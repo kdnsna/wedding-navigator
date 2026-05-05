@@ -123,7 +123,7 @@ bash scripts/coze-preview-run.sh
 
 ## 小程序升级计划
 
-项目已完成静态网页版（MVP），正在进行微信小程序升级，建立"主人编辑端 + 客人展示端"双角色体系。
+项目已完成静态网页版（MVP）和微信小程序版（uni-app）。小程序源码位于 `wedding-miniprogram/` 目录，建立"主人编辑端 + 客人展示端"双角色体系。
 
 ### 技术选型（综合方案）
 
@@ -157,12 +157,25 @@ bash scripts/coze-preview-run.sh
 6. 祝福墙（文字/语音/审核/置顶）
 7. 分享与统计（小程序码/卡片/数据面板）
 
+### 小程序源码结构
+
+```
+wedding-miniprogram/
+├── pages/              # 宾客端（7页）：首页/相册/路书/流程/RSVP/祝福墙/更多
+├── pages-owner/        # 主人端（10页，subPackages分包）：向导/管理/编辑页
+├── cloudfunctions/     # 9个云函数：CRUD/RSVP/祝福/统计
+├── stores/             # Pinia：user.js + wedding.js
+├── composables/        # useCloud.js 云开发API封装
+├── utils/              # 工具函数库
+└── uni.scss            # 全局SCSS设计系统（3套配色）
+```
+
 ### 开发阶段
 
-- Phase 1（MVP）：婚书 + 相册 + 路书 + 分享（2周）
-- Phase 2（V1.0）：流程 + RSVP + 祝福墙（1.5周）
-- Phase 3（V1.1）：体验优化 + 数据统计（1周）
-- Phase 4（V2.0）：语音祝福 + 角色视图 + 导出（1周）
+- Phase 1（MVP）：婚书 + 相册 + 路书 + 分享 ✅
+- Phase 2（V1.0）：流程 + RSVP + 祝福墙 ✅
+- Phase 3（V1.1）：体验优化 + 数据统计 ✅
+- Phase 4（V2.0）：语音祝福 + 角色视图 + 导出（后续迭代）
 
 ---
 
