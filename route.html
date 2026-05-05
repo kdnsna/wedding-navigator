@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>婚礼路书 - 婚礼导航</title>
+  <link rel="stylesheet" href="./css/style.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+  <div class="page-container">
+    <!-- 头部导航 -->
+    <header class="header">
+      <div class="header-content">
+        <button class="header-back" onclick="history.back()">←</button>
+        <div class="header-title">
+          <span>🗺️</span>
+          <span>婚礼路书</span>
+        </div>
+        <div style="width: 40px;"></div>
+      </div>
+    </header>
+
+    <!-- 主内容区域 -->
+    <main class="main-content">
+      <!-- 地图容器 -->
+      <section>
+        <div class="route-map-container">
+          <div id="routeMap" style="width: 100%; height: 100%;">
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: #f5f5f5;">
+              <div style="font-size: 2rem; margin-bottom: 0.5rem;">🗺️</div>
+              <div style="color: #666;">地图加载中...</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 路线说明 -->
+      <section class="card" style="margin-top: 1rem;">
+        <div class="card-body">
+          <h3 class="card-title" style="color: var(--color-primary);">🚗 接亲路线</h3>
+          <p style="color: var(--color-gray); font-size: 0.875rem; margin-top: 0.5rem;">
+            从新郎家出发 → 接亲酒店 → 婚礼大堂
+          </p>
+          <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap;">
+            <span class="role-tag" style="background: #FFE4E1;">🏠 新郎家</span>
+            <span style="color: var(--color-gray);">→</span>
+            <span class="role-tag" style="background: #E6E6FA;">🏨 接亲酒店</span>
+            <span style="color: var(--color-gray);">→</span>
+            <span class="role-tag" style="background: #FFF8DC;">⛪ 婚礼大堂</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 场地列表 -->
+      <section style="margin-top: 1.5rem;">
+        <h3 style="font-weight: 600; margin-bottom: 1rem;">📍 场地信息</h3>
+        <div class="route-list" id="routeList">
+          <!-- 由JS动态渲染 -->
+          <div style="text-align: center; padding: 2rem; color: #999;">
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">📍</div>
+            <div>加载中...</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 温馨提示 -->
+      <section class="card" style="margin-top: 1.5rem;">
+        <div class="card-body">
+          <h3 class="card-title" style="color: var(--color-gold);">💡 出行提示</h3>
+          <ul style="margin-top: 1rem; color: var(--color-gray); font-size: 0.875rem; padding-left: 1.25rem;">
+            <li style="margin-bottom: 0.5rem;">建议提前30分钟出发，预留充足时间</li>
+            <li style="margin-bottom: 0.5rem;">婚礼当天路况可能较为拥堵，请注意安全</li>
+            <li style="margin-bottom: 0.5rem;">点击「导航」按钮可一键唤起高德地图</li>
+            <li>外地宾客可提前一天入住附近酒店</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- 高德Key说明 -->
+      <section class="card" style="margin-top: 1rem; border: 1px dashed #ddd;">
+        <div class="card-body" style="padding: 1rem;">
+          <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+            <span style="font-size: 1.5rem;">🔑</span>
+            <div>
+              <div style="font-weight: 600; color: var(--color-primary); margin-bottom: 0.25rem;">
+                高德地图Key配置
+              </div>
+              <div style="font-size: 0.875rem; color: var(--color-gray);">
+                当前使用的是占位Key，如需正式使用，请：
+                <br>1. 前往 <a href="https://lbs.amap.com/" target="_blank" style="color: var(--color-primary);">高德开放平台</a> 申请Key
+                <br>2. 替换 <code style="background: #f5f5f5; padding: 0.125rem 0.25rem; border-radius: 4px;">setting.json</code> 中的 <code style="background: #f5f5f5; padding: 0.125rem 0.25rem; border-radius: 4px;">amapKey</code> 值
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- 底部导航栏 -->
+    <nav class="bottom-nav">
+      <a href="index.html" class="nav-item">
+        <span class="nav-icon">🏠</span>
+        <span>首页</span>
+      </a>
+      <a href="invitation.html" class="nav-item">
+        <span class="nav-icon">📜</span>
+        <span>请柬</span>
+      </a>
+      <a href="route.html" class="nav-item active">
+        <span class="nav-icon">🗺️</span>
+        <span>路书</span>
+      </a>
+      <a href="timeline.html" class="nav-item">
+        <span class="nav-icon">⏰</span>
+        <span>时间线</span>
+      </a>
+    </nav>
+  </div>
+
+  <script src="./js/config.js"></script>
+  <script src="./js/map.js"></script>
+  <script src="./js/app.js"></script>
+</body>
+</html>
