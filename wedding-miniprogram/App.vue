@@ -1,7 +1,9 @@
 <script setup>
 import { onLaunch, onShow, onHide } from '@dcloudio/uni-app'
+import { initCloud } from '@/composables/useCloud.js'
 
 onLaunch(() => {
+  initCloud()
   console.log('App Launch')
 })
 

@@ -1,7 +1,7 @@
 import { useWeddingStore } from '@/stores/wedding.js'
 
-// 云开发环境ID（部署时替换为真实ID）
-const CLOUD_ENV = ''
+// 云开发环境ID
+const CLOUD_ENV = 'cloud1-d5qqyur7g5a4d3c8d'
 
 /**
  * 初始化云开发
