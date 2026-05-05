@@ -23,7 +23,9 @@
       "address": "北京市朝阳区建国路88号",
       "lng": 116.478912,
       "lat": 39.916527,
-      "description": "接亲起点"
+      "description": "接亲起点",
+      "arrivalTime": "06:00",
+      "role": "groom"
     },
     {
       "id": "hotel",
@@ -32,7 +34,9 @@
       "address": "北京市朝阳区东三环中路61号",
       "lng": 116.459568,
       "lat": 39.90923,
-      "description": "新娘所在酒店"
+      "description": "新娘所在酒店",
+      "arrivalTime": "08:30",
+      "role": "all"
     },
     {
       "id": "venue",
@@ -41,7 +45,9 @@
       "address": "北京市朝阳区天辰东路7号",
       "lng": 116.397428,
       "lat": 39.904555,
-      "description": "婚宴举办地"
+      "description": "婚宴举办地",
+      "arrivalTime": "11:30",
+      "role": "all"
     }
   ],
   "timeline": [

@@ -223,11 +223,44 @@ function showToast(message, duration = 2000) {
   }, duration);
 }
 
+/**
+ * 显示分享二维码
+ */
+function showShareQRCode() {
+  const modal = document.getElementById('shareQRModal');
+  const container = document.getElementById('shareQRCode');
+  if (!modal || !container) return;
+
+  container.innerHTML = '';
+
+  // 生成当前页面的二维码
+  const url = window.location.href.split('?')[0];
+  new QRCode(container, {
+    text: url,
+    width: 200,
+    height: 200,
+    colorDark: '#C41E3A',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M
+  });
+
+  modal.classList.add('active');
+}
+
+/**
+ * 关闭分享二维码弹窗
+ */
+function closeShareQRModal() {
+  const modal = document.getElementById('shareQRModal');
+  if (modal) modal.classList.remove('active');
+}
+
 // 导出模块
 window.ExportManager = {
   exportToPNG,
   exportToPDF,
   copyShareLink,
+  showShareQRCode,
   showLoading,
   hideLoading,
   showToast

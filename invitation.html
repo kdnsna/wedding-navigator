@@ -6,6 +6,7 @@
   <title>婚书请柬 - 婚礼导航</title>
   <link rel="stylesheet" href="./css/style.css">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
   <div class="page-container">
@@ -68,6 +69,29 @@
         </div>
       </section>
 
+      <!-- 婚礼信息编辑 -->
+      <section class="editor-section">
+        <label class="editor-label">编辑婚礼信息</label>
+        <div style="display: grid; gap: 1rem;">
+          <div>
+            <label style="font-size: 0.875rem; color: var(--color-gray); margin-bottom: 0.25rem; display: block;">婚礼日期</label>
+            <input type="date" id="weddingDateInput" class="editor-input">
+          </div>
+          <div>
+            <label style="font-size: 0.875rem; color: var(--color-gray); margin-bottom: 0.25rem; display: block;">仪式时间</label>
+            <input type="time" id="weddingTimeInput" class="editor-input">
+          </div>
+          <div>
+            <label style="font-size: 0.875rem; color: var(--color-gray); margin-bottom: 0.25rem; display: block;">婚礼地点</label>
+            <input type="text" id="weddingVenueInput" class="editor-input" placeholder="婚礼举办地点">
+          </div>
+          <div>
+            <label style="font-size: 0.875rem; color: var(--color-gray); margin-bottom: 0.25rem; display: block;">详细地址</label>
+            <input type="text" id="weddingAddressInput" class="editor-input" placeholder="详细地址">
+          </div>
+        </div>
+      </section>
+
       <!-- 婚书文案选择 -->
       <section class="editor-section">
         <label class="editor-label">选择婚书文案</label>
@@ -99,9 +123,12 @@
       </section>
 
       <!-- 分享按钮 -->
-      <div style="text-align: center; margin-top: 1rem;">
-        <button class="btn btn-ghost" onclick="ExportManager.copyShareLink()">
-          🔗 复制分享链接
+      <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+        <button class="btn btn-ghost" style="flex: 1;" onclick="ExportManager.copyShareLink()">
+          🔗 复制链接
+        </button>
+        <button class="btn btn-ghost" style="flex: 1;" onclick="ExportManager.showShareQRCode()">
+          📱 分享二维码
         </button>
       </div>
     </main>
@@ -120,11 +147,37 @@
         <span class="nav-icon">🗺️</span>
         <span>路书</span>
       </a>
+      <a href="guests.html" class="nav-item">
+        <span class="nav-icon">👥</span>
+        <span>宾客</span>
+      </a>
       <a href="timeline.html" class="nav-item">
         <span class="nav-icon">⏰</span>
         <span>时间线</span>
       </a>
     </nav>
+  </div>
+
+  <!-- 二维码分享弹窗 -->
+  <div class="modal-overlay" id="shareQRModal">
+    <div class="modal-content" style="width: 90%; max-width: 400px; text-align: center;">
+      <div class="modal-header">
+        <h3>📱 分享请柬</h3>
+        <button class="modal-close" onclick="closeShareQRModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <p style="color: var(--color-gray); font-size: 0.875rem; margin-bottom: 1rem;">
+          扫描二维码即可查看婚礼请柬
+        </p>
+        <div id="shareQRCode" style="display: flex; justify-content: center; margin: 1rem 0;"></div>
+        <p style="color: var(--color-gray); font-size: 0.75rem; margin-top: 1rem;">
+          或使用下方按钮复制链接分享给亲友
+        </p>
+        <button class="btn btn-primary" style="margin-top: 1rem;" onclick="ExportManager.copyShareLink(); closeShareQRModal();">
+          🔗 复制链接
+        </button>
+      </div>
+    </div>
   </div>
 
   <script src="./js/config.js"></script>
@@ -136,12 +189,23 @@
       // 等待配置加载
       await window.ConfigManager.loadConfig();
       const config = window.ConfigManager.getConfig();
-      
+
       // 渲染婚书文案列表
       renderWishList(config.marriageWishes);
-      
+
       // 渲染预览
       window.renderInvitationPreview();
+    });
+
+    function closeShareQRModal() {
+      document.getElementById('shareQRModal').classList.remove('active');
+    }
+
+    // 点击弹窗外部关闭
+    document.addEventListener('click', (e) => {
+      if (e.target.classList.contains('modal-overlay')) {
+        e.target.classList.remove('active');
+      }
     });
 
     // 渲染婚书文案列表

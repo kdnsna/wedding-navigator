@@ -39,6 +39,11 @@ async function initApp() {
       case 'timeline':
         initTimelinePage();
         break;
+      case 'guests':
+        if (typeof initGuestsPage === 'function') {
+          initGuestsPage();
+        }
+        break;
       case 'home':
       default:
         initHomePage();
@@ -60,6 +65,7 @@ function getCurrentPage() {
   if (path.includes('invitation')) return 'invitation';
   if (path.includes('route')) return 'route';
   if (path.includes('timeline')) return 'timeline';
+  if (path.includes('guests')) return 'guests';
   return 'home';
 }
 
@@ -69,19 +75,36 @@ function getCurrentPage() {
 function initHomePage() {
   const config = AppState.config;
   if (!config) return;
-  
+
   // 更新新人名字
   const namesEl = document.getElementById('coupleNames');
   if (namesEl) {
     namesEl.textContent = `${config.groom.name} & ${config.bride.name}`;
   }
-  
+
   // 更新婚礼日期
   const dateEl = document.getElementById('weddingDate');
   if (dateEl) {
     dateEl.textContent = `${config.wedding.weekday} · ${config.wedding.date}`;
   }
-  
+
+  // 更新婚礼信息卡片
+  const dateInfoEl = document.getElementById('weddingDateInfo');
+  if (dateInfoEl) {
+    dateInfoEl.textContent = `${config.wedding.date} ${config.wedding.weekday}`;
+  }
+
+  const timeInfoEl = document.querySelector('#weddingDateInfo')?.parentElement?.nextElementSibling?.querySelector('span');
+  if (timeInfoEl) {
+    timeInfoEl.textContent = config.wedding.time;
+  }
+
+  const venueInfoEl = document.getElementById('venueInfo');
+  if (venueInfoEl) {
+    const venue = config.venues.find(v => v.type === 'venue');
+    venueInfoEl.textContent = venue ? `${venue.name} · ${venue.address}` : '';
+  }
+
   // 计算倒计时
   updateCountdown(config.wedding.dateShort);
 }
@@ -258,24 +281,81 @@ function bindInvitationEvents() {
  * 绑定编辑器事件
  */
 function bindEditorEvents() {
+  const config = AppState.config;
+
   const groomInput = document.getElementById('groomName');
   const brideInput = document.getElementById('brideName');
-  
+  const dateInput = document.getElementById('weddingDateInput');
+  const timeInput = document.getElementById('weddingTimeInput');
+  const venueInput = document.getElementById('weddingVenueInput');
+  const addressInput = document.getElementById('weddingAddressInput');
+
   if (groomInput) {
-    groomInput.value = AppState.config.groom.name;
+    groomInput.value = config.groom.name;
     groomInput.addEventListener('change', (e) => {
       ConfigManager.updateConfig('groom.name', e.target.value);
-      AppState.config.groom.name = e.target.value;
+      config.groom.name = e.target.value;
       renderInvitationPreview();
     });
   }
-  
+
   if (brideInput) {
-    brideInput.value = AppState.config.bride.name;
+    brideInput.value = config.bride.name;
     brideInput.addEventListener('change', (e) => {
       ConfigManager.updateConfig('bride.name', e.target.value);
-      AppState.config.bride.name = e.target.value;
+      config.bride.name = e.target.value;
       renderInvitationPreview();
+    });
+  }
+
+  if (dateInput) {
+    dateInput.value = config.wedding.dateShort;
+    dateInput.addEventListener('change', (e) => {
+      const date = new Date(e.target.value);
+      const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+      const dateStr = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+      ConfigManager.updateConfig('wedding.dateShort', e.target.value);
+      ConfigManager.updateConfig('wedding.date', dateStr);
+      ConfigManager.updateConfig('wedding.weekday', weekdays[date.getDay()]);
+      config.wedding.dateShort = e.target.value;
+      config.wedding.date = dateStr;
+      config.wedding.weekday = weekdays[date.getDay()];
+      renderInvitationPreview();
+    });
+  }
+
+  if (timeInput) {
+    timeInput.value = config.wedding.time;
+    timeInput.addEventListener('change', (e) => {
+      ConfigManager.updateConfig('wedding.time', e.target.value);
+      config.wedding.time = e.target.value;
+      renderInvitationPreview();
+    });
+  }
+
+  if (venueInput) {
+    const venue = config.venues.find(v => v.type === 'venue');
+    venueInput.value = venue ? venue.name : '';
+    venueInput.addEventListener('change', (e) => {
+      const venueIdx = config.venues.findIndex(v => v.type === 'venue');
+      if (venueIdx !== -1) {
+        config.venues[venueIdx].name = e.target.value;
+        ConfigManager.updateConfig('venues', config.venues);
+        renderInvitationPreview();
+      }
+    });
+  }
+
+  if (addressInput) {
+    const venue = config.venues.find(v => v.type === 'venue');
+    addressInput.value = venue ? venue.address : '';
+    addressInput.addEventListener('change', (e) => {
+      const venueIdx = config.venues.findIndex(v => v.type === 'venue');
+      if (venueIdx !== -1) {
+        config.venues[venueIdx].address = e.target.value;
+        ConfigManager.updateConfig('venues', config.venues);
+        renderInvitationPreview();
+      }
     });
   }
 }
@@ -311,7 +391,14 @@ function renderRouteList() {
   
   const config = AppState.config;
   
-  container.innerHTML = config.venues.map((venue, index) => `
+  container.innerHTML = config.venues.map((venue, index) => {
+    const nextVenue = index < config.venues.length - 1 ? config.venues[index + 1] : null;
+    const distance = nextVenue ? MapManager.getDistance(venue, nextVenue) : 0;
+    const driveTime = nextVenue ? MapManager.estimateDrivingTime(distance) : 0;
+    const arrivalInfo = venue.arrivalTime ? `🕐 预计 ${venue.arrivalTime} 到达` : '';
+    const nextInfo = nextVenue ? `🚗 距下一站约 ${distance} 公里（约 ${driveTime} 分钟）` : '';
+
+    return `
     <div class="route-item animate-slideUp" style="animation-delay: ${index * 0.1}s">
       <div class="route-marker ${venue.type}">
         ${ConfigManager.getVenueIcon(venue.type)}
@@ -320,11 +407,8 @@ function renderRouteList() {
         <div class="route-name">${venue.name}</div>
         <div class="route-address">${venue.address}</div>
         ${venue.description ? `<div class="route-time">📌 ${venue.description}</div>` : ''}
-        ${index < config.venues.length - 1 ? `
-          <div class="route-time" style="margin-top: 0.25rem;">
-            距下一站约 ${MapManager.getDistance(venue, config.venues[index + 1])} 公里
-          </div>
-        ` : ''}
+        ${arrivalInfo ? `<div class="route-time" style="color: var(--color-primary); font-weight: 600;">${arrivalInfo}</div>` : ''}
+        ${nextInfo ? `<div class="route-time" style="margin-top: 0.25rem;">${nextInfo}</div>` : ''}
       </div>
       <div class="route-action">
         <button class="nav-btn" onclick="MapManager.startNavigation(${JSON.stringify(venue).replace(/"/g, '&quot;')})">
@@ -332,7 +416,7 @@ function renderRouteList() {
         </button>
       </div>
     </div>
-  `).join('');
+  `}).join('');
 }
 
 /**
@@ -408,12 +492,49 @@ function renderTimeline() {
     return;
   }
   
+  // 获取当前时间用于高亮判断（仅婚礼当天有效）
+  const now = new Date();
+  const weddingDate = new Date(config.wedding.dateShort);
+  const isWeddingDay = now.toDateString() === weddingDate.toDateString();
+  const currentMinutes = isWeddingDay ? now.getHours() * 60 + now.getMinutes() : -1;
+
   container.innerHTML = filteredTimeline.map((item, index) => {
     const venue = config.venues.find(v => v.id === item.venue);
-    
+    const [itemHour, itemMin] = item.time.split(':').map(Number);
+    const itemMinutes = itemHour * 60 + itemMin;
+
+    // 判断节点状态：已完成 / 进行中 / 未开始
+    let nodeStatus = '';
+    let statusLabel = '';
+    if (isWeddingDay) {
+      if (currentMinutes >= itemMinutes + 30) {
+        nodeStatus = 'completed';
+        statusLabel = '✅ 已完成';
+      } else if (currentMinutes >= itemMinutes) {
+        nodeStatus = 'active';
+        statusLabel = '🔴 进行中';
+      } else if (currentMinutes >= itemMinutes - 30) {
+        nodeStatus = 'upcoming';
+        statusLabel = '⏳ 即将开始';
+      }
+    }
+
+    // 计算距离下一个节点还有多久
+    let countdownText = '';
+    if (isWeddingDay && nodeStatus === 'upcoming' && currentMinutes > 0) {
+      const diffMinutes = itemMinutes - currentMinutes;
+      if (diffMinutes > 0 && diffMinutes <= 60) {
+        countdownText = `还有 ${diffMinutes} 分钟`;
+      }
+    }
+
     return `
-      <div class="timeline-item animate-slideUp" style="animation-delay: ${index * 0.05}s">
-        <div class="timeline-time">🕐 ${item.time}</div>
+      <div class="timeline-item ${nodeStatus} animate-slideUp" style="animation-delay: ${index * 0.05}s" data-time="${item.time}">
+        <div class="timeline-time">
+          🕐 ${item.time}
+          ${statusLabel ? `<span class="timeline-status ${nodeStatus}">${statusLabel}</span>` : ''}
+          ${countdownText ? `<span class="timeline-countdown">${countdownText}</span>` : ''}
+        </div>
         <div class="timeline-title">${item.title}</div>
         <div class="timeline-desc">${item.description}</div>
         ${venue ? `
@@ -429,6 +550,16 @@ function renderTimeline() {
       </div>
     `;
   }).join('');
+
+  // 滚动到当前进行中的节点
+  if (isWeddingDay) {
+    setTimeout(() => {
+      const activeItem = container.querySelector('.timeline-item.active');
+      if (activeItem) {
+        activeItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 500);
+  }
 }
 
 // 页面加载完成后初始化
