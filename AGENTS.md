@@ -21,6 +21,7 @@ wedding-navigator/
 ├── invitation.html     # 婚书/请柬页面
 ├── route.html          # 路书/导航页面
 ├── timeline.html       # 流程时间线页面
+├── guests.html         # 宾客管理页面（RSVP、名单、统计）
 ├── setting.json        # 配置文件（新人信息、场地、时间线等）
 ├── css/
 │   └── style.css       # 全局样式
@@ -28,7 +29,8 @@ wedding-navigator/
 │   ├── app.js          # 主应用逻辑
 │   ├── config.js       # 配置加载模块
 │   ├── map.js          # 地图功能模块
-│   └── export.js       # 导出功能模块
+│   ├── export.js       # 导出功能模块（图片/PDF/二维码）
+│   └── guests.js       # 宾客管理模块
 ├── scripts/            # Coze 预览/部署脚本
 │   ├── coze-preview-build.sh
 │   ├── coze-preview-run.sh
@@ -45,18 +47,20 @@ wedding-navigator/
 - `index.html` - 首页，显示倒计时和新人大名，提供三个功能入口
 
 ### 功能页面
-- `invitation.html` - 婚书请柬，支持三种模板风格（传统红金、现代简约、极简高级）
-- `route.html` - 婚礼路书，多点路线串联，一键导航
-- `timeline.html` - 流程时间线，婚礼当天完整时间轴
+- `invitation.html` - 婚书请柬，支持三种模板风格（传统红金、现代简约、极简高级），可编辑婚礼日期/时间/地点，支持图片/PDF导出和二维码分享
+- `route.html` - 婚礼路书，多点路线串联，一键导航，场地与时间关联显示
+- `timeline.html` - 流程时间线，婚礼当天完整时间轴，角色筛选，当前节点自动高亮
+- `guests.html` - 宾客管理，RSVP回执、出席统计、二维码邀请、饮食偏好记录
 
 ### 配置系统
 - `setting.json` - 统一配置，包含新人信息、婚礼日期、场地坐标、时间线等
 - `js/config.js` - 配置加载和校验模块
 
 ### 功能模块
-- `js/app.js` - 主应用逻辑，首页和通用功能
-- `js/map.js` - 高德地图集成，路线规划和导航
-- `js/export.js` - 请柬导出功能（图片/PDF）
+- `js/app.js` - 主应用逻辑，首页和通用功能，时间线节点状态管理
+- `js/map.js` - 高德地图集成，路线规划和导航，距离/时间估算
+- `js/export.js` - 请柬导出功能（图片/PDF/二维码分享）
+- `js/guests.js` - 宾客管理模块（CRUD、筛选、统计、RSVP）
 
 ## 运行与预览
 
@@ -89,10 +93,12 @@ bash scripts/coze-preview-run.sh
 
 ## 用户偏好与长期约束
 
-1. **配置优先**：所有可定制内容都在 `setting.json` 中管理
+1. **配置优先**：所有可定制内容都在 `setting.json` 中管理，同时支持 localStorage 本地持久化
 2. **模板风格**：支持三种请柬风格切换
 3. **移动端优化**：使用 Tailwind 的响应式类，确保手机端体验
 4. **日期格式**：统一使用 "2026年11月14日" 格式
+5. **宾客数据**：宾客名单和 RSVP 数据仅存储在浏览器 localStorage 中，不上传服务器
+6. **时间线高亮**：婚礼当天自动根据当前时间高亮进行中/已完成/即将开始的节点
 
 ## Coze 配置说明
 
@@ -117,3 +123,5 @@ bash scripts/coze-preview-run.sh
 2. **跨域问题**：本地开发时注意 CORS 配置（如需代理）
 3. **静态资源路径**：确保 css/js 路径相对于 HTML 文件正确
 4. **端口冲突**：预览和部署都使用 5000 端口，脚本内置幂等性处理
+5. **宾客数据丢失**：宾客数据存在 localStorage，清除浏览器数据会丢失，建议定期导出备份
+6. **二维码分享**：请柬和宾客页面的二维码分享依赖 qrcode.js CDN，网络不稳定时可使用复制链接功能
