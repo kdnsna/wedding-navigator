@@ -94,9 +94,9 @@ function initHomePage() {
     dateInfoEl.textContent = `${config.wedding.date} ${config.wedding.weekday}`;
   }
 
-  const timeInfoEl = document.querySelector('#weddingDateInfo')?.parentElement?.nextElementSibling?.querySelector('span');
+  const timeInfoEl = document.getElementById('weddingTimeInfo');
   if (timeInfoEl) {
-    timeInfoEl.textContent = config.wedding.time;
+    timeInfoEl.textContent = config.wedding.time || '12:00';
   }
 
   const venueInfoEl = document.getElementById('venueInfo');
@@ -113,28 +113,40 @@ function initHomePage() {
  * 更新倒计时
  */
 function updateCountdown(dateStr) {
-  const countdownEl = document.getElementById('countdown');
-  if (!countdownEl) return;
-  
-  const weddingDate = new Date(dateStr);
-  const now = new Date();
-  
-  const diff = weddingDate - now;
-  
-  if (diff <= 0) {
-    countdownEl.innerHTML = '今天是你的婚礼！';
-    return;
+  const target = new Date(dateStr + 'T00:00:00');
+
+  function calculate() {
+    const daysEl = document.getElementById('cdDays');
+    const hoursEl = document.getElementById('cdHours');
+    const minutesEl = document.getElementById('cdMinutes');
+    const secondsEl = document.getElementById('cdSeconds');
+
+    if (!daysEl) return;
+
+    const now = new Date();
+    const diff = target - now;
+
+    if (diff <= 0) {
+      daysEl.textContent = '00';
+      if (hoursEl) hoursEl.textContent = '00';
+      if (minutesEl) minutesEl.textContent = '00';
+      if (secondsEl) secondsEl.textContent = '00';
+      return;
+    }
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+    daysEl.textContent = String(days).padStart(2, '0');
+    if (hoursEl) hoursEl.textContent = String(hours).padStart(2, '0');
+    if (minutesEl) minutesEl.textContent = String(minutes).padStart(2, '0');
+    if (secondsEl) secondsEl.textContent = String(seconds).padStart(2, '0');
   }
-  
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-  
-  countdownEl.innerHTML = `
-    <span class="countdown-days">${days}</span>天
-    <span class="countdown-hours">${hours}</span>时
-    <span class="countdown-minutes">${minutes}</span>分
-  `;
+
+  calculate();
+  setInterval(calculate, 1000);
 }
 
 /**
@@ -192,9 +204,12 @@ function renderInvitationPreview() {
     traditional: `
       <div class="invitation-traditional animate-fadeIn">
         <div class="invitation-content">
+          <div class="invitation-header">谨订于</div>
           <div class="invitation-title">婚书</div>
           <div class="bride-name">${config.bride.name}</div>
+          <div class="invitation-divider"></div>
           <div class="and-symbol">囍</div>
+          <div class="invitation-divider"></div>
           <div class="groom-name">${config.groom.name}</div>
           <div class="marriage-wish">${wish.content}</div>
           <div class="wedding-date">${config.wedding.date} ${config.wedding.time}</div>
@@ -205,12 +220,13 @@ function renderInvitationPreview() {
     modern: `
       <div class="invitation-modern animate-fadeIn">
         <div class="invitation-content">
-          <div class="invitation-title">Wedding Invitation</div>
+          <div class="invitation-label">Wedding Invitation</div>
           <div class="bride-name">${config.bride.name}</div>
-          <span class="and-symbol">&</span>
+          <div class="and-symbol">&</div>
           <div class="groom-name">${config.groom.name}</div>
+          <div class="invitation-divider"></div>
           <div class="marriage-wish">${wish.content}</div>
-          <div class="wedding-date">${config.wedding.weekday} · ${config.wedding.date}</div>
+          <div class="wedding-date">${config.wedding.weekday} · ${config.wedding.date} · ${config.wedding.time}</div>
           <div class="wedding-venue">${config.venues.find(v => v.type === 'venue')?.name || ''}</div>
         </div>
       </div>
@@ -218,10 +234,11 @@ function renderInvitationPreview() {
     minimal: `
       <div class="invitation-minimal animate-fadeIn">
         <div class="invitation-content">
-          <div class="invitation-title">Wedding</div>
+          <div class="invitation-label">Wedding Invitation</div>
           <div class="bride-name">${config.bride.name}</div>
           <div class="and-symbol">&</div>
           <div class="groom-name">${config.groom.name}</div>
+          <div class="invitation-divider"></div>
           <div class="marriage-wish">${wish.content}</div>
           <div class="wedding-date">${config.wedding.date} · ${config.wedding.time}</div>
           <div class="wedding-venue">${config.venues.find(v => v.type === 'venue')?.address || ''}</div>
