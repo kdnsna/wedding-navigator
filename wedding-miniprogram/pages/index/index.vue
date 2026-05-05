@@ -16,6 +16,7 @@
       <view class="hero-content">
         <view class="ring-icon">💍</view>
         <view class="couple-names">{{ coupleName }}</view>
+        <view class="hero-deco-line" />
         <view class="wedding-date">{{ formatDate(weddingDate) }}</view>
         <view class="countdown-box" v-if="countdown">
           <view class="countdown-item">
@@ -77,21 +78,21 @@
       </view>
       <view class="info-card">
         <view class="info-item">
-          <text class="info-icon">📅</text>
+          <view class="info-icon-wrap"><text class="info-icon">📅</text></view>
           <view class="info-content">
             <text class="info-label">婚礼日期</text>
             <text class="info-value">{{ formatDate(weddingDate) }} {{ getWeekDay(weddingDate) }}</text>
           </view>
         </view>
         <view class="info-item">
-          <text class="info-icon">🕐</text>
+          <view class="info-icon-wrap"><text class="info-icon">🕐</text></view>
           <view class="info-content">
             <text class="info-label">仪式时间</text>
             <text class="info-value">{{ weddingTime || '12:00' }}</text>
           </view>
         </view>
         <view class="info-item">
-          <text class="info-icon">📍</text>
+          <view class="info-icon-wrap"><text class="info-icon">📍</text></view>
           <view class="info-content">
             <text class="info-label">婚礼场地</text>
             <text class="info-value">{{ venueName }}</text>
@@ -297,31 +298,35 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss" scoped>
+/* ========== 页面基础 ========== */
 .page {
   background-color: $bg-color;
   min-height: 100vh;
 }
 
-/* 音乐控制 */
+/* ========== 音乐控制 ========== */
 .music-control {
   position: fixed;
   top: 100rpx;
   right: 30rpx;
-  width: 64rpx;
-  height: 64rpx;
-  background: rgba(255,255,255,0.9);
+  width: 72rpx;
+  height: 72rpx;
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(20rpx);
+  -webkit-backdrop-filter: blur(20rpx);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 100;
-  box-shadow: $shadow-sm;
+  border: 1rpx solid rgba(255,255,255,0.2);
+  animation: fadeInScale 0.6s $ease-out-back 0.8s both;
 }
 .music-icon {
   font-size: 32rpx;
 }
 
-/* 封面区域 */
+/* ========== 封面区域 ========== */
 .hero-section {
   position: relative;
   height: 100vh;
@@ -340,7 +345,12 @@ onUnmounted(() => {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.4) 100%);
+  background: linear-gradient(
+    to bottom,
+    rgba(44, 24, 16, 0.15) 0%,
+    rgba(44, 24, 16, 0.35) 50%,
+    rgba(44, 24, 16, 0.6) 100%
+  );
 }
 .hero-content {
   position: relative;
@@ -352,226 +362,365 @@ onUnmounted(() => {
   height: 100%;
   color: #fff;
   text-align: center;
-  padding: 60rpx;
-}
-.ring-icon {
-  font-size: 80rpx;
-  margin-bottom: 30rpx;
-}
-.couple-names {
-  font-size: 56rpx;
-  font-weight: 700;
-  letter-spacing: 8rpx;
-  margin-bottom: 20rpx;
-  text-shadow: 0 2rpx 10rpx rgba(0,0,0,0.3);
-}
-.wedding-date {
-  font-size: 32rpx;
-  opacity: 0.9;
-  margin-bottom: 60rpx;
+  padding: 80rpx 50rpx;
 }
 
-/* 倒计时 */
+/* 戒指图标 */
+.ring-icon {
+  font-size: 72rpx;
+  margin-bottom: 40rpx;
+  animation: fadeInUp 0.8s $ease-out-back 0.2s both;
+  filter: drop-shadow(0 4rpx 12rpx rgba(212, 168, 83, 0.4));
+}
+
+/* 新人名字 - 更优雅 */
+.couple-names {
+  font-size: 64rpx;
+  font-weight: 600;
+  letter-spacing: 12rpx;
+  margin-bottom: 20rpx;
+  text-shadow: 0 4rpx 20rpx rgba(0,0,0,0.4);
+  animation: fadeInUp 0.8s $ease-out 0.3s both;
+  font-family: "PingFang SC", -apple-system, sans-serif;
+}
+
+/* 金色装饰线 */
+.hero-deco-line {
+  width: 80rpx;
+  height: 2rpx;
+  background: linear-gradient(90deg, transparent, $color-gold-light, transparent);
+  margin-bottom: 24rpx;
+  animation: lineExpand 1s $ease-out 0.5s both;
+}
+
+.wedding-date {
+  font-size: 30rpx;
+  letter-spacing: 4rpx;
+  opacity: 0.85;
+  margin-bottom: 60rpx;
+  animation: fadeInUp 0.8s $ease-out 0.5s both;
+}
+
+/* ========== 倒计时 - 毛玻璃卡片 ========== */
 .countdown-box {
   display: flex;
-  gap: 20rpx;
+  gap: 16rpx;
   margin-bottom: 80rpx;
+  animation: fadeInUp 0.8s $ease-out 0.6s both;
 }
 .countdown-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: rgba(255,255,255,0.2);
-  backdrop-filter: blur(10rpx);
-  border-radius: 16rpx;
-  padding: 20rpx 24rpx;
-  min-width: 100rpx;
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: blur(16rpx);
+  -webkit-backdrop-filter: blur(16rpx);
+  border-radius: 20rpx;
+  padding: 24rpx 28rpx;
+  min-width: 110rpx;
+  border: 1rpx solid rgba(212, 168, 83, 0.25);
+  position: relative;
+}
+.countdown-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 20%;
+  right: 20%;
+  height: 2rpx;
+  background: linear-gradient(90deg, transparent, $color-gold-light, transparent);
 }
 .countdown-num {
-  font-size: 48rpx;
+  font-size: 52rpx;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.1;
+  color: #fff;
+  margin-bottom: 6rpx;
+  font-variant-numeric: tabular-nums;
 }
 .countdown-label {
-  font-size: 24rpx;
-  opacity: 0.8;
+  font-size: 22rpx;
+  color: rgba(255,255,255,0.7);
+  letter-spacing: 2rpx;
 }
 
-/* 滚动提示 */
+/* ========== 滚动提示 ========== */
 .scroll-hint {
   display: flex;
   flex-direction: column;
   align-items: center;
-  font-size: 24rpx;
-  opacity: 0.7;
+  font-size: 22rpx;
+  color: rgba(255,255,255,0.6);
+  letter-spacing: 2rpx;
+  animation: fadeIn 1s $ease-out 1s both;
 }
 .scroll-arrow {
-  font-size: 40rpx;
-  animation: bounce 1.5s infinite;
-}
-@keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(10rpx); }
+  font-size: 36rpx;
+  margin-top: 8rpx;
+  animation: bounceDown 2s ease-in-out infinite;
 }
 
-/* 通用section */
+/* ========== 通用 section ========== */
 .section {
-  padding: 60rpx 30rpx;
+  padding: 70rpx 30rpx;
 }
 .section-title {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 20rpx;
+  gap: 24rpx;
   font-size: 36rpx;
-  font-weight: 700;
+  font-weight: 600;
   color: $text-primary;
-  margin-bottom: 40rpx;
+  margin-bottom: 50rpx;
+  letter-spacing: 4rpx;
 }
 .title-deco {
-  color: $color-primary;
-  opacity: 0.5;
+  color: $color-gold;
+  font-weight: 300;
+  font-size: 28rpx;
+  opacity: 0.7;
 }
 
-/* 婚书区域 */
+/* ========== 婚书区域 ========== */
 .invitation-section {
   background: $bg-surface;
+  position: relative;
 }
+.invitation-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1rpx;
+  background: linear-gradient(90deg, transparent, $border-gold, transparent);
+}
+
 .invitation-card {
-  background: #FFF8F0;
-  border: 2rpx solid #F0E6D8;
-  border-radius: 24rpx;
-  padding: 60rpx 40rpx;
+  background: $bg-elevated;
+  border: 1rpx solid $border-light;
+  border-radius: 32rpx;
+  padding: 60rpx 44rpx;
   text-align: center;
+  position: relative;
+  box-shadow: $shadow-sm;
+  animation: fadeInScale 0.6s $ease-out both;
 }
+
+/* 中式角落装饰 */
+.invitation-card::before,
+.invitation-card::after {
+  content: '';
+  position: absolute;
+  width: 32rpx;
+  height: 32rpx;
+  border-color: $color-gold;
+  border-style: solid;
+  opacity: 0.35;
+}
+.invitation-card::before {
+  top: 20rpx;
+  left: 20rpx;
+  border-width: 2rpx 0 0 2rpx;
+}
+.invitation-card::after {
+  bottom: 20rpx;
+  right: 20rpx;
+  border-width: 0 2rpx 2rpx 0;
+}
+
 .invitation-header {
-  margin-bottom: 40rpx;
+  margin-bottom: 36rpx;
 }
 .invitation-subtitle {
   display: block;
-  font-size: 28rpx;
+  font-size: 26rpx;
   color: $text-secondary;
-  margin-bottom: 10rpx;
+  margin-bottom: 12rpx;
+  letter-spacing: 6rpx;
 }
 .invitation-date {
   display: block;
-  font-size: 40rpx;
+  font-size: 44rpx;
   font-weight: 700;
   color: $color-primary;
-  margin-bottom: 6rpx;
+  margin-bottom: 8rpx;
+  letter-spacing: 2rpx;
 }
 .invitation-week {
   display: block;
-  font-size: 26rpx;
+  font-size: 24rpx;
   color: $text-muted;
 }
+
+/* 正文区域 */
 .invitation-body {
-  margin: 40rpx 0;
-  padding: 30rpx 0;
-  border-top: 1rpx solid $border-color;
-  border-bottom: 1rpx solid $border-color;
+  margin: 36rpx 0;
+  padding: 36rpx 0;
+  position: relative;
 }
+.invitation-body::before,
+.invitation-body::after {
+  content: '';
+  position: absolute;
+  left: 15%;
+  right: 15%;
+  height: 1rpx;
+  background: linear-gradient(90deg, transparent, $color-gold, transparent);
+  opacity: 0.4;
+}
+.invitation-body::before { top: 0; }
+.invitation-body::after { bottom: 0; }
+
 .invitation-text {
   font-size: 30rpx;
-  line-height: 1.8;
+  line-height: 2;
   color: $text-primary;
+  letter-spacing: 2rpx;
 }
+
 .invitation-footer {
-  margin-top: 40rpx;
+  margin-top: 36rpx;
 }
 .couple-info {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 20rpx;
-  font-size: 36rpx;
+  gap: 24rpx;
+  font-size: 38rpx;
 }
 .groom-name, .bride-name {
-  font-weight: 700;
+  font-weight: 600;
+  letter-spacing: 4rpx;
 }
 .heart {
   color: $color-primary;
   font-size: 32rpx;
+  animation: gentleFloat 2s ease-in-out infinite;
 }
 
-/* 模板样式变体 */
+/* 模板变体 */
 .template-modern .invitation-card {
-  background: #fff;
-  border: 2rpx solid #eee;
+  background: $bg-surface;
+  border: 1rpx solid $border-color;
 }
 .template-luxury .invitation-card {
   background: #FAF8F5;
-  border: 4rpx solid #D4AF37;
+  border: 2rpx solid rgba(212, 168, 83, 0.4);
+  box-shadow: $shadow-gold;
 }
 
-/* 婚礼信息 */
+/* ========== 婚礼信息 ========== */
 .info-section {
   background: $bg-color;
 }
 .info-card {
   background: $bg-surface;
-  border-radius: 24rpx;
-  padding: 40rpx;
-  box-shadow: $shadow-sm;
+  border-radius: 32rpx;
+  padding: 44rpx;
+  box-shadow: $shadow-md;
+  border: 1rpx solid $border-light;
+  animation: fadeInUp 0.6s $ease-out both;
 }
 .info-item {
   display: flex;
   align-items: flex-start;
-  gap: 20rpx;
-  margin-bottom: 30rpx;
+  gap: 24rpx;
+  margin-bottom: 32rpx;
+  padding-bottom: 32rpx;
+  border-bottom: 1rpx solid $border-light;
+}
+.info-item:last-of-type {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+/* 图标容器 */
+.info-icon-wrap {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 20rpx;
+  background: linear-gradient(135deg, rgba(196,30,58,0.08) 0%, rgba(212,168,83,0.08) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 .info-icon {
-  font-size: 40rpx;
-  flex-shrink: 0;
+  font-size: 36rpx;
 }
 .info-content {
   flex: 1;
 }
 .info-label {
   display: block;
-  font-size: 24rpx;
+  font-size: 22rpx;
   color: $text-muted;
-  margin-bottom: 4rpx;
+  margin-bottom: 6rpx;
+  letter-spacing: 2rpx;
 }
 .info-value {
   display: block;
   font-size: 30rpx;
   color: $text-primary;
   font-weight: 500;
+  line-height: 1.4;
 }
 .info-address {
   display: block;
-  font-size: 26rpx;
+  font-size: 24rpx;
   color: $text-secondary;
-  margin-top: 4rpx;
+  margin-top: 6rpx;
+  line-height: 1.5;
 }
+
+/* 操作按钮 */
 .info-actions {
   display: flex;
   gap: 20rpx;
-  margin-top: 30rpx;
+  margin-top: 36rpx;
+  padding-top: 36rpx;
+  border-top: 1rpx solid $border-light;
 }
 .action-btn {
   flex: 1;
-  height: 80rpx;
-  line-height: 80rpx;
+  height: 84rpx;
+  line-height: 84rpx;
   text-align: center;
-  border-radius: 12rpx;
-  background: #f5f5f5;
+  border-radius: 20rpx;
+  background: $bg-muted;
   color: $text-primary;
   font-size: 28rpx;
-  border: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
 .action-btn.primary {
-  background: linear-gradient(135deg, $color-primary 0%, #E91E63 100%);
+  background: $gradient-primary;
   color: #fff;
+  box-shadow: 0 4rpx 16rpx rgba(196, 30, 58, 0.25);
+}
+.action-btn:active {
+  transform: scale(0.97);
 }
 .action-btn::after {
   border: none;
 }
 
-/* 快速入口 */
+/* ========== 快速入口 ========== */
 .quick-section {
   background: $bg-surface;
+  position: relative;
+}
+.quick-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1rpx;
+  background: linear-gradient(90deg, transparent, $border-gold, transparent);
 }
 .quick-grid {
   display: grid;
@@ -582,22 +731,46 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 40rpx 20rpx;
-  background: $bg-muted;
-  border-radius: 20rpx;
+  padding: 44rpx 16rpx;
+  background: $bg-elevated;
+  border-radius: 28rpx;
+  border: 1rpx solid $border-light;
+  transition: all 0.3s $ease-out;
+  position: relative;
+  overflow: hidden;
+}
+.quick-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3rpx;
+  background: linear-gradient(90deg, transparent, $color-gold, transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.quick-item:active {
+  transform: translateY(-4rpx);
+  box-shadow: $shadow-md;
+}
+.quick-item:active::before {
+  opacity: 1;
 }
 .quick-icon {
-  font-size: 60rpx;
+  font-size: 56rpx;
   margin-bottom: 16rpx;
 }
 .quick-label {
   font-size: 26rpx;
   color: $text-primary;
+  font-weight: 500;
 }
 
-/* 底部操作 */
+/* ========== 底部操作 ========== */
 .bottom-section {
   background: $bg-color;
+  padding-bottom: 60rpx;
 }
 .bottom-actions {
   display: flex;
@@ -605,37 +778,54 @@ onUnmounted(() => {
   gap: 20rpx;
 }
 .bottom-btn {
-  height: 90rpx;
-  line-height: 90rpx;
+  height: 96rpx;
+  line-height: 96rpx;
   text-align: center;
-  border-radius: 16rpx;
+  border-radius: 24rpx;
   background: $bg-surface;
   color: $text-primary;
   font-size: 30rpx;
+  font-weight: 500;
   box-shadow: $shadow-sm;
+  border: 1rpx solid $border-light;
+  transition: all 0.2s ease;
 }
 .bottom-btn.primary {
-  background: linear-gradient(135deg, $color-primary 0%, #E91E63 100%);
+  background: $gradient-primary;
   color: #fff;
+  box-shadow: 0 6rpx 24rpx rgba(196, 30, 58, 0.3);
+  border: none;
+}
+.bottom-btn.primary:active {
+  transform: scale(0.98);
+  box-shadow: 0 2rpx 12rpx rgba(196, 30, 58, 0.2);
+}
+.bottom-btn:active {
+  transform: scale(0.98);
 }
 .bottom-btn::after {
   border: none;
 }
 .bottom-text {
   text-align: center;
-  margin-top: 40rpx;
-  font-size: 26rpx;
+  margin-top: 48rpx;
+  font-size: 24rpx;
   color: $text-muted;
+  letter-spacing: 2rpx;
 }
 
-/* 引流 */
+/* ========== 引流 ========== */
 .promo-section {
-  padding: 30rpx;
+  padding: 40rpx 30rpx 60rpx;
   text-align: center;
+  background: $bg-color;
 }
 .promo-text {
   font-size: 26rpx;
   color: $color-primary;
-  text-decoration: underline;
+  padding: 16rpx 40rpx;
+  border-radius: 40rpx;
+  background: rgba(196, 30, 58, 0.06);
+  border: 1rpx solid rgba(196, 30, 58, 0.12);
 }
 </style>

@@ -70,26 +70,45 @@ onShow(async () => {
 </script>
 
 <style lang="scss" scoped>
+/* ========== 相册页面 ========== */
 .page {
   background-color: $bg-color;
   min-height: 100vh;
-  padding: 20rpx;
+  padding: 24rpx;
 }
 
 .album-container {
   column-count: 2;
-  column-gap: 16rpx;
+  column-gap: 20rpx;
 }
 
 .photo-item {
   break-inside: avoid;
-  margin-bottom: 16rpx;
-  border-radius: 16rpx;
+  margin-bottom: 20rpx;
+  border-radius: 24rpx;
   overflow: hidden;
   background: $bg-surface;
   box-shadow: $shadow-sm;
-  animation: slideUp 0.5s ease-out forwards;
+  animation: fadeInScale 0.5s $ease-out both;
   opacity: 0;
+  position: relative;
+}
+.photo-item::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60rpx;
+  background: linear-gradient(to top, rgba(0,0,0,0.15), transparent);
+  pointer-events: none;
+}
+
+/* 依次延迟入场 */
+@for $i from 1 through 20 {
+  .photo-item:nth-child(#{$i}) {
+    animation-delay: #{$i * 0.06}s;
+  }
 }
 
 .photo-image {
@@ -98,35 +117,38 @@ onShow(async () => {
 }
 
 .photo-caption {
-  padding: 16rpx;
+  padding: 16rpx 20rpx;
   font-size: 24rpx;
   color: $text-secondary;
+  position: relative;
+  z-index: 1;
+  background: $bg-surface;
 }
 
+/* 空状态 */
 .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 200rpx 60rpx;
+  animation: fadeIn 0.6s $ease-out both;
 }
 .empty-icon {
   font-size: 100rpx;
   margin-bottom: 30rpx;
+  filter: drop-shadow(0 4rpx 12rpx rgba(212,168,83,0.2));
 }
 .empty-text {
   font-size: 30rpx;
   color: $text-muted;
+  letter-spacing: 2rpx;
 }
 
 .loading-state {
   text-align: center;
-  padding: 100rpx;
+  padding: 120rpx;
   color: $text-muted;
-}
-
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(30rpx); }
-  to { opacity: 1; transform: translateY(0); }
+  font-size: 28rpx;
 }
 </style>

@@ -91,11 +91,12 @@ onShow(() => {
 
 .qrcode-card {
   background: $bg-surface;
-  border-radius: 24rpx;
+  border-radius: 28rpx;
   padding: 60rpx;
   text-align: center;
   margin-bottom: 30rpx;
   box-shadow: $shadow-sm;
+  border: 2rpx solid rgba(212,168,83,0.08);
 }
 .qrcode-box {
   width: 300rpx;
@@ -135,9 +136,10 @@ onShow(() => {
 
 .form-card {
   background: $bg-surface;
-  border-radius: 24rpx;
+  border-radius: 28rpx;
   padding: 30rpx;
   box-shadow: $shadow-sm;
+  border: 2rpx solid rgba(212,168,83,0.08);
 }
 .form-group {
   margin-bottom: 24rpx;
@@ -168,18 +170,22 @@ onShow(() => {
   gap: 20rpx;
 }
 .share-btn {
-  height: 90rpx;
-  line-height: 90rpx;
+  height: 96rpx;
+  line-height: 96rpx;
   text-align: center;
   border-radius: 16rpx;
-  font-size: 30rpx;
+  font-size: 32rpx;
+  font-weight: 600;
   background: $bg-surface;
   color: $text-primary;
   box-shadow: $shadow-sm;
+  border: 2rpx solid rgba(212,168,83,0.08);
 }
 .share-btn.primary {
   background: linear-gradient(135deg, $color-primary 0%, #E91E63 100%);
   color: #fff;
+  box-shadow: $shadow-md;
+  border: none;
 }
 .share-btn::after {
   border: none;

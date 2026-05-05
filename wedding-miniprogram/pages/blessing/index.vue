@@ -140,37 +140,45 @@ onShow(async () => {
 </script>
 
 <style lang="scss" scoped>
+/* ========== 祝福墙页面 ========== */
 .page {
   background-color: $bg-color;
   min-height: 100vh;
   padding: 30rpx;
 }
 
-/* 发送区域 */
+/* ===== 发送区域 ===== */
 .send-section {
   background: $bg-surface;
-  border-radius: 24rpx;
-  padding: 40rpx;
+  border-radius: 32rpx;
+  padding: 44rpx;
   margin-bottom: 30rpx;
-  box-shadow: $shadow-sm;
+  box-shadow: $shadow-md;
+  border: 1rpx solid $border-light;
+  animation: fadeInUp 0.5s $ease-out both;
 }
 .send-title {
   display: block;
   font-size: 32rpx;
-  font-weight: 700;
+  font-weight: 600;
   color: $text-primary;
   margin-bottom: 20rpx;
+  letter-spacing: 2rpx;
 }
 .send-input {
   width: 100%;
-  height: 200rpx;
-  padding: 20rpx 24rpx;
+  height: 180rpx;
+  padding: 24rpx 28rpx;
   border: 2rpx solid $border-light;
-  border-radius: 16rpx;
+  border-radius: 20rpx;
   font-size: 28rpx;
-  background: $bg-muted;
+  background: $bg-elevated;
   box-sizing: border-box;
-  margin-bottom: 20rpx;
+  margin-bottom: 24rpx;
+  transition: all 0.2s ease;
+}
+.send-input:focus {
+  border-color: $color-gold;
 }
 .send-actions {
   display: flex;
@@ -178,19 +186,26 @@ onShow(async () => {
 }
 .send-btn {
   flex: 1;
-  height: 80rpx;
-  line-height: 80rpx;
+  height: 84rpx;
+  line-height: 84rpx;
   text-align: center;
-  border-radius: 12rpx;
-  background: linear-gradient(135deg, $color-primary 0%, #E91E63 100%);
+  border-radius: 20rpx;
+  background: $gradient-primary;
   color: #fff;
   font-size: 28rpx;
+  font-weight: 500;
+  box-shadow: 0 4rpx 16rpx rgba(196, 30, 58, 0.2);
+  transition: all 0.2s ease;
+}
+.send-btn:active {
+  transform: scale(0.97);
+  box-shadow: 0 2rpx 8rpx rgba(196, 30, 58, 0.15);
 }
 .send-btn::after {
   border: none;
 }
 
-/* 列表区域 */
+/* ===== 列表区域 ===== */
 .list-section {
   margin-top: 20rpx;
 }
@@ -198,30 +213,51 @@ onShow(async () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20rpx;
+  margin-bottom: 24rpx;
   padding: 0 10rpx;
 }
 .list-title {
   font-size: 32rpx;
-  font-weight: 700;
+  font-weight: 600;
   color: $text-primary;
+  letter-spacing: 2rpx;
 }
 .list-count {
   font-size: 24rpx;
   color: $text-muted;
 }
 
+/* 祝福卡片 */
 .blessing-card {
   background: $bg-surface;
-  border-radius: 20rpx;
-  padding: 30rpx;
+  border-radius: 28rpx;
+  padding: 32rpx;
   margin-bottom: 20rpx;
   box-shadow: $shadow-sm;
+  border: 1rpx solid $border-light;
   position: relative;
+  animation: fadeInUp 0.5s $ease-out both;
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+@for $i from 1 through 15 {
+  .blessing-card:nth-child(#{$i}) {
+    animation-delay: #{$i * 0.05}s;
+  }
 }
 .blessing-card.pinned {
-  border: 2rpx solid $color-primary;
+  border-color: rgba(196, 30, 58, 0.2);
   background: rgba(196, 30, 58, 0.02);
+  box-shadow: 0 4rpx 20rpx rgba(196, 30, 58, 0.06);
+}
+.blessing-card.pinned::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3rpx;
+  background: linear-gradient(90deg, transparent, $color-gold, transparent);
 }
 
 .blessing-header {
@@ -232,7 +268,7 @@ onShow(async () => {
 }
 .sender-name {
   font-size: 28rpx;
-  font-weight: 500;
+  font-weight: 600;
   color: $text-primary;
 }
 .sender-time {
@@ -244,41 +280,50 @@ onShow(async () => {
   display: block;
   font-size: 28rpx;
   color: $text-secondary;
-  line-height: 1.6;
+  line-height: 1.8;
+  letter-spacing: 1rpx;
 }
 
 .blessing-voice {
-  margin-top: 16rpx;
-  padding: 16rpx;
-  background: $bg-muted;
-  border-radius: 12rpx;
+  margin-top: 20rpx;
+  padding: 20rpx;
+  background: $bg-elevated;
+  border-radius: 16rpx;
   font-size: 26rpx;
   color: $color-primary;
+  border: 1rpx solid $border-light;
 }
 
+/* 置顶标签 */
 .pinned-badge {
   position: absolute;
   top: 20rpx;
   right: 20rpx;
-  padding: 4rpx 12rpx;
-  background: $color-primary;
+  padding: 4rpx 14rpx;
+  background: $gradient-primary;
   color: #fff;
   font-size: 20rpx;
-  border-radius: 8rpx;
+  border-radius: 10rpx;
+  font-weight: 500;
+  box-shadow: 0 2rpx 8rpx rgba(196, 30, 58, 0.2);
 }
 
+/* 空状态 */
 .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 150rpx 60rpx;
+  padding: 160rpx 60rpx;
+  animation: fadeIn 0.6s $ease-out both;
 }
 .empty-icon {
   font-size: 100rpx;
   margin-bottom: 30rpx;
+  filter: drop-shadow(0 4rpx 12rpx rgba(212,168,83,0.2));
 }
 .empty-text {
   font-size: 30rpx;
   color: $text-muted;
+  letter-spacing: 2rpx;
 }
 </style>

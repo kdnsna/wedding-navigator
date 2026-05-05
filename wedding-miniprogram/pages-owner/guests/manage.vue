@@ -253,10 +253,12 @@ onShow(() => {
 /* 统计 */
 .stats-card {
   background: $bg-surface;
-  border-radius: 24rpx;
+  border-radius: 28rpx;
   padding: 30rpx;
   margin-bottom: 20rpx;
   box-shadow: $shadow-sm;
+  border: 2rpx solid rgba(212,168,83,0.08);
+  animation: fadeInUp 0.6s $ease-out-back both;
 }
 .stats-row {
   display: flex;
@@ -311,10 +313,11 @@ onShow(() => {
 }
 .guest-card {
   background: $bg-surface;
-  border-radius: 16rpx;
+  border-radius: 24rpx;
   padding: 24rpx;
   margin-bottom: 16rpx;
   box-shadow: $shadow-sm;
+  border: 2rpx solid rgba(212,168,83,0.08);
 }
 .guest-main {
   display: flex;
@@ -383,6 +386,7 @@ onShow(() => {
   font-size: 80rpx;
   display: block;
   margin-bottom: 20rpx;
+  filter: drop-shadow(0 4rpx 12rpx rgba(212,168,83,0.2));
 }
 .empty-text {
   font-size: 28rpx;
@@ -396,13 +400,15 @@ onShow(() => {
   bottom: calc(30rpx + env(safe-area-inset-bottom));
   left: 30rpx;
   right: 30rpx;
-  height: 90rpx;
-  line-height: 90rpx;
+  height: 96rpx;
+  line-height: 96rpx;
   text-align: center;
   border-radius: 16rpx;
   background: linear-gradient(135deg, $color-primary 0%, #E91E63 100%);
   color: #fff;
-  font-size: 30rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  box-shadow: $shadow-md;
 }
 .add-btn::after {
   border: none;
@@ -495,15 +501,17 @@ onShow(() => {
 }
 .modal-btn {
   flex: 1;
-  height: 80rpx;
-  line-height: 80rpx;
+  height: 96rpx;
+  line-height: 96rpx;
   text-align: center;
-  border-radius: 12rpx;
-  font-size: 30rpx;
+  border-radius: 16rpx;
+  font-size: 32rpx;
+  font-weight: 600;
 }
 .modal-btn.primary {
   background: linear-gradient(135deg, $color-primary 0%, #E91E63 100%);
   color: #fff;
+  box-shadow: $shadow-md;
 }
 .modal-btn.secondary {
   background: $bg-muted;

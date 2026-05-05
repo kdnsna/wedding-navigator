@@ -165,6 +165,7 @@ onShow(async () => {
 </script>
 
 <style lang="scss" scoped>
+/* ========== 路书页面 ========== */
 .page {
   display: flex;
   flex-direction: column;
@@ -183,20 +184,38 @@ onShow(async () => {
 
 .venue-list {
   max-height: 50vh;
-  padding: 20rpx;
+  padding: 24rpx;
   background: $bg-color;
 }
 
 .venue-card {
   background: $bg-surface;
-  border-radius: 20rpx;
-  padding: 30rpx;
+  border-radius: 28rpx;
+  padding: 32rpx;
   margin-bottom: 20rpx;
   box-shadow: $shadow-sm;
-  transition: all 0.3s;
+  border: 1rpx solid $border-light;
+  transition: all 0.3s $ease-out;
+  position: relative;
+  overflow: hidden;
+}
+.venue-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 6rpx;
+  height: 100%;
+  background: linear-gradient(to bottom, $color-gold, $color-gold-light);
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 .venue-card.active {
-  border: 2rpx solid $color-primary;
+  border-color: rgba(196, 30, 58, 0.2);
+  box-shadow: $shadow-md;
+}
+.venue-card.active::before {
+  opacity: 1;
 }
 
 .venue-header {
@@ -206,37 +225,41 @@ onShow(async () => {
   margin-bottom: 16rpx;
 }
 .venue-type-badge {
-  padding: 6rpx 16rpx;
-  border-radius: 8rpx;
+  padding: 6rpx 18rpx;
+  border-radius: 10rpx;
   font-size: 22rpx;
-  background: #f0f0f0;
+  background: $bg-muted;
   color: $text-secondary;
+  font-weight: 500;
 }
 .venue-type-badge.type-venue {
-  background: rgba(196, 30, 58, 0.1);
+  background: rgba(196, 30, 58, 0.08);
   color: $color-primary;
 }
 .venue-type-badge.type-hotel {
-  background: rgba(24, 144, 255, 0.1);
+  background: rgba(107, 142, 159, 0.08);
   color: $color-info;
 }
 .venue-time {
   font-size: 24rpx;
   color: $text-muted;
+  font-weight: 500;
 }
 
 .venue-name {
   display: block;
   font-size: 32rpx;
-  font-weight: 700;
+  font-weight: 600;
   color: $text-primary;
-  margin-bottom: 8rpx;
+  margin-bottom: 10rpx;
+  letter-spacing: 1rpx;
 }
 .venue-address {
   display: block;
   font-size: 26rpx;
   color: $text-secondary;
-  margin-bottom: 20rpx;
+  margin-bottom: 24rpx;
+  line-height: 1.5;
 }
 
 .venue-actions {
@@ -245,17 +268,23 @@ onShow(async () => {
 }
 .venue-btn {
   flex: 1;
-  height: 64rpx;
-  line-height: 64rpx;
+  height: 72rpx;
+  line-height: 72rpx;
   text-align: center;
-  border-radius: 10rpx;
-  background: #f5f5f5;
+  border-radius: 16rpx;
+  background: $bg-muted;
   font-size: 26rpx;
   color: $text-primary;
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
 .venue-btn.primary {
-  background: $color-primary;
+  background: $gradient-primary;
   color: #fff;
+  box-shadow: 0 4rpx 16rpx rgba(196, 30, 58, 0.2);
+}
+.venue-btn:active {
+  transform: scale(0.97);
 }
 .venue-btn::after {
   border: none;

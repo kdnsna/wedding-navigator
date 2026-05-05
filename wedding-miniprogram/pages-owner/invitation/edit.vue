@@ -281,7 +281,9 @@ onShow(() => {
   border: 3rpx solid transparent;
 }
 .template-item.active {
-  border-color: $color-primary;
+  border-color: $color-gold;
+  box-shadow: 0 4rpx 16rpx rgba(212,168,83,0.2);
+  transform: translateY(-4rpx);
 }
 .template-preview {
   width: 200rpx;
@@ -299,9 +301,11 @@ onShow(() => {
 /* 表单卡片 */
 .form-card {
   background: $bg-surface;
-  border-radius: 24rpx;
+  border-radius: 28rpx;
   padding: 30rpx;
   box-shadow: $shadow-sm;
+  border: 2rpx solid rgba(212,168,83,0.08);
+  animation: fadeInUp 0.6s $ease-out-back both;
 }
 .form-group {
   margin-bottom: 24rpx;
@@ -379,23 +383,26 @@ onShow(() => {
 }
 .save-btn {
   flex: 2;
-  height: 80rpx;
-  line-height: 80rpx;
+  height: 96rpx;
+  line-height: 96rpx;
   text-align: center;
-  border-radius: 12rpx;
+  border-radius: 16rpx;
   background: linear-gradient(135deg, $color-primary 0%, #E91E63 100%);
   color: #fff;
-  font-size: 30rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  box-shadow: $shadow-md;
 }
 .preview-btn {
   flex: 1;
-  height: 80rpx;
-  line-height: 80rpx;
+  height: 96rpx;
+  line-height: 96rpx;
   text-align: center;
-  border-radius: 12rpx;
+  border-radius: 16rpx;
   background: $bg-muted;
   color: $text-primary;
-  font-size: 30rpx;
+  font-size: 32rpx;
+  font-weight: 600;
 }
 .save-btn::after,
 .preview-btn::after {

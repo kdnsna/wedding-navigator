@@ -218,138 +218,174 @@ onLoad((options) => {
 </script>
 
 <style lang="scss" scoped>
+/* ========== RSVP 回执页面 ========== */
 .page {
   background-color: $bg-color;
   min-height: 100vh;
   padding: 30rpx;
 }
 
-/* 头部 */
+/* ===== 头部 ===== */
 .rsvp-header {
   text-align: center;
-  padding: 40rpx 20rpx;
+  padding: 50rpx 20rpx 40rpx;
   margin-bottom: 30rpx;
+  position: relative;
+}
+.rsvp-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 30%;
+  right: 30%;
+  height: 1rpx;
+  background: linear-gradient(90deg, transparent, $color-gold, transparent);
 }
 .header-title {
   display: block;
-  font-size: 40rpx;
-  font-weight: 700;
+  font-size: 44rpx;
+  font-weight: 600;
   color: $color-primary;
-  margin-bottom: 20rpx;
+  margin-bottom: 16rpx;
+  letter-spacing: 4rpx;
 }
 .header-subtitle {
   display: block;
   font-size: 30rpx;
   color: $text-primary;
-  margin-bottom: 30rpx;
+  margin-bottom: 24rpx;
+  font-weight: 500;
 }
 .header-info {
   display: flex;
   flex-direction: column;
-  gap: 12rpx;
+  gap: 10rpx;
 }
 .info-item {
-  font-size: 28rpx;
+  font-size: 26rpx;
   color: $text-secondary;
+  letter-spacing: 1rpx;
 }
 
-/* 表单 */
+/* ===== 表单卡片 ===== */
 .rsvp-form {
   background: $bg-surface;
-  border-radius: 24rpx;
-  padding: 40rpx;
-  box-shadow: $shadow-sm;
+  border-radius: 32rpx;
+  padding: 44rpx;
+  box-shadow: $shadow-md;
+  border: 1rpx solid $border-light;
+  animation: fadeInScale 0.5s $ease-out both;
 }
 .form-group {
-  margin-bottom: 40rpx;
+  margin-bottom: 44rpx;
 }
 .form-label {
   display: block;
-  font-size: 30rpx;
+  font-size: 28rpx;
   font-weight: 500;
   color: $text-primary;
   margin-bottom: 20rpx;
+  letter-spacing: 2rpx;
 }
 
-/* 出席选项 */
+/* ===== 出席选项 ===== */
 .attend-options {
   display: flex;
-  gap: 20rpx;
+  gap: 16rpx;
 }
 .attend-option {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 40rpx 20rpx;
+  padding: 36rpx 16rpx;
   border: 2rpx solid $border-light;
-  border-radius: 16rpx;
-  background: $bg-muted;
+  border-radius: 20rpx;
+  background: $bg-elevated;
+  transition: all 0.25s ease;
 }
 .attend-option.active {
   border-color: $color-primary;
-  background: rgba(196, 30, 58, 0.05);
+  background: rgba(196, 30, 58, 0.04);
+  box-shadow: 0 4rpx 16rpx rgba(196, 30, 58, 0.08);
+}
+.attend-option:active {
+  transform: scale(0.97);
 }
 .option-icon {
   font-size: 48rpx;
   margin-bottom: 12rpx;
 }
 .option-text {
-  font-size: 28rpx;
+  font-size: 26rpx;
   color: $text-primary;
+  font-weight: 500;
 }
 
-/* 步进器 */
+/* ===== 步进器 ===== */
 .count-stepper {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 40rpx;
+  gap: 48rpx;
 }
 .stepper-btn {
-  width: 64rpx;
-  height: 64rpx;
-  line-height: 64rpx;
+  width: 68rpx;
+  height: 68rpx;
+  line-height: 68rpx;
   text-align: center;
   border-radius: 50%;
   background: $bg-muted;
   font-size: 36rpx;
   color: $text-primary;
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
 .stepper-btn::after {
   border: none;
 }
+.stepper-btn:active {
+  background: $border-color;
+  transform: scale(0.92);
+}
 .stepper-value {
-  font-size: 40rpx;
+  font-size: 44rpx;
   font-weight: 700;
   color: $color-primary;
   min-width: 60rpx;
   text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 
-/* 输入框 */
+/* ===== 输入框 ===== */
 .form-input {
   width: 100%;
-  height: 88rpx;
-  padding: 0 24rpx;
+  height: 92rpx;
+  padding: 0 28rpx;
   border: 2rpx solid $border-light;
-  border-radius: 12rpx;
+  border-radius: 16rpx;
   font-size: 28rpx;
-  background: $bg-muted;
+  background: $bg-elevated;
   box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+.form-input:focus {
+  border-color: $color-gold;
+  box-shadow: 0 0 0 4rpx rgba(212, 168, 83, 0.1);
 }
 .form-textarea {
   width: 100%;
   height: 160rpx;
-  padding: 20rpx 24rpx;
+  padding: 24rpx 28rpx;
   border: 2rpx solid $border-light;
-  border-radius: 12rpx;
+  border-radius: 16rpx;
   font-size: 28rpx;
-  background: $bg-muted;
+  background: $bg-elevated;
   box-sizing: border-box;
+  transition: all 0.2s ease;
 }
 
-/* 饮食选项 */
+/* ===== 饮食选项 ===== */
 .diet-options {
   display: flex;
   flex-wrap: wrap;
@@ -358,78 +394,99 @@ onLoad((options) => {
 .diet-option {
   padding: 16rpx 32rpx;
   border: 2rpx solid $border-light;
-  border-radius: 12rpx;
+  border-radius: 14rpx;
   font-size: 26rpx;
   color: $text-primary;
-  background: $bg-muted;
+  background: $bg-elevated;
+  transition: all 0.2s ease;
 }
 .diet-option.active {
   border-color: $color-primary;
   background: rgba(196, 30, 58, 0.05);
   color: $color-primary;
+  font-weight: 500;
+}
+.diet-option:active {
+  transform: scale(0.95);
 }
 
-/* 提交按钮 */
+/* ===== 提交按钮 ===== */
 .submit-btn {
   width: 100%;
-  height: 90rpx;
-  line-height: 90rpx;
+  height: 96rpx;
+  line-height: 96rpx;
   text-align: center;
-  border-radius: 16rpx;
-  background: linear-gradient(135deg, $color-primary 0%, #E91E63 100%);
+  border-radius: 24rpx;
+  background: $gradient-primary;
   color: #fff;
   font-size: 32rpx;
   font-weight: 500;
+  box-shadow: 0 6rpx 24rpx rgba(196, 30, 58, 0.25);
+  transition: all 0.2s ease;
+}
+.submit-btn:active {
+  transform: scale(0.98);
+  box-shadow: 0 2rpx 12rpx rgba(196, 30, 58, 0.15);
 }
 .submit-btn::after {
   border: none;
 }
 
-/* 成功卡片 */
+/* ===== 成功卡片 ===== */
 .success-card {
   text-align: center;
-  padding: 80rpx 40rpx;
+  padding: 80rpx 48rpx;
   background: $bg-surface;
-  border-radius: 24rpx;
-  box-shadow: $shadow-sm;
+  border-radius: 32rpx;
+  box-shadow: $shadow-md;
+  border: 1rpx solid $border-light;
+  animation: fadeInScale 0.6s $ease-out-back both;
 }
 .success-icon {
-  font-size: 80rpx;
+  font-size: 88rpx;
   display: block;
   margin-bottom: 30rpx;
+  filter: drop-shadow(0 4rpx 12rpx rgba(212,168,83,0.3));
 }
 .success-title {
   display: block;
-  font-size: 36rpx;
-  font-weight: 700;
+  font-size: 38rpx;
+  font-weight: 600;
   color: $color-primary;
   margin-bottom: 40rpx;
+  letter-spacing: 4rpx;
 }
 .success-info {
   display: flex;
   flex-direction: column;
-  gap: 12rpx;
-  margin-bottom: 40rpx;
+  gap: 14rpx;
+  margin-bottom: 44rpx;
 }
 .success-info text {
   font-size: 28rpx;
   color: $text-secondary;
 }
+
 .success-actions {
   display: flex;
   gap: 20rpx;
 }
-.action-btn {
+.success-actions .action-btn {
   flex: 1;
-  height: 80rpx;
-  line-height: 80rpx;
+  height: 84rpx;
+  line-height: 84rpx;
   text-align: center;
-  border-radius: 12rpx;
-  background: #f5f5f5;
+  border-radius: 20rpx;
+  background: $bg-muted;
   font-size: 28rpx;
   color: $text-primary;
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
-.action-btn::after {
+.success-actions .action-btn:active {
+  transform: scale(0.97);
+}
+.success-actions .action-btn::after {
   border: none;
 }
 </style>

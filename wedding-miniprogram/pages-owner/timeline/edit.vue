@@ -196,13 +196,14 @@ onShow(() => {
 }
 .timeline-dot {
   position: absolute;
-  left: -40rpx;
+  left: -42rpx;
   top: 20rpx;
-  width: 20rpx;
-  height: 20rpx;
+  width: 24rpx;
+  height: 24rpx;
   border-radius: 50%;
-  background: $color-primary;
+  background: $color-gold;
   border: 4rpx solid $bg-surface;
+  box-shadow: 0 0 0 4rpx rgba(212,168,83,0.15);
 }
 .timeline-line {
   position: absolute;
@@ -214,9 +215,10 @@ onShow(() => {
 }
 .timeline-card {
   background: $bg-surface;
-  border-radius: 16rpx;
+  border-radius: 24rpx;
   padding: 24rpx;
   box-shadow: $shadow-sm;
+  border: 2rpx solid rgba(212,168,83,0.08);
 }
 .event-header {
   display: flex;
@@ -257,13 +259,15 @@ onShow(() => {
   bottom: calc(30rpx + env(safe-area-inset-bottom));
   left: 30rpx;
   right: 30rpx;
-  height: 90rpx;
-  line-height: 90rpx;
+  height: 96rpx;
+  line-height: 96rpx;
   text-align: center;
   border-radius: 16rpx;
   background: linear-gradient(135deg, $color-primary 0%, #E91E63 100%);
   color: #fff;
-  font-size: 30rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  box-shadow: $shadow-md;
 }
 .add-btn::after {
   border: none;
@@ -339,15 +343,17 @@ onShow(() => {
 }
 .modal-btn {
   flex: 1;
-  height: 80rpx;
-  line-height: 80rpx;
+  height: 96rpx;
+  line-height: 96rpx;
   text-align: center;
-  border-radius: 12rpx;
-  font-size: 30rpx;
+  border-radius: 16rpx;
+  font-size: 32rpx;
+  font-weight: 600;
 }
 .modal-btn.primary {
   background: linear-gradient(135deg, $color-primary 0%, #E91E63 100%);
   color: #fff;
+  box-shadow: $shadow-md;
 }
 .modal-btn.secondary {
   background: $bg-muted;

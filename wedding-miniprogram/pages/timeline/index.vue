@@ -109,6 +109,7 @@ onShow(async () => {
 </script>
 
 <style lang="scss" scoped>
+/* ========== 流程时间线 ========== */
 .page {
   background-color: $bg-color;
   min-height: 100vh;
@@ -117,14 +118,15 @@ onShow(async () => {
 
 .timeline-header {
   text-align: center;
-  padding: 40rpx 0;
+  padding: 40rpx 0 50rpx;
 }
 .header-date {
   display: block;
-  font-size: 36rpx;
-  font-weight: 700;
+  font-size: 38rpx;
+  font-weight: 600;
   color: $text-primary;
-  margin-bottom: 10rpx;
+  margin-bottom: 12rpx;
+  letter-spacing: 2rpx;
 }
 .header-countdown {
   font-size: 28rpx;
@@ -133,63 +135,80 @@ onShow(async () => {
 .header-countdown.today {
   color: $color-primary;
   font-weight: 700;
+  letter-spacing: 2rpx;
 }
 
+/* 时间线主体 */
 .timeline-body {
   position: relative;
-  padding-left: 40rpx;
+  padding-left: 48rpx;
 }
 
 .timeline-item {
   position: relative;
-  padding-bottom: 40rpx;
+  padding-bottom: 44rpx;
+  animation: fadeInUp 0.5s $ease-out both;
+  opacity: 0;
+}
+@for $i from 1 through 15 {
+  .timeline-item:nth-child(#{$i}) {
+    animation-delay: #{$i * 0.07}s;
+  }
 }
 
+/* 时间线节点 */
 .timeline-dot {
   position: absolute;
-  left: -40rpx;
-  top: 10rpx;
-  width: 20rpx;
-  height: 20rpx;
+  left: -48rpx;
+  top: 14rpx;
+  width: 24rpx;
+  height: 24rpx;
   border-radius: 50%;
   background: $border-color;
   border: 4rpx solid $bg-surface;
   z-index: 2;
+  box-shadow: 0 0 0 4rpx rgba(212,168,83,0.1);
+  transition: all 0.3s ease;
 }
 
 .timeline-line {
   position: absolute;
-  left: -32rpx;
-  top: 30rpx;
+  left: -40rpx;
+  top: 34rpx;
   width: 4rpx;
   height: calc(100% + 20rpx);
-  background: $border-light;
+  background: linear-gradient(to bottom, $border-light, $border-gold, $border-light);
 }
 
+/* 内容卡片 */
 .timeline-content {
   background: $bg-surface;
-  border-radius: 16rpx;
-  padding: 24rpx 30rpx;
+  border-radius: 24rpx;
+  padding: 28rpx 32rpx;
   box-shadow: $shadow-sm;
+  border: 1rpx solid $border-light;
+  transition: all 0.3s ease;
 }
 
 .timeline-time {
   display: flex;
   align-items: center;
   gap: 16rpx;
-  margin-bottom: 10rpx;
+  margin-bottom: 12rpx;
 }
 .time-text {
-  font-size: 32rpx;
+  font-size: 34rpx;
   font-weight: 700;
   color: $color-primary;
+  font-variant-numeric: tabular-nums;
 }
 .time-badge {
-  padding: 4rpx 12rpx;
-  background: rgba(196, 30, 58, 0.1);
+  padding: 6rpx 16rpx;
+  background: rgba(196, 30, 58, 0.08);
   color: $color-primary;
   font-size: 20rpx;
-  border-radius: 6rpx;
+  border-radius: 10rpx;
+  font-weight: 500;
 }
 
 .timeline-title {
@@ -198,6 +217,7 @@ onShow(async () => {
   font-weight: 500;
   color: $text-primary;
   margin-bottom: 8rpx;
+  letter-spacing: 1rpx;
 }
 .timeline-venue,
 .timeline-assignee,
@@ -205,41 +225,52 @@ onShow(async () => {
   display: block;
   font-size: 24rpx;
   color: $text-secondary;
-  margin-top: 6rpx;
+  margin-top: 8rpx;
+  line-height: 1.5;
 }
 
-/* 状态样式 */
+/* ===== 状态样式 ===== */
+
+/* 进行中 - 红色高亮 */
 .timeline-item.current .timeline-dot {
   background: $color-primary;
-  box-shadow: 0 0 0 8rpx rgba(196, 30, 58, 0.2);
+  box-shadow: 0 0 0 8rpx rgba(196, 30, 58, 0.15);
+  animation: glowPulse 2s ease-in-out infinite;
 }
 .timeline-item.current .timeline-content {
-  border: 2rpx solid $color-primary;
+  border-color: rgba(196, 30, 58, 0.25);
+  box-shadow: 0 4rpx 20rpx rgba(196, 30, 58, 0.08);
 }
 
+/* 已完成 - 灰色淡化 */
 .timeline-item.past .timeline-dot {
   background: $text-muted;
 }
 .timeline-item.past .timeline-content {
-  opacity: 0.6;
+  opacity: 0.55;
 }
 
+/* 即将开始 - 蓝色 */
 .timeline-item.upcoming .timeline-dot {
   background: $color-info;
 }
 
+/* 空状态 */
 .empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 200rpx 60rpx;
+  animation: fadeIn 0.6s $ease-out both;
 }
 .empty-icon {
   font-size: 100rpx;
   margin-bottom: 30rpx;
+  filter: drop-shadow(0 4rpx 12rpx rgba(212,168,83,0.2));
 }
 .empty-text {
   font-size: 30rpx;
   color: $text-muted;
+  letter-spacing: 2rpx;
 }
 </style>

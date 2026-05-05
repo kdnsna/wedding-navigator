@@ -121,9 +121,9 @@ onShow(() => {
   align-items: center;
   justify-content: center;
   padding: 80rpx 40rpx;
-  background: $bg-surface;
-  border-radius: 24rpx;
-  border: 2rpx dashed $border-color;
+  background: linear-gradient(135deg, rgba(212,168,83,0.06) 0%, rgba(196,30,58,0.04) 100%);
+  border-radius: 28rpx;
+  border: 2rpx dashed rgba(212,168,83,0.4);
   margin-bottom: 30rpx;
 }
 .upload-icon {
@@ -148,8 +148,10 @@ onShow(() => {
 .photo-item {
   position: relative;
   aspect-ratio: 1;
-  border-radius: 12rpx;
+  border-radius: 20rpx;
   overflow: hidden;
+  border: 2rpx solid rgba(212,168,83,0.08);
+  box-shadow: $shadow-sm;
 }
 .photo-img {
   width: 100%;
@@ -190,6 +192,7 @@ onShow(() => {
   font-size: 100rpx;
   display: block;
   margin-bottom: 30rpx;
+  filter: drop-shadow(0 4rpx 12rpx rgba(212,168,83,0.2));
 }
 .empty-text {
   font-size: 28rpx;

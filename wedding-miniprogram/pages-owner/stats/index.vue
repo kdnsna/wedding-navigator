@@ -18,7 +18,10 @@
 
     <!-- RSVP统计 -->
     <view class="section">
-      <text class="section-title">RSVP 统计</text>
+      <view class="section-header">
+        <text class="section-title">RSVP 统计</text>
+        <text class="section-count">{{ rsvpStats.total }}人</text>
+      </view>
       <view class="chart-card">
         <view class="chart-row">
           <view class="chart-bar">
@@ -64,18 +67,22 @@
       <text class="section-title">饮食偏好</text>
       <view class="diet-card">
         <view class="diet-item">
+          <view class="diet-icon">🍽️</view>
           <text class="diet-label">普通</text>
           <text class="diet-value">{{ dietStats.normal }}人</text>
         </view>
         <view class="diet-item">
+          <view class="diet-icon">🥗</view>
           <text class="diet-label">素食</text>
           <text class="diet-value">{{ dietStats.vegetarian }}人</text>
         </view>
         <view class="diet-item">
+          <view class="diet-icon">🥙</view>
           <text class="diet-label">清真</text>
           <text class="diet-value">{{ dietStats.halal }}人</text>
         </view>
         <view class="diet-item">
+          <view class="diet-icon">🥡</view>
           <text class="diet-label">其他</text>
           <text class="diet-value">{{ dietStats.other }}人</text>
         </view>
@@ -114,77 +121,113 @@ onShow(() => {})
 </script>
 
 <style lang="scss" scoped>
+/* ========== 数据统计 ========== */
 .page {
   background-color: $bg-color;
   min-height: 100vh;
   padding: 30rpx;
 }
 
+/* ===== 概览卡片 ===== */
 .overview-card {
   display: flex;
   justify-content: space-around;
-  background: linear-gradient(135deg, $color-primary 0%, #E91E63 100%);
-  border-radius: 24rpx;
-  padding: 40rpx;
+  background: $gradient-primary;
+  border-radius: 32rpx;
+  padding: 44rpx;
   margin-bottom: 30rpx;
+  box-shadow: $shadow-lg;
+  position: relative;
+  overflow: hidden;
+  animation: fadeInScale 0.5s $ease-out both;
+}
+.overview-card::before {
+  content: '';
+  position: absolute;
+  top: -40%;
+  right: -15%;
+  width: 180rpx;
+  height: 180rpx;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.06);
 }
 .overview-item {
   text-align: center;
   color: #fff;
+  position: relative;
+  z-index: 1;
 }
 .overview-num {
   display: block;
-  font-size: 48rpx;
+  font-size: 52rpx;
   font-weight: 700;
   margin-bottom: 8rpx;
+  font-variant-numeric: tabular-nums;
 }
 .overview-label {
   font-size: 24rpx;
-  opacity: 0.9;
+  opacity: 0.85;
+  letter-spacing: 2rpx;
 }
 
+/* ===== 区块标题 ===== */
 .section {
   margin-bottom: 30rpx;
+  animation: fadeInUp 0.5s $ease-out both;
+  opacity: 0;
 }
-.section-title {
-  display: block;
-  font-size: 32rpx;
-  font-weight: 700;
-  color: $text-primary;
+.section:nth-child(2) { animation-delay: 0.1s; }
+.section:nth-child(3) { animation-delay: 0.2s; }
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 20rpx;
 }
+.section-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: $text-primary;
+  letter-spacing: 2rpx;
+}
+.section-count {
+  font-size: 24rpx;
+  color: $text-muted;
+}
 
+/* ===== 图表卡片 ===== */
 .chart-card {
   background: $bg-surface;
-  border-radius: 24rpx;
-  padding: 30rpx;
-  box-shadow: $shadow-sm;
+  border-radius: 28rpx;
+  padding: 36rpx;
+  box-shadow: $shadow-md;
+  border: 1rpx solid $border-light;
 }
 .chart-row {
   display: flex;
   align-items: center;
   gap: 20rpx;
-  margin-bottom: 20rpx;
+  margin-bottom: 24rpx;
 }
 .chart-row:last-child {
   margin-bottom: 0;
 }
 .chart-bar {
   flex: 1;
-  height: 24rpx;
+  height: 28rpx;
   background: $bg-muted;
-  border-radius: 12rpx;
+  border-radius: 14rpx;
   overflow: hidden;
 }
 .bar-fill {
   height: 100%;
-  border-radius: 12rpx;
-  transition: width 0.5s ease;
+  border-radius: 14rpx;
+  transition: width 0.6s $ease-out;
 }
-.bar-fill.attending { background: $rsvp-attending; }
-.bar-fill.uncertain { background: $rsvp-uncertain; }
-.bar-fill.declined { background: $rsvp-declined; }
-.bar-fill.pending { background: $rsvp-pending; }
+.bar-fill.attending { background: linear-gradient(90deg, $rsvp-attending, lighten($rsvp-attending, 15%)); }
+.bar-fill.uncertain { background: linear-gradient(90deg, $rsvp-uncertain, lighten($rsvp-uncertain, 15%)); }
+.bar-fill.declined { background: linear-gradient(90deg, $rsvp-declined, lighten($rsvp-declined, 15%)); }
+.bar-fill.pending { background: linear-gradient(90deg, $rsvp-pending, lighten($rsvp-pending, 15%)); }
 
 .chart-info {
   display: flex;
@@ -202,8 +245,10 @@ onShow(() => {})
   color: $text-primary;
   min-width: 80rpx;
   text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
+/* ===== 饮食统计 ===== */
 .diet-card {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -211,20 +256,31 @@ onShow(() => {})
 }
 .diet-item {
   background: $bg-surface;
-  border-radius: 20rpx;
-  padding: 30rpx;
+  border-radius: 28rpx;
+  padding: 36rpx;
   text-align: center;
   box-shadow: $shadow-sm;
+  border: 1rpx solid $border-light;
+  transition: all 0.25s $ease-out;
+}
+.diet-item:active {
+  transform: translateY(-2rpx);
+  box-shadow: $shadow-md;
+}
+.diet-icon {
+  font-size: 48rpx;
+  margin-bottom: 12rpx;
 }
 .diet-label {
   display: block;
-  font-size: 26rpx;
+  font-size: 24rpx;
   color: $text-secondary;
   margin-bottom: 10rpx;
 }
 .diet-value {
-  font-size: 36rpx;
+  font-size: 38rpx;
   font-weight: 700;
   color: $color-primary;
+  font-variant-numeric: tabular-nums;
 }
 </style>

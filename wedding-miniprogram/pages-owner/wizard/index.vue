@@ -185,7 +185,6 @@ async function createWedding() {
   try {
     uni.showLoading({ title: '创建中...', mask: true })
 
-    // 本地模拟创建（真实环境调用云函数）
     const weddingId = generateId()
     const weddingData = {
       wedding_id: weddingId,
@@ -227,7 +226,6 @@ async function createWedding() {
       features: { show_countdown: true, show_rsvp: true, show_blessing: true, show_timeline: true }
     }
 
-    // 保存到本地存储（沙箱环境无真实云开发）
     const weddings = uni.getStorageSync('weddings') || {}
     weddings[weddingId] = { wedding: weddingData, invitation: invitationData }
     uni.setStorageSync('weddings', weddings)
@@ -250,6 +248,7 @@ async function createWedding() {
 </script>
 
 <style lang="scss" scoped>
+/* ========== 创建向导 ========== */
 .page {
   background-color: $bg-color;
   min-height: 100vh;
@@ -258,125 +257,170 @@ async function createWedding() {
   flex-direction: column;
 }
 
-/* 步骤指示器 */
+/* ===== 步骤指示器 ===== */
 .step-indicator {
   display: flex;
   justify-content: center;
-  gap: 16rpx;
+  gap: 20rpx;
   padding: 30rpx 0;
+  animation: fadeIn 0.5s $ease-out both;
 }
 .step-dot {
-  width: 24rpx;
-  height: 24rpx;
+  width: 16rpx;
+  height: 16rpx;
   border-radius: 50%;
   background: $border-color;
-  transition: all 0.3s;
+  transition: all 0.4s $ease-out;
+  position: relative;
 }
 .step-dot.active {
   background: $color-primary;
 }
 .step-dot.current {
-  box-shadow: 0 0 0 8rpx rgba(196, 30, 58, 0.2);
+  transform: scale(1.4);
+  box-shadow: 0 0 0 8rpx rgba(196, 30, 58, 0.15);
 }
 
-/* 步骤内容 */
+/* 步骤之间的连接线 */
+.step-indicator::before {
+  content: '';
+  position: absolute;
+  top: 38rpx;
+  left: 30%;
+  right: 30%;
+  height: 2rpx;
+  background: $border-light;
+  z-index: -1;
+}
+
+/* ===== 步骤内容 ===== */
 .step-content {
   flex: 1;
+  animation: fadeInUp 0.4s $ease-out both;
 }
 .step-header {
   text-align: center;
-  margin-bottom: 40rpx;
+  margin-bottom: 44rpx;
 }
 .step-title {
   display: block;
   font-size: 36rpx;
-  font-weight: 700;
+  font-weight: 600;
   color: $text-primary;
   margin-bottom: 12rpx;
+  letter-spacing: 1rpx;
 }
 .step-subtitle {
   font-size: 26rpx;
   color: $text-muted;
+  letter-spacing: 1rpx;
 }
 
-/* 表单卡片 */
+/* ===== 表单卡片 ===== */
 .form-card {
   background: $bg-surface;
-  border-radius: 24rpx;
-  padding: 40rpx;
-  box-shadow: $shadow-sm;
+  border-radius: 32rpx;
+  padding: 44rpx;
+  box-shadow: $shadow-md;
+  border: 1rpx solid $border-light;
 }
 .form-group {
-  margin-bottom: 30rpx;
+  margin-bottom: 32rpx;
 }
 .form-group:last-child {
   margin-bottom: 0;
 }
 .form-label {
   display: block;
-  font-size: 28rpx;
+  font-size: 26rpx;
   color: $text-secondary;
-  margin-bottom: 12rpx;
+  margin-bottom: 14rpx;
+  letter-spacing: 2rpx;
 }
 .form-input {
   width: 100%;
-  height: 88rpx;
-  padding: 0 24rpx;
+  height: 92rpx;
+  padding: 0 28rpx;
   border: 2rpx solid $border-light;
-  border-radius: 12rpx;
+  border-radius: 16rpx;
   font-size: 28rpx;
-  background: $bg-muted;
+  background: $bg-elevated;
   box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+.form-input:focus {
+  border-color: $color-gold;
+  box-shadow: 0 0 0 4rpx rgba(212, 168, 83, 0.1);
 }
 .picker-value {
   width: 100%;
-  height: 88rpx;
-  line-height: 88rpx;
-  padding: 0 24rpx;
+  height: 92rpx;
+  line-height: 92rpx;
+  padding: 0 28rpx;
   border: 2rpx solid $border-light;
-  border-radius: 12rpx;
+  border-radius: 16rpx;
   font-size: 28rpx;
-  background: $bg-muted;
+  background: $bg-elevated;
   color: $text-primary;
   box-sizing: border-box;
 }
 
-/* 模板选择 */
+/* ===== 模板选择 ===== */
 .template-grid {
   display: flex;
   flex-direction: column;
-  gap: 20rpx;
+  gap: 24rpx;
 }
 .template-card {
   background: $bg-surface;
-  border-radius: 20rpx;
+  border-radius: 28rpx;
   overflow: hidden;
   box-shadow: $shadow-sm;
-  border: 3rpx solid transparent;
+  border: 2rpx solid $border-light;
+  transition: all 0.3s $ease-out;
 }
 .template-card.active {
   border-color: $color-primary;
+  box-shadow: 0 4rpx 20rpx rgba(196, 30, 58, 0.1);
+  transform: translateY(-2rpx);
+}
+.template-card:active {
+  transform: scale(0.98);
 }
 .template-preview {
   height: 200rpx;
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+}
+.template-preview::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.3));
 }
 .template-name {
-  font-size: 36rpx;
+  font-size: 38rpx;
   font-weight: 700;
   color: #fff;
-  text-shadow: 0 2rpx 8rpx rgba(0,0,0,0.3);
+  text-shadow: 0 2rpx 10rpx rgba(0,0,0,0.4);
+  position: relative;
+  z-index: 1;
+  letter-spacing: 4rpx;
 }
 .template-desc {
   display: block;
-  padding: 20rpx;
+  padding: 24rpx;
   font-size: 26rpx;
   color: $text-secondary;
+  text-align: center;
 }
 
-/* 底部按钮 */
+/* ===== 底部按钮 ===== */
 .step-actions {
   display: flex;
   gap: 20rpx;
@@ -384,20 +428,31 @@ async function createWedding() {
 }
 .action-btn {
   flex: 1;
-  height: 90rpx;
-  line-height: 90rpx;
+  height: 96rpx;
+  line-height: 96rpx;
   text-align: center;
-  border-radius: 16rpx;
+  border-radius: 24rpx;
   font-size: 30rpx;
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
 .action-btn.primary {
-  background: linear-gradient(135deg, $color-primary 0%, #E91E63 100%);
+  background: $gradient-primary;
   color: #fff;
+  box-shadow: 0 6rpx 24rpx rgba(196, 30, 58, 0.25);
+}
+.action-btn.primary:active {
+  transform: scale(0.98);
+  box-shadow: 0 2rpx 12rpx rgba(196, 30, 58, 0.15);
 }
 .action-btn.secondary {
   background: $bg-surface;
   color: $text-primary;
-  border: 2rpx solid $border-light;
+  border: 1rpx solid $border-light;
+  box-shadow: $shadow-sm;
+}
+.action-btn.secondary:active {
+  transform: scale(0.98);
 }
 .action-btn::after {
   border: none;

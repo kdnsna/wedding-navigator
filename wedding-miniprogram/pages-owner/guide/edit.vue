@@ -180,10 +180,23 @@ onShow(() => {
   justify-content: space-between;
   align-items: flex-start;
   background: $bg-surface;
-  border-radius: 20rpx;
-  padding: 30rpx;
+  border-radius: 24rpx;
+  padding: 30rpx 30rpx 30rpx 36rpx;
   margin-bottom: 20rpx;
   box-shadow: $shadow-sm;
+  border: 2rpx solid rgba(212,168,83,0.08);
+  position: relative;
+  overflow: hidden;
+}
+.venue-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 20%;
+  width: 6rpx;
+  height: 60%;
+  background: linear-gradient(to bottom, $color-gold, $color-gold-light);
+  border-radius: 0 4rpx 4rpx 0;
 }
 .venue-info {
   flex: 1;
@@ -227,13 +240,15 @@ onShow(() => {
   bottom: calc(30rpx + env(safe-area-inset-bottom));
   left: 30rpx;
   right: 30rpx;
-  height: 90rpx;
-  line-height: 90rpx;
+  height: 96rpx;
+  line-height: 96rpx;
   text-align: center;
   border-radius: 16rpx;
   background: linear-gradient(135deg, $color-primary 0%, #E91E63 100%);
   color: #fff;
-  font-size: 30rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  box-shadow: $shadow-md;
 }
 .add-btn::after {
   border: none;
@@ -311,15 +326,17 @@ onShow(() => {
 }
 .modal-btn {
   flex: 1;
-  height: 80rpx;
-  line-height: 80rpx;
+  height: 96rpx;
+  line-height: 96rpx;
   text-align: center;
-  border-radius: 12rpx;
-  font-size: 30rpx;
+  border-radius: 16rpx;
+  font-size: 32rpx;
+  font-weight: 600;
 }
 .modal-btn.primary {
   background: linear-gradient(135deg, $color-primary 0%, #E91E63 100%);
   color: #fff;
+  box-shadow: $shadow-md;
 }
 .modal-btn.secondary {
   background: $bg-muted;

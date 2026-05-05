@@ -112,10 +112,12 @@ onShow(() => {})
   justify-content: space-around;
   padding: 20rpx;
   background: $bg-surface;
-  border-radius: 16rpx;
+  border-radius: 24rpx;
   margin-bottom: 20rpx;
   font-size: 26rpx;
   color: $text-secondary;
+  border: 2rpx solid rgba(212,168,83,0.08);
+  box-shadow: $shadow-sm;
 }
 
 .blessing-list {
@@ -123,13 +125,26 @@ onShow(() => {})
 }
 .blessing-card {
   background: $bg-surface;
-  border-radius: 20rpx;
+  border-radius: 24rpx;
   padding: 24rpx;
   margin-bottom: 16rpx;
   box-shadow: $shadow-sm;
+  border: 2rpx solid rgba(212,168,83,0.08);
+  position: relative;
+  overflow: hidden;
+}
+.blessing-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3rpx;
+  background: linear-gradient(90deg, transparent, rgba(212,168,83,0.3), transparent);
 }
 .blessing-card.pinned {
-  border: 2rpx solid $color-primary;
+  border-color: rgba(196, 30, 58, 0.15);
+  box-shadow: 0 4rpx 16rpx rgba(196, 30, 58, 0.08);
 }
 .blessing-header {
   display: flex;
@@ -171,6 +186,7 @@ onShow(() => {})
   font-size: 80rpx;
   display: block;
   margin-bottom: 20rpx;
+  filter: drop-shadow(0 4rpx 12rpx rgba(212,168,83,0.2));
 }
 .empty-text {
   font-size: 28rpx;
