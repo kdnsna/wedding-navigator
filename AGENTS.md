@@ -175,7 +175,13 @@ wedding-miniprogram/
 - Phase 1（MVP）：婚书 + 相册 + 路书 + 分享 ✅
 - Phase 2（V1.0）：流程 + RSVP + 祝福墙 ✅
 - Phase 3（V1.1）：体验优化 + 数据统计 ✅
-- Phase 4（V2.0）：语音祝福 + 角色视图 + 导出（后续迭代）
+- Phase 4（V1.2）：UI 视觉全面升级 ✅
+  - 全局设计系统重构（uni.scss + App.vue）
+  - 中国红+香槟金+奶油白配色体系
+  - 金色装饰线、渐变背景、毛玻璃卡片
+  - 全局动画系统（fadeInUp / fadeInScale / gentleFloat / glowPulse）
+  - 宾客端7页 + 主人端10页全面视觉升级
+- Phase 5（V2.0）：语音祝福 + 角色视图 + 导出（后续迭代）
 
 ---
 
