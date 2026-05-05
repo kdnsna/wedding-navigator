@@ -125,33 +125,23 @@
     "list": [
       {
         "pagePath": "pages/index/index",
-        "text": "首页",
-        "iconPath": "static/tabbar/home.png",
-        "selectedIconPath": "static/tabbar/home-active.png"
+        "text": "首页"
       },
       {
         "pagePath": "pages/album/index",
-        "text": "相册",
-        "iconPath": "static/tabbar/album.png",
-        "selectedIconPath": "static/tabbar/album-active.png"
+        "text": "相册"
       },
       {
         "pagePath": "pages/guide/index",
-        "text": "路书",
-        "iconPath": "static/tabbar/guide.png",
-        "selectedIconPath": "static/tabbar/guide-active.png"
+        "text": "路书"
       },
       {
         "pagePath": "pages/timeline/index",
-        "text": "流程",
-        "iconPath": "static/tabbar/timeline.png",
-        "selectedIconPath": "static/tabbar/timeline-active.png"
+        "text": "流程"
       },
       {
         "pagePath": "pages/more/index",
-        "text": "更多",
-        "iconPath": "static/tabbar/more.png",
-        "selectedIconPath": "static/tabbar/more-active.png"
+        "text": "更多"
       }
     ]
   },
