@@ -1,0 +1,74 @@
+/*
+  婚礼导航小程序 - 全局 SCSS 变量
+  支持三套配色方案，默认传统中国风
+*/
+
+/* ========== 色彩变量 ========== */
+
+// 方案A：传统中国风（默认）
+$color-primary: #C41E3A;
+$color-secondary: #FFD700;
+$color-accent: #FFB7C5;
+
+// 背景色
+$bg-color: #FFF8F0;
+$bg-surface: #FFFFFF;
+$bg-muted: #FAFAFA;
+
+// 文字色
+$text-primary: #2D2D2D;
+$text-secondary: #666666;
+$text-muted: #999999;
+$text-inverse: #FFFFFF;
+
+// 边框色
+$border-color: #F0E6D8;
+$border-light: #EEEEEE;
+
+// 功能色
+$color-success: #52c41a;
+$color-warning: #faad14;
+$color-error: #f5222d;
+$color-info: #1890ff;
+
+// RSVP 状态色
+$rsvp-attending: #52c41a;
+$rsvp-uncertain: #faad14;
+$rsvp-declined: #999999;
+$rsvp-pending: #1890ff;
+
+/* ========== 阴影变量 ========== */
+$shadow-sm: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+$shadow-md: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+$shadow-lg: 0 8rpx 32rpx rgba(0, 0, 0, 0.08);
+
+/* ========== 圆角变量 ========== */
+$radius-sm: 8rpx;
+$radius-md: 16rpx;
+$radius-lg: 24rpx;
+$radius-xl: 32rpx;
+$radius-full: 9999rpx;
+
+/* ========== 间距变量 ========== */
+$spacing-xs: 8rpx;
+$spacing-sm: 16rpx;
+$spacing-md: 24rpx;
+$spacing-lg: 32rpx;
+$spacing-xl: 48rpx;
+
+/* ========== 字号变量 ========== */
+$font-h1: 48rpx;
+$font-h2: 40rpx;
+$font-h3: 32rpx;
+$font-h4: 28rpx;
+$font-body: 28rpx;
+$font-body-sm: 26rpx;
+$font-caption: 24rpx;
+$font-mini: 20rpx;
+
+/* ========== 动画变量 ========== */
+$ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+$ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+$duration-fast: 0.2s;
+$duration-normal: 0.3s;
+$duration-slow: 0.5s;
