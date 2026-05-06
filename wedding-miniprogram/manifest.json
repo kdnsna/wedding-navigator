@@ -80,7 +80,7 @@
     "usingComponents": true,
     "permission": {
       "scope.userLocation": {
-        "desc": "你的位置信息将用于婚礼导航功能"
+        "desc": "你的位置信息将用于甜囍手册的地图导航功能"
       }
     },
     "requiredPrivateInfos": [
