@@ -83,7 +83,6 @@ function checkPrivacySetting() {
   }
 }
 </script>
-</script>
 
 <style lang="scss">
 @import '@/uni.scss';
