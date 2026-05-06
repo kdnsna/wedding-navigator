@@ -412,9 +412,10 @@ onUnmounted(() => {
 }
 .hero-date {
   font-size: 28rpx;
-  color: rgba(255,255,255,0.85);
+  color: rgba(255,255,255,0.95);
   letter-spacing: 6rpx;
   margin-bottom: 48rpx;
+  text-shadow: 0 2rpx 12rpx rgba(0,0,0,0.25);
 }
 
 .hero-countdown {
@@ -425,16 +426,16 @@ onUnmounted(() => {
 }
 .countdown-num {
   font-size: 120rpx;
-  font-weight: 200;
+  font-weight: 400;
   color: #fff;
   font-variant-numeric: tabular-nums;
-  text-shadow: 0 4rpx 20rpx rgba(0,0,0,0.2);
+  text-shadow: 0 4rpx 24rpx rgba(0,0,0,0.35), 0 1rpx 2rpx rgba(0,0,0,0.2);
   line-height: 1;
 }
 .countdown-divider {
   width: 1rpx;
   height: 80rpx;
-  background: rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.4);
 }
 .countdown-info {
   display: flex;
@@ -444,13 +445,13 @@ onUnmounted(() => {
 }
 .countdown-label {
   font-size: 28rpx;
-  color: rgba(255,255,255,0.5);
+  color: rgba(255,255,255,0.75);
   letter-spacing: 6rpx;
-  font-weight: 300;
+  font-weight: 400;
 }
 .countdown-desc {
   font-size: 26rpx;
-  color: rgba(255,255,255,0.8);
+  color: rgba(255,255,255,0.92);
   letter-spacing: 2rpx;
 }
 
@@ -464,16 +465,17 @@ onUnmounted(() => {
 }
 .today-label {
   font-size: 72rpx;
-  font-weight: 200;
+  font-weight: 400;
   color: #fff;
   letter-spacing: 12rpx;
-  text-shadow: 0 4rpx 20rpx rgba(0,0,0,0.2);
+  text-shadow: 0 4rpx 24rpx rgba(0,0,0,0.35), 0 1rpx 2rpx rgba(0,0,0,0.2);
   line-height: 1;
 }
 .today-desc {
   font-size: 32rpx;
-  color: rgba(255,255,255,0.85);
+  color: rgba(255,255,255,0.95);
   letter-spacing: 16rpx;
+  text-shadow: 0 2rpx 12rpx rgba(0,0,0,0.25);
 }
 
 /* 滚动提示 */
