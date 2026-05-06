@@ -1,26 +1,39 @@
 <template>
   <view class="page">
+    <!-- 顶部标题 -->
+    <view class="page-header">
+      <text class="page-tag">VENUES</text>
+      <text class="page-title">路书设置</text>
+    </view>
+
     <!-- 场地列表 -->
-    <view class="venue-list">
-      <view class="venue-card" v-for="venue in venues" :key="venue.id">
-        <view class="venue-info">
-          <text class="venue-name">{{ venue.name }}</text>
-          <text class="venue-address">{{ venue.address }}</text>
-          <text class="venue-time" v-if="venue.arrival_time">⏰ {{ venue.arrival_time }}</text>
+    <view class="venue-list" v-if="venues.length > 0">
+      <view class="venue-item" v-for="venue in venues" :key="venue.id">
+        <view class="venue-meta">
+          <text class="venue-type">{{ typeLabel(venue.type) }}</text>
+          <text class="venue-time" v-if="venue.arrival_time">{{ venue.arrival_time }}</text>
         </view>
+        <text class="venue-name">{{ venue.name }}</text>
+        <text class="venue-address">{{ venue.address }}</text>
         <view class="venue-actions">
-          <text class="edit-btn" @click="editVenue(venue)">编辑</text>
-          <text class="delete-btn" @click="deleteVenue(venue.id)">删除</text>
+          <text class="venue-action" @click="editVenue(venue)">编辑</text>
+          <text class="venue-action delete" @click="deleteVenue(venue.id)">删除</text>
         </view>
       </view>
     </view>
 
-    <!-- 添加场地按钮 -->
+    <!-- 空状态 -->
+    <view class="empty-state" v-if="venues.length === 0">
+      <text class="empty-icon">🗺️</text>
+      <text class="empty-text">还没有添加场地</text>
+    </view>
+
+    <!-- 添加按钮 -->
     <button class="add-btn" @click="showAddModal">
       <text>+ 添加场地</text>
     </button>
 
-    <!-- 添加/编辑弹窗 -->
+    <!-- 弹窗 -->
     <view class="modal-mask" v-if="showModal" @click="showModal = false">
       <view class="modal-content" @click.stop>
         <view class="modal-header">
@@ -79,15 +92,14 @@ const venueTypes = ['家', '酒店', '场地', '住宿', '摄影点']
 const typeMap = { '家': 'home', '酒店': 'hotel', '场地': 'venue', '住宿': 'hotel_guest', '摄影点': 'photo' }
 const typeReverseMap = { 'home': 0, 'hotel': 1, 'venue': 2, 'hotel_guest': 3, 'photo': 4 }
 
-const modalForm = ref({
-  name: '',
-  typeIndex: 2,
-  address: '',
-  arrivalTime: '',
-  phone: ''
-})
+const modalForm = ref({ name: '', typeIndex: 2, address: '', arrivalTime: '', phone: '' })
 
 const venues = computed(() => store.venues?.venues || [])
+
+function typeLabel(type) {
+  const map = { home: '家', hotel: '酒店', venue: '场地', hotel_guest: '住宿', photo: '摄影' }
+  return map[type] || '场地'
+}
 
 function showAddModal() {
   editingVenue.value = null
@@ -107,12 +119,8 @@ function editVenue(venue) {
   showModal.value = true
 }
 
-function onTypeChange(e) {
-  modalForm.value.typeIndex = e.detail.value
-}
-function onArrivalTimeChange(e) {
-  modalForm.value.arrivalTime = e.detail.value
-}
+function onTypeChange(e) { modalForm.value.typeIndex = e.detail.value }
+function onArrivalTimeChange(e) { modalForm.value.arrivalTime = e.detail.value }
 
 function saveVenue() {
   const venue = {
@@ -124,14 +132,12 @@ function saveVenue() {
     contact_phone: modalForm.value.phone,
     coordinate: editingVenue.value?.coordinate || null
   }
-
   if (editingVenue.value) {
     const idx = store.venues.venues.findIndex(v => v.id === editingVenue.value.id)
     if (idx >= 0) store.venues.venues[idx] = venue
   } else {
     store.addVenue(venue)
   }
-
   saveToStorage()
   showModal.value = false
   showSuccess('保存成功')
@@ -159,52 +165,65 @@ function saveToStorage() {
   }
 }
 
-onShow(() => {
-  // 加载数据
-})
+onShow(() => {})
 </script>
 
 <style lang="scss" scoped>
 .page {
   background-color: $bg-color;
   min-height: 100vh;
-  padding: 30rpx;
-  padding-bottom: 140rpx;
+  padding-bottom: 160rpx;
 }
 
+/* 顶部标题 */
+.page-header {
+  padding: 60rpx 48rpx 36rpx;
+}
+.page-tag {
+  display: block;
+  font-size: 22rpx;
+  color: $text-muted;
+  letter-spacing: 6rpx;
+  margin-bottom: 12rpx;
+}
+.page-title {
+  display: block;
+  font-size: $font-h1;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+/* 场地列表 */
 .venue-list {
-  margin-bottom: 30rpx;
+  padding: 0 48rpx;
 }
-.venue-card {
+.venue-item {
+  padding: 32rpx 0;
+  border-bottom: 1rpx solid $border-color;
+}
+.venue-meta {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  background: $bg-surface;
-  border-radius: 24rpx;
-  padding: 30rpx 30rpx 30rpx 36rpx;
-  margin-bottom: 20rpx;
-  box-shadow: $shadow-sm;
-  border: 2rpx solid rgba(212,168,83,0.08);
-  position: relative;
-  overflow: hidden;
+  align-items: center;
+  gap: 16rpx;
+  margin-bottom: 12rpx;
 }
-.venue-card::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 20%;
-  width: 6rpx;
-  height: 60%;
-  background: linear-gradient(to bottom, $color-gold, $color-gold-light);
-  border-radius: 0 4rpx 4rpx 0;
+.venue-type {
+  padding: 4rpx 12rpx;
+  background: $bg-muted;
+  color: $text-secondary;
+  font-size: 20rpx;
+  border-radius: 6rpx;
+  font-weight: 500;
 }
-.venue-info {
-  flex: 1;
+.venue-time {
+  font-size: 22rpx;
+  color: $text-muted;
+  font-weight: 500;
 }
 .venue-name {
   display: block;
-  font-size: 30rpx;
-  font-weight: 700;
+  font-size: 32rpx;
+  font-weight: 600;
   color: $text-primary;
   margin-bottom: 8rpx;
 }
@@ -212,137 +231,138 @@ onShow(() => {
   display: block;
   font-size: 26rpx;
   color: $text-secondary;
-  margin-bottom: 6rpx;
-}
-.venue-time {
-  font-size: 24rpx;
-  color: $color-primary;
+  margin-bottom: 16rpx;
 }
 .venue-actions {
   display: flex;
-  flex-direction: column;
-  gap: 16rpx;
+  gap: 24rpx;
 }
-.edit-btn, .delete-btn {
+.venue-action {
   font-size: 26rpx;
-  padding: 8rpx 16rpx;
+  color: $text-secondary;
 }
-.edit-btn {
-  color: $color-info;
-}
-.delete-btn {
+.venue-action.delete {
   color: $color-error;
 }
 
+/* 空状态 */
+.empty-state {
+  text-align: center;
+  padding: 150rpx 60rpx;
+}
+.empty-icon {
+  font-size: 80rpx;
+  display: block;
+  margin-bottom: 20rpx;
+}
+.empty-text {
+  font-size: 28rpx;
+  color: $text-muted;
+}
+
+/* 添加按钮 */
 .add-btn {
   position: fixed;
-  bottom: calc(30rpx + constant(safe-area-inset-bottom));
-  bottom: calc(30rpx + env(safe-area-inset-bottom));
-  left: 30rpx;
-  right: 30rpx;
+  bottom: calc(40rpx + constant(safe-area-inset-bottom));
+  bottom: calc(40rpx + env(safe-area-inset-bottom));
+  left: 48rpx;
+  right: 48rpx;
   height: 96rpx;
   line-height: 96rpx;
   text-align: center;
-  border-radius: 16rpx;
-  background: linear-gradient(135deg, $color-primary 0%, #E91E63 100%);
+  border-radius: $radius-full;
+  background: $text-primary;
   color: #fff;
-  font-size: 32rpx;
-  font-weight: 600;
-  box-shadow: $shadow-md;
+  font-size: 30rpx;
+  font-weight: 500;
 }
-.add-btn::after {
-  border: none;
-}
+.add-btn::after { border: none; }
+.add-btn:active { opacity: 0.8; }
 
 /* 弹窗 */
 .modal-mask {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0,0,0,0.5);
-  z-index: 1000;
   display: flex;
   align-items: flex-end;
+  justify-content: center;
+  z-index: 1000;
 }
 .modal-content {
   width: 100%;
   background: $bg-surface;
   border-radius: 32rpx 32rpx 0 0;
-  padding: 40rpx;
-  padding-bottom: calc(40rpx + constant(safe-area-inset-bottom));
+  padding: 40rpx 48rpx calc(40rpx + constant(safe-area-inset-bottom));
+  padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
 }
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30rpx;
+  margin-bottom: 36rpx;
 }
 .modal-title {
-  font-size: 34rpx;
-  font-weight: 700;
+  font-size: $font-h2;
+  font-weight: 600;
+  color: $text-primary;
 }
 .modal-close {
-  font-size: 36rpx;
+  font-size: 32rpx;
   color: $text-muted;
+  padding: 10rpx;
 }
 
 .form-group {
-  margin-bottom: 24rpx;
+  margin-bottom: 32rpx;
 }
 .form-label {
   display: block;
-  font-size: 26rpx;
-  color: $text-secondary;
-  margin-bottom: 10rpx;
+  font-size: 24rpx;
+  color: $text-muted;
+  margin-bottom: 12rpx;
 }
 .form-input {
   width: 100%;
   height: 80rpx;
-  padding: 0 20rpx;
-  border: 2rpx solid $border-light;
-  border-radius: 10rpx;
-  font-size: 28rpx;
-  background: $bg-muted;
+  padding: 0 4rpx;
+  border-bottom: 2rpx solid $border-color;
+  font-size: 30rpx;
+  background: transparent;
   box-sizing: border-box;
 }
 .picker-value {
   width: 100%;
   height: 80rpx;
   line-height: 80rpx;
-  padding: 0 20rpx;
-  border: 2rpx solid $border-light;
-  border-radius: 10rpx;
-  font-size: 28rpx;
-  background: $bg-muted;
-  box-sizing: border-box;
+  font-size: 30rpx;
+  color: $text-primary;
+  border-bottom: 2rpx solid $border-color;
 }
 
 .modal-footer {
   display: flex;
-  gap: 20rpx;
-  margin-top: 30rpx;
+  gap: 16rpx;
+  margin-top: 24rpx;
 }
 .modal-btn {
   flex: 1;
-  height: 96rpx;
-  line-height: 96rpx;
+  height: 88rpx;
+  line-height: 88rpx;
   text-align: center;
-  border-radius: 16rpx;
-  font-size: 32rpx;
-  font-weight: 600;
+  border-radius: $radius-full;
+  font-size: 28rpx;
+  font-weight: 500;
+  transition: opacity 0.2s ease;
 }
+.modal-btn::after { border: none; }
+.modal-btn:active { opacity: 0.8; }
 .modal-btn.primary {
-  background: linear-gradient(135deg, $color-primary 0%, #E91E63 100%);
+  background: $text-primary;
   color: #fff;
-  box-shadow: $shadow-md;
 }
 .modal-btn.secondary {
   background: $bg-muted;
   color: $text-primary;
-}
-.modal-btn::after {
-  border: none;
 }
 </style>

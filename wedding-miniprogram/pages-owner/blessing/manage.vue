@@ -1,29 +1,40 @@
 <template>
   <view class="page">
+    <!-- 顶部标题 -->
+    <view class="page-header">
+      <text class="page-tag">BLESSINGS</text>
+      <text class="page-title">祝福管理</text>
+    </view>
+
     <!-- 统计 -->
-    <view class="stats-bar">
-      <text>文字祝福：{{ textCount }}条</text>
-      <text>语音祝福：{{ voiceCount }}条</text>
+    <view class="stats-row">
+      <view class="stat-item">
+        <text class="stat-num">{{ textCount }}</text>
+        <text class="stat-label">文字</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-num">{{ voiceCount }}</text>
+        <text class="stat-label">语音</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-num">{{ blessings.length }}</text>
+        <text class="stat-label">总计</text>
+      </view>
     </view>
 
     <!-- 祝福列表 -->
-    <view class="blessing-list">
-      <view
-        class="blessing-card"
-        v-for="item in blessings"
-        :key="item.id"
-        :class="{ pinned: item.is_pinned }"
-      >
-        <view class="blessing-header">
-          <text class="sender">{{ item.sender?.name || '匿名' }}</text>
-          <text class="time">{{ formatTime(item.created_at) }}</text>
+    <view class="blessing-list" v-if="blessings.length > 0">
+      <view class="blessing-item" v-for="item in blessings" :key="item.id" :class="{ pinned: item.is_pinned }">
+        <view class="item-header">
+          <text class="item-name">{{ item.sender?.name || '匿名' }}</text>
+          <text class="item-time">{{ formatTime(item.created_at) }}</text>
         </view>
-        <text class="content">{{ item.content }}</text>
-        <view class="card-actions">
-          <text class="action-btn" @click="togglePin(item)">
+        <text class="item-content">{{ item.content }}</text>
+        <view class="item-actions">
+          <text class="item-action" @click="togglePin(item)">
             {{ item.is_pinned ? '取消置顶' : '置顶' }}
           </text>
-          <text class="action-btn delete" @click="deleteBlessing(item.id)">删除</text>
+          <text class="item-action delete" @click="deleteBlessing(item.id)">删除</text>
         </view>
       </view>
     </view>
@@ -65,11 +76,8 @@ function formatTime(ts) {
 
 function togglePin(item) {
   item.is_pinned = !item.is_pinned
-  // 取消其他置顶
   if (item.is_pinned) {
-    blessings.value.forEach(b => {
-      if (b.id !== item.id) b.is_pinned = false
-    })
+    blessings.value.forEach(b => { if (b.id !== item.id) b.is_pinned = false })
   }
   saveToStorage()
   showSuccess(item.is_pinned ? '已置顶' : '已取消置顶')
@@ -104,89 +112,110 @@ onShow(() => {})
 .page {
   background-color: $bg-color;
   min-height: 100vh;
-  padding: 30rpx;
+  padding-bottom: 60rpx;
 }
 
-.stats-bar {
-  display: flex;
-  justify-content: space-around;
-  padding: 20rpx;
-  background: $bg-surface;
-  border-radius: 24rpx;
-  margin-bottom: 20rpx;
-  font-size: 26rpx;
-  color: $text-secondary;
-  border: 2rpx solid rgba(212,168,83,0.08);
-  box-shadow: $shadow-sm;
+/* 顶部标题 */
+.page-header {
+  padding: 60rpx 48rpx 24rpx;
 }
-
-.blessing-list {
-  margin-bottom: 30rpx;
-}
-.blessing-card {
-  background: $bg-surface;
-  border-radius: 24rpx;
-  padding: 24rpx;
-  margin-bottom: 16rpx;
-  box-shadow: $shadow-sm;
-  border: 2rpx solid rgba(212,168,83,0.08);
-  position: relative;
-  overflow: hidden;
-}
-.blessing-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3rpx;
-  background: linear-gradient(90deg, transparent, rgba(212,168,83,0.3), transparent);
-}
-.blessing-card.pinned {
-  border-color: rgba(196, 30, 58, 0.15);
-  box-shadow: 0 4rpx 16rpx rgba(196, 30, 58, 0.08);
-}
-.blessing-header {
-  display: flex;
-  justify-content: space-between;
+.page-tag {
+  display: block;
+  font-size: 22rpx;
+  color: $text-muted;
+  letter-spacing: 6rpx;
   margin-bottom: 12rpx;
 }
-.sender {
-  font-size: 28rpx;
-  font-weight: 500;
+.page-title {
+  display: block;
+  font-size: $font-h1;
+  font-weight: 600;
+  color: $text-primary;
 }
-.time {
+
+/* 统计 */
+.stats-row {
+  display: flex;
+  padding: 24rpx 48rpx 32rpx;
+}
+.stat-item {
+  flex: 1;
+  text-align: center;
+  padding: 16rpx 0;
+}
+.stat-num {
+  display: block;
+  font-size: 40rpx;
+  font-weight: 700;
+  color: $text-primary;
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 4rpx;
+}
+.stat-label {
   font-size: 22rpx;
   color: $text-muted;
 }
-.content {
+
+/* 祝福列表 */
+.blessing-list {
+  padding: 0 48rpx;
+}
+.blessing-item {
+  padding: 32rpx 0;
+  border-bottom: 1rpx solid $border-color;
+}
+.blessing-item.pinned {
+  background: $bg-muted;
+  margin: 0 -48rpx;
+  padding: 32rpx 48rpx;
+}
+.blessing-item:last-child {
+  border-bottom: none;
+}
+
+.item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12rpx;
+}
+.item-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: $text-primary;
+}
+.item-time {
+  font-size: 22rpx;
+  color: $text-muted;
+}
+.item-content {
   display: block;
   font-size: 28rpx;
-  color: $text-secondary;
-  line-height: 1.5;
+  color: $text-primary;
+  line-height: 1.7;
   margin-bottom: 16rpx;
 }
-.card-actions {
+.item-actions {
   display: flex;
   gap: 24rpx;
 }
-.action-btn {
+.item-action {
   font-size: 24rpx;
-  color: $color-info;
+  color: $text-secondary;
 }
-.action-btn.delete {
+.item-action.delete {
   color: $color-error;
 }
 
+/* 空状态 */
 .empty-state {
   text-align: center;
-  padding: 150rpx 60rpx;
+  padding: 160rpx 60rpx;
 }
 .empty-icon {
   font-size: 80rpx;
   display: block;
   margin-bottom: 20rpx;
-  filter: drop-shadow(0 4rpx 12rpx rgba(212,168,83,0.2));
 }
 .empty-text {
   font-size: 28rpx;

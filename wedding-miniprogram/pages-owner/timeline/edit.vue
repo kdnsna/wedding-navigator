@@ -1,29 +1,47 @@
 <template>
   <view class="page">
+    <!-- 顶部标题 -->
+    <view class="page-header">
+      <text class="page-tag">TIMELINE</text>
+      <text class="page-title">流程编辑</text>
+    </view>
+
     <!-- 时间轴 -->
-    <view class="timeline-list">
+    <view class="timeline" v-if="events.length > 0">
       <view class="timeline-item" v-for="(event, index) in events" :key="event.id">
-        <view class="timeline-dot" />
-        <view class="timeline-line" v-if="index < events.length - 1" />
+        <view class="timeline-left">
+          <text class="timeline-time">{{ event.time }}</text>
+          <view class="timeline-dot" />
+          <view class="timeline-line" v-if="index < events.length - 1" />
+        </view>
         <view class="timeline-card">
           <view class="event-header">
-            <text class="event-time">{{ event.time }}</text>
-            <view class="event-actions">
-              <text class="action-btn" @click="editEvent(event)">编辑</text>
-              <text class="action-btn delete" @click="deleteEvent(event.id)">删除</text>
+            <text class="event-title">{{ event.title }}</text>
+            <view class="event-badges">
+              <text class="event-badge" v-if="event.is_important">重点</text>
             </view>
           </view>
-          <text class="event-title">{{ event.title }}</text>
           <text class="event-venue" v-if="getVenueName(event.venue_id)">
-            📍 {{ getVenueName(event.venue_id) }}
+            {{ getVenueName(event.venue_id) }}
           </text>
+          <text class="event-notes" v-if="event.notes">{{ event.notes }}</text>
+          <view class="event-actions">
+            <text class="event-action" @click="editEvent(event)">编辑</text>
+            <text class="event-action delete" @click="deleteEvent(event.id)">删除</text>
+          </view>
         </view>
       </view>
     </view>
 
+    <!-- 空状态 -->
+    <view class="empty-state" v-if="events.length === 0">
+      <text class="empty-icon">📅</text>
+      <text class="empty-text">还没有添加时间节点</text>
+    </view>
+
     <!-- 添加按钮 -->
     <button class="add-btn" @click="showAddModal">
-      <text>+ 添加时间节点</text>
+      <text>+ 添加节点</text>
     </button>
 
     <!-- 弹窗 -->
@@ -42,7 +60,7 @@
           </view>
           <view class="form-group">
             <text class="form-label">事件名称</text>
-            <input class="form-input" v-model="modalForm.title" placeholder="例如：接亲游戏开始" />
+            <input class="form-input" v-model="modalForm.title" placeholder="例如：接亲游戏" />
           </view>
           <view class="form-group">
             <text class="form-label">关联场地</text>
@@ -56,7 +74,7 @@
           </view>
           <view class="form-group">
             <label class="checkbox-label">
-              <checkbox :checked="modalForm.isImportant" @click="modalForm.isImportant = !modalForm.isImportant" />
+              <checkbox :checked="modalForm.isImportant" @click="modalForm.isImportant = !modalForm.isImportant" color="#1A1A1A" />
               <text>重要节点</text>
             </label>
           </view>
@@ -83,13 +101,7 @@ const userStore = useUserStore()
 const showModal = ref(false)
 const editingEvent = ref(null)
 
-const modalForm = ref({
-  time: '',
-  title: '',
-  venueIndex: 0,
-  notes: '',
-  isImportant: false
-})
+const modalForm = ref({ time: '', title: '', venueIndex: 0, notes: '', isImportant: false })
 
 const events = computed(() => store.timeline?.events || [])
 const venues = computed(() => store.venues?.venues || [])
@@ -120,12 +132,8 @@ function editEvent(event) {
   showModal.value = true
 }
 
-function onTimeChange(e) {
-  modalForm.value.time = e.detail.value
-}
-function onVenueChange(e) {
-  modalForm.value.venueIndex = e.detail.value
-}
+function onTimeChange(e) { modalForm.value.time = e.detail.value }
+function onVenueChange(e) { modalForm.value.venueIndex = e.detail.value }
 
 function saveEvent() {
   const venueId = modalForm.value.venueIndex > 0 ? venues.value[modalForm.value.venueIndex - 1]?.id : ''
@@ -138,14 +146,12 @@ function saveEvent() {
     is_important: modalForm.value.isImportant,
     sort_order: 0
   }
-
   if (editingEvent.value) {
     const idx = store.timeline.events.findIndex(e => e.id === editingEvent.value.id)
     if (idx >= 0) store.timeline.events[idx] = event
   } else {
     store.addTimelineEvent(event)
   }
-
   saveToStorage()
   showModal.value = false
   showSuccess('保存成功')
@@ -173,193 +179,244 @@ function saveToStorage() {
   }
 }
 
-onShow(() => {
-  // 加载
-})
+onShow(() => {})
 </script>
 
 <style lang="scss" scoped>
 .page {
   background-color: $bg-color;
   min-height: 100vh;
-  padding: 30rpx;
-  padding-bottom: 140rpx;
+  padding-bottom: 160rpx;
 }
 
-.timeline-list {
-  position: relative;
-  padding-left: 40rpx;
+/* 顶部标题 */
+.page-header {
+  padding: 60rpx 48rpx 36rpx;
+}
+.page-tag {
+  display: block;
+  font-size: 22rpx;
+  color: $text-muted;
+  letter-spacing: 6rpx;
+  margin-bottom: 12rpx;
+}
+.page-title {
+  display: block;
+  font-size: $font-h1;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+/* 时间轴 */
+.timeline {
+  padding: 0 48rpx;
 }
 .timeline-item {
+  display: flex;
+  gap: 32rpx;
+  padding-bottom: 32rpx;
+}
+
+.timeline-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 80rpx;
+  flex-shrink: 0;
   position: relative;
-  padding-bottom: 30rpx;
+}
+.timeline-time {
+  font-size: 24rpx;
+  color: $text-muted;
+  font-weight: 500;
+  margin-bottom: 8rpx;
+  font-variant-numeric: tabular-nums;
 }
 .timeline-dot {
-  position: absolute;
-  left: -42rpx;
-  top: 20rpx;
-  width: 24rpx;
-  height: 24rpx;
+  width: 12rpx;
+  height: 12rpx;
   border-radius: 50%;
-  background: $color-gold;
-  border: 4rpx solid $bg-surface;
-  box-shadow: 0 0 0 4rpx rgba(212,168,83,0.15);
+  background: $border-color;
+  position: relative;
+  z-index: 2;
 }
 .timeline-line {
   position: absolute;
-  left: -32rpx;
   top: 40rpx;
-  width: 4rpx;
-  height: calc(100% + 10rpx);
-  background: $border-light;
+  bottom: 0;
+  width: 1rpx;
+  background: $border-color;
 }
+
 .timeline-card {
-  background: $bg-surface;
-  border-radius: 24rpx;
-  padding: 24rpx;
-  box-shadow: $shadow-sm;
-  border: 2rpx solid rgba(212,168,83,0.08);
+  flex: 1;
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid $border-color;
 }
 .event-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 10rpx;
+  gap: 12rpx;
+  margin-bottom: 8rpx;
 }
-.event-time {
-  font-size: 32rpx;
-  font-weight: 700;
-  color: $color-primary;
+.event-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: $text-primary;
+}
+.event-badge {
+  padding: 4rpx 10rpx;
+  background: $bg-muted;
+  color: $text-secondary;
+  font-size: 18rpx;
+  border-radius: 4rpx;
+  font-weight: 500;
+}
+.event-venue,
+.event-notes {
+  display: block;
+  font-size: 24rpx;
+  color: $text-secondary;
+  margin-top: 6rpx;
 }
 .event-actions {
   display: flex;
-  gap: 20rpx;
+  gap: 24rpx;
+  margin-top: 16rpx;
 }
-.action-btn {
-  font-size: 24rpx;
-  color: $color-info;
-}
-.action-btn.delete {
-  color: $color-error;
-}
-.event-title {
-  display: block;
-  font-size: 28rpx;
-  color: $text-primary;
-  margin-bottom: 6rpx;
-}
-.event-venue {
+.event-action {
   font-size: 24rpx;
   color: $text-secondary;
 }
+.event-action.delete {
+  color: $color-error;
+}
 
+/* 空状态 */
+.empty-state {
+  text-align: center;
+  padding: 150rpx 60rpx;
+}
+.empty-icon {
+  font-size: 80rpx;
+  display: block;
+  margin-bottom: 20rpx;
+}
+.empty-text {
+  font-size: 28rpx;
+  color: $text-muted;
+}
+
+/* 添加按钮 */
 .add-btn {
   position: fixed;
-  bottom: calc(30rpx + constant(safe-area-inset-bottom));
-  bottom: calc(30rpx + env(safe-area-inset-bottom));
-  left: 30rpx;
-  right: 30rpx;
+  bottom: calc(40rpx + constant(safe-area-inset-bottom));
+  bottom: calc(40rpx + env(safe-area-inset-bottom));
+  left: 48rpx;
+  right: 48rpx;
   height: 96rpx;
   line-height: 96rpx;
   text-align: center;
-  border-radius: 16rpx;
-  background: linear-gradient(135deg, $color-primary 0%, #E91E63 100%);
+  border-radius: $radius-full;
+  background: $text-primary;
   color: #fff;
-  font-size: 32rpx;
-  font-weight: 600;
-  box-shadow: $shadow-md;
+  font-size: 30rpx;
+  font-weight: 500;
 }
-.add-btn::after {
-  border: none;
-}
+.add-btn::after { border: none; }
+.add-btn:active { opacity: 0.8; }
 
 /* 弹窗 */
 .modal-mask {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0,0,0,0.5);
-  z-index: 1000;
   display: flex;
   align-items: flex-end;
+  justify-content: center;
+  z-index: 1000;
 }
 .modal-content {
   width: 100%;
   background: $bg-surface;
   border-radius: 32rpx 32rpx 0 0;
-  padding: 40rpx;
-  padding-bottom: calc(40rpx + constant(safe-area-inset-bottom));
+  padding: 40rpx 48rpx calc(40rpx + constant(safe-area-inset-bottom));
+  padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
 }
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30rpx;
+  margin-bottom: 36rpx;
 }
 .modal-title {
-  font-size: 34rpx;
-  font-weight: 700;
+  font-size: $font-h2;
+  font-weight: 600;
+  color: $text-primary;
 }
 .modal-close {
-  font-size: 36rpx;
+  font-size: 32rpx;
   color: $text-muted;
+  padding: 10rpx;
 }
 
 .form-group {
-  margin-bottom: 24rpx;
+  margin-bottom: 32rpx;
 }
 .form-label {
   display: block;
-  font-size: 26rpx;
-  color: $text-secondary;
-  margin-bottom: 10rpx;
+  font-size: 24rpx;
+  color: $text-muted;
+  margin-bottom: 12rpx;
 }
-.form-input, .picker-value {
+.form-input {
   width: 100%;
   height: 80rpx;
-  padding: 0 20rpx;
-  border: 2rpx solid $border-light;
-  border-radius: 10rpx;
-  font-size: 28rpx;
-  background: $bg-muted;
+  padding: 0 4rpx;
+  border-bottom: 2rpx solid $border-color;
+  font-size: 30rpx;
+  background: transparent;
   box-sizing: border-box;
 }
 .picker-value {
+  width: 100%;
+  height: 80rpx;
   line-height: 80rpx;
+  font-size: 30rpx;
+  color: $text-primary;
+  border-bottom: 2rpx solid $border-color;
 }
 .checkbox-label {
   display: flex;
   align-items: center;
   gap: 12rpx;
   font-size: 28rpx;
+  color: $text-primary;
 }
 
 .modal-footer {
   display: flex;
-  gap: 20rpx;
-  margin-top: 30rpx;
+  gap: 16rpx;
+  margin-top: 24rpx;
 }
 .modal-btn {
   flex: 1;
-  height: 96rpx;
-  line-height: 96rpx;
+  height: 88rpx;
+  line-height: 88rpx;
   text-align: center;
-  border-radius: 16rpx;
-  font-size: 32rpx;
-  font-weight: 600;
+  border-radius: $radius-full;
+  font-size: 28rpx;
+  font-weight: 500;
+  transition: opacity 0.2s ease;
 }
+.modal-btn::after { border: none; }
+.modal-btn:active { opacity: 0.8; }
 .modal-btn.primary {
-  background: linear-gradient(135deg, $color-primary 0%, #E91E63 100%);
+  background: $text-primary;
   color: #fff;
-  box-shadow: $shadow-md;
 }
 .modal-btn.secondary {
   background: $bg-muted;
   color: $text-primary;
-}
-.modal-btn::after {
-  border: none;
 }
 </style>
