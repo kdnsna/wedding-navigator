@@ -15,31 +15,31 @@
     <!-- 功能列表 -->
     <view class="menu-group">
       <view class="menu-item" @click="goToRSVP">
-        <text class="menu-icon">📝</text>
+        <image class="visual-icon menu-icon" src="/static/visuals/icon-rsvp.png" mode="aspectFit" />
         <text class="menu-title">出席回执</text>
         <text class="menu-arrow">›</text>
       </view>
       <view class="divider" />
       <view class="menu-item" @click="goToBlessing">
-        <text class="menu-icon">💌</text>
+        <image class="visual-icon menu-icon" src="/static/visuals/icon-blessing.png" mode="aspectFit" />
         <text class="menu-title">祝福墙</text>
         <text class="menu-arrow">›</text>
       </view>
       <view class="divider" />
       <view class="menu-item" @click="goToGuide">
-        <text class="menu-icon">🗺️</text>
+        <image class="visual-icon menu-icon" src="/static/visuals/icon-guide.png" mode="aspectFit" />
         <text class="menu-title">婚礼路书</text>
         <text class="menu-arrow">›</text>
       </view>
       <view class="divider" />
       <view class="menu-item" @click="goToTimeline">
-        <text class="menu-icon">📅</text>
+        <image class="visual-icon menu-icon" src="/static/visuals/icon-timeline.png" mode="aspectFit" />
         <text class="menu-title">婚礼流程</text>
         <text class="menu-arrow">›</text>
       </view>
       <view class="divider" />
       <view class="menu-item" @click="goToAlbum">
-        <text class="menu-icon">📷</text>
+        <image class="visual-icon menu-icon" src="/static/visuals/icon-album.png" mode="aspectFit" />
         <text class="menu-title">婚纱相册</text>
         <text class="menu-arrow">›</text>
       </view>
@@ -47,7 +47,7 @@
 
     <view class="menu-group">
       <view class="menu-item" @click="goToManage">
-        <text class="menu-icon">⚙️</text>
+        <image class="visual-icon menu-icon" src="/static/visuals/icon-manage.png" mode="aspectFit" />
         <text class="menu-title">管理后台</text>
         <text class="menu-arrow">›</text>
       </view>

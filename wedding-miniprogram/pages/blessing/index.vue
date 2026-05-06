@@ -44,6 +44,7 @@
 
     <!-- 空状态 -->
     <view class="empty-state" v-if="blessings.length === 0">
+      <image class="empty-visual" src="/static/visuals/empty-blessing.png" mode="aspectFit" />
       <text class="empty-text">暂无祝福，来做第一个祝福的人吧</text>
     </view>
   </view>

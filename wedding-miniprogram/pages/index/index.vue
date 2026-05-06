@@ -67,7 +67,7 @@
       <view class="info-list stagger-2">
         <view class="info-row" @click="openCalendar">
           <view class="info-icon-wrap">
-            <text class="info-icon">📅</text>
+            <image class="visual-icon info-icon" src="/static/visuals/icon-date.png" mode="aspectFit" />
           </view>
           <view class="info-meta">
             <text class="info-label">日期 DATE</text>
@@ -78,7 +78,7 @@
         <view class="info-divider" />
         <view class="info-row">
           <view class="info-icon-wrap">
-            <text class="info-icon">🕐</text>
+            <image class="visual-icon info-icon" src="/static/visuals/icon-time.png" mode="aspectFit" />
           </view>
           <view class="info-meta">
             <text class="info-label">时间 TIME</text>
@@ -88,7 +88,7 @@
         <view class="info-divider" />
         <view class="info-row" @click="openNavigation">
           <view class="info-icon-wrap">
-            <text class="info-icon">📍</text>
+            <image class="visual-icon info-icon" src="/static/visuals/icon-location.png" mode="aspectFit" />
           </view>
           <view class="info-meta">
             <text class="info-label">地点 VENUE</text>
@@ -112,7 +112,7 @@
       </view>
       <view class="quick-grid">
         <view class="quick-item stagger-1" @click="goToAlbum">
-          <text class="quick-icon">📷</text>
+          <image class="visual-icon quick-icon" src="/static/visuals/icon-album.png" mode="aspectFit" />
           <view class="quick-meta">
             <text class="quick-label">婚纱相册</text>
             <text class="quick-en">ALBUM</text>
@@ -120,7 +120,7 @@
           <text class="quick-arrow">›</text>
         </view>
         <view class="quick-item stagger-2" @click="goToGuide">
-          <text class="quick-icon">🗺️</text>
+          <image class="visual-icon quick-icon" src="/static/visuals/icon-guide.png" mode="aspectFit" />
           <view class="quick-meta">
             <text class="quick-label">婚礼路书</text>
             <text class="quick-en">GUIDE</text>
@@ -128,7 +128,7 @@
           <text class="quick-arrow">›</text>
         </view>
         <view class="quick-item stagger-3" @click="goToTimeline">
-          <text class="quick-icon">📅</text>
+          <image class="visual-icon quick-icon" src="/static/visuals/icon-timeline.png" mode="aspectFit" />
           <view class="quick-meta">
             <text class="quick-label">婚礼流程</text>
             <text class="quick-en">TIMELINE</text>
@@ -136,7 +136,7 @@
           <text class="quick-arrow">›</text>
         </view>
         <view class="quick-item stagger-4" @click="goToBlessing">
-          <text class="quick-icon">💌</text>
+          <image class="visual-icon quick-icon" src="/static/visuals/icon-blessing.png" mode="aspectFit" />
           <view class="quick-meta">
             <text class="quick-label">祝福留言</text>
             <text class="quick-en">BLESSING</text>
@@ -180,7 +180,7 @@ const countdown = ref(null)
 const coverImage = computed(() => {
   const photos = store.album?.photos || []
   const cover = photos.find(p => p.type === 'cover')
-  return cover?.url || photos[0]?.url || '/static/default-cover.jpg'
+  return cover?.url || photos[0]?.url || '/static/visuals/default-cover.png'
 })
 
 const groomName = computed(() => store.invitation?.couple?.groom?.name || '新郎')
@@ -246,7 +246,7 @@ onLoad(async (options) => {
       updateCountdown()
       countdownTimer = setInterval(updateCountdown, 1000)
     } catch (err) {
-      console.error('加载婚礼数据失败:', err)
+      console.warn('加载婚礼数据失败，已使用本地默认数据:', err)
     }
   }
 })

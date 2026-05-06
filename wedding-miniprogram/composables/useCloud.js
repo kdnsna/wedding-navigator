@@ -24,10 +24,15 @@ export function initCloud() {
  */
 export function callCloudFunction(name, data = {}) {
   return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(`云函数 ${name} 请求超时`))
+    }, 8000)
+
     wx.cloud.callFunction({
       name,
       data,
       success: (res) => {
+        clearTimeout(timer)
         if (res.result && res.result.success === false) {
           reject(new Error(res.result.message || '调用失败'))
         } else {
@@ -35,7 +40,8 @@ export function callCloudFunction(name, data = {}) {
         }
       },
       fail: (err) => {
-        console.error(`云函数 ${name} 调用失败:`, err)
+        clearTimeout(timer)
+        console.warn(`云函数 ${name} 调用失败:`, err)
         reject(err)
       }
     })

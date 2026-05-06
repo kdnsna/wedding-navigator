@@ -2,11 +2,44 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
 export const useWeddingStore = defineStore('wedding', () => {
+  const fallbackWedding = {
+    basic_info: {
+      date: '2026-10-01',
+      time: '12:00'
+    },
+    share_config: {
+      title: '诚邀您参加我们的婚礼'
+    }
+  }
+
+  const fallbackInvitation = {
+    couple: {
+      groom: { name: '新郎' },
+      bride: { name: '新娘' }
+    },
+    wedding: {
+      venue_name: '婚礼宴会厅',
+      venue_address: '请在主人端填写婚礼地址'
+    },
+    content: {
+      main_text: '诚挚邀请您参加我们的婚礼，见证我们的幸福时刻。'
+    }
+  }
+
+  const fallbackVenues = {
+    venues: [{
+      id: 'default',
+      name: '婚礼宴会厅',
+      address: '请在主人端填写婚礼地址',
+      coordinate: null
+    }]
+  }
+
   // State
-  const wedding = ref(null)
-  const invitation = ref(null)
-  const album = ref(null)
-  const venues = ref(null)
+  const wedding = ref(fallbackWedding)
+  const invitation = ref(fallbackInvitation)
+  const album = ref({ photos: [] })
+  const venues = ref(fallbackVenues)
   const timeline = ref(null)
   const guests = ref(null)
   const blessings = ref(null)
@@ -34,7 +67,9 @@ export const useWeddingStore = defineStore('wedding', () => {
 
   const countdown = computed(() => {
     if (!weddingDate.value) return null
-    const date = new Date(`${weddingDate.value} ${weddingTime.value || '00:00:00'}`)
+    const time = weddingTime.value || '00:00:00'
+    const normalizedTime = time.length === 5 ? `${time}:00` : time
+    const date = new Date(`${weddingDate.value}T${normalizedTime}`)
     const now = new Date()
     const diff = date - now
 
@@ -62,10 +97,10 @@ export const useWeddingStore = defineStore('wedding', () => {
 
   // Actions
   function setWeddingData(data) {
-    wedding.value = data.wedding || null
-    invitation.value = data.invitation || null
-    album.value = data.album || null
-    venues.value = data.venues || null
+    wedding.value = data.wedding || fallbackWedding
+    invitation.value = data.invitation || fallbackInvitation
+    album.value = data.album || { photos: [] }
+    venues.value = data.venues || fallbackVenues
     timeline.value = data.timeline || null
     guests.value = data.guests || null
     blessings.value = data.blessings || null

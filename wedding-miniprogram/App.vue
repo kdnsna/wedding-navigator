@@ -1,8 +1,10 @@
 <script setup>
 import { onLaunch, onShow, onHide } from '@dcloudio/uni-app'
 import { initCloud } from '@/composables/useCloud.js'
+import { useUserStore } from '@/stores/user.js'
 
 onLaunch(() => {
+  useUserStore().loadFromStorage()
   initCloud()
 })
 
@@ -60,6 +62,28 @@ page {
 .flex-center { display: flex; align-items: center; justify-content: center; }
 .flex-between { display: flex; align-items: center; justify-content: space-between; }
 .flex-1 { flex: 1; }
+
+/* ========== 视觉资产 ========== */
+.visual-icon {
+  width: 52rpx;
+  height: 52rpx;
+  display: block;
+  flex-shrink: 0;
+}
+
+.visual-icon-sm {
+  width: 36rpx;
+  height: 36rpx;
+  display: block;
+  flex-shrink: 0;
+}
+
+.empty-visual {
+  width: 220rpx;
+  height: 220rpx;
+  display: block;
+  margin: 0 auto 24rpx;
+}
 
 /* ========== 间距工具 ========== */
 .mt-10 { margin-top: 10rpx; }

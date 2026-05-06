@@ -24,7 +24,7 @@
 
     <!-- 空状态 -->
     <view class="empty-state" v-if="venues.length === 0">
-      <text class="empty-icon">🗺️</text>
+      <image class="empty-visual empty-icon" src="/static/visuals/empty-guide.png" mode="aspectFit" />
       <text class="empty-text">还没有添加场地</text>
     </view>
 

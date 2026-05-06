@@ -35,7 +35,7 @@
 
     <!-- 空状态 -->
     <view class="empty-state" v-if="events.length === 0">
-      <text class="empty-icon">📅</text>
+      <image class="empty-visual empty-icon" src="/static/visuals/empty-timeline.png" mode="aspectFit" />
       <text class="empty-text">还没有添加时间节点</text>
     </view>
 

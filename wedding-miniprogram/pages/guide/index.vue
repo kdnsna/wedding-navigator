@@ -65,7 +65,7 @@ const markers = computed(() => {
     latitude: v.coordinate?.latitude || center.value.latitude,
     longitude: v.coordinate?.longitude || center.value.longitude,
     title: v.name,
-    iconPath: '/static/icons/venue.png',
+    iconPath: '/static/visuals/venue-marker.png',
     width: 30,
     height: 30,
     callout: {

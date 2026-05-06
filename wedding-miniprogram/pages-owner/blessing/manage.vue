@@ -40,7 +40,7 @@
     </view>
 
     <view class="empty-state" v-if="blessings.length === 0">
-      <text class="empty-icon">💌</text>
+      <image class="empty-visual empty-icon" src="/static/visuals/empty-blessing.png" mode="aspectFit" />
       <text class="empty-text">暂无祝福</text>
     </view>
   </view>

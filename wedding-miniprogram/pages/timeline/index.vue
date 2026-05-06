@@ -49,11 +49,11 @@
             </view>
           </view>
           <view class="content-meta" v-if="getVenueName(event.venue_id)">
-            <text class="meta-icon">📍</text>
+            <image class="visual-icon-sm meta-icon" src="/static/visuals/icon-location.png" mode="aspectFit" />
             <text class="meta-text">{{ getVenueName(event.venue_id) }}</text>
           </view>
           <view class="content-meta" v-if="event.assignee_ids?.length">
-            <text class="meta-icon">👤</text>
+            <image class="visual-icon-sm meta-icon" src="/static/visuals/icon-person.png" mode="aspectFit" />
             <text class="meta-text">{{ getAssignees(event.assignee_ids) }}</text>
           </view>
           <text class="content-notes" v-if="event.notes">{{ event.notes }}</text>
@@ -63,7 +63,7 @@
 
     <!-- 空状态 -->
     <view class="empty-state" v-if="events.length === 0">
-      <view class="empty-icon">📅</view>
+      <image class="empty-visual empty-icon" src="/static/visuals/empty-timeline.png" mode="aspectFit" />
       <text class="empty-text">暂无流程安排</text>
       <text class="empty-sub">婚礼当天的时间表将在这里展示</text>
     </view>
