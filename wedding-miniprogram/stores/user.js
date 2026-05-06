@@ -19,15 +19,21 @@ export const useUserStore = defineStore('user', () => {
     phone.value = info.phone || ''
     isOwner.value = info.isOwner || false
     weddingId.value = info.weddingId || ''
+    if (info.ownerVerified !== undefined) {
+      ownerVerified.value = info.ownerVerified
+    }
   }
 
   function verifyOwner(verified) {
+    isOwner.value = verified
     ownerVerified.value = verified
+    saveToStorage()
   }
 
   function setWeddingId(id) {
     weddingId.value = id
     uni.setStorageSync('currentWeddingId', id)
+    saveToStorage()
   }
 
   function loadFromStorage() {
@@ -43,7 +49,8 @@ export const useUserStore = defineStore('user', () => {
       openid: openid.value,
       phone: phone.value,
       isOwner: isOwner.value,
-      weddingId: weddingId.value
+      weddingId: weddingId.value,
+      ownerVerified: ownerVerified.value
     }))
   }
 

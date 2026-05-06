@@ -126,11 +126,13 @@ function shareWedding() {
 }
 
 onShow(() => {
-  if (!userStore.isOwner) {
+  if (!userStore.isOwner || !userStore.ownerVerified) {
     uni.showModal({
       title: '身份验证',
-      content: '请输入主人手机号后4位',
+      content: '',
+      placeholderText: '请输入主人手机号后4位',
       editable: true,
+      confirmText: '验证',
       success: (res) => {
         if (res.confirm && res.content) {
           userStore.verifyOwner(true)
