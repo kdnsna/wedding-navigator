@@ -105,6 +105,50 @@ page {
   50% { opacity: 1; }
 }
 
+/* 轻柔浮动 */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8rpx); }
+}
+
+/* 脉动缩放 */
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}
+
+/* 弹性入场 */
+@keyframes bounceIn {
+  0% { opacity: 0; transform: scale(0.3); }
+  50% { transform: scale(1.05); }
+  70% { transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* 遮罩揭示 */
+@keyframes revealUp {
+  from { clip-path: inset(100% 0 0 0); opacity: 0; }
+  to { clip-path: inset(0 0 0 0); opacity: 1; }
+}
+
+/* 线条生长 */
+@keyframes drawLine {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+/* 旋转缓入 */
+@keyframes spinIn {
+  from { opacity: 0; transform: rotate(-180deg) scale(0.5); }
+  to { opacity: 1; transform: rotate(0) scale(1); }
+}
+
+/* 错位入场 */
+@keyframes staggerFade {
+  from { opacity: 0; transform: translateY(20rpx); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* ========== 全局动画类 ========== */
 .animate-fade-in {
   animation: fadeIn 0.6s $ease-out forwards;
@@ -200,5 +244,70 @@ page {
   color: $text-muted;
   letter-spacing: 4rpx;
   text-transform: uppercase;
+}
+
+/* ========== 装饰元素 ========== */
+
+/* 细横线装饰 */
+.deco-line {
+  width: 48rpx;
+  height: 2rpx;
+  background: $text-muted;
+  display: inline-block;
+}
+
+/* 小圆点装饰 */
+.deco-dot {
+  width: 6rpx;
+  height: 6rpx;
+  border-radius: 50%;
+  background: $text-muted;
+  display: inline-block;
+}
+
+/* 引号装饰 */
+.quote-mark {
+  font-size: 72rpx;
+  line-height: 1;
+  color: $border-color;
+  font-family: Georgia, serif;
+}
+
+/* 囍字水印 */
+.xi-watermark {
+  font-size: 400rpx;
+  color: rgba(255,255,255,0.03);
+  position: absolute;
+  font-weight: 900;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ========== 动效类扩展 ========== */
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+.animate-pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
+.animate-bounce-in {
+  animation: bounceIn 0.8s $ease-out-back forwards;
+}
+.animate-reveal-up {
+  animation: revealUp 0.8s $ease-out forwards;
+}
+.animate-draw-line {
+  animation: drawLine 0.6s $ease-out forwards;
+  transform-origin: left center;
+}
+.animate-spin-in {
+  animation: spinIn 0.7s $ease-out-back forwards;
+}
+
+/* 依次错位入场（最多16个） */
+@for $i from 1 through 16 {
+  .stagger-#{$i} {
+    animation: staggerFade 0.5s $ease-out #{$i * 0.08}s both;
+  }
 }
 </style>

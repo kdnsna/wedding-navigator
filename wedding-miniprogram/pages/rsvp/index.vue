@@ -1,196 +1,263 @@
 <template>
   <view class="page">
-    <!-- 头部 -->
-    <view class="rsvp-header">
-      <text class="header-tag">RSVP</text>
-      <text class="header-title">出席回执</text>
-      <text class="header-sub">{{ coupleName }}</text>
-      <text class="header-date">{{ formatDate(weddingDate) }} {{ weddingTime || '12:00' }}</text>
-      <text class="header-venue">{{ venueName }}</text>
+    <!-- 顶部标题 -->
+    <view class="page-header" v-if="!submitted">
+      <text class="page-tag">RSVP</text>
+      <text class="page-title">确认出席</text>
+      <view class="page-divider" />
+      <text class="page-desc">请告诉我们是否能见证这美好时刻</text>
     </view>
 
     <!-- 表单 -->
-    <view class="rsvp-form" v-if="!submitted">
-      <view class="form-section">
-        <text class="section-label">是否出席</text>
-        <view class="attend-options">
-          <view
-            class="attend-option"
-            :class="{ active: form.attending }"
-            @click="form.attending = true"
-          >
-            <text class="option-text">出席</text>
-          </view>
-          <view
-            class="attend-option"
-            :class="{ active: !form.attending }"
-            @click="form.attending = false"
-          >
-            <text class="option-text">无法出席</text>
-          </view>
+    <view class="form" v-if="!submitted">
+      <!-- 姓名 -->
+      <view class="form-group">
+        <view class="form-label">
+          <text class="label-text">姓名</text>
+          <text class="label-en">NAME</text>
         </view>
-      </view>
-
-      <view class="form-section" v-if="form.attending">
-        <text class="section-label">出席人数</text>
-        <view class="count-stepper">
-          <button class="stepper-btn" @click="decrement">−</button>
-          <text class="stepper-value">{{ form.count }}</text>
-          <button class="stepper-btn" @click="increment">+</button>
-        </view>
-      </view>
-
-      <view class="form-section">
-        <text class="section-label">您的姓名</text>
         <input
           class="form-input"
           v-model="form.name"
-          placeholder="请输入姓名"
-          placeholder-class="input-placeholder"
+          placeholder="您的称呼"
+          placeholder-class="placeholder"
         />
       </view>
 
-      <view class="form-section">
-        <text class="section-label">联系电话</text>
+      <!-- 出席状态 -->
+      <view class="form-group">
+        <view class="form-label">
+          <text class="label-text">能否出席</text>
+          <text class="label-en">ATTENDANCE</text>
+        </view>
+        <view class="radio-group">
+          <view
+            class="radio-item"
+            :class="{ active: form.status === 'attending' }"
+            @click="form.status = 'attending'"
+          >
+            <view class="radio-dot" />
+            <text class="radio-label">我会出席</text>
+          </view>
+          <view
+            class="radio-item"
+            :class="{ active: form.status === 'uncertain' }"
+            @click="form.status = 'uncertain'"
+          >
+            <view class="radio-dot" />
+            <text class="radio-label">不确定</text>
+          </view>
+          <view
+            class="radio-item"
+            :class="{ active: form.status === 'declined' }"
+            @click="form.status = 'declined'"
+          >
+            <view class="radio-dot" />
+            <text class="radio-label">无法出席</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 出席人数 -->
+      <view class="form-group" v-if="form.status === 'attending' || form.status === 'uncertain'">
+        <view class="form-label">
+          <text class="label-text">出席人数</text>
+          <text class="label-en">GUESTS</text>
+        </view>
+        <view class="stepper">
+          <view class="step-btn" @click="form.guestCount = Math.max(1, form.guestCount - 1)">
+            <text class="step-icon">−</text>
+          </view>
+          <text class="step-value">{{ form.guestCount }}</text>
+          <view class="step-btn" @click="form.guestCount++">
+            <text class="step-icon">+</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 联系电话 -->
+      <view class="form-group" v-if="form.status !== 'declined'">
+        <view class="form-label">
+          <text class="label-text">联系电话</text>
+          <text class="label-en">PHONE</text>
+        </view>
         <input
           class="form-input"
           v-model="form.phone"
           type="number"
-          maxlength="11"
-          placeholder="请输入手机号"
-          placeholder-class="input-placeholder"
+          placeholder="用于接收通知"
+          placeholder-class="placeholder"
         />
       </view>
 
-      <view class="form-section" v-if="form.attending">
-        <text class="section-label">饮食偏好</text>
-        <view class="diet-options">
+      <!-- 饮食偏好 -->
+      <view class="form-group" v-if="form.status !== 'declined'">
+        <view class="form-label">
+          <text class="label-text">饮食偏好</text>
+          <text class="label-en">DIETARY</text>
+        </view>
+        <view class="tag-group">
           <view
-            class="diet-option"
-            v-for="opt in dietOptions"
-            :key="opt.value"
-            :class="{ active: form.diet === opt.value }"
-            @click="form.diet = opt.value"
+            class="tag-item"
+            v-for="diet in dietOptions"
+            :key="diet"
+            :class="{ active: form.dietary.includes(diet) }"
+            @click="toggleDiet(diet)"
           >
-            {{ opt.label }}
+            <text>{{ diet }}</text>
           </view>
         </view>
       </view>
 
-      <view class="form-section">
-        <text class="section-label">备注</text>
+      <!-- 留言 -->
+      <view class="form-group">
+        <view class="form-label">
+          <text class="label-text">留言</text>
+          <text class="label-en">MESSAGE</text>
+        </view>
         <textarea
           class="form-textarea"
-          v-model="form.notes"
-          placeholder="如有其他需求请在此留言"
-          placeholder-class="input-placeholder"
+          v-model="form.message"
+          placeholder="写一句祝福给我们吧"
+          placeholder-class="placeholder"
+          maxlength="200"
         />
+        <text class="char-count">{{ (form.message || '').length }}/200</text>
       </view>
 
+      <!-- 提交 -->
       <view class="form-actions">
-        <button class="submit-btn" @click="handleSubmit">提交回执</button>
+        <button class="submit-btn" @click="handleSubmit" :disabled="submitting">
+          <text v-if="!submitting">确认提交</text>
+          <text v-else>提交中...</text>
+        </button>
       </view>
     </view>
 
-    <!-- 提交成功 -->
-    <view class="success-view" v-else>
-      <view class="success-mark">✓</view>
-      <text class="success-title">已收到您的回执</text>
-      <text class="success-desc">期待与您相见</text>
-      <view class="success-info">
-        <text class="info-line">{{ formatDate(weddingDate) }} {{ weddingTime || '12:00' }}</text>
-        <text class="info-line">{{ venueName }}</text>
+    <!-- 成功页 -->
+    <view class="success-page" v-else>
+      <view class="success-ring">
+        <view class="success-circle">
+          <text class="success-icon">✓</text>
+        </view>
       </view>
-      <view class="success-actions">
-        <button class="action-btn primary" @click="openNavigation">查看路线</button>
-        <button class="action-btn" @click="callPhone">联系新人</button>
+      <text class="success-title">感谢回复</text>
+      <text class="success-desc" v-if="form.status === 'attending'">
+        期待在婚礼当天与您相见
+      </text>
+      <text class="success-desc" v-else-if="form.status === 'declined'">
+        很遗憾无法邀请您出席，但您的祝福我们已收到
+      </text>
+      <text class="success-desc" v-else>
+        有任何变动请随时联系我们
+      </text>
+      <view class="success-card">
+        <view class="success-info">
+          <text class="info-label">回复人</text>
+          <text class="info-value">{{ form.name || '匿名' }}</text>
+        </view>
+        <view class="success-divider" />
+        <view class="success-info">
+          <text class="info-label">出席状态</text>
+          <text class="info-value">{{ statusText[form.status] }}</text>
+        </view>
+        <view class="success-divider" v-if="form.status !== 'declined'" />
+        <view class="success-info" v-if="form.status !== 'declined'">
+          <text class="info-label">出席人数</text>
+          <text class="info-value">{{ form.guestCount }} 人</text>
+        </view>
       </view>
+      <button class="back-btn" @click="resetForm">
+        <text>返回首页</text>
+      </button>
     </view>
   </view>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, reactive } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { submitRSVP } from '@/composables/useCloud.js'
-import { formatDate, showSuccess, showError } from '@/utils/index.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
 
 const submitted = ref(false)
-const weddingId = ref('')
+const submitting = ref(false)
 
-const form = ref({
-  attending: true,
-  count: 1,
+const form = reactive({
   name: '',
+  status: 'attending',
+  guestCount: 1,
   phone: '',
-  diet: 'normal',
-  notes: ''
+  dietary: [],
+  message: ''
 })
 
-const coupleName = computed(() => store.coupleName)
-const weddingDate = computed(() => store.weddingDate)
-const weddingTime = computed(() => store.weddingTime)
-const venueName = computed(() => store.venueName)
+const dietOptions = ['无特殊要求', '素食', '清真', '海鲜过敏', '不吃辣']
+const statusText = {
+  attending: '确认出席',
+  uncertain: '待定',
+  declined: '无法出席'
+}
 
-const dietOptions = [
-  { label: '普通', value: 'normal' },
-  { label: '素食', value: 'vegetarian' },
-  { label: '清真', value: 'halal' },
-  { label: '其他', value: 'other' }
-]
-
-function increment() { if (form.value.count < 20) form.value.count++ }
-function decrement() { if (form.value.count > 1) form.value.count-- }
+function toggleDiet(diet) {
+  const idx = form.dietary.indexOf(diet)
+  if (idx > -1) {
+    form.dietary.splice(idx, 1)
+  } else {
+    form.dietary.push(diet)
+  }
+}
 
 async function handleSubmit() {
-  if (!form.value.name.trim()) { showError('请输入您的姓名'); return }
-  if (!form.value.phone.trim() || form.value.phone.length !== 11) {
-    showError('请输入正确的手机号'); return
+  if (!form.name.trim()) {
+    uni.showToast({ title: '请输入姓名', icon: 'none' })
+    return
+  }
+  if (form.status !== 'declined' && !form.phone.trim()) {
+    uni.showToast({ title: '请输入联系电话', icon: 'none' })
+    return
   }
 
+  submitting.value = true
   try {
-    uni.showLoading({ title: '提交中...', mask: true })
-    await submitRSVP(weddingId.value, {
-      name: form.value.name,
-      phone: form.value.phone,
-      rsvp_status: form.value.attending ? 'attending' : 'declined',
-      attending_count: form.value.attending ? form.value.count : 0,
-      diet_preference: form.value.attending ? form.value.diet : 'normal',
-      diet_notes: form.value.notes
+    await submitRSVP(userStore.weddingId, {
+      ...form,
+      openid: userStore.openid,
+      dietary: form.dietary.join('、')
     })
     submitted.value = true
-    showSuccess('提交成功')
   } catch (err) {
-    showError(err.message || '提交失败')
+    uni.showToast({ title: '提交失败，请重试', icon: 'none' })
   } finally {
-    uni.hideLoading()
+    submitting.value = false
   }
 }
 
-function openNavigation() {
-  const venue = store.venues?.venues?.[0]
-  if (venue?.coordinate) {
-    uni.openLocation({
-      latitude: venue.coordinate.latitude,
-      longitude: venue.coordinate.longitude,
-      name: venue.name,
-      address: venue.address
-    })
+function resetForm() {
+  submitted.value = false
+  form.name = ''
+  form.status = 'attending'
+  form.guestCount = 1
+  form.phone = ''
+  form.dietary = []
+  form.message = ''
+  uni.navigateBack()
+}
+
+onLoad(() => {
+  const rsvp = userStore.rsvpData
+  if (rsvp) {
+    form.name = rsvp.name || ''
+    form.status = rsvp.status || 'attending'
+    form.guestCount = rsvp.guest_count || 1
+    form.phone = rsvp.phone || ''
+    form.dietary = rsvp.dietary ? rsvp.dietary.split('、') : []
+    form.message = rsvp.message || ''
   }
-}
-
-function callPhone() {
-  const phone = store.invitation?.couple?.groom?.phone
-  if (phone) { uni.makePhoneCall({ phoneNumber: phone }) }
-}
-
-onLoad((options) => {
-  weddingId.value = options?.id || userStore.weddingId
 })
 </script>
 
@@ -198,178 +265,204 @@ onLoad((options) => {
 .page {
   background-color: $bg-color;
   min-height: 100vh;
-  padding-bottom: 60rpx;
+  padding-bottom: 80rpx;
 }
 
-/* 头部 */
-.rsvp-header {
-  padding: 60rpx 48rpx 48rpx;
+/* 顶部标题 */
+.page-header {
+  padding: 60rpx 48rpx 36rpx;
 }
-.header-tag {
+.page-tag {
   display: block;
   font-size: 22rpx;
   color: $text-muted;
   letter-spacing: 6rpx;
   margin-bottom: 12rpx;
 }
-.header-title {
+.page-title {
   display: block;
   font-size: $font-h1;
   font-weight: 600;
   color: $text-primary;
-  margin-bottom: 24rpx;
+  margin-bottom: 16rpx;
 }
-.header-sub {
-  display: block;
-  font-size: $font-h3;
-  color: $text-primary;
-  font-weight: 500;
-  margin-bottom: 8rpx;
+.page-divider {
+  width: 32rpx;
+  height: 2rpx;
+  background: $text-muted;
+  margin-bottom: 16rpx;
 }
-.header-date {
-  display: block;
-  font-size: $font-body;
-  color: $text-secondary;
-  margin-bottom: 4rpx;
-}
-.header-venue {
+.page-desc {
   display: block;
   font-size: $font-body;
   color: $text-secondary;
 }
 
 /* 表单 */
-.rsvp-form {
+.form {
   padding: 0 48rpx;
 }
-.form-section {
+.form-group {
   margin-bottom: 48rpx;
 }
-.section-label {
-  display: block;
-  font-size: 26rpx;
+.form-label {
+  display: flex;
+  align-items: baseline;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+}
+.label-text {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: $text-primary;
+}
+.label-en {
+  font-size: 20rpx;
   color: $text-muted;
-  margin-bottom: 20rpx;
-  letter-spacing: 2rpx;
+  letter-spacing: 3rpx;
 }
 
-/* 出席选项 */
-.attend-options {
+.form-input {
+  height: 96rpx;
+  font-size: 30rpx;
+  color: $text-primary;
+  border-bottom: 2rpx solid $border-color;
+  padding: 0;
+  transition: border-color 0.3s ease;
+}
+.form-input:focus {
+  border-color: $text-primary;
+}
+.placeholder {
+  color: $text-placeholder;
+  font-size: 30rpx;
+}
+
+/* 单选 */
+.radio-group {
   display: flex;
   gap: 16rpx;
 }
-.attend-option {
+.radio-item {
   flex: 1;
-  text-align: center;
-  padding: 28rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+  padding: 28rpx 16rpx;
   border-radius: $radius-lg;
   border: 2rpx solid $border-color;
-  background: $bg-color;
-  transition: all 0.2s ease;
+  background: $bg-surface;
+  transition: all 0.25s ease;
 }
-.attend-option.active {
-  background: $text-primary;
-  border-color: $text-primary;
-}
-.attend-option.active .option-text {
-  color: $text-inverse;
-}
-.attend-option:active {
+.radio-item:active {
   transform: scale(0.98);
 }
-.option-text {
-  font-size: 28rpx;
+.radio-item.active {
+  border-color: $text-primary;
+  background: $text-primary;
+}
+.radio-dot {
+  width: 24rpx;
+  height: 24rpx;
+  border-radius: 50%;
+  border: 2rpx solid $border-color;
+  position: relative;
+  transition: all 0.25s ease;
+}
+.radio-item.active .radio-dot {
+  border-color: #fff;
+  background: #fff;
+}
+.radio-label {
+  font-size: 26rpx;
   color: $text-primary;
-  font-weight: 500;
+  transition: color 0.25s ease;
+}
+.radio-item.active .radio-label {
+  color: #fff;
 }
 
 /* 步进器 */
-.count-stepper {
+.stepper {
   display: flex;
   align-items: center;
-  gap: 48rpx;
+  gap: 32rpx;
 }
-.stepper-btn {
-  width: 64rpx;
-  height: 64rpx;
-  line-height: 64rpx;
-  text-align: center;
+.step-btn {
+  width: 72rpx;
+  height: 72rpx;
   border-radius: 50%;
-  background: $bg-muted;
-  font-size: 32rpx;
-  color: $text-primary;
-  font-weight: 500;
+  border: 2rpx solid $border-color;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: all 0.2s ease;
 }
-.stepper-btn::after { border: none; }
-.stepper-btn:active { background: $border-color; transform: scale(0.92); }
-.stepper-value {
-  font-size: 44rpx;
+.step-btn:active {
+  background: $bg-muted;
+  transform: scale(0.95);
+}
+.step-icon {
+  font-size: 32rpx;
+  color: $text-primary;
+  font-weight: 300;
+}
+.step-value {
+  font-size: 36rpx;
   font-weight: 600;
   color: $text-primary;
-  min-width: 60rpx;
+  min-width: 48rpx;
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
 
-/* 输入框 */
-.form-input {
-  width: 100%;
-  height: 96rpx;
-  padding: 0 4rpx;
-  border-bottom: 2rpx solid $border-color;
-  font-size: 32rpx;
-  background: transparent;
-  box-sizing: border-box;
-  transition: border-color 0.2s ease;
-}
-.form-input:focus {
-  border-bottom-color: $text-primary;
-}
-.input-placeholder {
-  color: $text-muted;
-  font-size: 28rpx;
-}
-.form-textarea {
-  width: 100%;
-  height: 160rpx;
-  padding: 24rpx 4rpx;
-  border-bottom: 2rpx solid $border-color;
-  font-size: 28rpx;
-  background: transparent;
-  box-sizing: border-box;
-}
-
-/* 饮食选项 */
-.diet-options {
+/* 标签选择 */
+.tag-group {
   display: flex;
   flex-wrap: wrap;
   gap: 16rpx;
 }
-.diet-option {
-  padding: 20rpx 36rpx;
-  border: 2rpx solid $border-color;
+.tag-item {
+  padding: 14rpx 28rpx;
   border-radius: $radius-full;
+  border: 2rpx solid $border-color;
   font-size: 26rpx;
   color: $text-primary;
-  background: $bg-color;
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
 }
-.diet-option.active {
+.tag-item:active {
+  transform: scale(0.95);
+}
+.tag-item.active {
   background: $text-primary;
+  color: #fff;
   border-color: $text-primary;
-  color: $text-inverse;
-}
-.diet-option:active {
-  transform: scale(0.96);
 }
 
-/* 提交 */
+/* 文本域 */
+.form-textarea {
+  width: 100%;
+  height: 200rpx;
+  font-size: 30rpx;
+  color: $text-primary;
+  border-bottom: 2rpx solid $border-color;
+  padding: 16rpx 0;
+  line-height: 1.6;
+}
+.char-count {
+  display: block;
+  text-align: right;
+  font-size: 22rpx;
+  color: $text-muted;
+  margin-top: 8rpx;
+}
+
+/* 提交按钮 */
 .form-actions {
-  margin-top: 64rpx;
+  padding-top: 24rpx;
 }
 .submit-btn {
-  width: 100%;
   height: 96rpx;
   line-height: 96rpx;
   text-align: center;
@@ -378,71 +471,130 @@ onLoad((options) => {
   color: #fff;
   font-size: 30rpx;
   font-weight: 500;
-  transition: opacity 0.2s ease;
+  transition: all 0.2s ease;
+  box-shadow: 0 8rpx 24rpx rgba(0,0,0,0.12);
 }
 .submit-btn::after { border: none; }
-.submit-btn:active { opacity: 0.8; }
-
-/* 成功 */
-.success-view {
-  text-align: center;
-  padding: 120rpx 48rpx;
+.submit-btn:active {
+  transform: scale(0.97);
+  box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.1);
 }
-.success-mark {
-  width: 96rpx;
-  height: 96rpx;
-  line-height: 96rpx;
-  text-align: center;
+.submit-btn[disabled] {
+  opacity: 0.5;
+}
+
+/* ========== 成功页 ========== */
+.success-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 80rpx 48rpx;
+  min-height: 100vh;
+}
+
+.success-ring {
+  position: relative;
+  width: 160rpx;
+  height: 160rpx;
+  margin-bottom: 48rpx;
+}
+.success-ring::before {
+  content: '';
+  position: absolute;
+  top: -8rpx;
+  left: -8rpx;
+  right: -8rpx;
+  bottom: -8rpx;
+  border-radius: 50%;
+  border: 2rpx solid $color-success;
+  opacity: 0.3;
+  animation: scale-fade 2s ease-out infinite;
+}
+@keyframes scale-fade {
+  0% { transform: scale(1); opacity: 0.3; }
+  100% { transform: scale(1.3); opacity: 0; }
+}
+
+.success-circle {
+  width: 160rpx;
+  height: 160rpx;
   border-radius: 50%;
   background: $color-success;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+  animation: bounceIn 0.8s $ease-out-back both;
+}
+.success-icon {
+  font-size: 72rpx;
   color: #fff;
-  font-size: 44rpx;
-  font-weight: 600;
-  margin: 0 auto 40rpx;
-}
-.success-title {
-  display: block;
-  font-size: $font-h1;
-  font-weight: 600;
-  color: $text-primary;
-  margin-bottom: 12rpx;
-}
-.success-desc {
-  display: block;
-  font-size: $font-body;
-  color: $text-secondary;
-  margin-bottom: 48rpx;
-}
-.success-info {
-  margin-bottom: 48rpx;
-}
-.info-line {
-  display: block;
-  font-size: 26rpx;
-  color: $text-muted;
-  margin-bottom: 8rpx;
+  font-weight: 700;
 }
 
-.success-actions {
-  display: flex;
-  gap: 20rpx;
+.success-title {
+  font-size: 44rpx;
+  font-weight: 600;
+  color: $text-primary;
+  margin-bottom: 16rpx;
+  letter-spacing: 4rpx;
+  animation: fadeInUp 0.6s $ease-out 0.3s both;
 }
-.success-actions .action-btn {
-  flex: 1;
-  height: 88rpx;
-  line-height: 88rpx;
+.success-desc {
+  font-size: 26rpx;
+  color: $text-secondary;
+  margin-bottom: 48rpx;
   text-align: center;
-  border-radius: $radius-full;
-  background: $bg-muted;
+  animation: fadeInUp 0.6s $ease-out 0.45s both;
+}
+
+.success-card {
+  width: 100%;
+  max-width: 560rpx;
+  background: $bg-surface;
+  border-radius: $radius-lg;
+  border: 1rpx solid $border-color;
+  padding: 32rpx;
+  margin-bottom: 48rpx;
+  animation: fadeInUp 0.6s $ease-out 0.6s both;
+}
+.success-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16rpx 0;
+}
+.info-label {
+  font-size: 24rpx;
+  color: $text-muted;
+}
+.info-value {
   font-size: 28rpx;
   color: $text-primary;
   font-weight: 500;
-  transition: opacity 0.2s ease;
 }
-.success-actions .action-btn::after { border: none; }
-.success-actions .action-btn:active { opacity: 0.7; }
-.success-actions .action-btn.primary {
-  background: $text-primary;
-  color: #fff;
+.success-divider {
+  height: 1rpx;
+  background: $border-color;
+}
+
+.back-btn {
+  width: 280rpx;
+  height: 80rpx;
+  line-height: 80rpx;
+  text-align: center;
+  border-radius: $radius-full;
+  border: 2rpx solid $border-color;
+  background: transparent;
+  color: $text-primary;
+  font-size: 28rpx;
+  transition: all 0.2s ease;
+  animation: fadeInUp 0.6s $ease-out 0.75s both;
+}
+.back-btn::after { border: none; }
+.back-btn:active {
+  background: $bg-muted;
+  transform: scale(0.97);
 }
 </style>
