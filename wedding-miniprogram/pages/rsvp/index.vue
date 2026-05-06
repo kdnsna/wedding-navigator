@@ -245,7 +245,7 @@ function resetForm() {
   form.phone = ''
   form.dietary = []
   form.message = ''
-  uni.navigateBack()
+  uni.reLaunch({ url: '/pages/index/index' })
 }
 
 onLoad(() => {

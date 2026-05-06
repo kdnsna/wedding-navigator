@@ -194,7 +194,7 @@ const invitationText = computed(() => {
 })
 
 function updateCountdown() {
-  const cd = store.countdown
+  const cd = store.getLiveCountdown(Date.now())
   if (!cd) return
   countdown.value = {
     days: String(cd.days).padStart(2, '0'),
@@ -247,6 +247,7 @@ onLoad(async (options) => {
       countdownTimer = setInterval(updateCountdown, 1000)
     } catch (err) {
       console.warn('加载婚礼数据失败，已使用本地默认数据:', err)
+      uni.showToast({ title: '加载数据失败，请检查网络', icon: 'none', duration: 3000 })
     }
   }
 })

@@ -84,6 +84,26 @@ export const useWeddingStore = defineStore('wedding', () => {
     }
   })
 
+  // 实时倒计时（传入当前时间戳以触发响应式更新）
+  function getLiveCountdown(timestamp = Date.now()) {
+    if (!weddingDate.value) return null
+    const time = weddingTime.value || '00:00:00'
+    const normalizedTime = time.length === 5 ? `${time}:00` : time
+    const date = new Date(`${weddingDate.value}T${normalizedTime}`)
+    const now = new Date(timestamp)
+    const diff = date - now
+
+    if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0, isToday: true }
+
+    return {
+      days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+      hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+      minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
+      seconds: Math.floor((diff % (1000 * 60)) / 1000),
+      isToday: false
+    }
+  }
+
   const rsvpStats = computed(() => {
     const list = guests.value?.guests || []
     return {
@@ -192,6 +212,7 @@ export const useWeddingStore = defineStore('wedding', () => {
     weddingTime,
     venueName,
     countdown,
+    getLiveCountdown,
     rsvpStats,
     setWeddingData,
     updateWeddingField,

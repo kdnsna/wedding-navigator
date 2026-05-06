@@ -202,8 +202,15 @@ async function createWedding() {
     weddings[weddingId] = weddingData
     uni.setStorageSync('weddings', weddings)
     uni.setStorageSync(`invitation_${weddingId}`, invitationData)
-    weddingStore.setWedding(weddingData)
-    weddingStore.setInvitation(invitationData)
+    weddingStore.setWeddingData({
+      wedding: weddingData,
+      invitation: invitationData,
+      album: { photos: [] },
+      venues: { venues: [] },
+      timeline: null,
+      guests: null,
+      blessings: null
+    })
     userStore.setWeddingId(weddingId)
     userStore.verifyOwner(true)
     showSuccess('婚礼创建成功')
