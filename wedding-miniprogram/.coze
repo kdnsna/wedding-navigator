@@ -1,11 +1,8 @@
 [project]
 sub_id = "4267f09d"
-name = "wedding-navigator"
+name = "wedding-miniprogram"
 requires = ["nodejs-24"]
 project_type = ""
 
 [preview]
 preview_enable = "disabled"
-
-[subprojects]
-path = ["wedding-miniprogram"]
