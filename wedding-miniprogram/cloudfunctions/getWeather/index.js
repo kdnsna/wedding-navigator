@@ -1,7 +1,26 @@
 const cloud = require('wx-server-sdk')
+const https = require('https')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
 const db = cloud.database()
+
+function requestWeather(key, lon, lat) {
+  const url = `https://devapi.qweather.com/v7/weather/3d?key=${encodeURIComponent(key)}&location=${encodeURIComponent(`${lon},${lat}`)}`
+
+  return new Promise((resolve, reject) => {
+    https.get(url, (res) => {
+      let body = ''
+      res.on('data', chunk => { body += chunk })
+      res.on('end', () => {
+        try {
+          resolve(JSON.parse(body))
+        } catch (err) {
+          reject(err)
+        }
+      })
+    }).on('error', reject)
+  })
+}
 
 exports.main = async (event, context) => {
   const { weddingId } = event
@@ -11,32 +30,23 @@ exports.main = async (event, context) => {
   }
 
   try {
-    // 获取婚礼场地坐标
-    const wedding = await db.collection('weddings').doc(weddingId).field({
-      venue: true,
-      wedding_date: true
-    }).get()
+    const [wedding, venuesRes] = await Promise.all([
+      db.collection('weddings').doc(weddingId).get(),
+      db.collection('venues').doc(weddingId).get().catch(() => ({ data: null }))
+    ])
 
-    const venue = wedding.data?.venue
-    if (!venue?.latitude || !venue?.longitude) {
+    const venues = venuesRes.data?.venues || []
+    const venue = venues.find(item => item.coordinate?.latitude && item.coordinate?.longitude)
+
+    if (!venue?.coordinate?.latitude || !venue?.coordinate?.longitude) {
       return { success: false, message: '场地缺少经纬度坐标' }
     }
 
-    // 调高德/腾讯天气 API（生产环境建议配置自己的 Key）
-    // 这里用和风天气免费接口作为示例
     const WEATHER_KEY = 'YOUR_HEFENG_KEY' // 需要用户自行申请
-    const lat = venue.latitude
-    const lon = venue.longitude
+    const lat = venue.coordinate.latitude
+    const lon = venue.coordinate.longitude
+    const weddingDate = wedding.data?.basic_info?.date || wedding.data?.wedding_date || ''
 
-    // 调用和风天气 API
-    const res = await cloud.cloudFunction.invoke('https://devapi.qweather.com/v7/weather/3d', {
-      query: {
-        key: WEATHER_KEY,
-        location: `${lon},${lat}`
-      }
-    })
-
-    // 如果用户未配置 Key，返回模拟数据（婚礼前记得替换）
     if (!WEATHER_KEY || WEATHER_KEY === 'YOUR_HEFENG_KEY') {
       return {
         success: true,
@@ -49,13 +59,14 @@ exports.main = async (event, context) => {
           humidity: '65%',
           precip: '0%',
           icon: 'sunny',
-          date: wedding.data.wedding_date,
+          date: weddingDate,
           tips: '请配置天气 API Key 以获取真实天气'
         }
       }
     }
 
-    const daily = res.data?.daily?.[0]
+    const res = await requestWeather(WEATHER_KEY, lon, lat)
+    const daily = res.daily?.[0]
     if (!daily) {
       return { success: false, message: '天气数据获取失败' }
     }
@@ -90,7 +101,7 @@ exports.main = async (event, context) => {
         precip: daily.precip,
         sunrise: daily.sunrise,
         sunset: daily.sunset,
-        date: wedding.data.wedding_date,
+        date: weddingDate,
         tips
       }
     }

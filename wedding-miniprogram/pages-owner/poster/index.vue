@@ -11,11 +11,14 @@
     <!-- 海报预览 -->
     <view class="poster-preview">
       <view class="poster-container">
-        <poster-drawer
-          ref="posterRef"
-          :qrCodePath="qrCodePath"
-          @ready="onPosterReady"
-        />
+        <view class="poster-wrapper">
+          <canvas
+            canvas-id="posterCanvas"
+            id="posterCanvas"
+            class="poster-canvas"
+            :style="{ width: canvasStyle.width, height: canvasStyle.height }"
+          />
+        </view>
       </view>
     </view>
 
@@ -34,7 +37,7 @@
     <!-- 说明 -->
     <view class="tips">
       <view class="tip-header">
-        <text class="tip-icon">💡</text>
+        <image class="tip-icon" src="/static/visuals/icon-tip.png" mode="aspectFit" />
         <text class="tip-title">使用说明</text>
       </view>
       <view class="tip-item">1. 保存海报到手机相册</view>
@@ -56,18 +59,18 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, nextTick, getCurrentInstance } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
 import { generatePoster } from '@/composables/useCloud.js'
 import { showSuccess, showError } from '@/utils/index.js'
-import PosterDrawer from '@/components/poster-drawer/poster-drawer.vue'
+import { drawWeddingPoster, POSTER_CANVAS_STYLE } from '@/utils/posterCanvas.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
-const posterRef = ref(null)
+const instance = getCurrentInstance()
 
 const qrCodePath = ref('')
 const posterReady = ref(false)
@@ -75,6 +78,7 @@ const loading = ref(false)
 const loadingText = ref('生成中...')
 const generating = ref(false)
 const saving = ref(false)
+const canvasStyle = POSTER_CANVAS_STYLE
 
 async function generateQRCode() {
   generating.value = true
@@ -109,14 +113,22 @@ function onPosterReady() {
   posterReady.value = true
 }
 
+async function redrawPoster() {
+  try {
+    await nextTick()
+    await new Promise(r => setTimeout(r, 300))
+    await drawWeddingPoster({ instance, store, qrCodePath: qrCodePath.value })
+    onPosterReady()
+  } catch (err) {
+    console.error('poster draw fail:', err)
+    showError('海报绘制失败')
+  }
+}
+
 async function regenerate() {
   posterReady.value = false
   await generateQRCode()
-  if (qrCodePath.value) {
-    await new Promise(r => setTimeout(r, 500))
-    posterRef.value?.redraw()
-    posterReady.value = true
-  }
+  await redrawPoster()
 }
 
 async function saveToAlbum() {
@@ -166,6 +178,7 @@ async function saveToAlbum() {
 onLoad(async () => {
   if (!useOwnerGuard()) return
   await generateQRCode()
+  await redrawPoster()
 })
 </script>
 
@@ -218,6 +231,15 @@ onLoad(async () => {
   overflow: hidden;
   box-shadow: 0 24rpx 80rpx rgba(0, 0, 0, 0.18);
 }
+.poster-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.poster-canvas {
+  border-radius: 16rpx;
+  box-shadow: 0 16rpx 48rpx rgba(0, 0, 0, 0.25);
+}
 
 .actions {
   display: flex;
@@ -261,7 +283,10 @@ onLoad(async () => {
   gap: 8rpx;
   margin-bottom: 16rpx;
 }
-.tip-icon { font-size: 24rpx; }
+.tip-icon {
+  width: 30rpx;
+  height: 30rpx;
+}
 .tip-title {
   font-size: 26rpx;
   font-weight: 500;

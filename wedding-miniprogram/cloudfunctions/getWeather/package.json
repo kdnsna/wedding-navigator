@@ -2,5 +2,8 @@
   "name": "getWeather",
   "version": "1.0.0",
   "description": "获取婚礼当天天气预报",
-  "main": "index.js"
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
 }

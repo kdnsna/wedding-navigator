@@ -4,6 +4,17 @@ import { CLOUD_ENV } from '@/config/cloud.js'
 // 云函数基础配置
 const BASE_URL = `cloud://${CLOUD_ENV}`
 
+// 初始化云开发
+function initCloud() {
+  const options = CLOUD_ENV ? { env: CLOUD_ENV, traceUser: true } : { traceUser: true }
+
+  if (uni.cloud?.init) {
+    uni.cloud.init(options)
+  } else if (typeof wx !== 'undefined' && wx.cloud?.init) {
+    wx.cloud.init(options)
+  }
+}
+
 // 云函数调用封装
 async function callFunction(name, data = {}) {
   return new Promise((resolve, reject) => {
@@ -109,6 +120,7 @@ async function uploadBase64(base64Data, cloudPath) {
 }
 
 export {
+  initCloud,
   callFunction,
   fetchWedding,
   createWedding,

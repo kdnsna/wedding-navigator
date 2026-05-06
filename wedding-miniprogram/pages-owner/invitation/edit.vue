@@ -109,7 +109,11 @@
           :class="{ active: form.bgMusicId === music.id }"
           @click="selectMusic(music)"
         >
-          <text class="music-icon">{{ form.bgMusicId === music.id ? '🔊' : '♪' }}</text>
+          <image
+            class="visual-icon-sm music-icon"
+            :src="form.bgMusicId === music.id ? '/static/visuals/icon-speaker.png' : '/static/visuals/icon-music.png'"
+            mode="aspectFit"
+          />
           <text class="music-name">{{ music.name }}</text>
         </view>
       </view>
@@ -433,7 +437,10 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
 }
 .music-item.active .music-name { color: #fff; }
 .music-item:active { transform: scale(0.98); }
-.music-icon { font-size: 28rpx; }
+.music-icon {
+  width: 40rpx;
+  height: 40rpx;
+}
 .music-name {
   font-size: 28rpx;
   color: $text-primary;

@@ -78,6 +78,13 @@ page {
   flex-shrink: 0;
 }
 
+.visual-icon-xs {
+  width: 28rpx;
+  height: 28rpx;
+  display: block;
+  flex-shrink: 0;
+}
+
 .empty-visual {
   width: 220rpx;
   height: 220rpx;

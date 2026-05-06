@@ -13,19 +13,21 @@
     <!-- 海报预览 -->
     <view class="poster-preview">
       <view class="poster-container">
-        <poster-drawer
-          ref="posterRef"
-          :qrCodePath="qrCodePath"
-          @ready="onPosterReady"
-          @fail="onPosterFail"
-        />
+        <view class="poster-wrapper">
+          <canvas
+            canvas-id="posterCanvas"
+            id="posterCanvas"
+            class="poster-canvas"
+            :style="{ width: canvasStyle.width, height: canvasStyle.height }"
+          />
+        </view>
       </view>
     </view>
 
     <!-- 操作按钮 -->
     <view class="actions">
       <button class="action-btn primary" @click="saveToAlbum" :disabled="!posterReady">
-        <text class="action-icon">💾</text>
+        <image class="action-visual-icon" src="/static/visuals/icon-save.png" mode="aspectFit" />
         <text class="action-text">保存到相册</text>
       </button>
       <button class="action-btn" open-type="share" :disabled="!posterReady">
@@ -45,21 +47,22 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, nextTick, getCurrentInstance } from 'vue'
 import { onLoad, onShareAppMessage } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
-import { generatePoster, uploadFile } from '@/composables/useCloud.js'
-import PosterDrawer from '@/components/poster-drawer/poster-drawer.vue'
+import { generatePoster } from '@/composables/useCloud.js'
+import { drawWeddingPoster, POSTER_CANVAS_STYLE } from '@/utils/posterCanvas.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
-const posterRef = ref(null)
+const instance = getCurrentInstance()
 
 const qrCodePath = ref('')
 const posterReady = ref(false)
 const loading = ref(false)
 const loadingText = ref('生成海报中...')
+const canvasStyle = POSTER_CANVAS_STYLE
 
 async function generateQRCode() {
   loading.value = true
@@ -98,6 +101,17 @@ function onPosterFail(err) {
   console.error('poster draw fail:', err)
   uni.showToast({ title: '海报绘制失败', icon: 'none' })
   loading.value = false
+}
+
+async function redrawPoster() {
+  try {
+    await nextTick()
+    await new Promise(r => setTimeout(r, 300))
+    await drawWeddingPoster({ instance, store, qrCodePath: qrCodePath.value })
+    onPosterReady()
+  } catch (err) {
+    onPosterFail(err)
+  }
 }
 
 async function saveToAlbum() {
@@ -141,7 +155,7 @@ async function saveToAlbum() {
         console.error('canvasToTempFilePath fail:', err)
         uni.showToast({ title: '保存失败', icon: 'none' })
       }
-    }, getApp().$vm[0])
+    }, instance)
   } catch (err) {
     console.error('saveToAlbum error:', err)
     uni.showToast({ title: '保存失败', icon: 'none' })
@@ -171,6 +185,7 @@ onShareAppMessage(() => {
 
 onLoad(async (options) => {
   await generateQRCode()
+  await redrawPoster()
 })
 </script>
 
@@ -231,6 +246,15 @@ onLoad(async (options) => {
   overflow: hidden;
   box-shadow: 0 24rpx 80rpx rgba(0, 0, 0, 0.18);
 }
+.poster-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.poster-canvas {
+  border-radius: 16rpx;
+  box-shadow: 0 16rpx 48rpx rgba(0, 0, 0, 0.25);
+}
 
 .actions {
   display: flex;
@@ -262,6 +286,10 @@ onLoad(async (options) => {
 }
 .action-btn[disabled] { opacity: 0.4; }
 .action-icon { font-size: 32rpx; }
+.action-visual-icon {
+  width: 34rpx;
+  height: 34rpx;
+}
 .action-text { font-weight: 500; }
 
 /* 加载遮罩 */

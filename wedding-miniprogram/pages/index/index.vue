@@ -167,7 +167,12 @@
 
     <!-- 背景音乐控制 -->
     <view class="music-control" v-if="bgMusicEnabled" @click="toggleMusic">
-      <text class="music-icon" :class="{ playing: isMusicPlaying }">♪</text>
+      <image
+        class="music-icon"
+        :class="{ playing: isMusicPlaying }"
+        :src="isMusicPlaying ? '/static/visuals/icon-speaker.png' : '/static/visuals/icon-music.png'"
+        mode="aspectFit"
+      />
     </view>
   </view>
 </template>
@@ -827,15 +832,15 @@ onUnmounted(() => {
 }
 .music-control:active { transform: scale(0.92); }
 .music-icon {
-  font-size: 32rpx;
-  color: $text-primary;
+  width: 46rpx;
+  height: 46rpx;
   transition: transform 0.3s ease;
 }
 .music-icon.playing {
-  animation: musicRotate 4s linear infinite;
+  animation: musicPulse 2.4s ease-in-out infinite;
 }
-@keyframes musicRotate {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+@keyframes musicPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
 }
 </style>

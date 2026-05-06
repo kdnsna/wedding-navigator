@@ -28,7 +28,7 @@
     </view>
 
     <view class="empty-state" v-if="venues.length === 0">
-      <text class="empty-visual">📍</text>
+      <image class="empty-visual" src="/static/visuals/empty-venue.png" mode="aspectFit" />
       <text class="empty-text">还没有添加场地</text>
     </view>
 
@@ -74,9 +74,10 @@
             <text class="hotel-tag" v-if="hotel.distance">{{ hotel.distance }}</text>
             <text class="hotel-tag" v-if="hotel.price_range">{{ hotel.price_range }}</text>
           </view>
-          <text class="hotel-phone" v-if="hotel.phone" @click="callHotel(hotel.phone)">
-            📞 {{ hotel.phone }}
-          </text>
+          <view class="hotel-phone" v-if="hotel.phone" @click="callHotel(hotel.phone)">
+            <image class="visual-icon-xs hotel-phone-icon" src="/static/visuals/icon-phone.png" mode="aspectFit" />
+            <text>{{ hotel.phone }}</text>
+          </view>
         </view>
         <view class="hotel-actions">
           <text class="venue-action" @click="editHotel(hotel)">编辑</text>
@@ -86,7 +87,7 @@
     </view>
 
     <view class="empty-state" v-if="accommodations.length === 0">
-      <text class="empty-visual">🏨</text>
+      <image class="empty-visual" src="/static/visuals/empty-hotel.png" mode="aspectFit" />
       <text class="empty-text">还没有添加推荐住宿</text>
     </view>
 
@@ -494,8 +495,15 @@ onShow(() => { useOwnerGuard() })
   border-radius: 4rpx;
 }
 .hotel-phone {
+  display: inline-flex;
+  align-items: center;
+  gap: 8rpx;
   font-size: 22rpx;
   color: $color-primary;
+}
+.hotel-phone-icon {
+  width: 24rpx;
+  height: 24rpx;
 }
 
 /* 信息列表 */
@@ -542,8 +550,9 @@ onShow(() => { useOwnerGuard() })
 }
 .empty-visual {
   display: block;
-  font-size: 64rpx;
-  margin-bottom: 12rpx;
+  width: 200rpx;
+  height: 200rpx;
+  margin: 0 auto 12rpx;
 }
 .empty-text {
   font-size: 26rpx;

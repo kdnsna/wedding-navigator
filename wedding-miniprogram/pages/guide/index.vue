@@ -56,7 +56,7 @@
     <view class="tab-content info-tab" v-show="activeTab === 'weather'">
       <view class="weather-banner" v-if="weatherData && !weatherLoading">
         <view class="weather-main">
-          <text class="weather-icon">{{ weatherIcon }}</text>
+          <image class="weather-icon" :src="weatherIcon" mode="aspectFit" />
           <view class="weather-temp">
             <text class="temp-max">{{ weatherData.temp_max }}°</text>
             <text class="temp-sep">/</text>
@@ -68,9 +68,10 @@
           <text class="weather-date">{{ formatWeatherDate(weatherData.date) }}</text>
         </view>
         <view class="weather-tags" v-if="weatherData.tips">
-          <text class="weather-tag" :class="{ rain: weatherData.precip > 30 }">
-            💡 {{ weatherData.tips }}
-          </text>
+          <view class="weather-tag" :class="{ rain: weatherData.precip > 30 }">
+            <image class="visual-icon-xs weather-tag-icon" src="/static/visuals/icon-tip.png" mode="aspectFit" />
+            <text>{{ weatherData.tips }}</text>
+          </view>
         </view>
       </view>
 
@@ -82,7 +83,7 @@
 
       <!-- 无天气数据 -->
       <view class="empty-state" v-if="!weatherLoading && !weatherData">
-        <text class="empty-visual">☀️</text>
+        <image class="empty-visual" src="/static/visuals/empty-weather.png" mode="aspectFit" />
         <text class="empty-text">暂无天气数据</text>
         <text class="empty-sub">请在主人端设置场地坐标以获取天气</text>
       </view>
@@ -90,29 +91,30 @@
       <!-- 天气详情 -->
       <view class="weather-details" v-if="weatherData && !weatherLoading">
         <view class="detail-row">
-          <text class="detail-label">💨</text>
+          <image class="visual-icon-sm detail-icon" src="/static/visuals/icon-weather-wind.png" mode="aspectFit" />
           <text class="detail-text">{{ weatherData.wind }}</text>
         </view>
         <view class="detail-divider" />
         <view class="detail-row">
-          <text class="detail-label">💧</text>
+          <image class="visual-icon-sm detail-icon" src="/static/visuals/icon-weather-precip.png" mode="aspectFit" />
           <text class="detail-text">降水概率 {{ weatherData.precip }}%</text>
         </view>
         <view class="detail-divider" v-if="weatherData.sunrise" />
         <view class="detail-row" v-if="weatherData.sunrise">
-          <text class="detail-label">🌅</text>
+          <image class="visual-icon-sm detail-icon" src="/static/visuals/icon-weather-sunrise.png" mode="aspectFit" />
           <text class="detail-text">{{ weatherData.sunrise }} 日出</text>
         </view>
         <view class="detail-divider" v-if="weatherData.sunset" />
         <view class="detail-row" v-if="weatherData.sunset">
-          <text class="detail-label">🌇</text>
+          <image class="visual-icon-sm detail-icon" src="/static/visuals/icon-weather-sunset.png" mode="aspectFit" />
           <text class="detail-text">{{ weatherData.sunset }} 日落</text>
         </view>
       </view>
 
       <!-- 无天气 API 说明 -->
       <view class="api-note" v-if="weatherData?.isMock">
-        <text class="note-text">⚠️ 当前为模拟数据，请配置天气 API Key 以获取真实天气</text>
+        <image class="visual-icon-xs note-icon" src="/static/visuals/icon-warning.png" mode="aspectFit" />
+        <text class="note-text">当前为模拟数据，请配置天气 API Key 以获取真实天气</text>
       </view>
     </view>
 
@@ -126,7 +128,7 @@
       <view v-if="transportInfo.transport || transportInfo.parking" class="info-card">
         <view class="info-row" v-if="transportInfo.transport">
           <view class="info-icon-wrap">
-            <text>🚌</text>
+            <image class="visual-icon info-row-icon" src="/static/visuals/icon-transport.png" mode="aspectFit" />
           </view>
           <view class="info-content">
             <text class="info-label">出行方式</text>
@@ -136,7 +138,7 @@
         <view class="info-divider" v-if="transportInfo.transport && transportInfo.parking" />
         <view class="info-row" v-if="transportInfo.parking">
           <view class="info-icon-wrap">
-            <text>🅿️</text>
+            <image class="visual-icon info-row-icon" src="/static/visuals/icon-parking.png" mode="aspectFit" />
           </view>
           <view class="info-content">
             <text class="info-label">停车信息</text>
@@ -146,7 +148,7 @@
       </view>
 
       <view class="empty-state" v-if="!transportInfo.transport && !transportInfo.parking">
-        <text class="empty-visual">🚌</text>
+        <image class="empty-visual" src="/static/visuals/empty-transport.png" mode="aspectFit" />
         <text class="empty-text">暂无交通指引</text>
         <text class="empty-sub">主人尚未添加交通信息</text>
       </view>
@@ -171,14 +173,15 @@
           </view>
           <view class="hotel-actions">
             <button class="hotel-btn" v-if="hotel.phone" @click="callHotel(hotel.phone)">
-              📞 一键拨打
+              <image class="visual-icon-xs hotel-btn-icon" src="/static/visuals/icon-phone.png" mode="aspectFit" />
+              <text>一键拨打</text>
             </button>
           </view>
         </view>
       </view>
 
       <view class="empty-state" v-if="accommodations.length === 0">
-        <text class="empty-visual">🏨</text>
+        <image class="empty-visual" src="/static/visuals/empty-hotel.png" mode="aspectFit" />
         <text class="empty-text">暂无推荐住宿</text>
         <text class="empty-sub">主人尚未添加住宿推荐</text>
       </view>
@@ -214,10 +217,14 @@ const weatherData = ref(null)
 const weatherLoading = ref(false)
 const weatherIcon = computed(() => {
   const iconMap = {
-    sunny: '☀️', cloudy: '⛅', overcast: '☁️',
-    rain: '🌧️', thunder: '⛈️', fog: '🌫️'
+    sunny: '/static/visuals/icon-weather-sunny.png',
+    cloudy: '/static/visuals/icon-weather-cloudy.png',
+    overcast: '/static/visuals/icon-weather-cloudy.png',
+    rain: '/static/visuals/icon-weather-rain.png',
+    thunder: '/static/visuals/icon-weather-rain.png',
+    fog: '/static/visuals/icon-weather-cloudy.png'
   }
-  return iconMap[weatherData.value?.icon] || '☀️'
+  return iconMap[weatherData.value?.icon] || '/static/visuals/icon-weather-sunny.png'
 })
 
 const venues = computed(() => store.venues?.venues || [])
@@ -483,7 +490,11 @@ onShow(async () => {
   gap: 24rpx;
   margin-bottom: 20rpx;
 }
-.weather-icon { font-size: 80rpx; }
+.weather-icon {
+  width: 88rpx;
+  height: 88rpx;
+  flex-shrink: 0;
+}
 .weather-temp {
   display: flex;
   align-items: baseline;
@@ -523,13 +534,16 @@ onShow(async () => {
   margin-top: 16rpx;
 }
 .weather-tag {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 8rpx;
   font-size: 22rpx;
   color: $text-secondary;
   background: rgba(255,255,255,0.7);
   padding: 8rpx 16rpx;
   border-radius: $radius-full;
 }
+.weather-tag-icon { flex-shrink: 0; }
 .weather-tag.rain { color: #4a90d9; }
 
 .weather-details {
@@ -544,7 +558,11 @@ onShow(async () => {
   align-items: center;
   padding: 28rpx 32rpx;
 }
-.detail-label { font-size: 28rpx; margin-right: 16rpx; }
+.detail-icon {
+  width: 40rpx;
+  height: 40rpx;
+  margin-right: 16rpx;
+}
 .detail-text { font-size: 26rpx; color: $text-primary; }
 .detail-divider { height: 1rpx; background: $border-color; margin: 0 32rpx; }
 
@@ -566,11 +584,15 @@ onShow(async () => {
 .loading-text { font-size: 26rpx; color: $text-muted; }
 
 .api-note {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
   margin: 24rpx;
   padding: 20rpx 24rpx;
   background: #FFF7E6;
   border-radius: $radius-lg;
 }
+.note-icon { flex-shrink: 0; }
 .note-text { font-size: 22rpx; color: #B8860B; }
 
 /* 交通 / 住宿 */
@@ -607,7 +629,15 @@ onShow(async () => {
   padding: 32rpx;
   gap: 20rpx;
 }
-.info-icon-wrap { font-size: 32rpx; }
+.info-icon-wrap {
+  width: 52rpx;
+  height: 52rpx;
+  flex-shrink: 0;
+}
+.info-row-icon {
+  width: 52rpx;
+  height: 52rpx;
+}
 .info-content { flex: 1; }
 .info-label {
   display: block;
@@ -657,6 +687,7 @@ onShow(async () => {
 .hotel-btn {
   display: inline-flex;
   align-items: center;
+  gap: 10rpx;
   padding: 14rpx 32rpx;
   background: $text-primary;
   color: #fff;
@@ -664,6 +695,10 @@ onShow(async () => {
   font-size: 24rpx;
   border: none;
   line-height: 1;
+}
+.hotel-btn-icon {
+  width: 28rpx;
+  height: 28rpx;
 }
 .hotel-btn::after { border: none; }
 
@@ -674,8 +709,9 @@ onShow(async () => {
 }
 .empty-visual {
   display: block;
-  font-size: 80rpx;
-  margin-bottom: 16rpx;
+  width: 220rpx;
+  height: 220rpx;
+  margin: 0 auto 16rpx;
 }
 .empty-text {
   display: block;
