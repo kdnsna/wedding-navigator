@@ -53,9 +53,11 @@ async function createWedding(data) {
   return callFunction('createWedding', data)
 }
 
-// 更新婚礼
-async function updateWedding(weddingId, data) {
-  return callFunction('updateWedding', { weddingId, ...data })
+// 更新婚礼指定集合
+async function updateWedding(weddingId, collection, data) {
+  // 过滤云数据库系统字段，避免 update 报错
+  const { _id, created_at, updated_at, owner_openid, ...cleanData } = data || {}
+  return callFunction('updateWedding', { weddingId, collection, data: cleanData })
 }
 
 // 提交 RSVP

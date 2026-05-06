@@ -95,6 +95,7 @@ import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { generateId, showSuccess } from '@/utils/index.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
+import { updateWedding } from '@/composables/useCloud.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
@@ -172,7 +173,15 @@ function deleteEvent(id) {
   })
 }
 
-function saveToStorage() {
+async function saveToStorage() {
+  try {
+    // 先同步云端
+    await updateWedding(userStore.weddingId, 'timelines', store.timeline)
+  } catch (err) {
+    console.error('timeline 云端保存失败:', err)
+    uni.showToast({ title: '云端同步失败', icon: 'none' })
+  }
+  // 再缓存本地（离线兜底）
   const weddings = uni.getStorageSync('weddings') || {}
   if (weddings[userStore.weddingId]) {
     weddings[userStore.weddingId].timeline = store.timeline

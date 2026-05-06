@@ -207,6 +207,7 @@ import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { generateId, showSuccess } from '@/utils/index.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
+import { updateWedding } from '@/composables/useCloud.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
@@ -378,7 +379,15 @@ function callHotel(phone) {
 }
 
 // ========== 数据持久化 ==========
-function saveToStorage() {
+async function saveToStorage() {
+  try {
+    // 先同步云端
+    await updateWedding(userStore.weddingId, 'venues', store.venues)
+  } catch (err) {
+    console.error(' venues 云端保存失败:', err)
+    uni.showToast({ title: '云端同步失败', icon: 'none' })
+  }
+  // 再缓存本地（离线兜底）
   const weddings = uni.getStorageSync('weddings') || {}
   if (weddings[userStore.weddingId]) {
     weddings[userStore.weddingId].venues = store.venues

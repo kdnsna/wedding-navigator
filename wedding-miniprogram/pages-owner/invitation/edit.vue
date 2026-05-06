@@ -137,6 +137,7 @@ import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { showSuccess, showError } from '@/utils/index.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
+import { updateWedding } from '@/composables/useCloud.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
@@ -199,7 +200,7 @@ function selectMusic(music) {
 function onDateChange(e) { form.value.date = e.detail.value }
 function onTimeChange(e) { form.value.time = e.detail.value }
 
-function saveInvitation() {
+async function saveInvitation() {
   try {
     uni.showLoading({ title: '保存中...', mask: true })
     const invitationData = {
@@ -229,6 +230,11 @@ function saveInvitation() {
         bg_music_url: form.value.bgMusicUrl
       }
     }
+
+    // 先同步云端
+    await updateWedding(userStore.weddingId, 'invitations', invitationData)
+
+    // 再更新本地 store + 缓存
     store.updateInvitation(invitationData)
     const weddings = uni.getStorageSync('weddings') || {}
     if (weddings[userStore.weddingId]) {
@@ -237,7 +243,8 @@ function saveInvitation() {
     }
     showSuccess('保存成功')
   } catch (err) {
-    showError('保存失败')
+    console.error('保存请柬失败:', err)
+    showError(err.message || '保存失败')
   } finally {
     uni.hideLoading()
   }

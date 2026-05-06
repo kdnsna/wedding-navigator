@@ -102,7 +102,7 @@
     <view class="step-actions">
       <button class="step-btn secondary" v-if="currentStep > 1" @click="prevStep">上一步</button>
       <button class="step-btn primary" v-if="currentStep < 4" @click="nextStep">下一步</button>
-      <button class="step-btn primary" v-if="currentStep === 4" @click="createWedding">创建婚礼</button>
+      <button class="step-btn primary" v-if="currentStep === 4" @click="createWeddingAction">创建婚礼</button>
     </view>
   </view>
 </template>
@@ -111,7 +111,8 @@
 import { ref } from 'vue'
 import { useUserStore } from '@/stores/user.js'
 import { useWeddingStore } from '@/stores/wedding.js'
-import { generateId, showSuccess, showError } from '@/utils/index.js'
+import { createWedding } from '@/composables/useCloud.js'
+import { showSuccess, showError } from '@/utils/index.js'
 
 const userStore = useUserStore()
 const weddingStore = useWeddingStore()
@@ -160,14 +161,12 @@ function validateStep() {
   return true
 }
 
-async function createWedding() {
+async function createWeddingAction() {
   if (!validateStep()) return
   try {
     uni.showLoading({ title: '创建中...', mask: true })
-    const weddingId = generateId()
-    const weddingData = {
-      wedding_id: weddingId,
-      owner_id: userStore.openid || 'local_user',
+
+    const weddingPayload = {
       basic_info: { date: form.value.date, time: form.value.time, week_day: '' },
       status: 'published',
       stats: { views: 0, shares: 0, rsvp_count: 0, blessing_count: 0, unique_viewers: 0 },
@@ -177,8 +176,7 @@ async function createWedding() {
         cover_image: ''
       }
     }
-    const invitationData = {
-      wedding_id: weddingId,
+    const invitationPayload = {
       template: form.value.template,
       content: {
         title: '婚礼请柬',
@@ -198,13 +196,28 @@ async function createWedding() {
       },
       features: { show_countdown: true, show_rsvp: true, show_blessing: true, show_timeline: true }
     }
+
+    // 先写云端
+    const res = await createWedding({
+      wedding: weddingPayload,
+      invitation: invitationPayload
+    })
+
+    if (!res?.success) {
+      throw new Error(res?.message || '云端创建失败')
+    }
+
+    const weddingId = res.weddingId
+
+    // 再缓存本地（离线兜底）
     const weddings = uni.getStorageSync('weddings') || {}
-    weddings[weddingId] = weddingData
+    weddings[weddingId] = { wedding_id: weddingId, ...weddingPayload }
     uni.setStorageSync('weddings', weddings)
-    uni.setStorageSync(`invitation_${weddingId}`, invitationData)
+    uni.setStorageSync(`invitation_${weddingId}`, { wedding_id: weddingId, ...invitationPayload })
+
     weddingStore.setWeddingData({
-      wedding: weddingData,
-      invitation: invitationData,
+      wedding: { wedding_id: weddingId, ...weddingPayload },
+      invitation: { wedding_id: weddingId, ...invitationPayload },
       album: { photos: [] },
       venues: { venues: [] },
       timeline: null,
@@ -216,7 +229,8 @@ async function createWedding() {
     showSuccess('婚礼创建成功')
     uni.reLaunch({ url: '/pages-owner/manage/index' })
   } catch (err) {
-    showError(err.message || '创建失败')
+    console.error('创建婚礼失败:', err)
+    showError(err.message || '创建失败，请检查云开发环境')
   } finally {
     uni.hideLoading()
   }

@@ -123,6 +123,7 @@ import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { generateId, showSuccess } from '@/utils/index.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
+import { updateWedding } from '@/composables/useCloud.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
@@ -222,7 +223,12 @@ function deleteGuest(id) {
   })
 }
 
-function saveToStorage() {
+async function saveToStorage() {
+  try {
+    await updateWedding(userStore.weddingId, 'guests', store.guests)
+  } catch (err) {
+    console.error('guests 云端保存失败:', err)
+  }
   const weddings = uni.getStorageSync('weddings') || {}
   if (weddings[userStore.weddingId]) {
     weddings[userStore.weddingId].guests = store.guests
