@@ -1,6 +1,6 @@
-# Wedding Navigator Mini Program
+# 甜囍手册 小程序
 
-婚礼导航微信小程序 —— 基于 uni-app + Vue3 + Pinia + 微信云开发的婚礼全流程管理小程序。
+甜囍手册 —— 基于 uni-app + Vue3 + Pinia + 微信云开发的婚礼全流程管理小程序。
 
 ## 功能特性
 

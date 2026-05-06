@@ -113,9 +113,9 @@
   ],
   "globalStyle": {
     "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "婚礼导航",
-    "navigationBarBackgroundColor": "#FFF8F0",
-    "backgroundColor": "#FFF8F0"
+    "navigationBarTitleText": "甜囍手册",
+    "navigationBarBackgroundColor": "#FFFFFF",
+    "backgroundColor": "#FFFFFF"
   },
   "tabBar": {
     "color": "#999999",
