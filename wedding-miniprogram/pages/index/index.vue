@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page" @touchstart="onPageTap">
     <!-- 封面大图 -->
     <view class="hero">
       <image class="hero-image" :src="coverImage" mode="aspectFill" />
@@ -164,6 +164,11 @@
         <text class="share-icon">↗</text>
       </button>
     </view>
+
+    <!-- 背景音乐控制 -->
+    <view class="music-control" v-if="bgMusicEnabled" @click="toggleMusic">
+      <text class="music-icon" :class="{ playing: isMusicPlaying }">♪</text>
+    </view>
   </view>
 </template>
 
@@ -180,6 +185,48 @@ const userStore = useUserStore()
 
 let countdownTimer = null
 const countdown = ref(null)
+
+// 背景音乐
+let audioCtx = null
+const bgMusicEnabled = computed(() => store.invitation?.features?.bg_music_enabled || false)
+const bgMusicUrl = computed(() => store.invitation?.features?.bg_music_url || '')
+const isMusicPlaying = ref(false)
+const musicStarted = ref(false) // 是否已点击过页面（满足自动播放条件）
+
+function initMusic() {
+  if (!bgMusicEnabled.value || !bgMusicUrl.value) return
+  audioCtx = uni.createInnerAudioContext()
+  audioCtx.src = bgMusicUrl.value
+  audioCtx.loop = true
+  audioCtx.volume = 0.5
+  audioCtx.onPlay(() => { isMusicPlaying.value = true })
+  audioCtx.onPause(() => { isMusicPlaying.value = false })
+  audioCtx.onError(() => {
+    isMusicPlaying.value = false
+    console.warn('背景音乐播放失败')
+  })
+}
+
+function toggleMusic() {
+  if (!audioCtx) {
+    initMusic()
+    musicStarted.value = true
+  }
+  if (audioCtx.paused) {
+    audioCtx.play()
+  } else {
+    audioCtx.pause()
+  }
+}
+
+// 首页点击时触发音乐播放（满足微信自动播放策略）
+function onPageTap() {
+  if (!musicStarted.value && bgMusicEnabled.value) {
+    musicStarted.value = true
+    initMusic()
+    if (audioCtx) audioCtx.play()
+  }
+}
 
 const coverImage = computed(() => {
   const photos = store.album?.photos || []
@@ -261,6 +308,10 @@ onShow(() => { updateCountdown() })
 
 onUnmounted(() => {
   if (countdownTimer) clearInterval(countdownTimer)
+  if (audioCtx) {
+    audioCtx.stop()
+    audioCtx = null
+  }
 })
 </script>
 
@@ -755,5 +806,36 @@ onUnmounted(() => {
 }
 .share-icon {
   font-size: 28rpx;
+}
+
+/* 背景音乐控制 */
+.music-control {
+  position: fixed;
+  top: calc(80rpx + env(safe-area-inset-top));
+  right: 32rpx;
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.9);
+  border: 1rpx solid $border-color;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.08);
+  transition: all 0.2s ease;
+}
+.music-control:active { transform: scale(0.92); }
+.music-icon {
+  font-size: 32rpx;
+  color: $text-primary;
+  transition: transform 0.3s ease;
+}
+.music-icon.playing {
+  animation: musicRotate 4s linear infinite;
+}
+@keyframes musicRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 </style>

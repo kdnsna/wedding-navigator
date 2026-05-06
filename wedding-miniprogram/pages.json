@@ -42,6 +42,13 @@
       "style": {
         "navigationBarTitleText": "祝福墙"
       }
+    },
+    {
+      "path": "pages/poster/index",
+      "style": {
+        "navigationBarTitleText": "婚礼海报",
+        "navigationStyle": "custom"
+      }
     }
   ],
   "subPackages": [
@@ -100,6 +107,12 @@
           "path": "share/index",
           "style": {
             "navigationBarTitleText": "分享设置"
+          }
+        },
+        {
+          "path": "poster/index",
+          "style": {
+            "navigationBarTitleText": "海报生成"
           }
         },
         {

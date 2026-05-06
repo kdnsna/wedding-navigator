@@ -120,7 +120,11 @@ export const useWeddingStore = defineStore('wedding', () => {
     wedding.value = data.wedding || fallbackWedding
     invitation.value = data.invitation || fallbackInvitation
     album.value = data.album || { photos: [] }
-    venues.value = data.venues || fallbackVenues
+    venues.value = data.venues ? {
+      venues: data.venues.venues || data.venues,
+      transportation: data.venues.transportation || {},
+      accommodations: data.venues.accommodations || []
+    } : fallbackVenues
     timeline.value = data.timeline || null
     guests.value = data.guests || null
     blessings.value = data.blessings || null
@@ -148,8 +152,10 @@ export const useWeddingStore = defineStore('wedding', () => {
   }
 
   function addVenue(venue) {
-    if (!venues.value) venues.value = { venues: [] }
+    if (!venues.value) venues.value = { venues: [], transportation: {}, accommodations: [] }
     if (!venues.value.venues) venues.value.venues = []
+    if (!venues.value.transportation) venues.value.transportation = {}
+    if (!venues.value.accommodations) venues.value.accommodations = []
     venues.value.venues.push(venue)
   }
 

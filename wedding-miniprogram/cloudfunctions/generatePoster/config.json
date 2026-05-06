@@ -1,0 +1,6 @@
+{
+  "permissions": {
+    "openapi": ["wxacode.getUnlimited"]
+  },
+  "desc": "生成小程序码海报"
+}

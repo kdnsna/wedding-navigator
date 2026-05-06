@@ -1,148 +1,126 @@
 import { useWeddingStore } from '@/stores/wedding.js'
 import { CLOUD_ENV } from '@/config/cloud.js'
 
-/**
- * 初始化云开发
- */
-export function initCloud() {
-  if (CLOUD_ENV) {
-    wx.cloud.init({
-      env: CLOUD_ENV,
-      traceUser: true
-    })
-  } else {
-    wx.cloud.init({
-      traceUser: true
-    })
-  }
-}
+// 云函数基础配置
+const BASE_URL = `cloud://${CLOUD_ENV}`
 
-/**
- * 调用云函数
- */
-export function callCloudFunction(name, data = {}) {
+// 云函数调用封装
+async function callFunction(name, data = {}) {
   return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => {
-      reject(new Error(`云函数 ${name} 请求超时`))
-    }, 8000)
-
-    wx.cloud.callFunction({
+    uni.cloud.callFunction({
       name,
       data,
       success: (res) => {
-        clearTimeout(timer)
-        if (res.result && res.result.success === false) {
-          reject(new Error(res.result.message || '调用失败'))
+        if (res.result?.success === false) {
+          reject(new Error(res.result.message))
         } else {
           resolve(res.result)
         }
       },
-      fail: (err) => {
-        clearTimeout(timer)
-        console.warn(`云函数 ${name} 调用失败:`, err)
-        reject(err)
-      }
+      fail: (err) => reject(err)
     })
   })
 }
 
-/**
- * 获取婚礼完整数据
- */
-export async function fetchWedding(weddingId) {
+// 获取婚礼数据
+async function fetchWedding(weddingId) {
   const store = useWeddingStore()
-  store.setLoading(true)
   try {
-    const result = await callCloudFunction('getWedding', { weddingId })
-    store.setWeddingData(result.data)
-    return result.data
+    const res = await callFunction('getWedding', { weddingId })
+    if (res?.data) {
+      store.setWeddingData(res.data)
+    }
+    return res
   } catch (err) {
-    store.setError(err.message)
+    console.error('fetchWedding error:', err)
     throw err
-  } finally {
-    store.setLoading(false)
   }
 }
 
-/**
- * 提交RSVP
- */
-export async function submitRSVP(weddingId, rsvpData) {
-  return callCloudFunction('submitRSVP', { weddingId, rsvpData })
+// 创建婚礼
+async function createWedding(data) {
+  return callFunction('createWedding', data)
 }
 
-/**
- * 提交祝福
- */
-export async function submitBlessing(weddingId, blessing) {
-  return callCloudFunction('submitBlessing', { weddingId, blessing })
+// 更新婚礼
+async function updateWedding(weddingId, data) {
+  return callFunction('updateWedding', { weddingId, ...data })
 }
 
-/**
- * 创建婚礼
- */
-export async function createWedding(weddingData) {
-  return callCloudFunction('createWedding', { weddingData })
+// 提交 RSVP
+async function submitRSVP(weddingId, data) {
+  return callFunction('submitRSVP', { weddingId, ...data })
 }
 
-/**
- * 更新婚礼数据
- */
-export async function updateWedding(weddingId, collection, data) {
-  return callCloudFunction('updateWedding', { weddingId, collection, data })
+// 提交祝福
+async function submitBlessing(weddingId, data) {
+  return callFunction('submitBlessing', { weddingId, ...data })
 }
 
-/**
- * 获取RSVP统计
- */
-export async function getRSVPStats(weddingId) {
-  return callCloudFunction('getRSVPStats', { weddingId })
+// 置顶祝福
+async function pinBlessing(weddingId, blessingId, isPinned) {
+  return callFunction('pinBlessing', { weddingId, blessingId, isPinned })
 }
 
-/**
- * 置顶/取消置顶祝福
- */
-export async function pinBlessing(weddingId, blessingId, isPinned) {
-  return callCloudFunction('pinBlessing', { weddingId, blessingId, isPinned })
+// 记录浏览
+async function recordView(weddingId, openid) {
+  return callFunction('recordView', { weddingId, openid })
 }
 
-/**
- * 记录浏览/分享
- */
-export async function recordView(weddingId, type = 'view') {
-  return callCloudFunction('recordView', { weddingId, type })
+// 获取统计数据
+async function getStats(weddingId) {
+  return callFunction('getStats', { weddingId })
 }
 
-/**
- * 获取统计数据
- */
-export async function getStats(weddingId) {
-  return callCloudFunction('getStats', { weddingId })
+// 获取 RSVP 统计
+async function getRSVPStats(weddingId) {
+  return callFunction('getRSVPStats', { weddingId })
 }
 
-/**
- * 上传图片到云存储
- */
-export function uploadImage(filePath, cloudPath) {
+// 生成小程序码海报
+async function generatePoster(page, scene, width = 430) {
+  return callFunction('generatePoster', { page, scene, width })
+}
+
+// 获取婚礼当天天气
+async function getWeather(weddingId) {
+  return callFunction('getWeather', { weddingId })
+}
+
+// 上传文件到云存储
+async function uploadFile(filePath, cloudPath) {
   return new Promise((resolve, reject) => {
-    wx.cloud.uploadFile({
-      cloudPath,
+    uni.cloud.uploadFile({
+      cloudPath: cloudPath || `uploads/${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`,
       filePath,
-      success: (res) => resolve(res.fileID),
-      fail: reject
+      success: (res) => resolve(res),
+      fail: (err) => reject(err)
     })
   })
 }
 
-/**
- * 获取临时图片链接
- */
-export function getTempImageURL(fileID) {
-  return new Promise((resolve, reject) => {
-    wx.cloud.getTempFileURL({
-      fileList: [fileID],
-      success: (res) => resolve(res.fileList[0]?.tempFileURL || ''),
-      fail: reject
-    })
-  })
+// 上传 base64 图片到云存储
+async function uploadBase64(base64Data, cloudPath) {
+  // 将 base64 转为临时文件路径
+  const filePath = `${wx.env.USER_DATA_PATH}/temp_${Date.now()}.png`
+  const fs = wx.getFileSystemManager()
+  fs.writeFileSync(filePath, base64Data, 'base64')
+  return uploadFile(filePath, cloudPath)
+}
+
+export {
+  callFunction,
+  fetchWedding,
+  createWedding,
+  updateWedding,
+  submitRSVP,
+  submitBlessing,
+  pinBlessing,
+  recordView,
+  getStats,
+  getRSVPStats,
+  generatePoster,
+  getWeather,
+  uploadFile,
+  uploadBase64
 }

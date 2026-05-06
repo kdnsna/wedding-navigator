@@ -94,6 +94,30 @@
       </view>
     </view>
 
+    <!-- 背景音乐 -->
+    <view class="section">
+      <text class="section-label">背景音乐</text>
+      <view class="switch-item">
+        <text class="switch-label">开启背景音乐</text>
+        <switch :checked="form.bgMusicEnabled" @change="form.bgMusicEnabled = $event.detail.value" color="#1A1A1A" />
+      </view>
+      <view class="music-presets" v-if="form.bgMusicEnabled">
+        <view
+          class="music-item"
+          v-for="music in musicPresets"
+          :key="music.id"
+          :class="{ active: form.bgMusicId === music.id }"
+          @click="selectMusic(music)"
+        >
+          <text class="music-icon">{{ form.bgMusicId === music.id ? '🔊' : '♪' }}</text>
+          <text class="music-name">{{ music.name }}</text>
+        </view>
+      </view>
+      <view class="music-tip" v-if="form.bgMusicEnabled">
+        <text>提示：宾客进入首页后，需点击页面任意位置后音乐才会自动播放</text>
+      </view>
+    </view>
+
     <!-- 底部按钮 -->
     <view class="bottom-actions">
       <button class="action-btn primary" @click="saveInvitation">保存</button>
@@ -119,6 +143,12 @@ const templates = [
   { id: 'luxury', name: '纯白', color: '#E8E8E8' }
 ]
 
+const musicPresets = [
+  { id: 'piano-dream', name: '梦中的钢琴', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
+  { id: 'gentle-love', name: '温柔爱意', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' },
+  { id: 'eternal-vow', name: '永恒誓言', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' },
+]
+
 const form = ref({
   template: 'classic',
   content: '',
@@ -130,7 +160,10 @@ const form = ref({
   showCountdown: true,
   showRsvp: true,
   showBlessing: true,
-  showTimeline: true
+  showTimeline: true,
+  bgMusicEnabled: false,
+  bgMusicId: '',
+  bgMusicUrl: ''
 })
 
 function loadFromStore() {
@@ -147,8 +180,16 @@ function loadFromStore() {
     showCountdown: inv.features?.show_countdown !== false,
     showRsvp: inv.features?.show_rsvp !== false,
     showBlessing: inv.features?.show_blessing !== false,
-    showTimeline: inv.features?.show_timeline !== false
+    showTimeline: inv.features?.show_timeline !== false,
+    bgMusicEnabled: inv.features?.bg_music_enabled || false,
+    bgMusicId: inv.features?.bg_music_id || '',
+    bgMusicUrl: inv.features?.bg_music_url || ''
   }
+}
+
+function selectMusic(music) {
+  form.value.bgMusicId = music.id
+  form.value.bgMusicUrl = music.url
 }
 
 function onDateChange(e) { form.value.date = e.detail.value }
@@ -178,7 +219,10 @@ function saveInvitation() {
         show_countdown: form.value.showCountdown,
         show_rsvp: form.value.showRsvp,
         show_blessing: form.value.showBlessing,
-        show_timeline: form.value.showTimeline
+        show_timeline: form.value.showTimeline,
+        bg_music_enabled: form.value.bgMusicEnabled,
+        bg_music_id: form.value.bgMusicId,
+        bg_music_url: form.value.bgMusicUrl
       }
     }
     store.updateInvitation(invitationData)
@@ -364,5 +408,41 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
 .action-btn.primary {
   background: $text-primary;
   color: #fff;
+}
+
+/* 音乐预设 */
+.music-presets {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  margin-top: 20rpx;
+}
+.music-item {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 24rpx 28rpx;
+  background: $bg-surface;
+  border-radius: $radius-lg;
+  border: 2rpx solid $border-color;
+  transition: all 0.2s ease;
+}
+.music-item.active {
+  border-color: $text-primary;
+  background: $text-primary;
+}
+.music-item.active .music-name { color: #fff; }
+.music-item:active { transform: scale(0.98); }
+.music-icon { font-size: 28rpx; }
+.music-name {
+  font-size: 28rpx;
+  color: $text-primary;
+  font-weight: 500;
+}
+.music-tip {
+  margin-top: 16rpx;
+  font-size: 22rpx;
+  color: $text-muted;
+  line-height: 1.5;
 }
 </style>

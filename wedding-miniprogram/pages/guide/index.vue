@@ -1,64 +1,228 @@
 <template>
   <view class="page">
-    <!-- 地图 -->
-    <view class="map-container">
-      <map
-        id="weddingMap"
-        class="map"
-        :latitude="center.latitude"
-        :longitude="center.longitude"
-        :scale="scale"
-        :markers="markers"
-        :polyline="polyline"
-        :show-location="true"
-        @markertap="onMarkerTap"
-      />
+    <!-- 顶部 Tab 栏 -->
+    <view class="tab-bar">
+      <view
+        class="tab-item"
+        v-for="tab in tabs"
+        :key="tab.key"
+        :class="{ active: activeTab === tab.key }"
+        @click="activeTab = tab.key"
+      >
+        <text class="tab-label">{{ tab.label }}</text>
+        <view class="tab-dot" v-if="tab.key === 'weather' && weatherData" />
+      </view>
     </view>
 
-    <!-- 场地列表 -->
-    <scroll-view class="venue-list" scroll-y>
-      <view
-        class="venue-card"
-        v-for="venue in venues"
-        :key="venue.id"
-        :class="{ active: selectedVenue?.id === venue.id }"
-        @click="selectVenue(venue)"
-      >
-        <view class="venue-meta">
-          <text class="venue-type">{{ typeLabel(venue.type) }}</text>
-          <text class="venue-time" v-if="venue.arrival_time">{{ venue.arrival_time }}</text>
+    <!-- 地图 Tab -->
+    <view class="tab-content" v-show="activeTab === 'map'">
+      <view class="map-container">
+        <map
+          id="weddingMap"
+          class="map"
+          :latitude="center.latitude"
+          :longitude="center.longitude"
+          :scale="scale"
+          :markers="markers"
+          :polyline="polyline"
+          :show-location="true"
+          @markertap="onMarkerTap"
+        />
+      </view>
+
+      <scroll-view class="venue-list" scroll-y>
+        <view
+          class="venue-card"
+          v-for="venue in venues"
+          :key="venue.id"
+          :class="{ active: selectedVenue?.id === venue.id }"
+          @click="selectVenue(venue)"
+        >
+          <view class="venue-meta">
+            <text class="venue-type">{{ typeLabel(venue.type) }}</text>
+            <text class="venue-time" v-if="venue.arrival_time">{{ venue.arrival_time }}</text>
+          </view>
+          <text class="venue-name">{{ venue.name }}</text>
+          <text class="venue-address">{{ venue.address }}</text>
+          <view class="venue-actions">
+            <button class="action-btn" @click.stop="callPhone(venue.contact_phone)" v-if="venue.contact_phone">电话</button>
+            <button class="action-btn primary" @click.stop="navigateTo(venue)">导航</button>
+          </view>
         </view>
-        <text class="venue-name">{{ venue.name }}</text>
-        <text class="venue-address">{{ venue.address }}</text>
-        <view class="venue-actions">
-          <button class="action-btn" @click.stop="callPhone(venue.contact_phone)" v-if="venue.contact_phone">
-            电话
-          </button>
-          <button class="action-btn primary" @click.stop="navigateTo(venue)">
-            导航
-          </button>
+      </scroll-view>
+    </view>
+
+    <!-- 天气 Tab -->
+    <view class="tab-content info-tab" v-show="activeTab === 'weather'">
+      <view class="weather-banner" v-if="weatherData && !weatherLoading">
+        <view class="weather-main">
+          <text class="weather-icon">{{ weatherIcon }}</text>
+          <view class="weather-temp">
+            <text class="temp-max">{{ weatherData.temp_max }}°</text>
+            <text class="temp-sep">/</text>
+            <text class="temp-min">{{ weatherData.temp_min }}°</text>
+          </view>
+        </view>
+        <view class="weather-desc">
+          <text class="weather-text">{{ weatherData.text }}</text>
+          <text class="weather-date">{{ formatWeatherDate(weatherData.date) }}</text>
+        </view>
+        <view class="weather-tags" v-if="weatherData.tips">
+          <text class="weather-tag" :class="{ rain: weatherData.precip > 30 }">
+            💡 {{ weatherData.tips }}
+          </text>
         </view>
       </view>
-    </scroll-view>
+
+      <!-- 天气加载中 -->
+      <view class="weather-loading" v-if="weatherLoading">
+        <view class="loading-spinner" />
+        <text class="loading-text">加载天气中...</text>
+      </view>
+
+      <!-- 无天气数据 -->
+      <view class="empty-state" v-if="!weatherLoading && !weatherData">
+        <text class="empty-visual">☀️</text>
+        <text class="empty-text">暂无天气数据</text>
+        <text class="empty-sub">请在主人端设置场地坐标以获取天气</text>
+      </view>
+
+      <!-- 天气详情 -->
+      <view class="weather-details" v-if="weatherData && !weatherLoading">
+        <view class="detail-row">
+          <text class="detail-label">💨</text>
+          <text class="detail-text">{{ weatherData.wind }}</text>
+        </view>
+        <view class="detail-divider" />
+        <view class="detail-row">
+          <text class="detail-label">💧</text>
+          <text class="detail-text">降水概率 {{ weatherData.precip }}%</text>
+        </view>
+        <view class="detail-divider" v-if="weatherData.sunrise" />
+        <view class="detail-row" v-if="weatherData.sunrise">
+          <text class="detail-label">🌅</text>
+          <text class="detail-text">{{ weatherData.sunrise }} 日出</text>
+        </view>
+        <view class="detail-divider" v-if="weatherData.sunset" />
+        <view class="detail-row" v-if="weatherData.sunset">
+          <text class="detail-label">🌇</text>
+          <text class="detail-text">{{ weatherData.sunset }} 日落</text>
+        </view>
+      </view>
+
+      <!-- 无天气 API 说明 -->
+      <view class="api-note" v-if="weatherData?.isMock">
+        <text class="note-text">⚠️ 当前为模拟数据，请配置天气 API Key 以获取真实天气</text>
+      </view>
+    </view>
+
+    <!-- 交通 Tab -->
+    <view class="tab-content info-tab" v-show="activeTab === 'transport'">
+      <view class="section-header">
+        <text class="section-title">交通指引</text>
+        <text class="section-date">{{ formatDate(store.weddingDate) }}</text>
+      </view>
+
+      <view v-if="transportInfo.transport || transportInfo.parking" class="info-card">
+        <view class="info-row" v-if="transportInfo.transport">
+          <view class="info-icon-wrap">
+            <text>🚌</text>
+          </view>
+          <view class="info-content">
+            <text class="info-label">出行方式</text>
+            <text class="info-value">{{ transportInfo.transport }}</text>
+          </view>
+        </view>
+        <view class="info-divider" v-if="transportInfo.transport && transportInfo.parking" />
+        <view class="info-row" v-if="transportInfo.parking">
+          <view class="info-icon-wrap">
+            <text>🅿️</text>
+          </view>
+          <view class="info-content">
+            <text class="info-label">停车信息</text>
+            <text class="info-value">{{ transportInfo.parking }}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="empty-state" v-if="!transportInfo.transport && !transportInfo.parking">
+        <text class="empty-visual">🚌</text>
+        <text class="empty-text">暂无交通指引</text>
+        <text class="empty-sub">主人尚未添加交通信息</text>
+      </view>
+    </view>
+
+    <!-- 住宿 Tab -->
+    <view class="tab-content info-tab" v-show="activeTab === 'hotel'">
+      <view class="section-header">
+        <text class="section-title">推荐住宿</text>
+        <text class="section-date">{{ formatDate(store.weddingDate) }}</text>
+      </view>
+
+      <view class="hotel-list" v-if="accommodations.length > 0">
+        <view class="hotel-card" v-for="hotel in accommodations" :key="hotel.id">
+          <view class="hotel-info">
+            <text class="hotel-name">{{ hotel.name }}</text>
+            <view class="hotel-tags" v-if="hotel.distance || hotel.price_range">
+              <text class="hotel-tag" v-if="hotel.distance">{{ hotel.distance }}</text>
+              <text class="hotel-tag" v-if="hotel.price_range">{{ hotel.price_range }}</text>
+            </view>
+            <text class="hotel-notes" v-if="hotel.notes">{{ hotel.notes }}</text>
+          </view>
+          <view class="hotel-actions">
+            <button class="hotel-btn" v-if="hotel.phone" @click="callHotel(hotel.phone)">
+              📞 一键拨打
+            </button>
+          </view>
+        </view>
+      </view>
+
+      <view class="empty-state" v-if="accommodations.length === 0">
+        <text class="empty-visual">🏨</text>
+        <text class="empty-text">暂无推荐住宿</text>
+        <text class="empty-sub">主人尚未添加住宿推荐</text>
+      </view>
+    </view>
   </view>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
-import { fetchWedding } from '@/composables/useCloud.js'
+import { fetchWedding, getWeather } from '@/composables/useCloud.js'
 import { MARKER_ICON } from '@/config/cloud.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
 
+const activeTab = ref('map')
+const tabs = [
+  { key: 'map', label: '地图' },
+  { key: 'weather', label: '天气' },
+  { key: 'transport', label: '交通' },
+  { key: 'hotel', label: '住宿' }
+]
+
 const center = ref({ latitude: 39.908823, longitude: 116.397470 })
 const scale = ref(12)
 const selectedVenue = ref(null)
 
+// 天气
+const weatherData = ref(null)
+const weatherLoading = ref(false)
+const weatherIcon = computed(() => {
+  const iconMap = {
+    sunny: '☀️', cloudy: '⛅', overcast: '☁️',
+    rain: '🌧️', thunder: '⛈️', fog: '🌫️'
+  }
+  return iconMap[weatherData.value?.icon] || '☀️'
+})
+
 const venues = computed(() => store.venues?.venues || [])
+const transportInfo = computed(() => store.venues?.transportation || {})
+const accommodations = computed(() => store.venues?.accommodations || [])
 
 const markers = computed(() => {
   return venues.value.map((v, i) => ({
@@ -70,31 +234,18 @@ const markers = computed(() => {
     width: 30,
     height: 30,
     callout: {
-      content: v.name,
-      color: '#333',
-      fontSize: 14,
-      borderRadius: 8,
-      bgColor: '#fff',
-      padding: 10,
-      display: 'BYCLICK'
+      content: v.name, color: '#333', fontSize: 14,
+      borderRadius: 8, bgColor: '#fff', padding: 10, display: 'BYCLICK'
     }
   }))
 })
 
 const polyline = computed(() => {
-  const points = venues.value
-    .filter(v => v.coordinate)
-    .map(v => ({
-      latitude: v.coordinate.latitude,
-      longitude: v.coordinate.longitude
-    }))
+  const points = venues.value.filter(v => v.coordinate).map(v => ({
+    latitude: v.coordinate.latitude, longitude: v.coordinate.longitude
+  }))
   if (points.length < 2) return []
-  return [{
-    points,
-    color: '#B03A5B',
-    width: 3,
-    dottedLine: false
-  }]
+  return [{ points, color: '#B03A5B', width: 3, dottedLine: false }]
 })
 
 function typeLabel(type) {
@@ -108,6 +259,7 @@ function selectVenue(venue) {
     center.value = { latitude: venue.coordinate.latitude, longitude: venue.coordinate.longitude }
     scale.value = 16
   }
+  activeTab.value = 'map'
 }
 
 function onMarkerTap(e) {
@@ -133,7 +285,42 @@ function callPhone(phone) {
   uni.makePhoneCall({ phoneNumber: phone })
 }
 
-onShow(async () => {
+function callHotel(phone) {
+  if (phone) uni.makePhoneCall({ phoneNumber: String(phone) })
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  return `${d.getMonth() + 1}月${d.getDate()}日`
+}
+
+function formatWeatherDate(dateStr) {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  const days = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+  return `${d.getMonth() + 1}月${d.getDate()}日 ${days[d.getDay()]}`
+}
+
+async function loadWeather() {
+  if (!userStore.weddingId) return
+  weatherLoading.value = true
+  try {
+    const res = await getWeather(userStore.weddingId)
+    if (res?.success) {
+      weatherData.value = res.data
+    } else {
+      weatherData.value = null
+    }
+  } catch (err) {
+    console.error('loadWeather error:', err)
+    weatherData.value = null
+  } finally {
+    weatherLoading.value = false
+  }
+}
+
+onMounted(async () => {
   if (userStore.weddingId && venues.value.length === 0) {
     try {
       await fetchWedding(userStore.weddingId)
@@ -142,6 +329,12 @@ onShow(async () => {
         center.value = { latitude: first.coordinate.latitude, longitude: first.coordinate.longitude }
       }
     } catch (err) {}
+  }
+})
+
+onShow(async () => {
+  if (activeTab.value === 'weather' && !weatherData.value && !weatherLoading.value) {
+    await loadWeather()
   }
 })
 </script>
@@ -154,9 +347,52 @@ onShow(async () => {
   background: $bg-color;
 }
 
+/* Tab 栏 */
+.tab-bar {
+  display: flex;
+  background: $bg-surface;
+  border-bottom: 1rpx solid $border-color;
+  flex-shrink: 0;
+  padding: 0 16rpx;
+}
+.tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20rpx 0;
+  position: relative;
+  gap: 6rpx;
+}
+.tab-label {
+  font-size: 26rpx;
+  color: $text-muted;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+.tab-item.active .tab-label {
+  color: $text-primary;
+  font-weight: 600;
+}
+.tab-dot {
+  width: 8rpx;
+  height: 8rpx;
+  border-radius: 50%;
+  background: $color-primary;
+  position: absolute;
+  top: 16rpx;
+  right: calc(50% - 24rpx);
+}
+
+.tab-content {
+  flex: 1;
+  overflow: hidden;
+}
+
+/* 地图 */
 .map-container {
   flex: 1;
-  min-height: 400rpx;
+  min-height: 300rpx;
 }
 .map {
   width: 100%;
@@ -164,7 +400,7 @@ onShow(async () => {
 }
 
 .venue-list {
-  max-height: 50vh;
+  max-height: 45vh;
   padding: 24rpx;
   background: $bg-color;
 }
@@ -175,75 +411,282 @@ onShow(async () => {
   padding: 32rpx;
   margin-bottom: 16rpx;
   transition: all 0.2s ease;
+  border: 1rpx solid transparent;
 }
 .venue-card.active {
   background: $text-primary;
+  border-color: $text-primary;
 }
 .venue-card.active .venue-name,
 .venue-card.active .venue-address,
 .venue-card.active .venue-type,
 .venue-card.active .venue-time {
-  color: #fff;
+  color: rgba(255,255,255,0.85);
 }
-.venue-card:active {
-  opacity: 0.8;
-}
-
 .venue-meta {
   display: flex;
   align-items: center;
   gap: 16rpx;
-  margin-bottom: 12rpx;
+  margin-bottom: 8rpx;
 }
 .venue-type {
   padding: 4rpx 12rpx;
-  border-radius: 6rpx;
-  font-size: 20rpx;
   background: $bg-muted;
   color: $text-secondary;
+  font-size: 20rpx;
+  border-radius: 6rpx;
   font-weight: 500;
 }
-.venue-time {
-  font-size: 22rpx;
-  color: $text-muted;
-  font-weight: 500;
-}
-
+.venue-time { font-size: 22rpx; color: $text-muted; }
 .venue-name {
   display: block;
-  font-size: 32rpx;
-  font-weight: 600;
+  font-size: 30rpx;
+  font-weight: 500;
   color: $text-primary;
-  margin-bottom: 8rpx;
+  margin-bottom: 4rpx;
 }
 .venue-address {
   display: block;
-  font-size: 26rpx;
+  font-size: 24rpx;
   color: $text-secondary;
-  margin-bottom: 24rpx;
-  line-height: 1.5;
+  margin-bottom: 16rpx;
 }
-
 .venue-actions {
   display: flex;
-  gap: 16rpx;
+  gap: 12rpx;
 }
 .action-btn {
-  flex: 1;
-  height: 72rpx;
-  line-height: 72rpx;
-  text-align: center;
+  padding: 10rpx 28rpx;
+  font-size: 24rpx;
   border-radius: $radius-full;
   background: $bg-muted;
-  font-size: 26rpx;
   color: $text-primary;
-  font-weight: 500;
-  transition: opacity 0.2s ease;
+  border: none;
+  line-height: 1.5;
 }
 .action-btn.primary {
-  background: $text-primary;
+  background: $color-primary;
   color: #fff;
 }
 .action-btn::after { border: none; }
-.action-btn:active { opacity: 0.8; }
+
+/* 天气 */
+.weather-banner {
+  padding: 48rpx;
+  background: linear-gradient(135deg, #fef9f3 0%, #fdf2eb 100%);
+  margin: 24rpx;
+  border-radius: $radius-lg;
+}
+.weather-main {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  margin-bottom: 20rpx;
+}
+.weather-icon { font-size: 80rpx; }
+.weather-temp {
+  display: flex;
+  align-items: baseline;
+  gap: 8rpx;
+}
+.temp-max {
+  font-size: 64rpx;
+  font-weight: 300;
+  color: $text-primary;
+  font-variant-numeric: tabular-nums;
+}
+.temp-sep {
+  font-size: 32rpx;
+  color: $text-muted;
+  font-weight: 300;
+}
+.temp-min {
+  font-size: 32rpx;
+  color: $text-muted;
+  font-variant-numeric: tabular-nums;
+}
+.weather-desc {
+  display: flex;
+  align-items: baseline;
+  gap: 16rpx;
+}
+.weather-text {
+  font-size: 32rpx;
+  color: $text-primary;
+  font-weight: 500;
+}
+.weather-date {
+  font-size: 24rpx;
+  color: $text-muted;
+}
+.weather-tags {
+  margin-top: 16rpx;
+}
+.weather-tag {
+  display: inline-block;
+  font-size: 22rpx;
+  color: $text-secondary;
+  background: rgba(255,255,255,0.7);
+  padding: 8rpx 16rpx;
+  border-radius: $radius-full;
+}
+.weather-tag.rain { color: #4a90d9; }
+
+.weather-details {
+  margin: 24rpx;
+  background: $bg-surface;
+  border-radius: $radius-lg;
+  border: 1rpx solid $border-color;
+  overflow: hidden;
+}
+.detail-row {
+  display: flex;
+  align-items: center;
+  padding: 28rpx 32rpx;
+}
+.detail-label { font-size: 28rpx; margin-right: 16rpx; }
+.detail-text { font-size: 26rpx; color: $text-primary; }
+.detail-divider { height: 1rpx; background: $border-color; margin: 0 32rpx; }
+
+.weather-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 120rpx 0;
+  gap: 20rpx;
+}
+.loading-spinner {
+  width: 56rpx; height: 56rpx;
+  border: 3rpx solid $border-color;
+  border-top-color: $text-primary;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 26rpx; color: $text-muted; }
+
+.api-note {
+  margin: 24rpx;
+  padding: 20rpx 24rpx;
+  background: #FFF7E6;
+  border-radius: $radius-lg;
+}
+.note-text { font-size: 22rpx; color: #B8860B; }
+
+/* 交通 / 住宿 */
+.info-tab {
+  padding: 24rpx;
+  overflow-y: auto;
+}
+.section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+.section-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: $text-primary;
+}
+.section-date {
+  font-size: 22rpx;
+  color: $text-muted;
+}
+
+.info-card {
+  background: $bg-surface;
+  border-radius: $radius-lg;
+  border: 1rpx solid $border-color;
+  overflow: hidden;
+  margin-bottom: 24rpx;
+}
+.info-row {
+  display: flex;
+  align-items: flex-start;
+  padding: 32rpx;
+  gap: 20rpx;
+}
+.info-icon-wrap { font-size: 32rpx; }
+.info-content { flex: 1; }
+.info-label {
+  display: block;
+  font-size: 22rpx;
+  color: $text-muted;
+  margin-bottom: 6rpx;
+  letter-spacing: 2rpx;
+}
+.info-value {
+  display: block;
+  font-size: 28rpx;
+  color: $text-primary;
+  line-height: 1.5;
+}
+.info-divider { height: 1rpx; background: $border-color; margin: 0 32rpx; }
+
+/* 住宿列表 */
+.hotel-list { display: flex; flex-direction: column; gap: 16rpx; }
+.hotel-card {
+  background: $bg-surface;
+  border-radius: $radius-lg;
+  border: 1rpx solid $border-color;
+  padding: 32rpx;
+}
+.hotel-name {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 500;
+  color: $text-primary;
+  margin-bottom: 8rpx;
+}
+.hotel-tags { display: flex; gap: 12rpx; margin: 8rpx 0; }
+.hotel-tag {
+  font-size: 20rpx;
+  color: $text-secondary;
+  background: $bg-muted;
+  padding: 4rpx 12rpx;
+  border-radius: 4rpx;
+}
+.hotel-notes {
+  display: block;
+  font-size: 24rpx;
+  color: $text-muted;
+  margin-top: 8rpx;
+}
+.hotel-actions { margin-top: 20rpx; }
+.hotel-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 14rpx 32rpx;
+  background: $text-primary;
+  color: #fff;
+  border-radius: $radius-full;
+  font-size: 24rpx;
+  border: none;
+  line-height: 1;
+}
+.hotel-btn::after { border: none; }
+
+/* 空状态 */
+.empty-state {
+  text-align: center;
+  padding: 80rpx 0;
+}
+.empty-visual {
+  display: block;
+  font-size: 80rpx;
+  margin-bottom: 16rpx;
+}
+.empty-text {
+  display: block;
+  font-size: 28rpx;
+  color: $text-primary;
+  font-weight: 500;
+  margin-bottom: 8rpx;
+}
+.empty-sub {
+  display: block;
+  font-size: 24rpx;
+  color: $text-muted;
+}
 </style>

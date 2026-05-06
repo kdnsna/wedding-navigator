@@ -6,7 +6,12 @@
       <text class="page-title">路书设置</text>
     </view>
 
-    <!-- 场地列表 -->
+    <!-- ===== 场地列表 ===== -->
+    <view class="section-title">
+      <text class="section-label">婚礼场地</text>
+      <text class="section-hint">宾客可一键导航</text>
+    </view>
+
     <view class="venue-list" v-if="venues.length > 0">
       <view class="venue-item" v-for="venue in venues" :key="venue.id">
         <view class="venue-meta">
@@ -22,18 +27,77 @@
       </view>
     </view>
 
-    <!-- 空状态 -->
     <view class="empty-state" v-if="venues.length === 0">
-      <image class="empty-visual empty-icon" src="/static/visuals/empty-guide.png" mode="aspectFit" />
+      <text class="empty-visual">📍</text>
       <text class="empty-text">还没有添加场地</text>
     </view>
 
-    <!-- 添加按钮 -->
-    <button class="add-btn" @click="showAddModal">
+    <button class="add-btn secondary" @click="showAddModal">
       <text>+ 添加场地</text>
     </button>
 
-    <!-- 弹窗 -->
+    <!-- ===== 交通指引 ===== -->
+    <view class="section-title">
+      <text class="section-label">交通指引</text>
+      <text class="section-hint">帮助外地宾客出行</text>
+    </view>
+
+    <view class="info-section">
+      <view class="info-row" @click="editTransportation">
+        <view class="info-meta">
+          <text class="info-row-label">出行方式</text>
+          <text class="info-row-value">{{ transportation.transport || '点击设置' }}</text>
+        </view>
+        <text class="info-arrow">›</text>
+      </view>
+      <view class="info-divider" />
+      <view class="info-row" @click="editTransportation">
+        <view class="info-meta">
+          <text class="info-row-label">停车信息</text>
+          <text class="info-row-value">{{ transportation.parking || '点击设置' }}</text>
+        </view>
+        <text class="info-arrow">›</text>
+      </view>
+    </view>
+
+    <!-- ===== 推荐住宿 ===== -->
+    <view class="section-title">
+      <text class="section-label">推荐住宿</text>
+      <text class="section-hint">附近酒店推荐给宾客</text>
+    </view>
+
+    <view class="hotel-list" v-if="accommodations.length > 0">
+      <view class="hotel-item" v-for="hotel in accommodations" :key="hotel.id">
+        <view class="hotel-info">
+          <text class="hotel-name">{{ hotel.name }}</text>
+          <view class="hotel-tags">
+            <text class="hotel-tag" v-if="hotel.distance">{{ hotel.distance }}</text>
+            <text class="hotel-tag" v-if="hotel.price_range">{{ hotel.price_range }}</text>
+          </view>
+          <text class="hotel-phone" v-if="hotel.phone" @click="callHotel(hotel.phone)">
+            📞 {{ hotel.phone }}
+          </text>
+        </view>
+        <view class="hotel-actions">
+          <text class="venue-action" @click="editHotel(hotel)">编辑</text>
+          <text class="venue-action delete" @click="deleteHotel(hotel.id)">删除</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="empty-state" v-if="accommodations.length === 0">
+      <text class="empty-visual">🏨</text>
+      <text class="empty-text">还没有添加推荐住宿</text>
+    </view>
+
+    <button class="add-btn secondary" @click="showHotelModal">
+      <text>+ 添加住宿</text>
+    </button>
+
+    <!-- 底部占位 -->
+    <view style="height: 160rpx" />
+
+    <!-- ===== 场地弹窗 ===== -->
     <view class="modal-mask" v-if="showModal" @click="showModal = false">
       <view class="modal-content" @click.stop>
         <view class="modal-header">
@@ -72,6 +136,66 @@
         </view>
       </view>
     </view>
+
+    <!-- ===== 交通指引弹窗 ===== -->
+    <view class="modal-mask" v-if="showTransportModal" @click="showTransportModal = false">
+      <view class="modal-content" @click.stop>
+        <view class="modal-header">
+          <text class="modal-title">交通指引</text>
+          <text class="modal-close" @click="showTransportModal = false">✕</text>
+        </view>
+        <view class="modal-body">
+          <view class="form-group">
+            <text class="form-label">出行方式</text>
+            <input class="form-input" v-model="transportForm.transport" placeholder="如：高铁至南京南站，换乘地铁2号线" />
+          </view>
+          <view class="form-group">
+            <text class="form-label">停车信息</text>
+            <textarea class="form-textarea" v-model="transportForm.parking" placeholder="如：酒店地下停车场，宾客免费停车" />
+          </view>
+        </view>
+        <view class="modal-footer">
+          <button class="modal-btn secondary" @click="showTransportModal = false">取消</button>
+          <button class="modal-btn primary" @click="saveTransportation">确定</button>
+        </view>
+      </view>
+    </view>
+
+    <!-- ===== 住宿弹窗 ===== -->
+    <view class="modal-mask" v-if="showHotelM" @click="showHotelM = false">
+      <view class="modal-content" @click.stop>
+        <view class="modal-header">
+          <text class="modal-title">{{ editingHotel ? '编辑住宿' : '添加住宿' }}</text>
+          <text class="modal-close" @click="showHotelM = false">✕</text>
+        </view>
+        <view class="modal-body">
+          <view class="form-group">
+            <text class="form-label">酒店名称</text>
+            <input class="form-input" v-model="hotelForm.name" placeholder="例如：金陵饭店" />
+          </view>
+          <view class="form-group">
+            <text class="form-label">距离场地</text>
+            <input class="form-input" v-model="hotelForm.distance" placeholder="例如：距仪式场地 800 米" />
+          </view>
+          <view class="form-group">
+            <text class="form-label">价格区间</text>
+            <input class="form-input" v-model="hotelForm.price_range" placeholder="例如：400-600元/晚" />
+          </view>
+          <view class="form-group">
+            <text class="form-label">预订电话</text>
+            <input class="form-input" v-model="hotelForm.phone" placeholder="选填" type="number" />
+          </view>
+          <view class="form-group">
+            <text class="form-label">备注</text>
+            <input class="form-input" v-model="hotelForm.notes" placeholder="选填，如：协议价，订房报新人名字" />
+          </view>
+        </view>
+        <view class="modal-footer">
+          <button class="modal-btn secondary" @click="showHotelM = false">取消</button>
+          <button class="modal-btn primary" @click="saveHotel">确定</button>
+        </view>
+      </view>
+    </view>
   </view>
 </template>
 
@@ -86,13 +210,12 @@ import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
 const store = useWeddingStore()
 const userStore = useUserStore()
 
+// ========== 场地 ==========
 const showModal = ref(false)
 const editingVenue = ref(null)
-
 const venueTypes = ['家', '酒店', '场地', '住宿', '摄影点']
 const typeMap = { '家': 'home', '酒店': 'hotel', '场地': 'venue', '住宿': 'hotel_guest', '摄影点': 'photo' }
 const typeReverseMap = { 'home': 0, 'hotel': 1, 'venue': 2, 'hotel_guest': 3, 'photo': 4 }
-
 const modalForm = ref({ name: '', typeIndex: 2, address: '', arrivalTime: '', phone: '' })
 
 const venues = computed(() => store.venues?.venues || [])
@@ -124,6 +247,10 @@ function onTypeChange(e) { modalForm.value.typeIndex = e.detail.value }
 function onArrivalTimeChange(e) { modalForm.value.arrivalTime = e.detail.value }
 
 function saveVenue() {
+  if (!modalForm.value.name.trim()) {
+    uni.showToast({ title: '请输入场地名称', icon: 'none' })
+    return
+  }
   const venue = {
     id: editingVenue.value?.id || generateId(),
     name: modalForm.value.name,
@@ -158,6 +285,98 @@ function deleteVenue(id) {
   })
 }
 
+// ========== 交通指引 ==========
+const showTransportModal = ref(false)
+const transportForm = ref({ transport: '', parking: '' })
+
+const transportation = computed(() => store.venues?.transportation || {})
+
+function editTransportation() {
+  transportForm.value = {
+    transport: transportation.value.transport || '',
+    parking: transportation.value.parking || ''
+  }
+  showTransportModal.value = true
+}
+
+function saveTransportation() {
+  store.venues.transportation = { ...transportForm.value }
+  saveToStorage()
+  showTransportModal.value = false
+  showSuccess('保存成功')
+}
+
+// ========== 住宿 ==========
+const showHotelM = ref(false)
+const editingHotel = ref(null)
+const hotelForm = ref({ name: '', distance: '', price_range: '', phone: '', notes: '' })
+
+const accommodations = computed(() => store.venues?.accommodations || [])
+
+function showHotelModal() {
+  editingHotel.value = null
+  hotelForm.value = { name: '', distance: '', price_range: '', phone: '', notes: '' }
+  showHotelM.value = true
+}
+
+function editHotel(hotel) {
+  editingHotel.value = hotel
+  hotelForm.value = {
+    name: hotel.name,
+    distance: hotel.distance || '',
+    price_range: hotel.price_range || '',
+    phone: hotel.phone || '',
+    notes: hotel.notes || ''
+  }
+  showHotelM.value = true
+}
+
+function saveHotel() {
+  if (!hotelForm.value.name.trim()) {
+    uni.showToast({ title: '请输入酒店名称', icon: 'none' })
+    return
+  }
+  const hotel = {
+    id: editingHotel.value?.id || generateId(),
+    name: hotelForm.value.name,
+    distance: hotelForm.value.distance,
+    price_range: hotelForm.value.price_range,
+    phone: hotelForm.value.phone,
+    notes: hotelForm.value.notes
+  }
+  if (editingHotel.value) {
+    const idx = store.venues.accommodations.findIndex(h => h.id === editingHotel.value.id)
+    if (idx >= 0) store.venues.accommodations[idx] = hotel
+  } else {
+    if (!store.venues.accommodations) store.venues.accommodations = []
+    store.venues.accommodations.push(hotel)
+  }
+  saveToStorage()
+  showHotelM.value = false
+  showSuccess('保存成功')
+}
+
+function deleteHotel(id) {
+  uni.showModal({
+    title: '确认删除',
+    content: '确定删除该住宿？',
+    success: (res) => {
+      if (res.confirm) {
+        store.venues.accommodations = store.venues.accommodations.filter(h => h.id !== id)
+        saveToStorage()
+        showSuccess('已删除')
+      }
+    }
+  })
+}
+
+function callHotel(phone) {
+  if (phone) {
+    uni.makePhoneCall({ phoneNumber: String(phone) })
+  }
+}
+
+// ========== 数据持久化 ==========
 function saveToStorage() {
   const weddings = uni.getStorageSync('weddings') || {}
   if (weddings[userStore.weddingId]) {
@@ -173,10 +392,9 @@ onShow(() => { useOwnerGuard() })
 .page {
   background-color: $bg-color;
   min-height: 100vh;
-  padding-bottom: 160rpx;
+  padding-bottom: 80rpx;
 }
 
-/* 顶部标题 */
 .page-header {
   padding: 60rpx 48rpx 36rpx;
 }
@@ -194,19 +412,36 @@ onShow(() => { useOwnerGuard() })
   color: $text-primary;
 }
 
+/* 分组标题 */
+.section-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 40rpx 48rpx 20rpx;
+}
+.section-label {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: $text-primary;
+}
+.section-hint {
+  font-size: 22rpx;
+  color: $text-muted;
+}
+
 /* 场地列表 */
-.venue-list {
+.venue-list, .hotel-list {
   padding: 0 48rpx;
 }
-.venue-item {
-  padding: 32rpx 0;
+.venue-item, .hotel-item {
+  padding: 28rpx 0;
   border-bottom: 1rpx solid $border-color;
 }
 .venue-meta {
   display: flex;
   align-items: center;
   gap: 16rpx;
-  margin-bottom: 12rpx;
+  margin-bottom: 8rpx;
 }
 .venue-type {
   padding: 4rpx 12rpx;
@@ -219,132 +454,166 @@ onShow(() => { useOwnerGuard() })
 .venue-time {
   font-size: 22rpx;
   color: $text-muted;
-  font-weight: 500;
 }
-.venue-name {
+.venue-name, .hotel-name {
   display: block;
-  font-size: 32rpx;
-  font-weight: 600;
+  font-size: 30rpx;
   color: $text-primary;
-  margin-bottom: 8rpx;
+  font-weight: 500;
+  margin-bottom: 6rpx;
 }
 .venue-address {
   display: block;
-  font-size: 26rpx;
+  font-size: 24rpx;
   color: $text-secondary;
-  margin-bottom: 16rpx;
+  margin-bottom: 12rpx;
 }
-.venue-actions {
+.venue-actions, .hotel-actions {
   display: flex;
   gap: 24rpx;
 }
 .venue-action {
-  font-size: 26rpx;
+  font-size: 24rpx;
   color: $text-secondary;
 }
 .venue-action.delete {
   color: $color-error;
 }
 
+/* 住宿 */
+.hotel-tags {
+  display: flex;
+  gap: 12rpx;
+  margin: 6rpx 0;
+}
+.hotel-tag {
+  font-size: 20rpx;
+  color: $text-secondary;
+  background: $bg-muted;
+  padding: 2rpx 10rpx;
+  border-radius: 4rpx;
+}
+.hotel-phone {
+  font-size: 22rpx;
+  color: $color-primary;
+}
+
+/* 信息列表 */
+.info-section {
+  margin: 0 48rpx;
+  background: $bg-surface;
+  border-radius: $radius-lg;
+  border: 1rpx solid $border-color;
+  overflow: hidden;
+}
+.info-row {
+  display: flex;
+  align-items: center;
+  padding: 32rpx;
+}
+.info-row-label {
+  display: block;
+  font-size: 26rpx;
+  color: $text-primary;
+  font-weight: 500;
+  margin-bottom: 4rpx;
+}
+.info-row-value {
+  display: block;
+  font-size: 24rpx;
+  color: $text-secondary;
+  max-width: 480rpx;
+}
+.info-arrow {
+  font-size: 28rpx;
+  color: $text-muted;
+  margin-left: auto;
+}
+.info-divider {
+  height: 1rpx;
+  background: $border-color;
+  margin: 0 32rpx;
+}
+
 /* 空状态 */
 .empty-state {
   text-align: center;
-  padding: 150rpx 60rpx;
+  padding: 40rpx 0;
 }
-.empty-icon {
-  font-size: 80rpx;
+.empty-visual {
   display: block;
-  margin-bottom: 20rpx;
+  font-size: 64rpx;
+  margin-bottom: 12rpx;
 }
 .empty-text {
-  font-size: 28rpx;
+  font-size: 26rpx;
   color: $text-muted;
 }
 
 /* 添加按钮 */
 .add-btn {
-  position: fixed;
-  bottom: calc(40rpx + constant(safe-area-inset-bottom));
-  bottom: calc(40rpx + env(safe-area-inset-bottom));
-  left: 48rpx;
-  right: 48rpx;
-  height: 96rpx;
-  line-height: 96rpx;
+  margin: 24rpx 48rpx 0;
+  height: 88rpx;
+  line-height: 88rpx;
   text-align: center;
   border-radius: $radius-full;
-  background: $text-primary;
-  color: #fff;
-  font-size: 30rpx;
+  font-size: 28rpx;
   font-weight: 500;
+  border: 2rpx dashed $border-color;
+  background: transparent;
+  color: $text-secondary;
+  transition: all 0.2s ease;
+}
+.add-btn.secondary {
+  border: 2rpx dashed $border-color;
 }
 .add-btn::after { border: none; }
-.add-btn:active { opacity: 0.8; }
+.add-btn:active { background: $bg-muted; }
 
 /* 弹窗 */
 .modal-mask {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0,0,0,0.4);
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  z-index: 1000;
+  z-index: 200;
 }
 .modal-content {
   width: 100%;
   background: $bg-surface;
   border-radius: 32rpx 32rpx 0 0;
-  padding: 40rpx 48rpx calc(40rpx + constant(safe-area-inset-bottom));
-  padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
+  max-height: 85vh;
+  overflow-y: auto;
 }
 .modal-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 36rpx;
+  justify-content: space-between;
+  padding: 36rpx 48rpx 24rpx;
+  border-bottom: 1rpx solid $border-color;
+  position: sticky;
+  top: 0;
+  background: $bg-surface;
 }
 .modal-title {
-  font-size: $font-h2;
+  font-size: 32rpx;
   font-weight: 600;
   color: $text-primary;
 }
 .modal-close {
   font-size: 32rpx;
   color: $text-muted;
-  padding: 10rpx;
+  padding: 8rpx;
 }
-
-.form-group {
-  margin-bottom: 32rpx;
+.modal-body {
+  padding: 32rpx 48rpx;
 }
-.form-label {
-  display: block;
-  font-size: 24rpx;
-  color: $text-muted;
-  margin-bottom: 12rpx;
-}
-.form-input {
-  width: 100%;
-  height: 80rpx;
-  padding: 0 4rpx;
-  border-bottom: 2rpx solid $border-color;
-  font-size: 30rpx;
-  background: transparent;
-  box-sizing: border-box;
-}
-.picker-value {
-  width: 100%;
-  height: 80rpx;
-  line-height: 80rpx;
-  font-size: 30rpx;
-  color: $text-primary;
-  border-bottom: 2rpx solid $border-color;
-}
-
 .modal-footer {
   display: flex;
-  gap: 16rpx;
-  margin-top: 24rpx;
+  gap: 20rpx;
+  padding: 24rpx 48rpx calc(48rpx + env(safe-area-inset-bottom));
 }
 .modal-btn {
   flex: 1;
@@ -352,18 +621,52 @@ onShow(() => { useOwnerGuard() })
   line-height: 88rpx;
   text-align: center;
   border-radius: $radius-full;
-  font-size: 28rpx;
+  font-size: 30rpx;
   font-weight: 500;
-  transition: opacity 0.2s ease;
+  transition: all 0.2s ease;
 }
 .modal-btn::after { border: none; }
-.modal-btn:active { opacity: 0.8; }
+.modal-btn.secondary {
+  background: $bg-muted;
+  color: $text-primary;
+}
 .modal-btn.primary {
   background: $text-primary;
   color: #fff;
 }
-.modal-btn.secondary {
-  background: $bg-muted;
+.modal-btn:active { transform: scale(0.98); opacity: 0.85; }
+
+/* 表单 */
+.form-group {
+  margin-bottom: 28rpx;
+}
+.form-label {
+  display: block;
+  font-size: 24rpx;
+  color: $text-muted;
+  margin-bottom: 12rpx;
+  letter-spacing: 2rpx;
+}
+.form-input {
+  height: 88rpx;
+  font-size: 28rpx;
   color: $text-primary;
+  border-bottom: 2rpx solid $border-color;
+}
+.form-textarea {
+  width: 100%;
+  height: 160rpx;
+  font-size: 28rpx;
+  color: $text-primary;
+  border-bottom: 2rpx solid $border-color;
+  line-height: 1.6;
+}
+.picker-value {
+  height: 88rpx;
+  font-size: 28rpx;
+  color: $text-primary;
+  border-bottom: 2rpx solid $border-color;
+  display: flex;
+  align-items: center;
 }
 </style>

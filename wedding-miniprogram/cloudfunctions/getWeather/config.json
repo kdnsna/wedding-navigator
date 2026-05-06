@@ -1,0 +1,6 @@
+{
+  "permissions": {
+    "openapi": []
+  },
+  "desc": "获取婚礼当天天气预报"
+}
