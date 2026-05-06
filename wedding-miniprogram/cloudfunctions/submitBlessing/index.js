@@ -12,6 +12,16 @@ exports.main = async (event, context) => {
   }
 
   try {
+    // 内容安全检测
+    if (blessing.content) {
+      const secRes = await cloud.openapi.security.msgSecCheck({
+        content: blessing.content
+      })
+      if (secRes.errCode !== 0) {
+        return { success: false, message: '祝福内容包含敏感信息，请修改后重试' }
+      }
+    }
+
     const newBlessing = {
       id: Date.now().toString(),
       ...blessing,

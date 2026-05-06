@@ -11,6 +11,16 @@ exports.main = async (event, context) => {
   }
 
   try {
+    // 内容安全检测（留言内容）
+    if (rsvpData.message) {
+      const secRes = await cloud.openapi.security.msgSecCheck({
+        content: rsvpData.message
+      })
+      if (secRes.errCode !== 0) {
+        return { success: false, message: '留言内容包含敏感信息，请修改后重试' }
+      }
+    }
+
     // 检查是否已有该手机号的记录
     const guestRes = await db.collection('guests').doc(weddingId).get()
     const guests = guestRes.data.guests || []

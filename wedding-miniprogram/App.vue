@@ -6,10 +6,83 @@ import { useUserStore } from '@/stores/user.js'
 onLaunch(() => {
   useUserStore().loadFromStorage()
   initCloud()
+  checkPrivacySetting()
+  checkUpdate()
 })
 
 onShow(() => {})
 onHide(() => {})
+
+// 全局错误捕获
+uni.onError((err) => {
+  console.error('[Global Error]', err)
+})
+
+// 全局未处理的 Promise 拒绝
+if (typeof uni.onUnhandledRejection === 'function') {
+  uni.onUnhandledRejection((res) => {
+    console.error('[Unhandled Rejection]', res.reason)
+  })
+}
+
+// 版本更新检测
+function checkUpdate() {
+  if (typeof uni.getUpdateManager === 'function') {
+    const updateManager = uni.getUpdateManager()
+    updateManager.onCheckForUpdate((res) => {
+      if (res.hasUpdate) {
+        updateManager.onUpdateReady(() => {
+          uni.showModal({
+            title: '更新提示',
+            content: '新版本已准备好，是否重启应用？',
+            confirmText: '立即重启',
+            cancelText: '稍后',
+            success: (modalRes) => {
+              if (modalRes.confirm) {
+                updateManager.applyUpdate()
+              }
+            }
+          })
+        })
+        updateManager.onUpdateFailed(() => {
+          uni.showModal({
+            title: '更新失败',
+            content: '新版本下载失败，请检查网络后重试',
+            showCancel: false
+          })
+        })
+      }
+    })
+  }
+}
+
+// 隐私保护指引检查
+function checkPrivacySetting() {
+  if (typeof wx !== 'undefined' && wx.getPrivacySetting) {
+    wx.getPrivacySetting({
+      success: (res) => {
+        if (res.needAuthorization) {
+          // 需要弹出隐私协议
+          wx.showModal({
+            title: '隐私保护指引',
+            content: '使用本小程序需要您同意《隐私保护指引》，我们仅收集必要的信息用于婚礼邀请功能。',
+            confirmText: '同意',
+            cancelText: '不同意',
+            success: (modalRes) => {
+              if (modalRes.confirm) {
+                wx.openPrivacyContract()
+              } else {
+                // 用户不同意，提示功能受限
+                uni.showToast({ title: '未同意隐私指引，部分功能受限', icon: 'none', duration: 3000 })
+              }
+            }
+          })
+        }
+      }
+    })
+  }
+}
+</script>
 </script>
 
 <style lang="scss">

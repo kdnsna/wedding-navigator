@@ -179,10 +179,10 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { onLoad, onShareAppMessage, onShow } from '@dcloudio/uni-app'
+import { onLoad, onShareAppMessage, onShareTimeline, onShow } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
-import { fetchWedding } from '@/composables/useCloud.js'
+import { fetchWedding, recordView } from '@/composables/useCloud.js'
 import { formatDate, getWeekDay } from '@/utils/index.js'
 
 const store = useWeddingStore()
@@ -282,7 +282,46 @@ function openNavigation() {
 }
 
 function openCalendar() {
-  uni.showToast({ title: '请手动添加到日历', icon: 'none' })
+  const date = store.weddingDate
+  const time = store.weddingTime || '12:00'
+  const venue = store.venues?.venues?.[0]
+  if (!date) {
+    uni.showToast({ title: '暂无婚礼日期信息', icon: 'none' })
+    return
+  }
+
+  const [h, m] = time.split(':')
+  const startTime = Math.floor(new Date(`${date}T${time}`).getTime() / 1000)
+  const endTime = startTime + 4 * 3600 // 默认婚礼持续4小时
+
+  if (typeof wx !== 'undefined' && wx.addPhoneCalendar) {
+    wx.addPhoneCalendar({
+      title: `${groomName.value} & ${brideName.value} 的婚礼`,
+      startTime,
+      endTime,
+      location: venue?.name || store.venueName || '',
+      description: `诚挚邀请您参加${groomName.value} & ${brideName.value}的婚礼，期待您的到来。`,
+      success: () => {
+        uni.showToast({ title: '已添加到日历', icon: 'success' })
+      },
+      fail: (err) => {
+        if (err.errMsg?.includes('auth deny')) {
+          uni.showModal({
+            title: '需要授权',
+            content: '请允许添加到日历权限',
+            confirmText: '去设置',
+            success: (res) => {
+              if (res.confirm) uni.openSetting()
+            }
+          })
+        } else {
+          uni.showToast({ title: '添加失败，请手动添加', icon: 'none' })
+        }
+      }
+    })
+  } else {
+    uni.showToast({ title: '请手动添加到日历', icon: 'none' })
+  }
 }
 
 onShareAppMessage(() => {
@@ -290,6 +329,15 @@ onShareAppMessage(() => {
   return {
     title,
     path: `/pages/index/index?id=${userStore.weddingId}`,
+    imageUrl: coverImage.value
+  }
+})
+
+onShareTimeline(() => {
+  const title = store.wedding?.share_config?.title || `${groomName.value} & ${brideName.value} 的婚礼邀请`
+  return {
+    title,
+    query: `id=${userStore.weddingId}`,
     imageUrl: coverImage.value
   }
 })
@@ -302,6 +350,8 @@ onLoad(async (options) => {
       await fetchWedding(weddingId)
       updateCountdown()
       countdownTimer = setInterval(updateCountdown, 1000)
+      // 异步记录浏览量，不阻塞渲染
+      recordView(weddingId).catch(() => {})
     } catch (err) {
       console.warn('加载婚礼数据失败，已使用本地默认数据:', err)
       uni.showToast({ title: '加载数据失败，请检查网络', icon: 'none', duration: 3000 })

@@ -4,6 +4,7 @@ const db = cloud.database()
 
 exports.main = async (event, context) => {
   const { weddingId } = event
+  const { OPENID } = cloud.getWXContext()
 
   if (!weddingId) {
     return { success: false, message: '缺少婚礼ID' }
@@ -35,6 +36,21 @@ exports.main = async (event, context) => {
       return { success: false, message: '婚礼不存在' }
     }
 
+    // 判断是否为婚礼主人
+    const isOwner = weddingRes.data.owner_openid === OPENID
+
+    // 对非主人隐藏宾客敏感信息（手机号）
+    let guestsData = guestsRes.data
+    if (!isOwner && guestsData && guestsData.guests) {
+      guestsData = {
+        ...guestsData,
+        guests: guestsData.guests.map(g => {
+          const { phone, dietary, ...safeGuest } = g
+          return safeGuest
+        })
+      }
+    }
+
     return {
       success: true,
       data: {
@@ -43,7 +59,7 @@ exports.main = async (event, context) => {
         album: albumRes.data,
         venues: venuesRes.data,
         timeline: timelineRes.data,
-        guests: guestsRes.data,
+        guests: guestsData,
         blessings: blessingsRes.data,
         stats: statsRes.data
       }

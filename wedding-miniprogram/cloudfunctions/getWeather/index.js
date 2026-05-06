@@ -42,7 +42,8 @@ exports.main = async (event, context) => {
       return { success: false, message: '场地缺少经纬度坐标' }
     }
 
-    const WEATHER_KEY = 'YOUR_HEFENG_KEY' // 需要用户自行申请
+    // 从云函数环境变量读取和风天气 API Key（需在云开发控制台配置）
+    const WEATHER_KEY = process.env.HEFENG_KEY || ''
     const lat = venue.coordinate.latitude
     const lon = venue.coordinate.longitude
     const weddingDate = wedding.data?.basic_info?.date || wedding.data?.wedding_date || ''

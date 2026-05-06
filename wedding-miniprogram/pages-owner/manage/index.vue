@@ -88,7 +88,6 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { formatDate } from '@/utils/index.js'
@@ -125,22 +124,7 @@ function shareWedding() {
   uni.navigateTo({ url: '/pages-owner/share/index' })
 }
 
-onShow(() => {
-  if (!userStore.isOwner || !userStore.ownerVerified) {
-    uni.showModal({
-      title: '身份验证',
-      content: '',
-      placeholderText: '请输入主人手机号后4位',
-      editable: true,
-      confirmText: '验证',
-      success: (res) => {
-        if (res.confirm && res.content) {
-          userStore.verifyOwner(true)
-        }
-      }
-    })
-  }
-})
+// 管理后台权限由云函数通过 openid 鉴权，前端无需弹窗验证
 </script>
 
 <style lang="scss" scoped>

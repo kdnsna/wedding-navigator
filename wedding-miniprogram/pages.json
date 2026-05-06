@@ -50,6 +50,12 @@
         "navigationBarTitleText": "婚礼海报",
         "navigationStyle": "custom"
       }
+    },
+    {
+      "path": "pages/privacy/index",
+      "style": {
+        "navigationBarTitleText": "隐私保护指引"
+      }
     }
   ],
   "subPackages": [
@@ -158,6 +164,12 @@
         "text": "更多"
       }
     ]
+  },
+  "preloadRule": {
+    "pages/index/index": {
+      "network": "all",
+      "packages": ["pages-owner"]
+    }
   },
   "condition": {}
 }

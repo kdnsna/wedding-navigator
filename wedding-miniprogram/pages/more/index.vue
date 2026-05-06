@@ -51,6 +51,12 @@
         <text class="menu-title">管理后台</text>
         <text class="menu-arrow">›</text>
       </view>
+      <view class="divider" />
+      <button class="menu-item contact-btn" open-type="contact">
+        <image class="visual-icon menu-icon" src="/static/visuals/icon-phone.png" mode="aspectFit" />
+        <text class="menu-title">联系客服</text>
+        <text class="menu-arrow">›</text>
+      </button>
     </view>
 
     <!-- 分享 -->
@@ -67,7 +73,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { onShareAppMessage } from '@dcloudio/uni-app'
+import { onShareAppMessage, onShareTimeline } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { formatDate } from '@/utils/index.js'
@@ -88,6 +94,11 @@ function goToManage() { uni.navigateTo({ url: '/pages-owner/manage/index' }) }
 onShareAppMessage(() => ({
   title: `${coupleName.value}的婚礼邀请`,
   path: `/pages/index/index?id=${userStore.weddingId}`
+}))
+
+onShareTimeline(() => ({
+  title: `${coupleName.value}的婚礼邀请`,
+  query: `id=${userStore.weddingId}`
 }))
 </script>
 
@@ -149,6 +160,15 @@ onShareAppMessage(() => ({
 .menu-item:active {
   background: $bg-muted;
 }
+.contact-btn {
+  background: transparent;
+  border: none;
+  padding: 32rpx 28rpx;
+  margin: 0;
+  line-height: inherit;
+  text-align: left;
+}
+.contact-btn::after { border: none; }
 .menu-icon {
   font-size: 36rpx;
   margin-right: 20rpx;
