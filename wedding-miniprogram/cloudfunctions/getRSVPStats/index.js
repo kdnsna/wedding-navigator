@@ -4,12 +4,19 @@ const db = cloud.database()
 
 exports.main = async (event, context) => {
   const { weddingId } = event
+  const { OPENID } = cloud.getWXContext()
 
   if (!weddingId) {
     return { success: false, message: '缺少婚礼ID' }
   }
 
   try {
+    // 权限校验：仅主人可查看统计
+    const wedding = await db.collection('weddings').doc(weddingId).get()
+    if (wedding.data.owner_openid !== OPENID) {
+      return { success: false, message: '无权查看' }
+    }
+
     const res = await db.collection('guests').doc(weddingId).get()
     const guests = res.data.guests || []
 

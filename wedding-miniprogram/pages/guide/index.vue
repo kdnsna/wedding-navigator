@@ -49,6 +49,7 @@ import { onShow } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { fetchWedding } from '@/composables/useCloud.js'
+import { MARKER_ICON } from '@/config/cloud.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
@@ -65,7 +66,7 @@ const markers = computed(() => {
     latitude: v.coordinate?.latitude || center.value.latitude,
     longitude: v.coordinate?.longitude || center.value.longitude,
     title: v.name,
-    iconPath: '/static/visuals/venue-marker.png',
+    iconPath: MARKER_ICON || '',
     width: 30,
     height: 30,
     callout: {

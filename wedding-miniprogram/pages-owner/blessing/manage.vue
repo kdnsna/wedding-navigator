@@ -9,16 +9,12 @@
     <!-- 统计 -->
     <view class="stats-row">
       <view class="stat-item">
-        <text class="stat-num">{{ textCount }}</text>
-        <text class="stat-label">文字</text>
-      </view>
-      <view class="stat-item">
-        <text class="stat-num">{{ voiceCount }}</text>
-        <text class="stat-label">语音</text>
-      </view>
-      <view class="stat-item">
         <text class="stat-num">{{ blessings.length }}</text>
-        <text class="stat-label">总计</text>
+        <text class="stat-label">祝福总数</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-num">{{ pinnedCount }}</text>
+        <text class="stat-label">已置顶</text>
       </view>
     </view>
 
@@ -52,6 +48,7 @@ import { onShow } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { showSuccess } from '@/utils/index.js'
+import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
@@ -65,8 +62,7 @@ const blessings = computed(() => {
   })
 })
 
-const textCount = computed(() => blessings.value.filter(b => b.type === 'text').length)
-const voiceCount = computed(() => blessings.value.filter(b => b.type === 'voice').length)
+const pinnedCount = computed(() => blessings.value.filter(b => b.is_pinned).length)
 
 function formatTime(ts) {
   if (!ts) return ''
@@ -105,7 +101,7 @@ function saveToStorage() {
   }
 }
 
-onShow(() => {})
+onShow(() => { useOwnerGuard() })
 </script>
 
 <style lang="scss" scoped>

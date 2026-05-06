@@ -108,6 +108,7 @@ import { onShow } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { showSuccess, showError } from '@/utils/index.js'
+import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
@@ -199,7 +200,7 @@ function previewInvitation() {
 }
 
 const inv = store.invitation || {}
-onShow(() => { loadFromStore() })
+onShow(() => { useOwnerGuard(); loadFromStore() })
 </script>
 
 <style lang="scss" scoped>

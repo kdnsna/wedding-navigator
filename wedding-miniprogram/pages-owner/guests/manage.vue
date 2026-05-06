@@ -122,6 +122,7 @@ import { onShow } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { generateId, showSuccess } from '@/utils/index.js'
+import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
@@ -229,7 +230,7 @@ function saveToStorage() {
   }
 }
 
-onShow(() => {})
+onShow(() => { useOwnerGuard() })
 </script>
 
 <style lang="scss" scoped>

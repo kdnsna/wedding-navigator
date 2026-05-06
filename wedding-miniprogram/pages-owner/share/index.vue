@@ -42,6 +42,7 @@ import { onShow, onShareAppMessage } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { showSuccess } from '@/utils/index.js'
+import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
@@ -67,7 +68,7 @@ onShareAppMessage(() => ({
   desc: shareForm.value.description
 }))
 
-onShow(() => { loadFromStore() })
+onShow(() => { useOwnerGuard(); loadFromStore() })
 </script>
 
 <style lang="scss" scoped>

@@ -35,9 +35,6 @@
           <text class="item-time">{{ formatTime(item.created_at) }}</text>
         </view>
         <text class="item-content">{{ item.content }}</text>
-        <view class="item-voice" v-if="item.type === 'voice'">
-          <text>语音祝福 {{ item.voice_duration }}"</text>
-        </view>
         <view class="pinned-tag" v-if="item.is_pinned">置顶</view>
       </view>
     </view>
@@ -227,11 +224,6 @@ onShow(async () => {
   font-size: 28rpx;
   color: $text-primary;
   line-height: 1.7;
-}
-.item-voice {
-  margin-top: 12rpx;
-  font-size: 24rpx;
-  color: $text-secondary;
 }
 .pinned-tag {
   position: absolute;

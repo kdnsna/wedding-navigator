@@ -11,13 +11,17 @@
         <text class="hero-names animate-fade-up delay-4">{{ groomName }} & {{ brideName }}</text>
         <text class="hero-sub animate-fade-up delay-5">We're getting married</text>
         <text class="hero-date animate-fade-up delay-6">{{ formatDate(weddingDate) }}</text>
-        <view class="hero-countdown animate-fade-up delay-7" v-if="countdown">
+        <view class="hero-countdown animate-fade-up delay-7" v-if="countdown && !countdown.isToday">
           <text class="countdown-num">{{ countdown.days }}</text>
           <view class="countdown-divider" />
           <view class="countdown-info">
             <text class="countdown-label">DAYS</text>
             <text class="countdown-desc">距离我们结婚</text>
           </view>
+        </view>
+        <view class="hero-today animate-fade-up delay-7" v-if="countdown?.isToday">
+          <text class="today-label">TODAY</text>
+          <text class="today-desc">就是今天</text>
         </view>
         <view class="scroll-hint animate-fade-in delay-10">
           <view class="scroll-line" />
@@ -200,7 +204,8 @@ function updateCountdown() {
     days: String(cd.days).padStart(2, '0'),
     hours: String(cd.hours).padStart(2, '0'),
     minutes: String(cd.minutes).padStart(2, '0'),
-    seconds: String(cd.seconds).padStart(2, '0')
+    seconds: String(cd.seconds).padStart(2, '0'),
+    isToday: cd.isToday
   }
 }
 
@@ -391,6 +396,28 @@ onUnmounted(() => {
   font-size: 26rpx;
   color: rgba(255,255,255,0.8);
   letter-spacing: 2rpx;
+}
+
+/* 婚礼当天 */
+.hero-today {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+  margin-bottom: 80rpx;
+}
+.today-label {
+  font-size: 72rpx;
+  font-weight: 200;
+  color: #fff;
+  letter-spacing: 12rpx;
+  text-shadow: 0 4rpx 20rpx rgba(0,0,0,0.2);
+  line-height: 1;
+}
+.today-desc {
+  font-size: 32rpx;
+  color: rgba(255,255,255,0.85);
+  letter-spacing: 16rpx;
 }
 
 /* 滚动提示 */

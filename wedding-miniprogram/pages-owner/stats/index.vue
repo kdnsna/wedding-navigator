@@ -102,6 +102,7 @@
 import { computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
+import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
 
 const store = useWeddingStore()
 
@@ -124,7 +125,7 @@ const dietStats = computed(() => {
   }
 })
 
-onShow(() => {})
+onShow(() => { useOwnerGuard() })
 </script>
 
 <style lang="scss" scoped>
