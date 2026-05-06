@@ -1,58 +1,59 @@
 <template>
   <view class="page">
-    <!-- 日期和倒计时 -->
-    <view class="timeline-header">
-      <text class="header-date">{{ formatDate(weddingDate) }}</text>
-      <text class="header-countdown" v-if="countdown && !countdown.isToday">
+    <!-- 顶部标题 -->
+    <view class="page-header">
+      <text class="page-tag">TIMELINE</text>
+      <text class="page-title">婚礼流程</text>
+      <text class="page-desc" v-if="countdown && !countdown.isToday">
         距离婚礼还有 {{ countdown.days }} 天
       </text>
-      <text class="header-countdown today" v-if="countdown?.isToday">
-        🎉 今天是婚礼日
+      <text class="page-desc today" v-if="countdown?.isToday">
+        今天是我们的婚礼日
       </text>
     </view>
 
     <!-- 时间轴 -->
-    <view class="timeline-body">
+    <view class="timeline" v-if="events.length > 0">
       <view
         class="timeline-item"
         v-for="(event, index) in events"
         :key="event.id"
         :class="getEventStatus(event.time)"
       >
-        <view class="timeline-dot" />
-        <view class="timeline-line" v-if="index < events.length - 1" />
+        <view class="timeline-left">
+          <text class="timeline-time">{{ event.time }}</text>
+          <view class="timeline-dot" />
+          <view class="timeline-line" v-if="index < events.length - 1" />
+        </view>
         <view class="timeline-content">
-          <view class="timeline-time">
-            <text class="time-text">{{ event.time }}</text>
-            <text class="time-badge" v-if="event.is_important">重要</text>
+          <view class="content-header">
+            <text class="content-title">{{ event.title }}</text>
+            <text class="content-badge" v-if="event.is_important">重点</text>
           </view>
-          <text class="timeline-title">{{ event.title }}</text>
-          <text class="timeline-venue" v-if="getVenueName(event.venue_id)">
-            📍 {{ getVenueName(event.venue_id) }}
+          <text class="content-venue" v-if="getVenueName(event.venue_id)">
+            {{ getVenueName(event.venue_id) }}
           </text>
-          <text class="timeline-assignee" v-if="event.assignee_ids?.length">
-            👤 {{ getAssignees(event.assignee_ids) }}
+          <text class="content-assignee" v-if="event.assignee_ids?.length">
+            {{ getAssignees(event.assignee_ids) }}
           </text>
-          <text class="timeline-notes" v-if="event.notes">{{ event.notes }}</text>
+          <text class="content-notes" v-if="event.notes">{{ event.notes }}</text>
         </view>
       </view>
     </view>
 
     <!-- 空状态 -->
     <view class="empty-state" v-if="events.length === 0">
-      <text class="empty-icon">📅</text>
       <text class="empty-text">暂无流程安排</text>
     </view>
   </view>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { fetchWedding } from '@/composables/useCloud.js'
-import { formatDate } from '@/utils/index.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
@@ -81,17 +82,11 @@ function getEventStatus(timeStr) {
   if (!timeStr) return ''
   const today = new Date()
   const weddingDay = new Date(weddingDate.value)
-  
-  // 如果不是婚礼当天，全部显示为 upcoming
-  if (today.toDateString() !== weddingDay.toDateString()) {
-    return 'upcoming'
-  }
-  
+  if (today.toDateString() !== weddingDay.toDateString()) return 'upcoming'
   const [h, m] = timeStr.split(':').map(Number)
   const eventTime = new Date(today.getFullYear(), today.getMonth(), today.getDate(), h, m)
   const now = new Date()
   const diff = now - eventTime
-  
   if (diff > 30 * 60 * 1000) return 'past'
   if (Math.abs(diff) <= 30 * 60 * 1000) return 'current'
   return 'upcoming'
@@ -99,178 +94,153 @@ function getEventStatus(timeStr) {
 
 onShow(async () => {
   if (userStore.weddingId && events.value.length === 0) {
-    try {
-      await fetchWedding(userStore.weddingId)
-    } catch (err) {
-      console.error('加载流程失败:', err)
-    }
+    try { await fetchWedding(userStore.weddingId) } catch (err) {}
   }
 })
 </script>
 
 <style lang="scss" scoped>
-/* ========== 流程时间线 ========== */
 .page {
   background-color: $bg-color;
   min-height: 100vh;
-  padding: 30rpx;
+  padding-bottom: 60rpx;
 }
 
-.timeline-header {
-  text-align: center;
-  padding: 40rpx 0 50rpx;
+/* 顶部标题 */
+.page-header {
+  padding: 60rpx 48rpx 48rpx;
 }
-.header-date {
+.page-tag {
   display: block;
-  font-size: 38rpx;
+  font-size: 22rpx;
+  color: $text-muted;
+  letter-spacing: 6rpx;
+  margin-bottom: 12rpx;
+}
+.page-title {
+  display: block;
+  font-size: $font-h1;
   font-weight: 600;
   color: $text-primary;
-  margin-bottom: 12rpx;
-  letter-spacing: 2rpx;
+  margin-bottom: 16rpx;
 }
-.header-countdown {
-  font-size: 28rpx;
+.page-desc {
+  display: block;
+  font-size: $font-body;
   color: $text-secondary;
 }
-.header-countdown.today {
+.page-desc.today {
   color: $color-primary;
-  font-weight: 700;
-  letter-spacing: 2rpx;
+  font-weight: 500;
 }
 
-/* 时间线主体 */
-.timeline-body {
-  position: relative;
-  padding-left: 48rpx;
+/* 时间轴 */
+.timeline {
+  padding: 0 48rpx;
 }
-
 .timeline-item {
+  display: flex;
+  gap: 32rpx;
+  padding-bottom: 48rpx;
   position: relative;
-  padding-bottom: 44rpx;
-  animation: fadeInUp 0.5s $ease-out both;
-  opacity: 0;
-}
-@for $i from 1 through 15 {
-  .timeline-item:nth-child(#{$i}) {
-    animation-delay: #{$i * 0.07}s;
-  }
 }
 
-/* 时间线节点 */
+.timeline-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 80rpx;
+  flex-shrink: 0;
+  position: relative;
+}
+.timeline-time {
+  font-size: 26rpx;
+  color: $text-muted;
+  font-weight: 500;
+  margin-bottom: 12rpx;
+  font-variant-numeric: tabular-nums;
+}
 .timeline-dot {
-  position: absolute;
-  left: -48rpx;
-  top: 14rpx;
-  width: 24rpx;
-  height: 24rpx;
+  width: 12rpx;
+  height: 12rpx;
   border-radius: 50%;
   background: $border-color;
-  border: 4rpx solid $bg-surface;
+  position: relative;
   z-index: 2;
-  box-shadow: 0 0 0 4rpx rgba(212,168,83,0.1);
-  transition: all 0.3s ease;
 }
-
 .timeline-line {
   position: absolute;
-  left: -40rpx;
-  top: 34rpx;
-  width: 4rpx;
-  height: calc(100% + 20rpx);
-  background: linear-gradient(to bottom, $border-light, $border-gold, $border-light);
+  top: 52rpx;
+  bottom: 0;
+  width: 1rpx;
+  background: $border-color;
 }
 
-/* 内容卡片 */
 .timeline-content {
-  background: $bg-surface;
-  border-radius: 24rpx;
-  padding: 28rpx 32rpx;
-  box-shadow: $shadow-sm;
-  border: 1rpx solid $border-light;
-  transition: all 0.3s ease;
+  flex: 1;
+  padding-top: 36rpx;
 }
-
-.timeline-time {
+.content-header {
   display: flex;
   align-items: center;
   gap: 16rpx;
-  margin-bottom: 12rpx;
-}
-.time-text {
-  font-size: 34rpx;
-  font-weight: 700;
-  color: $color-primary;
-  font-variant-numeric: tabular-nums;
-}
-.time-badge {
-  padding: 6rpx 16rpx;
-  background: rgba(196, 30, 58, 0.08);
-  color: $color-primary;
-  font-size: 20rpx;
-  border-radius: 10rpx;
-  font-weight: 500;
-}
-
-.timeline-title {
-  display: block;
-  font-size: 30rpx;
-  font-weight: 500;
-  color: $text-primary;
   margin-bottom: 8rpx;
-  letter-spacing: 1rpx;
 }
-.timeline-venue,
-.timeline-assignee,
-.timeline-notes {
+.content-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: $text-primary;
+}
+.content-badge {
+  padding: 4rpx 12rpx;
+  background: $bg-muted;
+  color: $text-secondary;
+  font-size: 18rpx;
+  border-radius: 6rpx;
+  font-weight: 500;
+}
+.content-venue,
+.content-assignee,
+.content-notes {
   display: block;
-  font-size: 24rpx;
+  font-size: 26rpx;
   color: $text-secondary;
   margin-top: 8rpx;
   line-height: 1.5;
 }
 
-/* ===== 状态样式 ===== */
-
-/* 进行中 - 红色高亮 */
+/* 状态 */
 .timeline-item.current .timeline-dot {
+  width: 16rpx;
+  height: 16rpx;
   background: $color-primary;
-  box-shadow: 0 0 0 8rpx rgba(196, 30, 58, 0.15);
-  animation: glowPulse 2s ease-in-out infinite;
 }
-.timeline-item.current .timeline-content {
-  border-color: rgba(196, 30, 58, 0.25);
-  box-shadow: 0 4rpx 20rpx rgba(196, 30, 58, 0.08);
+.timeline-item.current .timeline-time {
+  color: $color-primary;
+  font-weight: 600;
+}
+.timeline-item.current .content-title {
+  color: $color-primary;
 }
 
-/* 已完成 - 灰色淡化 */
 .timeline-item.past .timeline-dot {
   background: $text-muted;
 }
-.timeline-item.past .timeline-content {
-  opacity: 0.55;
-}
-
-/* 即将开始 - 蓝色 */
-.timeline-item.upcoming .timeline-dot {
-  background: $color-info;
+.timeline-item.past .timeline-time,
+.timeline-item.past .content-title,
+.timeline-item.past .content-venue,
+.timeline-item.past .content-assignee,
+.timeline-item.past .content-notes {
+  color: $text-muted;
 }
 
 /* 空状态 */
 .empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  text-align: center;
   padding: 200rpx 60rpx;
-  animation: fadeIn 0.6s $ease-out both;
-}
-.empty-icon {
-  font-size: 100rpx;
-  margin-bottom: 30rpx;
-  filter: drop-shadow(0 4rpx 12rpx rgba(212,168,83,0.2));
 }
 .empty-text {
   font-size: 30rpx;
   color: $text-muted;
-  letter-spacing: 2rpx;
 }
 </style>

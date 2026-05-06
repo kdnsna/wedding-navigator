@@ -1,28 +1,24 @@
 <template>
   <view class="page">
-    <!-- 顶部信息 -->
+    <!-- 头部 -->
     <view class="rsvp-header">
-      <text class="header-title">💌 期待您的光临</text>
-      <text class="header-subtitle">{{ coupleName }} 诚邀您出席婚礼</text>
-      <view class="header-info">
-        <text class="info-item">📅 {{ formatDate(weddingDate) }}</text>
-        <text class="info-item">🕛 {{ weddingTime || '12:00' }}</text>
-        <text class="info-item">📍 {{ venueName }}</text>
-      </view>
+      <text class="header-tag">RSVP</text>
+      <text class="header-title">出席回执</text>
+      <text class="header-sub">{{ coupleName }}</text>
+      <text class="header-date">{{ formatDate(weddingDate) }} {{ weddingTime || '12:00' }}</text>
+      <text class="header-venue">{{ venueName }}</text>
     </view>
 
     <!-- 表单 -->
     <view class="rsvp-form" v-if="!submitted">
-      <!-- 是否出席 -->
-      <view class="form-group">
-        <text class="form-label">是否出席？</text>
+      <view class="form-section">
+        <text class="section-label">是否出席</text>
         <view class="attend-options">
           <view
             class="attend-option"
             :class="{ active: form.attending }"
             @click="form.attending = true"
           >
-            <text class="option-icon">✅</text>
             <text class="option-text">出席</text>
           </view>
           <view
@@ -30,48 +26,44 @@
             :class="{ active: !form.attending }"
             @click="form.attending = false"
           >
-            <text class="option-icon">❌</text>
-            <text class="option-text">遗憾缺席</text>
+            <text class="option-text">无法出席</text>
           </view>
         </view>
       </view>
 
-      <!-- 出席人数 -->
-      <view class="form-group" v-if="form.attending">
-        <text class="form-label">出席人数（含本人）</text>
+      <view class="form-section" v-if="form.attending">
+        <text class="section-label">出席人数</text>
         <view class="count-stepper">
-          <button class="stepper-btn" @click="decrement">-</button>
+          <button class="stepper-btn" @click="decrement">−</button>
           <text class="stepper-value">{{ form.count }}</text>
           <button class="stepper-btn" @click="increment">+</button>
         </view>
       </view>
 
-      <!-- 姓名 -->
-      <view class="form-group">
-        <text class="form-label">您的姓名</text>
+      <view class="form-section">
+        <text class="section-label">您的姓名</text>
         <input
           class="form-input"
           v-model="form.name"
-          placeholder="请输入您的姓名"
-          maxlength="20"
+          placeholder="请输入姓名"
+          placeholder-class="input-placeholder"
         />
       </view>
 
-      <!-- 电话 -->
-      <view class="form-group">
-        <text class="form-label">联系电话</text>
+      <view class="form-section">
+        <text class="section-label">联系电话</text>
         <input
           class="form-input"
           v-model="form.phone"
-          placeholder="请输入您的手机号"
           type="number"
           maxlength="11"
+          placeholder="请输入手机号"
+          placeholder-class="input-placeholder"
         />
       </view>
 
-      <!-- 饮食偏好 -->
-      <view class="form-group" v-if="form.attending">
-        <text class="form-label">饮食偏好</text>
+      <view class="form-section" v-if="form.attending">
+        <text class="section-label">饮食偏好</text>
         <view class="diet-options">
           <view
             class="diet-option"
@@ -85,38 +77,33 @@
         </view>
       </view>
 
-      <!-- 特殊要求 -->
-      <view class="form-group" v-if="form.attending">
-        <text class="form-label">特殊要求（可选）</text>
+      <view class="form-section">
+        <text class="section-label">备注</text>
         <textarea
           class="form-textarea"
           v-model="form.notes"
-          placeholder="如：海鲜过敏、需儿童座椅等"
-          maxlength="200"
+          placeholder="如有其他需求请在此留言"
+          placeholder-class="input-placeholder"
         />
       </view>
 
-      <!-- 提交按钮 -->
-      <button class="submit-btn" @click="handleSubmit">
-        提交回执
-      </button>
+      <view class="form-actions">
+        <button class="submit-btn" @click="handleSubmit">提交回执</button>
+      </view>
     </view>
 
     <!-- 提交成功 -->
-    <view class="success-card" v-else>
-      <text class="success-icon">✅</text>
-      <text class="success-title">已收到您的回执，感谢！</text>
+    <view class="success-view" v-else>
+      <view class="success-mark">✓</view>
+      <text class="success-title">已收到您的回执</text>
+      <text class="success-desc">期待与您相见</text>
       <view class="success-info">
-        <text>📍 婚礼地址：{{ venueName }}</text>
-        <text>📅 {{ formatDate(weddingDate) }} {{ weddingTime || '12:00' }}</text>
+        <text class="info-line">{{ formatDate(weddingDate) }} {{ weddingTime || '12:00' }}</text>
+        <text class="info-line">{{ venueName }}</text>
       </view>
       <view class="success-actions">
-        <button class="action-btn" @click="openNavigation">
-          <text>🗺️ 查看路线</text>
-        </button>
-        <button class="action-btn" @click="callPhone">
-          <text>📞 拨打电话</text>
-        </button>
+        <button class="action-btn primary" @click="openNavigation">查看路线</button>
+        <button class="action-btn" @click="callPhone">联系新人</button>
       </view>
     </view>
   </view>
@@ -157,21 +144,13 @@ const dietOptions = [
   { label: '其他', value: 'other' }
 ]
 
-function increment() {
-  if (form.value.count < 20) form.value.count++
-}
-function decrement() {
-  if (form.value.count > 1) form.value.count--
-}
+function increment() { if (form.value.count < 20) form.value.count++ }
+function decrement() { if (form.value.count > 1) form.value.count-- }
 
 async function handleSubmit() {
-  if (!form.value.name.trim()) {
-    showError('请输入您的姓名')
-    return
-  }
+  if (!form.value.name.trim()) { showError('请输入您的姓名'); return }
   if (!form.value.phone.trim() || form.value.phone.length !== 11) {
-    showError('请输入正确的手机号')
-    return
+    showError('请输入正确的手机号'); return
   }
 
   try {
@@ -207,9 +186,7 @@ function openNavigation() {
 
 function callPhone() {
   const phone = store.invitation?.couple?.groom?.phone
-  if (phone) {
-    uni.makePhoneCall({ phoneNumber: phone })
-  }
+  if (phone) { uni.makePhoneCall({ phoneNumber: phone }) }
 }
 
 onLoad((options) => {
@@ -218,253 +195,232 @@ onLoad((options) => {
 </script>
 
 <style lang="scss" scoped>
-/* ========== RSVP 回执页面 ========== */
 .page {
   background-color: $bg-color;
   min-height: 100vh;
-  padding: 30rpx;
+  padding-bottom: 60rpx;
 }
 
-/* ===== 头部 ===== */
+/* 头部 */
 .rsvp-header {
-  text-align: center;
-  padding: 50rpx 20rpx 40rpx;
-  margin-bottom: 30rpx;
-  position: relative;
+  padding: 60rpx 48rpx 48rpx;
 }
-.rsvp-header::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 30%;
-  right: 30%;
-  height: 1rpx;
-  background: linear-gradient(90deg, transparent, $color-gold, transparent);
+.header-tag {
+  display: block;
+  font-size: 22rpx;
+  color: $text-muted;
+  letter-spacing: 6rpx;
+  margin-bottom: 12rpx;
 }
 .header-title {
   display: block;
-  font-size: 44rpx;
+  font-size: $font-h1;
   font-weight: 600;
-  color: $color-primary;
-  margin-bottom: 16rpx;
-  letter-spacing: 4rpx;
-}
-.header-subtitle {
-  display: block;
-  font-size: 30rpx;
   color: $text-primary;
   margin-bottom: 24rpx;
+}
+.header-sub {
+  display: block;
+  font-size: $font-h3;
+  color: $text-primary;
   font-weight: 500;
+  margin-bottom: 8rpx;
 }
-.header-info {
-  display: flex;
-  flex-direction: column;
-  gap: 10rpx;
-}
-.info-item {
-  font-size: 26rpx;
+.header-date {
+  display: block;
+  font-size: $font-body;
   color: $text-secondary;
-  letter-spacing: 1rpx;
+  margin-bottom: 4rpx;
+}
+.header-venue {
+  display: block;
+  font-size: $font-body;
+  color: $text-secondary;
 }
 
-/* ===== 表单卡片 ===== */
+/* 表单 */
 .rsvp-form {
-  background: $bg-surface;
-  border-radius: 32rpx;
-  padding: 44rpx;
-  box-shadow: $shadow-md;
-  border: 1rpx solid $border-light;
-  animation: fadeInScale 0.5s $ease-out both;
+  padding: 0 48rpx;
 }
-.form-group {
-  margin-bottom: 44rpx;
+.form-section {
+  margin-bottom: 48rpx;
 }
-.form-label {
+.section-label {
   display: block;
-  font-size: 28rpx;
-  font-weight: 500;
-  color: $text-primary;
+  font-size: 26rpx;
+  color: $text-muted;
   margin-bottom: 20rpx;
   letter-spacing: 2rpx;
 }
 
-/* ===== 出席选项 ===== */
+/* 出席选项 */
 .attend-options {
   display: flex;
   gap: 16rpx;
 }
 .attend-option {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 36rpx 16rpx;
-  border: 2rpx solid $border-light;
-  border-radius: 20rpx;
-  background: $bg-elevated;
-  transition: all 0.25s ease;
+  text-align: center;
+  padding: 28rpx;
+  border-radius: $radius-lg;
+  border: 2rpx solid $border-color;
+  background: $bg-color;
+  transition: all 0.2s ease;
 }
 .attend-option.active {
-  border-color: $color-primary;
-  background: rgba(196, 30, 58, 0.04);
-  box-shadow: 0 4rpx 16rpx rgba(196, 30, 58, 0.08);
+  background: $text-primary;
+  border-color: $text-primary;
+}
+.attend-option.active .option-text {
+  color: $text-inverse;
 }
 .attend-option:active {
-  transform: scale(0.97);
-}
-.option-icon {
-  font-size: 48rpx;
-  margin-bottom: 12rpx;
+  transform: scale(0.98);
 }
 .option-text {
-  font-size: 26rpx;
+  font-size: 28rpx;
   color: $text-primary;
   font-weight: 500;
 }
 
-/* ===== 步进器 ===== */
+/* 步进器 */
 .count-stepper {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 48rpx;
 }
 .stepper-btn {
-  width: 68rpx;
-  height: 68rpx;
-  line-height: 68rpx;
+  width: 64rpx;
+  height: 64rpx;
+  line-height: 64rpx;
   text-align: center;
   border-radius: 50%;
   background: $bg-muted;
-  font-size: 36rpx;
+  font-size: 32rpx;
   color: $text-primary;
   font-weight: 500;
   transition: all 0.2s ease;
 }
-.stepper-btn::after {
-  border: none;
-}
-.stepper-btn:active {
-  background: $border-color;
-  transform: scale(0.92);
-}
+.stepper-btn::after { border: none; }
+.stepper-btn:active { background: $border-color; transform: scale(0.92); }
 .stepper-value {
   font-size: 44rpx;
-  font-weight: 700;
-  color: $color-primary;
+  font-weight: 600;
+  color: $text-primary;
   min-width: 60rpx;
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
 
-/* ===== 输入框 ===== */
+/* 输入框 */
 .form-input {
   width: 100%;
-  height: 92rpx;
-  padding: 0 28rpx;
-  border: 2rpx solid $border-light;
-  border-radius: 16rpx;
-  font-size: 28rpx;
-  background: $bg-elevated;
+  height: 96rpx;
+  padding: 0 4rpx;
+  border-bottom: 2rpx solid $border-color;
+  font-size: 32rpx;
+  background: transparent;
   box-sizing: border-box;
-  transition: all 0.2s ease;
+  transition: border-color 0.2s ease;
 }
 .form-input:focus {
-  border-color: $color-gold;
-  box-shadow: 0 0 0 4rpx rgba(212, 168, 83, 0.1);
+  border-bottom-color: $text-primary;
+}
+.input-placeholder {
+  color: $text-muted;
+  font-size: 28rpx;
 }
 .form-textarea {
   width: 100%;
   height: 160rpx;
-  padding: 24rpx 28rpx;
-  border: 2rpx solid $border-light;
-  border-radius: 16rpx;
+  padding: 24rpx 4rpx;
+  border-bottom: 2rpx solid $border-color;
   font-size: 28rpx;
-  background: $bg-elevated;
+  background: transparent;
   box-sizing: border-box;
-  transition: all 0.2s ease;
 }
 
-/* ===== 饮食选项 ===== */
+/* 饮食选项 */
 .diet-options {
   display: flex;
   flex-wrap: wrap;
   gap: 16rpx;
 }
 .diet-option {
-  padding: 16rpx 32rpx;
-  border: 2rpx solid $border-light;
-  border-radius: 14rpx;
+  padding: 20rpx 36rpx;
+  border: 2rpx solid $border-color;
+  border-radius: $radius-full;
   font-size: 26rpx;
   color: $text-primary;
-  background: $bg-elevated;
+  background: $bg-color;
   transition: all 0.2s ease;
 }
 .diet-option.active {
-  border-color: $color-primary;
-  background: rgba(196, 30, 58, 0.05);
-  color: $color-primary;
-  font-weight: 500;
+  background: $text-primary;
+  border-color: $text-primary;
+  color: $text-inverse;
 }
 .diet-option:active {
-  transform: scale(0.95);
+  transform: scale(0.96);
 }
 
-/* ===== 提交按钮 ===== */
+/* 提交 */
+.form-actions {
+  margin-top: 64rpx;
+}
 .submit-btn {
   width: 100%;
   height: 96rpx;
   line-height: 96rpx;
   text-align: center;
-  border-radius: 24rpx;
-  background: $gradient-primary;
+  border-radius: $radius-full;
+  background: $text-primary;
   color: #fff;
-  font-size: 32rpx;
+  font-size: 30rpx;
   font-weight: 500;
-  box-shadow: 0 6rpx 24rpx rgba(196, 30, 58, 0.25);
-  transition: all 0.2s ease;
+  transition: opacity 0.2s ease;
 }
-.submit-btn:active {
-  transform: scale(0.98);
-  box-shadow: 0 2rpx 12rpx rgba(196, 30, 58, 0.15);
-}
-.submit-btn::after {
-  border: none;
-}
+.submit-btn::after { border: none; }
+.submit-btn:active { opacity: 0.8; }
 
-/* ===== 成功卡片 ===== */
-.success-card {
+/* 成功 */
+.success-view {
   text-align: center;
-  padding: 80rpx 48rpx;
-  background: $bg-surface;
-  border-radius: 32rpx;
-  box-shadow: $shadow-md;
-  border: 1rpx solid $border-light;
-  animation: fadeInScale 0.6s $ease-out-back both;
+  padding: 120rpx 48rpx;
 }
-.success-icon {
-  font-size: 88rpx;
-  display: block;
-  margin-bottom: 30rpx;
-  filter: drop-shadow(0 4rpx 12rpx rgba(212,168,83,0.3));
+.success-mark {
+  width: 96rpx;
+  height: 96rpx;
+  line-height: 96rpx;
+  text-align: center;
+  border-radius: 50%;
+  background: $color-success;
+  color: #fff;
+  font-size: 44rpx;
+  font-weight: 600;
+  margin: 0 auto 40rpx;
 }
 .success-title {
   display: block;
-  font-size: 38rpx;
+  font-size: $font-h1;
   font-weight: 600;
-  color: $color-primary;
-  margin-bottom: 40rpx;
-  letter-spacing: 4rpx;
+  color: $text-primary;
+  margin-bottom: 12rpx;
+}
+.success-desc {
+  display: block;
+  font-size: $font-body;
+  color: $text-secondary;
+  margin-bottom: 48rpx;
 }
 .success-info {
-  display: flex;
-  flex-direction: column;
-  gap: 14rpx;
-  margin-bottom: 44rpx;
+  margin-bottom: 48rpx;
 }
-.success-info text {
-  font-size: 28rpx;
-  color: $text-secondary;
+.info-line {
+  display: block;
+  font-size: 26rpx;
+  color: $text-muted;
+  margin-bottom: 8rpx;
 }
 
 .success-actions {
@@ -473,20 +429,20 @@ onLoad((options) => {
 }
 .success-actions .action-btn {
   flex: 1;
-  height: 84rpx;
-  line-height: 84rpx;
+  height: 88rpx;
+  line-height: 88rpx;
   text-align: center;
-  border-radius: 20rpx;
+  border-radius: $radius-full;
   background: $bg-muted;
   font-size: 28rpx;
   color: $text-primary;
   font-weight: 500;
-  transition: all 0.2s ease;
+  transition: opacity 0.2s ease;
 }
-.success-actions .action-btn:active {
-  transform: scale(0.97);
-}
-.success-actions .action-btn::after {
-  border: none;
+.success-actions .action-btn::after { border: none; }
+.success-actions .action-btn:active { opacity: 0.7; }
+.success-actions .action-btn.primary {
+  background: $text-primary;
+  color: #fff;
 }
 </style>
