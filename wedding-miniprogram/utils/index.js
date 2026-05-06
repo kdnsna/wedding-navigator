@@ -127,20 +127,6 @@ export function compressImage(src, quality = 0.8, maxWidth = 1920) {
 }
 
 /**
- * 显示成功提示
- */
-export function showSuccess(title) {
-  uni.showToast({ title, icon: 'success', duration: 2000 })
-}
-
-/**
- * 显示错误提示
- */
-export function showError(title) {
-  uni.showToast({ title, icon: 'none', duration: 3000 })
-}
-
-/**
  * 分享到微信
  */
 export function shareToWechat(title, path, imageUrl) {
