@@ -6,10 +6,13 @@ const _ = db.command
 const RELATED_COLLECTIONS = ['invitations', 'albums', 'venues', 'timelines', 'guests', 'blessings', 'share_stats']
 
 exports.main = async (event, context) => {
-  const { weddingData } = event
+  const { weddingData, wedding, invitation } = event
   const { OPENID } = cloud.getWXContext()
 
-  if (!weddingData) {
+  const weddingPayload = weddingData?.wedding || wedding
+  const invitationPayload = weddingData?.invitation || invitation
+
+  if (!weddingPayload) {
     return { success: false, message: '缺少婚礼数据' }
   }
 
@@ -21,7 +24,7 @@ exports.main = async (event, context) => {
     await db.collection('weddings').add({
       data: {
         _id: weddingId,
-        ...weddingData.wedding,
+        ...weddingPayload,
         owner_openid: OPENID,
         created_at: now,
         updated_at: now
@@ -30,7 +33,7 @@ exports.main = async (event, context) => {
 
     await Promise.all([
       db.collection('invitations').add({
-        data: { _id: weddingId, ...weddingData.invitation, created_at: now, updated_at: now }
+        data: { _id: weddingId, ...invitationPayload, created_at: now, updated_at: now }
       }),
       db.collection('albums').add({
         data: { _id: weddingId, photos: [], created_at: now, updated_at: now }
