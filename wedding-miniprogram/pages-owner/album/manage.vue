@@ -39,34 +39,48 @@ import { ref, computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
-import { generateId, showSuccess, showError } from '@/utils/index.js'
+import { generateId, showSuccess, showError, showLoading, hideLoading } from '@/utils/index.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
-import { updateWedding } from '@/composables/useCloud.js'
+import { updateWedding, uploadFile } from '@/composables/useCloud.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
 
 const photos = computed(() => store.album?.photos || [])
+const uploading = ref(false)
 
-function chooseImage() {
+async function chooseImage() {
   uni.chooseImage({
     count: 9,
     sizeType: ['compressed'],
     sourceType: ['album', 'camera'],
-    success: (res) => {
-      res.tempFilePaths.forEach(path => {
-        const photo = {
-          id: generateId(),
-          url: path,
-          type: photos.value.length === 0 ? 'cover' : 'normal',
-          upload_time: new Date().toISOString()
+    success: async (res) => {
+      uploading.value = true
+      showLoading('上传中...')
+      
+      try {
+        for (const path of res.tempFilePaths) {
+          const cloudRes = await uploadFile(path)
+          const photo = {
+            id: generateId(),
+            url: cloudRes.fileID,
+            type: photos.value.length === 0 ? 'cover' : 'normal',
+            upload_time: new Date().toISOString()
+          }
+          store.addPhoto(photo)
         }
-        store.addPhoto(photo)
-      })
-      saveToStorage()
-      showSuccess('上传成功')
+        await saveToStorage()
+        hideLoading()
+        showSuccess('上传成功')
+      } catch (err) {
+        hideLoading()
+        console.error('照片上传失败:', err)
+        showError('上传失败，请重试')
+      } finally {
+        uploading.value = false
+      }
     },
-    fail: () => { showError('上传失败') }
+    fail: () => { showError('选择照片失败') }
   })
 }
 
