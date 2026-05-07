@@ -45,6 +45,13 @@ export const useWeddingStore = defineStore('wedding', () => {
   const blessings = ref(null)
   const loading = ref(false)
   const error = ref(null)
+  const lastFetchTime = ref(0)
+
+  const CACHE_TTL = 5 * 60 * 1000
+
+  const isCacheValid = computed(() => {
+    return lastFetchTime.value > 0 && (Date.now() - lastFetchTime.value) < CACHE_TTL
+  })
 
   // Getters
   const coupleName = computed(() => {
@@ -128,6 +135,7 @@ export const useWeddingStore = defineStore('wedding', () => {
     timeline.value = data.timeline || null
     guests.value = data.guests || null
     blessings.value = data.blessings || null
+    lastFetchTime.value = Date.now()
   }
 
   function updateWeddingField(field, value) {
@@ -213,6 +221,8 @@ export const useWeddingStore = defineStore('wedding', () => {
     blessings,
     loading,
     error,
+    lastFetchTime,
+    isCacheValid,
     coupleName,
     weddingDate,
     weddingTime,

@@ -51,8 +51,11 @@ async function callFunction(name, data = {}, options = {}) {
 }
 
 // 获取婚礼数据
-async function fetchWedding(weddingId) {
+async function fetchWedding(weddingId, forceRefresh = false) {
   const store = useWeddingStore()
+  if (!forceRefresh && store.isCacheValid) {
+    return { data: true, fromCache: true }
+  }
   try {
     const res = await callFunction('getWedding', { weddingId }, { timeoutMs: 10000 })
     if (res?.data) {

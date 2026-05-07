@@ -30,9 +30,15 @@ exports.main = async (event, context) => {
       }
     }
 
+    const protectedFields = ['_id', 'owner_openid', 'created_at']
+    const cleanData = { ...data }
+    for (const field of protectedFields) {
+      delete cleanData[field]
+    }
+
     await db.collection(collection).doc(weddingId).update({
       data: {
-        ...data,
+        ...cleanData,
         updated_at: Date.now()
       }
     })

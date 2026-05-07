@@ -208,6 +208,7 @@ function initMusic() {
   audioCtx.onPause(() => { isMusicPlaying.value = false })
   audioCtx.onError(() => {
     isMusicPlaying.value = false
+    audioCtx = null
     console.warn('背景音乐播放失败')
   })
 }
@@ -217,6 +218,7 @@ function toggleMusic() {
     initMusic()
     musicStarted.value = true
   }
+  if (!audioCtx) return
   if (audioCtx.paused) {
     audioCtx.play()
   } else {
@@ -268,8 +270,9 @@ function goToRSVP() { uni.navigateTo({ url: '/pages/rsvp/index' }) }
 function goToBlessing() { uni.navigateTo({ url: '/pages/blessing/index' }) }
 
 function openNavigation() {
-  const venue = store.venues?.venues?.[0]
-  if (venue?.coordinate) {
+  const venueList = store.venues?.venues || []
+  const venue = venueList.find(v => v.type === 'venue' || v.type === 'home') || venueList[0]
+  if (venue?.coordinate?.latitude && venue?.coordinate?.longitude) {
     uni.openLocation({
       latitude: venue.coordinate.latitude,
       longitude: venue.coordinate.longitude,
@@ -349,8 +352,7 @@ onLoad(async (options) => {
     try {
       await fetchWedding(weddingId)
       updateCountdown()
-      countdownTimer = setInterval(updateCountdown, 1000)
-      // 异步记录浏览量，不阻塞渲染
+      startCountdownTimer()
       recordView(weddingId).catch(() => {})
     } catch (err) {
       if (err?.message === '婚礼不存在') {
@@ -365,6 +367,20 @@ onLoad(async (options) => {
     }
   }
 })
+
+function startCountdownTimer() {
+  if (countdownTimer) clearInterval(countdownTimer)
+  const cd = store.getLiveCountdown(Date.now())
+  const interval = cd && cd.days > 0 ? 60000 : 1000
+  countdownTimer = setInterval(() => {
+    updateCountdown()
+    const newCd = store.getLiveCountdown(Date.now())
+    const newInterval = newCd && newCd.days > 0 ? 60000 : 1000
+    if (newInterval !== interval) {
+      startCountdownTimer()
+    }
+  }, interval)
+}
 
 onShow(() => { updateCountdown() })
 

@@ -69,7 +69,7 @@
             <text class="step-icon">−</text>
           </view>
           <text class="step-value">{{ form.guestCount }}</text>
-          <view class="step-btn" @click="form.guestCount++">
+          <view class="step-btn" @click="form.guestCount = Math.min(form.guestCount + 1, 20)">
             <text class="step-icon">+</text>
           </view>
         </view>

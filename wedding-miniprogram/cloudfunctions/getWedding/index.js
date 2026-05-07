@@ -39,7 +39,12 @@ exports.main = async (event, context) => {
     // 判断是否为婚礼主人
     const isOwner = weddingRes.data.owner_openid === OPENID
 
-    // 对非主人隐藏宾客敏感信息（手机号）
+    let weddingData = weddingRes.data
+    if (!isOwner) {
+      const { owner_openid, ...safeWedding } = weddingData
+      weddingData = safeWedding
+    }
+
     let guestsData = guestsRes.data
     if (!isOwner && guestsData && guestsData.guests) {
       guestsData = {
@@ -54,7 +59,7 @@ exports.main = async (event, context) => {
     return {
       success: true,
       data: {
-        wedding: weddingRes.data,
+        wedding: weddingData,
         invitation: invitationRes.data,
         album: albumRes.data,
         venues: venuesRes.data,
