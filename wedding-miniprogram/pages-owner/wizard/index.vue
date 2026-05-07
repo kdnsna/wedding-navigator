@@ -230,6 +230,7 @@ async function createWeddingAction() {
     uni.reLaunch({ url: '/pages-owner/manage/index' })
   } catch (err) {
     console.error('创建婚礼失败:', err)
+    uni.hideLoading()
     showError(err.message || '创建失败，请检查云开发环境')
   } finally {
     uni.hideLoading()

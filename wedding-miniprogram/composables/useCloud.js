@@ -1,14 +1,11 @@
 import { useWeddingStore } from '@/stores/wedding.js'
 import { CLOUD_ENV } from '@/config/cloud.js'
 
-// 云函数基础配置
-const BASE_URL = `cloud://${CLOUD_ENV}`
-
 // 初始化云开发
 function initCloud() {
   const options = CLOUD_ENV ? { env: CLOUD_ENV, traceUser: true } : { traceUser: true }
 
-  if (uni.cloud?.init) {
+  if (typeof uni !== 'undefined' && uni.cloud?.init) {
     uni.cloud.init(options)
   } else if (typeof wx !== 'undefined' && wx.cloud?.init) {
     wx.cloud.init(options)
@@ -32,10 +29,20 @@ async function callFunction(name, data = {}, options = {}) {
       finish(reject, new Error(`${name} 请求超时`))
     }, timeoutMs)
 
-    uni.cloud.callFunction({
+    const cloudApi = (typeof uni !== 'undefined' && uni.cloud?.callFunction)
+      ? uni.cloud
+      : (typeof wx !== 'undefined' && wx.cloud?.callFunction ? wx.cloud : null)
+
+    if (!cloudApi) {
+      finish(reject, new Error('云开发环境未初始化，请检查 appid 和云开发配置'))
+      return
+    }
+
+    cloudApi.callFunction({
       name,
       data,
       success: (res) => {
+        console.log(`[cloud] ${name} success:`, res)
         if (res.result?.success === false) {
           finish(reject, new Error(res.result.message || `${name} 调用失败`))
           return
@@ -43,6 +50,7 @@ async function callFunction(name, data = {}, options = {}) {
         finish(resolve, res.result)
       },
       fail: (err) => {
+        console.error(`[cloud] ${name} fail:`, err)
         const message = err?.message || err?.errMsg || `${name} 调用失败`
         finish(reject, new Error(message.includes(name) ? message : `${name}: ${message}`))
       }
@@ -128,7 +136,16 @@ async function getWeather(weddingId) {
 // 上传文件到云存储
 async function uploadFile(filePath, cloudPath) {
   return new Promise((resolve, reject) => {
-    uni.cloud.uploadFile({
+    const cloudApi = (typeof uni !== 'undefined' && uni.cloud?.uploadFile)
+      ? uni.cloud
+      : (typeof wx !== 'undefined' && wx.cloud?.uploadFile ? wx.cloud : null)
+
+    if (!cloudApi) {
+      reject(new Error('云存储未初始化'))
+      return
+    }
+
+    cloudApi.uploadFile({
       cloudPath: cloudPath || `uploads/${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`,
       filePath,
       success: (res) => resolve(res),
