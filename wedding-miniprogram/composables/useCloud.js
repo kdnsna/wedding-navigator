@@ -16,19 +16,36 @@ function initCloud() {
 }
 
 // 云函数调用封装
-async function callFunction(name, data = {}) {
+async function callFunction(name, data = {}, options = {}) {
+  const { timeoutMs = 8000 } = options
+
   return new Promise((resolve, reject) => {
+    let settled = false
+    const finish = (handler, payload) => {
+      if (settled) return
+      settled = true
+      clearTimeout(timeoutId)
+      handler(payload)
+    }
+
+    const timeoutId = setTimeout(() => {
+      finish(reject, new Error(`${name} 请求超时`))
+    }, timeoutMs)
+
     uni.cloud.callFunction({
       name,
       data,
       success: (res) => {
         if (res.result?.success === false) {
-          reject(new Error(res.result.message))
-        } else {
-          resolve(res.result)
+          finish(reject, new Error(res.result.message || `${name} 调用失败`))
+          return
         }
+        finish(resolve, res.result)
       },
-      fail: (err) => reject(err)
+      fail: (err) => {
+        const message = err?.message || err?.errMsg || `${name} 调用失败`
+        finish(reject, new Error(message.includes(name) ? message : `${name}: ${message}`))
+      }
     })
   })
 }
@@ -37,7 +54,7 @@ async function callFunction(name, data = {}) {
 async function fetchWedding(weddingId) {
   const store = useWeddingStore()
   try {
-    const res = await callFunction('getWedding', { weddingId })
+    const res = await callFunction('getWedding', { weddingId }, { timeoutMs: 10000 })
     if (res?.data) {
       store.setWeddingData(res.data)
     }
@@ -62,12 +79,12 @@ async function updateWedding(weddingId, collection, data) {
 
 // 提交 RSVP
 async function submitRSVP(weddingId, data) {
-  return callFunction('submitRSVP', { weddingId, ...data })
+  return callFunction('submitRSVP', { weddingId, rsvpData: data }, { timeoutMs: 10000 })
 }
 
 // 提交祝福
 async function submitBlessing(weddingId, data) {
-  return callFunction('submitBlessing', { weddingId, ...data })
+  return callFunction('submitBlessing', { weddingId, blessing: data }, { timeoutMs: 10000 })
 }
 
 // 置顶祝福
@@ -77,27 +94,27 @@ async function pinBlessing(weddingId, blessingId, isPinned) {
 
 // 记录浏览
 async function recordView(weddingId, openid) {
-  return callFunction('recordView', { weddingId, openid })
+  return callFunction('recordView', { weddingId, openid }, { timeoutMs: 4000 })
 }
 
 // 获取统计数据
 async function getStats(weddingId) {
-  return callFunction('getStats', { weddingId })
+  return callFunction('getStats', { weddingId }, { timeoutMs: 10000 })
 }
 
 // 获取 RSVP 统计
 async function getRSVPStats(weddingId) {
-  return callFunction('getRSVPStats', { weddingId })
+  return callFunction('getRSVPStats', { weddingId }, { timeoutMs: 10000 })
 }
 
 // 生成小程序码海报
 async function generatePoster(page, scene, width = 430) {
-  return callFunction('generatePoster', { page, scene, width })
+  return callFunction('generatePoster', { page, scene, width }, { timeoutMs: 15000 })
 }
 
 // 获取婚礼当天天气
 async function getWeather(weddingId) {
-  return callFunction('getWeather', { weddingId })
+  return callFunction('getWeather', { weddingId }, { timeoutMs: 7000 })
 }
 
 // 上传文件到云存储

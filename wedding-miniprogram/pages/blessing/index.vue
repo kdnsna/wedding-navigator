@@ -97,7 +97,7 @@ async function sendTextBlessing() {
       content
     })
     store.addBlessing({
-      id: res.blessing_id,
+      id: res.blessingId || res.blessing_id || Date.now().toString(),
       sender: { name: '宾客' },
       type: 'text',
       content,

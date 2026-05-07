@@ -353,8 +353,15 @@ onLoad(async (options) => {
       // 异步记录浏览量，不阻塞渲染
       recordView(weddingId).catch(() => {})
     } catch (err) {
+      if (err?.message === '婚礼不存在') {
+        userStore.setWeddingId('')
+      }
       console.warn('加载婚礼数据失败，已使用本地默认数据:', err)
-      uni.showToast({ title: '加载数据失败，请检查网络', icon: 'none', duration: 3000 })
+      uni.showToast({
+        title: err?.message === '婚礼不存在' ? '婚礼链接已失效，请重新进入' : '加载数据失败，请检查网络',
+        icon: 'none',
+        duration: 3000
+      })
     }
   }
 })

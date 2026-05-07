@@ -8,7 +8,7 @@ function requestWeather(key, lon, lat) {
   const url = `https://devapi.qweather.com/v7/weather/3d?key=${encodeURIComponent(key)}&location=${encodeURIComponent(`${lon},${lat}`)}`
 
   return new Promise((resolve, reject) => {
-    https.get(url, (res) => {
+    const req = https.get(url, (res) => {
       let body = ''
       res.on('data', chunk => { body += chunk })
       res.on('end', () => {
@@ -18,8 +18,32 @@ function requestWeather(key, lon, lat) {
           reject(err)
         }
       })
-    }).on('error', reject)
+    })
+
+    req.setTimeout(5000, () => {
+      req.destroy(new Error('天气服务请求超时'))
+    })
+
+    req.on('error', reject)
   })
+}
+
+function buildMockWeather(weddingDate, tips = '天气服务暂时不可用，先为您展示模拟天气') {
+  return {
+    success: true,
+    isMock: true,
+    data: {
+      text: '晴',
+      temp_max: '28',
+      temp_min: '18',
+      wind: '东南风 2级',
+      humidity: '65%',
+      precip: '0',
+      icon: 'sunny',
+      date: weddingDate,
+      tips
+    }
+  }
 }
 
 exports.main = async (event, context) => {
@@ -49,27 +73,13 @@ exports.main = async (event, context) => {
     const weddingDate = wedding.data?.basic_info?.date || wedding.data?.wedding_date || ''
 
     if (!WEATHER_KEY || WEATHER_KEY === 'YOUR_HEFENG_KEY') {
-      return {
-        success: true,
-        isMock: true,
-        data: {
-          text: '晴',
-          temp_max: '28',
-          temp_min: '18',
-          wind: '东南风 2级',
-          humidity: '65%',
-          precip: '0%',
-          icon: 'sunny',
-          date: weddingDate,
-          tips: '请配置天气 API Key 以获取真实天气'
-        }
-      }
+      return buildMockWeather(weddingDate, '请配置天气 API Key 以获取真实天气')
     }
 
     const res = await requestWeather(WEATHER_KEY, lon, lat)
     const daily = res.daily?.[0]
     if (!daily) {
-      return { success: false, message: '天气数据获取失败' }
+      return buildMockWeather(weddingDate)
     }
 
     const weatherMap = {
@@ -108,6 +118,6 @@ exports.main = async (event, context) => {
     }
   } catch (err) {
     console.error('getWeather error:', err)
-    return { success: false, message: '获取天气失败' }
+    return buildMockWeather('', '天气服务暂时不可用，先为您展示模拟天气')
   }
 }
