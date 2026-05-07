@@ -3,6 +3,8 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 
+const RELATED_COLLECTIONS = ['invitations', 'albums', 'venues', 'timelines', 'guests', 'blessings', 'share_stats']
+
 exports.main = async (event, context) => {
   const { weddingData } = event
   const { OPENID } = cloud.getWXContext()
@@ -11,11 +13,11 @@ exports.main = async (event, context) => {
     return { success: false, message: '缺少婚礼数据' }
   }
 
+  let weddingId = null
   try {
-    const weddingId = await generateUniqueId()
+    weddingId = await generateUniqueId()
     const now = Date.now()
 
-    // 创建婚礼主文档
     await db.collection('weddings').add({
       data: {
         _id: weddingId,
@@ -26,7 +28,6 @@ exports.main = async (event, context) => {
       }
     })
 
-    // 并行创建关联集合
     await Promise.all([
       db.collection('invitations').add({
         data: { _id: weddingId, ...weddingData.invitation, created_at: now, updated_at: now }
@@ -54,15 +55,33 @@ exports.main = async (event, context) => {
     return { success: true, weddingId }
   } catch (err) {
     console.error(err)
+    if (weddingId) {
+      await cleanupPartialCreation(weddingId).catch(() => {})
+    }
     return { success: false, message: err.message }
+  }
+}
+
+async function cleanupPartialCreation(weddingId) {
+  try { await db.collection('weddings').doc(weddingId).remove() } catch (e) {}
+  for (const col of RELATED_COLLECTIONS) {
+    try { await db.collection(col).doc(weddingId).remove() } catch (e) {}
   }
 }
 
 async function generateUniqueId() {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-  let id = ''
-  for (let i = 0; i < 8; i++) {
-    id += chars.charAt(Math.floor(Math.random() * chars.length))
+  for (let attempt = 0; attempt < 5; attempt++) {
+    let id = Date.now().toString(36).slice(-4)
+    for (let i = 0; i < 6; i++) {
+      id += chars.charAt(Math.floor(Math.random() * chars.length))
+    }
+    try {
+      const existing = await db.collection('weddings').doc(id).get()
+      if (!existing.data) return id
+    } catch (e) {
+      return id
+    }
   }
-  return id
+  return Date.now().toString(36) + Math.random().toString(36).substr(2, 8)
 }

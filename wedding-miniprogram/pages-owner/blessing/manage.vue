@@ -47,7 +47,7 @@ import { ref, computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
-import { showSuccess } from '@/utils/index.js'
+import { showSuccess, formatDateTime } from '@/utils/index.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
 import { updateWedding } from '@/composables/useCloud.js'
 
@@ -66,18 +66,19 @@ const blessings = computed(() => {
 const pinnedCount = computed(() => blessings.value.filter(b => b.is_pinned).length)
 
 function formatTime(ts) {
-  if (!ts) return ''
-  const d = new Date(ts)
-  return `${d.getMonth() + 1}月${d.getDate()}日 ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
+  return formatDateTime(ts)
 }
 
 function togglePin(item) {
-  item.is_pinned = !item.is_pinned
-  if (item.is_pinned) {
-    blessings.value.forEach(b => { if (b.id !== item.id) b.is_pinned = false })
+  const originalList = store.blessings?.blessings || []
+  const target = originalList.find(b => b.id === item.id)
+  if (!target) return
+  target.is_pinned = !target.is_pinned
+  if (target.is_pinned) {
+    originalList.forEach(b => { if (b.id !== item.id) b.is_pinned = false })
   }
   saveToStorage()
-  showSuccess(item.is_pinned ? '已置顶' : '已取消置顶')
+  showSuccess(target.is_pinned ? '已置顶' : '已取消置顶')
 }
 
 function deleteBlessing(id) {

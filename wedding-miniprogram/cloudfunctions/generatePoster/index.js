@@ -8,6 +8,10 @@ exports.main = async (event, context) => {
     return { success: false, message: '缺少 page 参数' }
   }
 
+  if (scene && scene.length > 32) {
+    return { success: false, message: 'scene 参数不能超过32个字符' }
+  }
+
   try {
     const result = await cloud.openapi.wxacode.getUnlimited({
       scene: scene || '',

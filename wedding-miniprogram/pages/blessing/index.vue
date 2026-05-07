@@ -9,6 +9,14 @@
 
     <!-- 发送区域 -->
     <view class="send-area">
+      <view class="sender-row">
+        <input
+          class="sender-input"
+          v-model="senderName"
+          placeholder="您的称呼"
+          placeholder-class="input-placeholder"
+        />
+      </view>
       <textarea
         class="send-input"
         v-model="newBlessing"
@@ -53,11 +61,13 @@ import { onShow } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { fetchWedding, submitBlessing } from '@/composables/useCloud.js'
-import { showSuccess, showError } from '@/utils/index.js'
+import { showSuccess, showError, formatRelativeTime } from '@/utils/index.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
 const newBlessing = ref('')
+const senderName = ref('')
+const sending = ref(false)
 
 const blessings = computed(() => {
   const list = store.blessings?.blessings || []
@@ -69,36 +79,25 @@ const blessings = computed(() => {
 })
 
 function formatTime(ts) {
-  if (!ts) return ''
-  const date = new Date(ts)
-  const now = new Date()
-  const diff = now - date
-  const minutes = Math.floor(diff / 60000)
-  const hours = Math.floor(diff / 3600000)
-  const days = Math.floor(diff / 86400000)
-
-  if (minutes < 1) return '刚刚'
-  if (minutes < 60) return `${minutes}分钟前`
-  if (hours < 24) return `${hours}小时前`
-  if (days < 7) return `${days}天前`
-  return `${date.getMonth() + 1}月${date.getDate()}日`
+  return formatRelativeTime(ts)
 }
 
 async function sendTextBlessing() {
   const content = newBlessing.value.trim()
   if (!content) { showError('请输入祝福内容'); return }
   if (!userStore.weddingId) { showError('未找到婚礼信息'); return }
-
+  if (sending.value) return
+  sending.value = true
   try {
     uni.showLoading({ title: '发送中...', mask: true })
     const res = await submitBlessing(userStore.weddingId, {
-      sender: { name: '宾客', openid: userStore.openid || '' },
+      sender: { name: senderName.value.trim() || '宾客', openid: userStore.openid || '' },
       type: 'text',
       content
     })
     store.addBlessing({
       id: res.blessingId || res.blessing_id || Date.now().toString(),
-      sender: { name: '宾客' },
+      sender: { name: senderName.value.trim() || '宾客' },
       type: 'text',
       content,
       is_pinned: false,
@@ -109,6 +108,7 @@ async function sendTextBlessing() {
   } catch (err) {
     showError(err.message || '发送失败')
   } finally {
+    sending.value = false
     uni.hideLoading()
   }
 }
@@ -154,6 +154,16 @@ onShow(async () => {
 /* 发送区域 */
 .send-area {
   padding: 0 48rpx 36rpx;
+}
+.sender-row {
+  margin-bottom: 16rpx;
+}
+.sender-input {
+  height: 72rpx;
+  font-size: 28rpx;
+  color: $text-primary;
+  border-bottom: 2rpx solid $border-color;
+  padding: 0;
 }
 .send-input {
   width: 100%;

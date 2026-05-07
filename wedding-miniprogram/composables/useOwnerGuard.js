@@ -1,10 +1,17 @@
 import { useUserStore } from '@/stores/user.js'
 
-/**
- * 主人端页面权限守卫
- * 实际权限校验由云函数通过 openid 完成，前端仅做状态标记
- */
 export function useOwnerGuard() {
-  // 云函数层面已做 openid 鉴权，前端无需重复验证
+  const userStore = useUserStore()
+  if (!userStore.isOwner || !userStore.ownerVerified) {
+    uni.showModal({
+      title: '无权限',
+      content: '仅婚礼主人可访问此页面',
+      showCancel: false,
+      success: () => {
+        uni.reLaunch({ url: '/pages/index/index' })
+      }
+    })
+    return false
+  }
   return true
 }

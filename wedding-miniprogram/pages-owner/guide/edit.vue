@@ -380,8 +380,11 @@ function callHotel(phone) {
 
 // ========== 数据持久化 ==========
 async function saveToStorage() {
+  if (!userStore.weddingId) {
+    uni.showToast({ title: '未找到婚礼信息，请重新进入', icon: 'none' })
+    return
+  }
   try {
-    // 先同步云端
     await updateWedding(userStore.weddingId, 'venues', store.venues)
   } catch (err) {
     console.error(' venues 云端保存失败:', err)

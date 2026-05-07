@@ -125,8 +125,8 @@ function getAssignees(assigneeIds) {
 function getEventStatus(timeStr) {
   if (!timeStr) return 'upcoming'
   const today = new Date()
-  const weddingDay = new Date(weddingDate.value)
-  if (today.toDateString() !== weddingDay.toDateString()) return 'upcoming'
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+  if (todayStr !== weddingDate.value) return 'upcoming'
   const [h, m] = timeStr.split(':').map(Number)
   const eventTime = new Date(today.getFullYear(), today.getMonth(), today.getDate(), h, m)
   const now = new Date()

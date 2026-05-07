@@ -37,9 +37,14 @@ export const useUserStore = defineStore('user', () => {
   }
 
   function loadFromStorage() {
-    const stored = uni.getStorageSync('userInfo')
-    if (stored) {
-      setUser(JSON.parse(stored))
+    try {
+      const stored = uni.getStorageSync('userInfo')
+      if (stored) {
+        setUser(JSON.parse(stored))
+      }
+    } catch (e) {
+      console.warn('读取用户缓存失败，清除损坏数据:', e)
+      uni.removeStorageSync('userInfo')
     }
     weddingId.value = uni.getStorageSync('currentWeddingId') || ''
   }
