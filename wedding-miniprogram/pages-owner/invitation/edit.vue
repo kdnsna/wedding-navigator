@@ -179,8 +179,8 @@ function loadFromStore() {
     content: inv.content?.main_text || '',
     groomName: inv.couple?.groom?.name || '',
     brideName: inv.couple?.bride?.name || '',
-    date: wedding.date || '',
-    time: wedding.time || '',
+    date: wedding.basic_info?.date || '',
+    time: wedding.basic_info?.time || '',
     venueName: inv.wedding?.venue_name || '',
     showCountdown: inv.features?.show_countdown !== false,
     showRsvp: inv.features?.show_rsvp !== false,
@@ -212,8 +212,8 @@ async function saveInvitation() {
         story: ''
       },
       couple: {
-        groom: { name: form.value.groomName, phone: inv?.couple?.groom?.phone || '', photo: '' },
-        bride: { name: form.value.brideName, phone: inv?.couple?.bride?.phone || '', photo: '' }
+        groom: { name: form.value.groomName, phone: store.invitation?.couple?.groom?.phone || '', photo: '' },
+        bride: { name: form.value.brideName, phone: store.invitation?.couple?.bride?.phone || '', photo: '' }
       },
       wedding: {
         date: form.value.date,

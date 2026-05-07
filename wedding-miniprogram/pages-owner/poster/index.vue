@@ -60,7 +60,7 @@
 
 <script setup>
 import { ref, nextTick, getCurrentInstance } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { onLoad, onShow } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
@@ -175,8 +175,9 @@ async function saveToAlbum() {
   }
 }
 
+onShow(() => { useOwnerGuard() })
+
 onLoad(async () => {
-  if (!useOwnerGuard()) return
   await generateQRCode()
   await redrawPoster()
 })

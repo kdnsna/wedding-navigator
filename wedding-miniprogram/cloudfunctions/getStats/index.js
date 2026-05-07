@@ -12,8 +12,8 @@ exports.main = async (event, context) => {
 
   try {
     // 权限校验：仅主人可查看统计
-    const wedding = await db.collection('weddings').doc(weddingId).get()
-    if (wedding.data.owner_openid !== OPENID) {
+    const wedding = await db.collection('weddings').doc(weddingId).get().catch(() => ({ data: null }))
+    if (!wedding.data || wedding.data.owner_openid !== OPENID) {
       return { success: false, message: '无权查看' }
     }
 

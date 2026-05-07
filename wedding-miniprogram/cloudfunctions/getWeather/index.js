@@ -70,7 +70,7 @@ exports.main = async (event, context) => {
     const WEATHER_KEY = process.env.HEFENG_KEY
     const lat = venue.coordinate.latitude
     const lon = venue.coordinate.longitude
-    const weddingDate = wedding.data?.basic_info?.date || wedding.data?.wedding_date || ''
+    const weddingDate = wedding.data?.basic_info?.date || ''
 
     if (!WEATHER_KEY) {
       return buildMockWeather(weddingDate, '请配置天气 API Key 以获取真实天气')

@@ -35,6 +35,19 @@ exports.main = async (event, context) => {
         blessings: _.push(newBlessing),
         updated_at: Date.now()
       }
+    }).catch(async (err) => {
+      // 文档不存在则创建
+      if (err.errCode === -502005) {
+        await db.collection('blessings').add({
+          data: {
+            _id: weddingId,
+            blessings: [newBlessing],
+            updated_at: Date.now()
+          }
+        })
+      } else {
+        throw err
+      }
     })
 
     return { success: true, blessingId: newBlessing.id }

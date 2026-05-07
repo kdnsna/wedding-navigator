@@ -36,11 +36,15 @@ exports.main = async (event, context) => {
       delete cleanData[field]
     }
 
+    // timelines 集合结构为 { events: [...] }，venues 为 { venues: [], transportation: {}, accommodations: [] }
+    // 均不需要 [collection] 包装，直接存储对象本身（与 createWedding 初始化格式保持一致）
+    const isObjectCollection = ['venues', 'timelines'].includes(collection)
+    const updateData = isObjectCollection
+      ? { ...cleanData, updated_at: Date.now() }
+      : { [collection]: cleanData, updated_at: Date.now() }
+
     await db.collection(collection).doc(weddingId).update({
-      data: {
-        ...cleanData,
-        updated_at: Date.now()
-      }
+      data: updateData
     })
 
     return { success: true }

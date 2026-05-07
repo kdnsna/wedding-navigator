@@ -12,12 +12,15 @@ exports.main = async (event, context) => {
 
   try {
     // 校验主人权限
-    const ownerRes = await db.collection('weddings').doc(weddingId).get()
-    if (ownerRes.data.owner_openid !== OPENID) {
+    const ownerRes = await db.collection('weddings').doc(weddingId).get().catch(() => ({ data: null }))
+    if (!ownerRes.data || ownerRes.data.owner_openid !== OPENID) {
       return { success: false, message: '无权限操作' }
     }
 
-    const res = await db.collection('blessings').doc(weddingId).get()
+    const res = await db.collection('blessings').doc(weddingId).get().catch(() => ({ data: null }))
+    if (!res.data) {
+      return { success: false, message: '祝福不存在' }
+    }
     const blessings = res.data.blessings || []
 
     const idx = blessings.findIndex(b => b.id === blessingId)
