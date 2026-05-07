@@ -5,6 +5,17 @@ const _ = db.command
 
 const RELATED_COLLECTIONS = ['invitations', 'albums', 'venues', 'timelines', 'guests', 'blessings', 'share_stats']
 
+async function ensureCollection(collectionName) {
+  try {
+    await db.createCollection(collectionName)
+  } catch (e) {
+    // 集合已存在时也会报错，忽略
+    if (e.errCode !== -501005) {
+      console.warn(`[ensureCollection] ${collectionName}:`, e.message)
+    }
+  }
+}
+
 exports.main = async (event, context) => {
   const { weddingData, wedding, invitation } = event
   const { OPENID } = cloud.getWXContext()
@@ -18,6 +29,12 @@ exports.main = async (event, context) => {
 
   let weddingId = null
   try {
+    // 自动创建所有需要的集合（首次运行）
+    await ensureCollection('weddings')
+    for (const col of RELATED_COLLECTIONS) {
+      await ensureCollection(col)
+    }
+
     weddingId = await generateUniqueId()
     const now = Date.now()
 
