@@ -110,6 +110,11 @@ async function getRSVPStats(weddingId) {
   return callFunction('getRSVPStats', { weddingId }, { timeoutMs: 10000 })
 }
 
+// 验证当前用户是否为婚礼主人
+async function checkOwnership(weddingId) {
+  return callFunction('checkOwnership', { weddingId }, { timeoutMs: 5000 })
+}
+
 // 生成小程序码海报
 async function generatePoster(page, scene, width = 430) {
   return callFunction('generatePoster', { page, scene, width }, { timeoutMs: 15000 })
@@ -153,6 +158,7 @@ export {
   recordView,
   getStats,
   getRSVPStats,
+  checkOwnership,
   generatePoster,
   getWeather,
   uploadFile,

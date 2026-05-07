@@ -3,6 +3,13 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 
+function isDocNotExistError(err) {
+  if (!err) return false
+  if (err.errCode === -1 || err.errCode === 'DATABASE_COLLECTION_NOT_EXIST') return true
+  const msg = (err.errMsg || err.message || '').toLowerCase()
+  return msg.includes('not exist') || msg.includes('does not exist') || msg.includes('not found')
+}
+
 exports.main = async (event, context) => {
   const { weddingId, rsvpData } = event
 
@@ -27,37 +34,39 @@ exports.main = async (event, context) => {
       updated_at: now
     }
 
+    let guestDoc = null
     try {
-      const guestRes = await db.collection('guests').doc(weddingId).get()
-      const guests = guestRes.data.guests || []
-      const idx = guests.findIndex(g => g.phone === rsvpData.phone)
-
-      if (idx >= 0) {
-        newGuest.id = guests[idx].id
-        if (idx >= 0) guests[idx] = newGuest
-        await db.collection('guests').doc(weddingId).update({
-          data: { guests, updated_at: now }
-        })
-      } else {
-        newGuest.created_at = now
-        await db.collection('guests').doc(weddingId).update({
-          data: { guests: _.push(newGuest), updated_at: now }
-        })
-      }
+      guestDoc = await db.collection('guests').doc(weddingId).get()
     } catch (err) {
-      if (err.errCode === -1 || err.message?.includes('not exist')) {
+      if (isDocNotExistError(err)) {
         newGuest.created_at = now
         await db.collection('guests').add({
           data: { _id: weddingId, guests: [newGuest], created_at: now, updated_at: now }
         })
-      } else {
-        throw err
+        return { success: true }
       }
+      throw err
+    }
+
+    const guests = guestDoc.data.guests || []
+    const idx = guests.findIndex(g => g.phone === rsvpData.phone)
+
+    if (idx >= 0) {
+      newGuest.id = guests[idx].id
+      guests[idx] = newGuest
+      await db.collection('guests').doc(weddingId).update({
+        data: { guests, updated_at: now }
+      })
+    } else {
+      newGuest.created_at = now
+      await db.collection('guests').doc(weddingId).update({
+        data: { guests: _.push(newGuest), updated_at: now }
+      })
     }
 
     return { success: true }
   } catch (err) {
     console.error(err)
-    return { success: false, message: err.message }
+    return { success: false, message: err.message || '提交失败' }
   }
 }
