@@ -98,7 +98,8 @@ wedding-miniprogram/
 ## 本地开发
 
 ### 环境要求
-- Node.js >= 18
+- Node.js 20 LTS（项目已提供 `.nvmrc`，建议 `nvm use` 后再构建）
+- npm >= 10（当前仓库使用 `package-lock.json`，推荐 npm 安装依赖）
 - HBuilderX 或 VS Code + uni-app 插件
 - 微信开发者工具
 
@@ -106,14 +107,16 @@ wedding-miniprogram/
 
 ```bash
 cd wedding-miniprogram
-pnpm install
+nvm use
+npm install
 ```
 
 ### 配置
 
 1. 在 `manifest.json` 中配置你的微信小程序 AppID
-2. 在 `composables/useCloud.js` 中配置云开发环境ID（如已绑定则留空）
-3. 在 `cloudfunctions/*/config.json` 中按需配置权限
+2. 在 `config/cloud.js` 中配置云开发环境 ID：`CLOUD_ENV`
+3. 如需真实天气，在 `getWeather` 云函数环境变量中配置 `HEFENG_KEY`
+4. 在 `cloudfunctions/*/config.json` 中按需配置权限
 
 ### 运行到微信开发者工具
 
@@ -124,10 +127,19 @@ pnpm install
 
 或使用 CLI：
 ```bash
-pnpm dev:mp-weixin
+npm run dev:mp-weixin
 ```
 
 然后在微信开发者工具中打开 `dist/dev/mp-weixin` 目录。
+
+### 本地构建检查
+
+```bash
+npm run check:release
+npm run build:mp-weixin
+```
+
+构建完成后，在微信开发者工具中打开 `dist/build/mp-weixin` 目录进行模拟器预览。
 
 ## 部署
 
@@ -141,6 +153,14 @@ pnpm dev:mp-weixin
 ```
 云开发 -> 云函数 -> 右键每个云函数目录 -> 创建并部署：云端安装依赖
 ```
+
+天气云函数如需真实天气，请在云函数环境变量中设置：
+
+```
+HEFENG_KEY=你的和风天气Key
+```
+
+未配置时会返回模拟天气，不会阻断路书页。
 
 ### 3. 创建数据库索引
 
@@ -162,6 +182,17 @@ pnpm dev:mp-weixin
 ### 5. 配置分享
 
 在小程序后台配置页面分享权限，确保 `pages/index/index` 可被分享。
+
+## 发布前检查清单
+
+- `manifest.json` 中 `mp-weixin.appid` 已替换为正式小程序 AppID
+- `config/cloud.js` 中 `CLOUD_ENV` 已替换为正式云开发环境 ID
+- 已部署所有 `cloudfunctions/*`，选择「云端安装依赖」
+- 数据库集合已创建：`weddings`、`invitations`、`albums`、`venues`、`timelines`、`guests`、`blessings`、`share_stats`、`viewers`
+- 数据库索引已创建：`viewers.wedding_id + viewers.openid`、`guests.guests.phone`、`blessings.blessings.id`
+- 已运行 `npm run check:release` 并通过
+- 已运行 `npm run build:mp-weixin`，并确认 `dist/build/mp-weixin` 可由微信开发者工具打开
+- 在微信开发者工具中完成首页、RSVP、祝福墙、路书、管理后台、宾客管理、统计页的模拟器检查
 
 ## 设计系统
 

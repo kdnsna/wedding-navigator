@@ -182,7 +182,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { onLoad, onShareAppMessage, onShareTimeline, onShow } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
-import { fetchWedding, recordView } from '@/composables/useCloud.js'
+import { fetchWedding, recordShare, recordView } from '@/composables/useCloud.js'
 import { formatDate, getWeekDay } from '@/utils/index.js'
 
 const store = useWeddingStore()
@@ -327,20 +327,34 @@ function openCalendar() {
   }
 }
 
+function getSharePath() {
+  return userStore.weddingId
+    ? `/pages/index/index?id=${userStore.weddingId}`
+    : '/pages/index/index'
+}
+
+function trackShare() {
+  if (userStore.weddingId) {
+    recordShare(userStore.weddingId).catch(() => {})
+  }
+}
+
 onShareAppMessage(() => {
+  trackShare()
   const title = store.wedding?.share_config?.title || `${groomName.value} & ${brideName.value} 的婚礼邀请`
   return {
     title,
-    path: `/pages/index/index?id=${userStore.weddingId}`,
+    path: getSharePath(),
     imageUrl: coverImage.value
   }
 })
 
 onShareTimeline(() => {
+  trackShare()
   const title = store.wedding?.share_config?.title || `${groomName.value} & ${brideName.value} 的婚礼邀请`
   return {
     title,
-    query: `id=${userStore.weddingId}`,
+    query: userStore.weddingId ? `id=${userStore.weddingId}` : '',
     imageUrl: coverImage.value
   }
 })
@@ -799,6 +813,7 @@ onUnmounted(() => {
 }
 .quick-meta {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 4rpx;
@@ -807,6 +822,7 @@ onUnmounted(() => {
   font-size: 28rpx;
   color: $text-primary;
   font-weight: 500;
+  white-space: nowrap;
 }
 .quick-en {
   font-size: 18rpx;
@@ -870,6 +886,7 @@ onUnmounted(() => {
 .float-btn:active { transform: scale(0.96); opacity: 0.85; }
 .float-btn.rsvp {
   flex: 1;
+  min-width: 0;
   background: $text-primary;
   color: #fff;
   box-shadow: 0 8rpx 24rpx rgba(0,0,0,0.15);

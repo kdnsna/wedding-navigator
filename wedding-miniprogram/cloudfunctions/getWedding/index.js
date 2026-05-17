@@ -58,6 +58,7 @@ exports.main = async (event, context) => {
 
     return {
       success: true,
+      isOwner,
       data: {
         wedding: weddingData,
         invitation: invitationRes.data,
@@ -66,7 +67,8 @@ exports.main = async (event, context) => {
         timeline: timelineRes.data,
         guests: guestsData,
         blessings: blessingsRes.data,
-        stats: statsRes.data
+        stats: statsRes.data,
+        isOwner
       }
     }
   } catch (err) {

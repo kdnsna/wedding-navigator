@@ -54,6 +54,14 @@ export const useWeddingStore = defineStore('wedding', () => {
   })
 
   // Getters
+  function guestStatus(guest) {
+    return guest?.rsvp_status || guest?.status || 'pending'
+  }
+
+  function guestCount(guest) {
+    return Number(guest?.attending_count ?? guest?.guestCount ?? guest?.guest_count ?? 1)
+  }
+
   const coupleName = computed(() => {
     if (!invitation.value?.couple) return ''
     const { groom, bride } = invitation.value.couple
@@ -115,10 +123,13 @@ export const useWeddingStore = defineStore('wedding', () => {
     const list = guests.value?.guests || []
     return {
       total: list.length,
-      attending: list.filter(g => g.rsvp_status === 'attending').length,
-      uncertain: list.filter(g => g.rsvp_status === 'uncertain').length,
-      declined: list.filter(g => g.rsvp_status === 'declined').length,
-      pending: list.filter(g => g.rsvp_status === 'pending').length
+      attending: list.filter(g => guestStatus(g) === 'attending').length,
+      uncertain: list.filter(g => guestStatus(g) === 'uncertain').length,
+      declined: list.filter(g => guestStatus(g) === 'declined').length,
+      pending: list.filter(g => guestStatus(g) === 'pending').length,
+      attending_people: list
+        .filter(g => guestStatus(g) === 'attending')
+        .reduce((sum, g) => sum + guestCount(g), 0)
     }
   })
 

@@ -34,10 +34,13 @@ exports.main = async (event, context) => {
         unique_viewers: statsRes.data.unique_viewers || 0,
         rsvp: {
           total: guests.length,
-          attending: guests.filter(g => g.rsvp_status === 'attending').length,
-          uncertain: guests.filter(g => g.rsvp_status === 'uncertain').length,
-          declined: guests.filter(g => g.rsvp_status === 'declined').length,
-          pending: guests.filter(g => g.rsvp_status === 'pending').length
+          attending: guests.filter(g => getGuestStatus(g) === 'attending').length,
+          uncertain: guests.filter(g => getGuestStatus(g) === 'uncertain').length,
+          declined: guests.filter(g => getGuestStatus(g) === 'declined').length,
+          pending: guests.filter(g => getGuestStatus(g) === 'pending').length,
+          attending_people: guests
+            .filter(g => getGuestStatus(g) === 'attending')
+            .reduce((sum, g) => sum + getGuestCount(g), 0)
         },
         blessings: blessings.length
       }
@@ -46,4 +49,12 @@ exports.main = async (event, context) => {
     console.error(err)
     return { success: false, message: err.message }
   }
+}
+
+function getGuestStatus(guest) {
+  return guest.rsvp_status || guest.status || 'pending'
+}
+
+function getGuestCount(guest) {
+  return Number(guest.attending_count ?? guest.guestCount ?? guest.guest_count ?? 1)
 }

@@ -73,10 +73,11 @@
 
 <script setup>
 import { computed } from 'vue'
-import { onShareAppMessage, onShareTimeline } from '@dcloudio/uni-app'
+import { onShareAppMessage, onShareTimeline, onShow } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { formatDate } from '@/utils/index.js'
+import { fetchWedding, recordShare } from '@/composables/useCloud.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
@@ -91,15 +92,37 @@ function goToTimeline() { uni.switchTab({ url: '/pages/timeline/index' }) }
 function goToAlbum() { uni.switchTab({ url: '/pages/album/index' }) }
 function goToManage() { uni.navigateTo({ url: '/pages-owner/manage/index' }) }
 
-onShareAppMessage(() => ({
-  title: `${coupleName.value}的婚礼邀请`,
-  path: `/pages/index/index?id=${userStore.weddingId}`
-}))
+function getSharePath() {
+  return userStore.weddingId ? `/pages/index/index?id=${userStore.weddingId}` : '/pages/index/index'
+}
 
-onShareTimeline(() => ({
-  title: `${coupleName.value}的婚礼邀请`,
-  query: `id=${userStore.weddingId}`
-}))
+function trackShare() {
+  if (userStore.weddingId) {
+    recordShare(userStore.weddingId).catch(() => {})
+  }
+}
+
+onShareAppMessage(() => {
+  trackShare()
+  return {
+    title: `${coupleName.value || '甜囍手册'}的婚礼邀请`,
+    path: getSharePath()
+  }
+})
+
+onShareTimeline(() => {
+  trackShare()
+  return {
+    title: `${coupleName.value || '甜囍手册'}的婚礼邀请`,
+    query: userStore.weddingId ? `id=${userStore.weddingId}` : ''
+  }
+})
+
+onShow(async () => {
+  if (userStore.weddingId && !store.wedding?._id && !store.wedding?.wedding_id) {
+    try { await fetchWedding(userStore.weddingId) } catch (err) {}
+  }
+})
 </script>
 
 <style lang="scss" scoped>
