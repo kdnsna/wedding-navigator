@@ -27,7 +27,8 @@
     <!-- 空状态 -->
     <view class="empty-state" v-if="photos.length === 0 && !loading">
       <image class="empty-visual" src="/static/visuals/empty-album.png" mode="aspectFit" />
-      <text class="empty-text">暂无照片</text>
+      <text class="empty-text">{{ emptyText }}</text>
+      <text class="empty-sub" v-if="emptySub">{{ emptySub }}</text>
     </view>
 
     <!-- 加载中 -->
@@ -47,8 +48,19 @@ import { fetchWedding } from '@/composables/useCloud.js'
 const store = useWeddingStore()
 const userStore = useUserStore()
 const loading = ref(false)
+const loadError = ref('')
 
 const photos = computed(() => store.album?.photos || [])
+const emptyText = computed(() => {
+  if (!userStore.weddingId) return '请从有效婚礼邀请进入'
+  if (loadError.value) return '相册加载失败'
+  return '暂无照片'
+})
+const emptySub = computed(() => {
+  if (!userStore.weddingId) return '当前没有关联的婚礼信息'
+  if (loadError.value) return '请稍后重试或联系新人'
+  return '新人还在准备婚纱照'
+})
 
 function previewImage(index) {
   const urls = photos.value.map(p => p.url)
@@ -56,11 +68,11 @@ function previewImage(index) {
 }
 
 onShow(async () => {
-  if (userStore.weddingId && photos.value.length === 0) {
-    loading.value = true
-    try { await fetchWedding(userStore.weddingId) } catch (err) {}
-    finally { loading.value = false }
-  }
+  if (!userStore.weddingId || photos.value.length > 0) return
+  loading.value = true
+  loadError.value = ''
+  try { await fetchWedding(userStore.weddingId) } catch (err) { loadError.value = err?.message || 'load failed' }
+  finally { loading.value = false }
 })
 </script>
 
@@ -118,8 +130,15 @@ onShow(async () => {
   padding: 200rpx 60rpx;
 }
 .empty-text {
+  display: block;
   font-size: 30rpx;
   color: $text-muted;
+}
+.empty-sub {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: $text-placeholder;
 }
 
 .loading-state {

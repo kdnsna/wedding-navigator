@@ -88,9 +88,12 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { formatDate } from '@/utils/index.js'
+import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
+import { fetchWedding, getStats } from '@/composables/useCloud.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
@@ -124,7 +127,24 @@ function shareWedding() {
   uni.navigateTo({ url: '/pages-owner/share/index' })
 }
 
-// 管理后台权限由云函数通过 openid 鉴权，前端无需弹窗验证
+onShow(async () => {
+  if (!useOwnerGuard()) return
+  try {
+    await fetchWedding(userStore.weddingId)
+    const res = await getStats(userStore.weddingId)
+    if (res?.stats) {
+      store.wedding.stats = {
+        views: res.stats.views || 0,
+        shares: res.stats.shares || 0,
+        rsvp_count: res.stats.rsvp?.total || 0,
+        blessing_count: res.stats.blessings || 0,
+        unique_viewers: res.stats.unique_viewers || 0
+      }
+    }
+  } catch (err) {
+    console.warn('管理后台数据加载失败:', err)
+  }
+})
 </script>
 
 <style lang="scss" scoped>

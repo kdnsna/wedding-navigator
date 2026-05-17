@@ -64,8 +64,8 @@
     <!-- 空状态 -->
     <view class="empty-state" v-if="events.length === 0">
       <image class="empty-visual empty-icon" src="/static/visuals/empty-timeline.png" mode="aspectFit" />
-      <text class="empty-text">暂无流程安排</text>
-      <text class="empty-sub">婚礼当天的时间表将在这里展示</text>
+      <text class="empty-text">{{ emptyText }}</text>
+      <text class="empty-sub">{{ emptySub }}</text>
     </view>
 
     <!-- 底部 -->
@@ -77,7 +77,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
@@ -85,12 +85,23 @@ import { fetchWedding } from '@/composables/useCloud.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
+const loadError = ref('')
 
 const weddingDate = computed(() => store.weddingDate)
 const countdown = computed(() => store.countdown)
 const events = computed(() => store.timeline?.events || [])
 const venues = computed(() => store.venues?.venues || [])
 const roles = computed(() => store.timeline?.roles || [])
+const emptyText = computed(() => {
+  if (!userStore.weddingId) return '请从有效婚礼邀请进入'
+  if (loadError.value) return '流程加载失败'
+  return '暂无流程安排'
+})
+const emptySub = computed(() => {
+  if (!userStore.weddingId) return '当前没有关联的婚礼信息'
+  if (loadError.value) return '请稍后重试或联系新人'
+  return '婚礼当天的时间表将在这里展示'
+})
 
 const weddingDay = computed(() => {
   if (!weddingDate.value) return ''
@@ -138,7 +149,8 @@ function getEventStatus(timeStr) {
 
 onShow(async () => {
   if (userStore.weddingId && events.value.length === 0) {
-    try { await fetchWedding(userStore.weddingId) } catch (err) {}
+    loadError.value = ''
+    try { await fetchWedding(userStore.weddingId) } catch (err) { loadError.value = err?.message || 'load failed' }
   }
 })
 </script>

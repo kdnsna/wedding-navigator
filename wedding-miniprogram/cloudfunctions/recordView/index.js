@@ -12,6 +12,8 @@ exports.main = async (event, context) => {
   }
 
   try {
+    await ensureStatsDocument(weddingId)
+
     const updateData = { updated_at: Date.now() }
 
     if (type === 'view') {
@@ -51,5 +53,21 @@ exports.main = async (event, context) => {
   } catch (err) {
     console.error(err)
     return { success: false, message: err.message }
+  }
+}
+
+async function ensureStatsDocument(weddingId) {
+  try {
+    await db.collection('share_stats').doc(weddingId).get()
+  } catch (err) {
+    await db.collection('share_stats').doc(weddingId).set({
+      data: {
+        views: 0,
+        shares: 0,
+        unique_viewers: 0,
+        created_at: Date.now(),
+        updated_at: Date.now()
+      }
+    })
   }
 }

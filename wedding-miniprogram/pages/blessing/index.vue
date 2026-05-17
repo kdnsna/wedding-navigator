@@ -42,7 +42,8 @@
     <!-- 空状态 -->
     <view class="empty-state" v-if="blessings.length === 0">
       <image class="empty-visual" src="/static/visuals/empty-blessing.png" mode="aspectFit" />
-      <text class="empty-text">暂无祝福，来做第一个祝福的人吧</text>
+      <text class="empty-text">{{ emptyText }}</text>
+      <text class="empty-sub" v-if="emptySub">{{ emptySub }}</text>
     </view>
   </view>
 </template>
@@ -58,6 +59,7 @@ import { showSuccess, showError } from '@/utils/index.js'
 const store = useWeddingStore()
 const userStore = useUserStore()
 const newBlessing = ref('')
+const loadError = ref('')
 
 const blessings = computed(() => {
   const list = store.blessings?.blessings || []
@@ -66,6 +68,16 @@ const blessings = computed(() => {
     if (!a.is_pinned && b.is_pinned) return 1
     return (b.created_at || 0) - (a.created_at || 0)
   })
+})
+const emptyText = computed(() => {
+  if (!userStore.weddingId) return '请从有效婚礼邀请进入'
+  if (loadError.value) return '祝福加载失败'
+  return '暂无祝福，来做第一个祝福的人吧'
+})
+const emptySub = computed(() => {
+  if (!userStore.weddingId) return '当前没有关联的婚礼信息'
+  if (loadError.value) return '请稍后重试或联系新人'
+  return ''
 })
 
 function formatTime(ts) {
@@ -115,7 +127,8 @@ async function sendTextBlessing() {
 
 onShow(async () => {
   if (userStore.weddingId && blessings.value.length === 0) {
-    try { await fetchWedding(userStore.weddingId) } catch (err) {}
+    loadError.value = ''
+    try { await fetchWedding(userStore.weddingId) } catch (err) { loadError.value = err?.message || 'load failed' }
   }
 })
 </script>
@@ -243,7 +256,14 @@ onShow(async () => {
   padding: 160rpx 60rpx;
 }
 .empty-text {
+  display: block;
   font-size: 28rpx;
   color: $text-muted;
+}
+.empty-sub {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: $text-placeholder;
 }
 </style>

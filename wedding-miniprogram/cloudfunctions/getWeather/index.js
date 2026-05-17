@@ -66,8 +66,8 @@ exports.main = async (event, context) => {
       return { success: false, message: '场地缺少经纬度坐标' }
     }
 
-    // 优先读取云函数环境变量；本地联调时回落到当前项目配置。
-    const WEATHER_KEY = process.env.HEFENG_KEY || 'ea363fcdd56742fa84a17c4b11b37bdc'
+    // 生产环境请在云函数环境变量中配置 HEFENG_KEY。
+    const WEATHER_KEY = process.env.HEFENG_KEY || ''
     const lat = venue.coordinate.latitude
     const lon = venue.coordinate.longitude
     const weddingDate = wedding.data?.basic_info?.date || wedding.data?.wedding_date || ''

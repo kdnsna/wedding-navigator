@@ -1,4 +1,5 @@
 import { useWeddingStore } from '@/stores/wedding.js'
+import { useUserStore } from '@/stores/user.js'
 import { CLOUD_ENV } from '@/config/cloud.js'
 
 // 云函数基础配置
@@ -13,6 +14,12 @@ function initCloud() {
   } else if (typeof wx !== 'undefined' && wx.cloud?.init) {
     wx.cloud.init(options)
   }
+}
+
+function getCloudApi() {
+  if (uni.cloud?.callFunction) return uni.cloud
+  if (typeof wx !== 'undefined' && wx.cloud?.callFunction) return wx.cloud
+  return null
 }
 
 // 云函数调用封装
@@ -32,7 +39,13 @@ async function callFunction(name, data = {}, options = {}) {
       finish(reject, new Error(`${name} 请求超时`))
     }, timeoutMs)
 
-    uni.cloud.callFunction({
+    const cloudApi = getCloudApi()
+    if (!cloudApi) {
+      finish(reject, new Error('云开发能力不可用，请在微信小程序环境中打开'))
+      return
+    }
+
+    cloudApi.callFunction({
       name,
       data,
       success: (res) => {
@@ -53,10 +66,14 @@ async function callFunction(name, data = {}, options = {}) {
 // 获取婚礼数据
 async function fetchWedding(weddingId) {
   const store = useWeddingStore()
+  const userStore = useUserStore()
   try {
     const res = await callFunction('getWedding', { weddingId }, { timeoutMs: 10000 })
     if (res?.data) {
       store.setWeddingData(res.data)
+      if (res.isOwner || res.data.isOwner || res.data.is_owner) {
+        userStore.verifyOwner(true)
+      }
     }
     return res
   } catch (err) {
@@ -94,7 +111,13 @@ async function pinBlessing(weddingId, blessingId, isPinned) {
 
 // 记录浏览
 async function recordView(weddingId, openid) {
-  return callFunction('recordView', { weddingId, openid }, { timeoutMs: 4000 })
+  return callFunction('recordView', { weddingId, openid, type: 'view' }, { timeoutMs: 4000 })
+}
+
+// 记录分享
+async function recordShare(weddingId) {
+  if (!weddingId) return null
+  return callFunction('recordView', { weddingId, type: 'share' }, { timeoutMs: 4000 })
 }
 
 // 获取统计数据
@@ -120,7 +143,12 @@ async function getWeather(weddingId) {
 // 上传文件到云存储
 async function uploadFile(filePath, cloudPath) {
   return new Promise((resolve, reject) => {
-    uni.cloud.uploadFile({
+    const cloudApi = uni.cloud?.uploadFile ? uni.cloud : (typeof wx !== 'undefined' && wx.cloud?.uploadFile ? wx.cloud : null)
+    if (!cloudApi) {
+      reject(new Error('云存储能力不可用，请在微信小程序环境中打开'))
+      return
+    }
+    cloudApi.uploadFile({
       cloudPath: cloudPath || `uploads/${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`,
       filePath,
       success: (res) => resolve(res),
@@ -148,6 +176,7 @@ export {
   submitBlessing,
   pinBlessing,
   recordView,
+  recordShare,
   getStats,
   getRSVPStats,
   generatePoster,

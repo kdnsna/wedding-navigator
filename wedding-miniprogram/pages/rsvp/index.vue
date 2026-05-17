@@ -179,7 +179,7 @@ import { ref, reactive } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
-import { submitRSVP } from '@/composables/useCloud.js'
+import { fetchWedding, submitRSVP } from '@/composables/useCloud.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
@@ -203,6 +203,13 @@ const statusText = {
   declined: '无法出席'
 }
 
+function getDietPreference() {
+  if (form.dietary.includes('素食')) return 'vegetarian'
+  if (form.dietary.includes('清真')) return 'halal'
+  if (form.dietary.length > 0 && !form.dietary.includes('无特殊要求')) return 'other'
+  return 'normal'
+}
+
 function toggleDiet(diet) {
   const idx = form.dietary.indexOf(diet)
   if (idx > -1) {
@@ -213,6 +220,10 @@ function toggleDiet(diet) {
 }
 
 async function handleSubmit() {
+  if (!userStore.weddingId) {
+    uni.showToast({ title: '未找到婚礼信息，请重新打开邀请', icon: 'none' })
+    return
+  }
   if (!form.name.trim()) {
     uni.showToast({ title: '请输入姓名', icon: 'none' })
     return
@@ -224,14 +235,30 @@ async function handleSubmit() {
 
   submitting.value = true
   try {
+    const attendingCount = form.status === 'declined' ? 0 : form.guestCount
     await submitRSVP(userStore.weddingId, {
-      ...form,
+      name: form.name.trim(),
+      phone: form.phone.trim(),
       openid: userStore.openid,
-      dietary: form.dietary.join('、')
+      rsvp_status: form.status,
+      attending_count: attendingCount,
+      diet_preference: getDietPreference(),
+      dietary: form.dietary.join('、'),
+      message: form.message.trim()
+    })
+    store.updateGuestRSVP(form.phone.trim() || `${userStore.openid || 'guest'}_${form.name.trim()}`, {
+      name: form.name.trim(),
+      phone: form.phone.trim(),
+      openid: userStore.openid,
+      rsvp_status: form.status,
+      attending_count: attendingCount,
+      diet_preference: getDietPreference(),
+      dietary: form.dietary.join('、'),
+      message: form.message.trim()
     })
     submitted.value = true
   } catch (err) {
-    uni.showToast({ title: '提交失败，请重试', icon: 'none' })
+    uni.showToast({ title: err?.message || '提交失败，请重试', icon: 'none' })
   } finally {
     submitting.value = false
   }
@@ -248,12 +275,20 @@ function resetForm() {
   uni.reLaunch({ url: '/pages/index/index' })
 }
 
-onLoad(() => {
-  const rsvp = userStore.rsvpData
+onLoad(async (options) => {
+  if (options?.id) {
+    userStore.setWeddingId(options.id)
+  }
+  if (userStore.weddingId && !(store.guests?.guests?.length)) {
+    try { await fetchWedding(userStore.weddingId) } catch (err) {}
+  }
+  const rsvp = (store.guests?.guests || []).find(item => {
+    return (form.phone && item.phone === form.phone) || (userStore.openid && item.openid === userStore.openid)
+  })
   if (rsvp) {
     form.name = rsvp.name || ''
-    form.status = rsvp.status || 'attending'
-    form.guestCount = rsvp.guest_count || 1
+    form.status = rsvp.rsvp_status || rsvp.status || 'attending'
+    form.guestCount = rsvp.attending_count || rsvp.guest_count || rsvp.guestCount || 1
     form.phone = rsvp.phone || ''
     form.dietary = rsvp.dietary ? rsvp.dietary.split('、') : []
     form.message = rsvp.message || ''
@@ -345,6 +380,7 @@ onLoad(() => {
 }
 .radio-item {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -378,6 +414,7 @@ onLoad(() => {
   font-size: 26rpx;
   color: $text-primary;
   transition: color 0.25s ease;
+  white-space: nowrap;
 }
 .radio-item.active .radio-label {
   color: #fff;

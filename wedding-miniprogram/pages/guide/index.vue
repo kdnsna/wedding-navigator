@@ -328,7 +328,8 @@ async function loadWeather() {
 }
 
 onMounted(async () => {
-  if (userStore.weddingId && venues.value.length === 0) {
+  const hasLoadedWedding = Boolean(store.wedding?._id || store.wedding?.wedding_id)
+  if (userStore.weddingId && !hasLoadedWedding) {
     try {
       await fetchWedding(userStore.weddingId)
       const first = venues.value[0]

@@ -102,9 +102,12 @@
 import { computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
+import { useUserStore } from '@/stores/user.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
+import { fetchWedding, getStats } from '@/composables/useCloud.js'
 
 const store = useWeddingStore()
+const userStore = useUserStore()
 
 const stats = computed(() => store.wedding?.stats || {})
 const rsvpStats = computed(() => store.rsvpStats)
@@ -125,7 +128,18 @@ const dietStats = computed(() => {
   }
 })
 
-onShow(() => { useOwnerGuard() })
+onShow(async () => {
+  if (!useOwnerGuard()) return
+  try {
+    await fetchWedding(userStore.weddingId)
+    const res = await getStats(userStore.weddingId)
+    if (res?.stats) {
+      store.wedding.stats = res.stats
+    }
+  } catch (err) {
+    console.warn('统计数据加载失败:', err)
+  }
+})
 </script>
 
 <style lang="scss" scoped>

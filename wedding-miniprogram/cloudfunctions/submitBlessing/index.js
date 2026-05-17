@@ -14,11 +14,9 @@ exports.main = async (event, context) => {
   try {
     // 内容安全检测
     if (blessing.content) {
-      const secRes = await cloud.openapi.security.msgSecCheck({
-        content: blessing.content
-      })
-      if (secRes.errCode !== 0) {
-        return { success: false, message: '祝福内容包含敏感信息，请修改后重试' }
+      const secRes = await checkContentSafety(blessing.content)
+      if (!secRes.safe) {
+        return { success: false, message: secRes.message || '祝福内容包含敏感信息，请修改后重试' }
       }
     }
 
@@ -41,5 +39,18 @@ exports.main = async (event, context) => {
   } catch (err) {
     console.error(err)
     return { success: false, message: err.message }
+  }
+}
+
+async function checkContentSafety(content) {
+  try {
+    const secRes = await cloud.openapi.security.msgSecCheck({ content })
+    return {
+      safe: secRes.errCode === 0,
+      message: secRes.errCode === 0 ? '' : '祝福内容包含敏感信息，请修改后重试'
+    }
+  } catch (err) {
+    console.error('msgSecCheck failed:', err)
+    return { safe: false, message: '内容安全校验暂不可用，请稍后重试' }
   }
 }
