@@ -117,12 +117,6 @@
           }
         },
         {
-          "path": "poster/index",
-          "style": {
-            "navigationBarTitleText": "海报生成"
-          }
-        },
-        {
           "path": "stats/index",
           "style": {
             "navigationBarTitleText": "数据统计"

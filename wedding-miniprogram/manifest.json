@@ -2,8 +2,8 @@
   "name": "甜囍手册",
   "appid": "__UNI__WEDDING_NAV",
   "description": "甜囍手册 - 婚礼全流程导航小程序",
-  "versionName": "1.0.7",
-  "versionCode": "107",
+  "versionName": "2.0.0",
+  "versionCode": "200",
   "transformPx": false,
   "app-plus": {
     "usingComponents": true,
