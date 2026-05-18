@@ -6,9 +6,9 @@
         <view class="step-fill" :style="{ width: ((currentStep - 1) / 3 * 100) + '%' }" />
       </view>
       <view class="step-labels">
-        <text class="step-label" :class="{ active: currentStep >= 1 }">日期</text>
-        <text class="step-label" :class="{ active: currentStep >= 2 }">场地</text>
-        <text class="step-label" :class="{ active: currentStep >= 3 }">风格</text>
+        <text class="step-label" :class="{ active: currentStep >= 1 }">模板</text>
+        <text class="step-label" :class="{ active: currentStep >= 2 }">日期</text>
+        <text class="step-label" :class="{ active: currentStep >= 3 }">场地</text>
         <text class="step-label" :class="{ active: currentStep >= 4 }">新人</text>
       </view>
     </view>
@@ -16,8 +16,45 @@
     <!-- Step 1 -->
     <view class="step-content" v-if="currentStep === 1">
       <view class="step-header">
+        <text class="step-title">先选择婚礼模板</text>
+        <text class="step-sub">先决定第一眼的气质，再补充婚礼信息；后续仍可在婚书编辑中更换</text>
+      </view>
+      <view class="template-showcase">
+        <view
+          class="template-item"
+          v-for="tpl in templates"
+          :key="tpl.id"
+          :class="{ active: form.template === tpl.id }"
+          @click="selectTemplate(tpl)"
+        >
+          <view class="template-visual" :style="{ background: tpl.preview }">
+            <text class="template-kicker">{{ tpl.kicker }}</text>
+            <text class="template-monogram">{{ tpl.shortName }}</text>
+            <view class="template-line" />
+            <text class="template-venue">{{ tpl.preset?.venueName }}</text>
+          </view>
+          <view class="template-meta">
+            <view class="template-head">
+              <text class="template-name">{{ tpl.name }}</text>
+              <text class="template-status">{{ form.template === tpl.id ? '已选择' : '选择' }}</text>
+            </view>
+            <text class="template-desc">{{ tpl.desc }}</text>
+            <text class="template-copy">{{ tpl.copy }}</text>
+            <text class="template-photo">{{ tpl.photoMood }}</text>
+          </view>
+        </view>
+      </view>
+      <view class="template-note" v-if="selectedTemplate">
+        <text class="template-note-title">预设文案</text>
+        <text class="template-note-copy">{{ selectedTemplate.preset?.mainText }}</text>
+      </view>
+    </view>
+
+    <!-- Step 2 -->
+    <view class="step-content" v-if="currentStep === 2">
+      <view class="step-header">
         <text class="step-title">婚礼日期</text>
-        <text class="step-sub">这将用于生成倒计时</text>
+        <text class="step-sub">这将用于生成倒计时和分享卡片</text>
       </view>
       <view class="form-group">
         <text class="form-label">日期</text>
@@ -33,8 +70,8 @@
       </view>
     </view>
 
-    <!-- Step 2 -->
-    <view class="step-content" v-if="currentStep === 2">
+    <!-- Step 3 -->
+    <view class="step-content" v-if="currentStep === 3">
       <view class="step-header">
         <text class="step-title">婚礼场地</text>
         <text class="step-sub">宾客将使用这些信息导航到场</text>
@@ -46,32 +83,6 @@
       <view class="form-group">
         <text class="form-label">详细地址</text>
         <input class="form-input" v-model="form.venueAddress" placeholder="请输入详细地址" />
-      </view>
-    </view>
-
-    <!-- Step 3 -->
-    <view class="step-content" v-if="currentStep === 3">
-      <view class="step-header">
-        <text class="step-title">选择模板风格</text>
-        <text class="step-sub">可随时在管理后台更换</text>
-      </view>
-      <view class="template-list">
-        <view
-          class="template-item"
-          v-for="tpl in templates"
-          :key="tpl.id"
-          :class="{ active: form.template === tpl.id }"
-          @click="form.template = tpl.id"
-        >
-          <view class="template-color" :style="{ background: tpl.preview }">
-            <text v-if="form.template === tpl.id" class="template-check">✓</text>
-          </view>
-          <view class="template-meta">
-            <text class="template-name">{{ tpl.name }}</text>
-            <text class="template-desc">{{ tpl.desc }}</text>
-            <text class="template-photo">{{ tpl.photoMood }}</text>
-          </view>
-        </view>
       </view>
     </view>
 
@@ -109,12 +120,12 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useUserStore } from '@/stores/user.js'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { createWedding } from '@/composables/useCloud.js'
 import { showSuccess, showError, getWeekDay } from '@/utils/index.js'
-import { WEDDING_TEMPLATES } from '@/utils/templates.js'
+import { WEDDING_TEMPLATES, getWeddingTemplate } from '@/utils/templates.js'
 
 const userStore = useUserStore()
 const weddingStore = useWeddingStore()
@@ -134,21 +145,35 @@ const form = ref({
 })
 
 const templates = WEDDING_TEMPLATES
+const selectedTemplate = computed(() => getWeddingTemplate(form.value.template))
 
 function onDateChange(e) { form.value.date = e.detail.value }
 function onTimeChange(e) { form.value.time = e.detail.value }
 
+function selectTemplate(tpl) {
+  form.value.template = tpl.id
+  if (!form.value.venueName.trim()) {
+    form.value.venueName = tpl.preset?.venueName || ''
+  }
+}
+
 function nextStep() {
   if (!validateStep()) return
+  if (currentStep.value === 1 && selectedTemplate.value?.preset?.venueName && !form.value.venueName.trim()) {
+    form.value.venueName = selectedTemplate.value.preset.venueName
+  }
   currentStep.value++
 }
 function prevStep() { currentStep.value-- }
 
 function validateStep() {
   if (currentStep.value === 1) {
-    if (!form.value.date) { showError('请选择婚礼日期'); return false }
+    if (!form.value.template) { showError('请选择婚礼模板'); return false }
   }
   if (currentStep.value === 2) {
+    if (!form.value.date) { showError('请选择婚礼日期'); return false }
+  }
+  if (currentStep.value === 3) {
     if (!form.value.venueName.trim()) { showError('请输入场地名称'); return false }
   }
   if (currentStep.value === 4) {
@@ -163,6 +188,7 @@ async function createWeddingAction() {
   if (!validateStep()) return
   try {
     uni.showLoading({ title: '创建中...', mask: true })
+    const tpl = selectedTemplate.value
 
     const weddingPayload = {
       basic_info: { date: form.value.date, time: form.value.time, week_day: getWeekDay(form.value.date) },
@@ -178,7 +204,7 @@ async function createWeddingAction() {
       template: form.value.template,
       content: {
         title: '婚礼请柬',
-        main_text: '诚挚邀请您参加我们的婚礼，见证我们的幸福时刻。',
+        main_text: tpl?.preset?.mainText || '诚挚邀请您参加我们的婚礼，见证我们的幸福时刻。',
         sub_text: '',
         story: ''
       },
@@ -189,7 +215,7 @@ async function createWeddingAction() {
       wedding: {
         date: form.value.date,
         time: form.value.time,
-        venue_name: form.value.venueName,
+        venue_name: form.value.venueName || tpl?.preset?.venueName || '',
         venue_address: form.value.venueAddress
       },
       features: { show_countdown: true, show_rsvp: true, show_blessing: true, show_timeline: true }
@@ -322,16 +348,16 @@ async function createWeddingAction() {
 }
 
 /* 模板列表 */
-.template-list {
+.template-showcase {
   display: flex;
   flex-direction: column;
-  gap: 16rpx;
+  gap: 22rpx;
 }
 .template-item {
   display: flex;
-  align-items: center;
-  gap: 24rpx;
-  padding: 24rpx;
+  align-items: stretch;
+  gap: 22rpx;
+  padding: 22rpx;
   border-radius: $radius-lg;
   border: 2rpx solid $border-color;
   background: $bg-surface;
@@ -344,35 +370,85 @@ async function createWeddingAction() {
 .template-item:active {
   background: $bg-muted;
 }
-.template-color {
-  width: 108rpx;
-  height: 144rpx;
+.template-visual {
+  width: 180rpx;
+  min-height: 232rpx;
   border-radius: $radius-lg;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 22rpx 18rpx;
   flex-shrink: 0;
   box-shadow: inset 0 0 0 1rpx rgba(255,255,255,0.34);
+  box-sizing: border-box;
 }
-.template-check {
+.template-kicker {
   color: #fff;
-  font-size: 32rpx;
+  font-size: 15rpx;
+  letter-spacing: 2rpx;
+  line-height: 1.25;
+  opacity: 0.76;
+}
+.template-monogram {
+  color: #fff;
+  font-size: 34rpx;
   font-weight: 600;
+  line-height: 1.2;
+}
+.template-line {
+  width: 56rpx;
+  height: 2rpx;
+  background: rgba(255,255,255,0.72);
+}
+.template-venue {
+  color: rgba(255,255,255,0.82);
+  font-size: 18rpx;
+  line-height: 1.3;
 }
 .template-meta {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.template-head {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-bottom: 8rpx;
 }
 .template-name {
   display: block;
+  flex: 1;
+  min-width: 0;
   font-size: 30rpx;
   font-weight: 500;
   color: $text-primary;
-  margin-bottom: 4rpx;
+}
+.template-status {
+  flex-shrink: 0;
+  padding: 6rpx 14rpx;
+  border-radius: $radius-full;
+  background: $bg-muted;
+  color: $text-muted;
+  font-size: 20rpx;
+}
+.template-item.active .template-status {
+  background: $text-primary;
+  color: #fff;
 }
 .template-desc {
   display: block;
   font-size: 24rpx;
   color: $text-secondary;
+  line-height: 1.45;
+}
+.template-copy {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 22rpx;
+  color: $text-primary;
   line-height: 1.45;
 }
 .template-photo {
@@ -381,6 +457,26 @@ async function createWeddingAction() {
   font-size: 22rpx;
   color: $text-muted;
   line-height: 1.45;
+}
+.template-note {
+  margin-top: 28rpx;
+  padding: 28rpx;
+  border-radius: $radius-lg;
+  background: #fff8f1;
+  border: 1rpx solid rgba(201,169,110,0.32);
+}
+.template-note-title {
+  display: block;
+  font-size: 22rpx;
+  color: $text-muted;
+  letter-spacing: 4rpx;
+  margin-bottom: 12rpx;
+}
+.template-note-copy {
+  display: block;
+  font-size: 26rpx;
+  color: $text-primary;
+  line-height: 1.65;
 }
 
 /* 底部按钮 */

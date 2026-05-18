@@ -115,6 +115,13 @@
       <button class="action-btn primary" @click="previewWedding">预览效果</button>
       <button class="action-btn" @click="shareWedding">分享邀请</button>
     </view>
+
+    <view class="danger-zone">
+      <text class="danger-kicker">DANGER ZONE</text>
+      <text class="danger-title">删除婚礼邀请</text>
+      <text class="danger-desc">删除后当前邀请链接将失效，婚书、相册记录、路书、流程、宾客回执、祝福和统计数据都会移除。</text>
+      <button class="danger-btn" :loading="deleting" :disabled="deleting" @click="confirmDeleteWedding">删除婚礼邀请</button>
+    </view>
   </view>
 </template>
 
@@ -123,12 +130,13 @@ import { ref, computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
-import { formatDate } from '@/utils/index.js'
+import { formatDate, showError, showSuccess } from '@/utils/index.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
-import { fetchWedding, getStats } from '@/composables/useCloud.js'
+import { deleteWedding, fetchWedding, getStats } from '@/composables/useCloud.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
+const deleting = ref(false)
 
 const coupleName = computed(() => store.coupleName)
 const weddingDate = computed(() => store.weddingDate)
@@ -166,6 +174,69 @@ function previewWedding() {
 }
 function shareWedding() {
   uni.navigateTo({ url: '/pages-owner/share/index' })
+}
+async function confirmDeleteWedding() {
+  if (deleting.value) return
+  if (!userStore.weddingId) {
+    showError('当前没有可删除的婚礼邀请')
+    return
+  }
+  const first = await showDeleteModal(
+    '删除婚礼邀请',
+    '这会删除婚礼资料、请柬、相册记录、路书、流程、宾客回执、祝福和统计数据。此操作不可恢复。',
+    '继续删除'
+  )
+  if (!first) return
+
+  const second = await showDeleteModal(
+    '再次确认',
+    '删除后宾客打开旧邀请链接将看不到这场婚礼。确认继续删除吗？',
+    '确认删除'
+  )
+  if (!second) return
+
+  const weddingId = userStore.weddingId
+  try {
+    deleting.value = true
+    uni.showLoading({ title: '删除中...', mask: true })
+    await deleteWedding(weddingId, 'DELETE')
+    clearLocalWedding(weddingId)
+    showSuccess('已删除婚礼邀请')
+    uni.reLaunch({ url: '/pages-owner/wizard/index' })
+  } catch (err) {
+    console.error('删除婚礼邀请失败:', err)
+    showError(err.message || '删除失败，请稍后重试')
+  } finally {
+    deleting.value = false
+    uni.hideLoading()
+  }
+}
+
+function showDeleteModal(title, content, confirmText) {
+  return new Promise((resolve) => {
+    uni.showModal({
+      title,
+      content,
+      confirmText,
+      confirmColor: '#EA4335',
+      cancelText: '取消',
+      success: (res) => resolve(Boolean(res.confirm)),
+      fail: () => resolve(false)
+    })
+  })
+}
+
+function clearLocalWedding(weddingId) {
+  if (weddingId) {
+    const weddings = uni.getStorageSync('weddings') || {}
+    if (weddings[weddingId]) {
+      delete weddings[weddingId]
+      uni.setStorageSync('weddings', weddings)
+    }
+    uni.removeStorageSync(`invitation_${weddingId}`)
+  }
+  store.setWeddingData({})
+  userStore.logout()
 }
 
 onShow(async () => {
@@ -423,5 +494,47 @@ onShow(async () => {
 .action-btn.primary {
   background: $text-primary;
   color: #fff;
+}
+
+.danger-zone {
+  margin: 0 48rpx 48rpx;
+  padding: 30rpx;
+  border-radius: $radius-lg;
+  border: 1rpx solid rgba(234,67,53,0.24);
+  background: rgba(234,67,53,0.045);
+}
+.danger-kicker {
+  display: block;
+  font-size: 18rpx;
+  color: rgba(234,67,53,0.72);
+  letter-spacing: 5rpx;
+  margin-bottom: 10rpx;
+}
+.danger-title {
+  display: block;
+  font-size: 30rpx;
+  color: #9F2D26;
+  font-weight: 600;
+  margin-bottom: 10rpx;
+}
+.danger-desc {
+  display: block;
+  font-size: 24rpx;
+  color: $text-secondary;
+  line-height: 1.55;
+  margin-bottom: 24rpx;
+}
+.danger-btn {
+  height: 82rpx;
+  line-height: 82rpx;
+  border-radius: $radius-full;
+  background: #EA4335;
+  color: #fff;
+  font-size: 28rpx;
+  font-weight: 500;
+}
+.danger-btn::after { border: none; }
+.danger-btn[disabled] {
+  opacity: 0.62;
 }
 </style>

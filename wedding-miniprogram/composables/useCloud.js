@@ -99,6 +99,11 @@ async function updateWedding(weddingId, collection, data) {
   return callFunction('updateWedding', { weddingId, collection, data: cleanData })
 }
 
+// 删除婚礼邀请及关联数据
+async function deleteWedding(weddingId, confirmText = 'DELETE') {
+  return callFunction('deleteWedding', { weddingId, confirmText }, { timeoutMs: 15000 })
+}
+
 // 提交 RSVP
 async function submitRSVP(weddingId, data) {
   return callFunction('submitRSVP', { weddingId, rsvpData: data }, { timeoutMs: 10000 })
@@ -192,6 +197,7 @@ export {
   fetchWedding,
   createWedding,
   updateWedding,
+  deleteWedding,
   submitRSVP,
   submitBlessing,
   pinBlessing,

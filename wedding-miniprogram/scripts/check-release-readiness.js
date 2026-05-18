@@ -125,6 +125,12 @@ function checkDataContracts() {
   assertIncludes('cloudfunctions/getStats/index.js', 'normalizeListDocument', 'getStats must normalize legacy nested list documents')
   assertIncludes('cloudfunctions/getRSVPStats/index.js', 'normalizeListDocument', 'getRSVPStats must normalize legacy nested guest documents')
   assertIncludes('cloudfunctions/generatePoster/index.js', 'WXACODE_ENV_VERSION', 'generatePoster must support configurable wxacode env version')
+  assert(fs.existsSync(path.join(root, 'cloudfunctions/deleteWedding/index.js')), 'deleteWedding cloud function must exist')
+  assertIncludes('cloudfunctions/deleteWedding/index.js', 'owner_openid', 'deleteWedding must verify owner before deleting data')
+  assertIncludes('cloudfunctions/deleteWedding/index.js', 'removeByWeddingId', 'deleteWedding must remove wedding-scoped viewer records')
+  assertIncludes('composables/useCloud.js', 'deleteWedding', 'useCloud must expose deleteWedding')
+  assertIncludes('pages-owner/manage/index.vue', 'confirmDeleteWedding', 'manage page must expose delete confirmation flow')
+  assertIncludes('pages-owner/manage/index.vue', 'danger-zone', 'manage page must render a distinct danger zone')
 }
 
 function checkTemplateSystem() {
@@ -133,6 +139,10 @@ function checkTemplateSystem() {
   assertIncludes('utils/templates.js', 'noir-banquet', 'templates must include noir banquet')
   assertIncludes('utils/templates.js', 'garden-film', 'templates must include garden film')
   assertIncludes('pages-owner/wizard/index.vue', 'WEDDING_TEMPLATES', 'wizard must use shared template definitions')
+  assertIncludes('pages-owner/wizard/index.vue', '先选择婚礼模板', 'wizard must show templates before asking for details')
+  assertIncludes('pages-owner/wizard/index.vue', 'selectedTemplate', 'wizard must derive preset copy from the selected template')
+  assertIncludes('pages-owner/wizard/index.vue', 'template-visual', 'wizard template choices must include rich visual previews')
+  assertIncludes('pages-owner/wizard/index.vue', 'preset?.mainText', 'wizard must use template preset invitation copy')
   assertIncludes('pages-owner/invitation/edit.vue', 'WEDDING_TEMPLATES', 'invitation editor must use shared template definitions')
   assertIncludes('pages-owner/invitation/edit.vue', 'previewTemplate', 'invitation editor must preview the currently selected template before saving')
   assertIncludes('pages-owner/invitation/edit.vue', 'applyTemplatePreset', 'invitation editor must expose built-in template preset copy')

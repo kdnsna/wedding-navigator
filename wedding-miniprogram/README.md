@@ -13,8 +13,8 @@
 - **祝福墙**：发送文字祝福，主人可审核置顶
 
 ### 主人端（编辑管理）
-- **创建向导**：4步流程创建婚礼（婚期→场地→模板→新人信息）
-- **管理后台**：发布准备度、数据概览、功能导航、快捷操作
+- **创建向导**：4步流程创建婚礼（模板→婚期→场地→新人信息），先选精美模板再填资料
+- **管理后台**：发布准备度、数据概览、功能导航、快捷操作、删除婚礼邀请
 - **婚书编辑**：模板切换、文案编辑、新人信息、功能开关
 - **相册管理**：上传、删除、设为封面
 - **路书编辑**：场地CRUD管理（名称/地址/坐标/电话/时间）
@@ -41,6 +41,7 @@ wedding-miniprogram/
 │   ├── createWedding/       # 创建婚礼
 │   ├── getWedding/          # 获取婚礼数据
 │   ├── updateWedding/       # 更新婚礼数据
+│   ├── deleteWedding/       # 删除婚礼邀请及关联数据
 │   ├── submitRSVP/          # 提交RSVP
 │   ├── getRSVPStats/        # RSVP统计
 │   ├── submitBlessing/      # 提交祝福
@@ -132,6 +133,7 @@ npm install
 4. 如需内容安全接口失败时阻断提交，在 `submitRSVP`、`submitBlessing` 云函数环境变量中配置 `CONTENT_SAFETY_MODE=strict`
 5. 如需生成体验版/开发版小程序码，在 `generatePoster` 云函数环境变量中配置 `WXACODE_ENV_VERSION=trial` 或 `develop`
 6. 在 `cloudfunctions/*/config.json` 中按需配置权限
+7. 需要支持主人删除邀请时，确认 `deleteWedding` 已部署；该函数会校验 `owner_openid`，并删除婚礼、请柬、相册记录、路书、流程、宾客、祝福、统计和访客记录
 
 ### 运行到微信开发者工具
 
@@ -228,6 +230,7 @@ MINIPROGRAM_PRIVATE_KEY_PATH=/path/to/private.key npm run upload:mp-weixin
 - `manifest.json` 中 `mp-weixin.appid` 已替换为正式小程序 AppID
 - `config/cloud.js` 中 `CLOUD_ENV` 已替换为正式云开发环境 ID
 - 已部署所有 `cloudfunctions/*`，选择「云端安装依赖」
+- 已部署 `deleteWedding`，并在主人端管理后台验证删除后旧邀请链接失效、新建向导可重新打开
 - 数据库集合已创建：`weddings`、`invitations`、`albums`、`venues`、`timelines`、`guests`、`blessings`、`share_stats`、`viewers`
 - 数据库索引已创建：`viewers.wedding_id + viewers.openid`、`guests.guests.phone`、`blessings.blessings.id`
 - 已运行 `npm run check:release` 并通过
@@ -243,7 +246,7 @@ MINIPROGRAM_PRIVATE_KEY_PATH=/path/to/private.key npm run upload:mp-weixin
 - **黑金晚宴**：近黑 + 暖金，适合晚宴、酒店宴会厅、高级餐厅
 - **花园胶片**：自然绿 + 胶片留白，适合户外、旅拍、生活感婚礼
 
-模板配置集中在 `utils/templates.js`，创建向导、婚书编辑、首页、RSVP、相册、路书、流程和更多页都会读取同一份模板配置。
+模板配置集中在 `utils/templates.js`，创建向导会先展示四套模板并套用对应预设文案，婚书编辑、首页、RSVP、相册、路书、流程和更多页都会读取同一份模板配置。
 
 ## 双角色架构
 
