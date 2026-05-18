@@ -2,5 +2,6 @@
   "permissions": {
     "openapi": []
   },
+  "timeout": 20,
   "desc": "获取婚礼当天天气预报"
 }

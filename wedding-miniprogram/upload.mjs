@@ -1,49 +1,46 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import ci from 'miniprogram-ci';
+import fs from 'fs'
+import path from 'path'
+import { spawnSync } from 'child_process'
+import { fileURLToPath } from 'url'
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, 'manifest.json'), 'utf8'));
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, 'manifest.json'), 'utf8'))
 
-const appid = process.env.MINIPROGRAM_APPID || manifest['mp-weixin']?.appid;
-const projectPath = process.env.MINIPROGRAM_PROJECT_PATH || path.join(__dirname, 'dist/build/mp-weixin');
-const privateKeyPath = process.env.MINIPROGRAM_PRIVATE_KEY_PATH;
-const version = process.env.MINIPROGRAM_VERSION || manifest.versionName || '1.0.0';
-const desc = process.env.MINIPROGRAM_UPLOAD_DESC || `甜囍手册 ${version} 发布`;
+const cliPath = process.env.WECHAT_DEVTOOLS_CLI_PATH || '/Applications/wechatwebdevtools.app/Contents/MacOS/cli'
+const projectPath = process.env.MINIPROGRAM_PROJECT_PATH || path.join(__dirname, 'dist/build/mp-weixin')
+const version = process.env.MINIPROGRAM_VERSION || manifest.versionName || '1.0.0'
+const desc = process.env.MINIPROGRAM_UPLOAD_DESC || `甜囍手册 ${version} 发布`
+const port = process.env.WECHAT_DEVTOOLS_PORT || '9420'
+const infoOutput = process.env.MINIPROGRAM_UPLOAD_INFO_OUTPUT || path.join(__dirname, '.release', `upload-${version}.json`)
 
 function assertConfig(condition, message) {
   if (!condition) {
-    console.error(`配置缺失：${message}`);
-    process.exit(1);
+    console.error(`配置缺失：${message}`)
+    process.exit(1)
   }
 }
 
-assertConfig(appid && !appid.startsWith('__UNI__'), '请配置 MINIPROGRAM_APPID 或 manifest.json mp-weixin.appid');
-assertConfig(privateKeyPath, '请设置 MINIPROGRAM_PRIVATE_KEY_PATH 指向微信上传密钥');
-assertConfig(fs.existsSync(projectPath), `构建目录不存在：${projectPath}，请先运行 npm run build:mp-weixin`);
-assertConfig(fs.existsSync(privateKeyPath), `上传密钥不存在：${privateKeyPath}`);
+assertConfig(fs.existsSync(cliPath), `微信开发者工具 CLI 不存在：${cliPath}`)
+assertConfig(fs.existsSync(projectPath), `构建目录不存在：${projectPath}，请先运行 npm run build:mp-weixin`)
 
-const project = new ci.Project({
-  appid,
-  type: 'miniProgram',
-  projectPath,
-  privateKeyPath,
-  ignores: ['node_modules/**/*'],
-});
+fs.mkdirSync(path.dirname(infoOutput), { recursive: true })
 
-console.log(`开始上传 ${appid} v${version}...`);
-try {
-  const res = await ci.upload({
-    project,
-    version,
-    desc,
-    onProgressUpdate: (info) => {
-      if (info.status === 'doing') console.log('  ->', info.message);
-    },
-  });
-  console.log('上传成功', JSON.stringify(res, null, 2));
-} catch (err) {
-  console.error('上传失败:', err.message || err);
-  process.exit(1);
+const args = [
+  'upload',
+  '--project', projectPath,
+  '--version', version,
+  '--desc', desc,
+  '--port', port,
+  '--lang', 'zh',
+  '--info-output', infoOutput
+]
+
+console.log(`开始使用微信开发者工具 CLI 上传 v${version}...`)
+const result = spawnSync(cliPath, args, { stdio: 'inherit' })
+
+if (result.status !== 0) {
+  console.error(`上传失败，退出码：${result.status}`)
+  process.exit(result.status || 1)
 }
+
+console.log(`上传完成，详情文件：${infoOutput}`)

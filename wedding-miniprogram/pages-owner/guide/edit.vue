@@ -233,6 +233,7 @@ const typeMap = { '家': 'home', '酒店': 'hotel', '场地': 'venue', '住宿':
 const typeReverseMap = { 'home': 0, 'hotel': 1, 'venue': 2, 'hotel_guest': 3, 'photo': 4 }
 const modalForm = ref({ name: '', typeIndex: 2, address: '', arrivalTime: '', phone: '', coordinate: null })
 const geocoding = ref(false)
+const lastGeocodeError = ref('')
 
 const venues = computed(() => store.venues?.venues || [])
 const geoStatusText = computed(() => {
@@ -281,6 +282,7 @@ async function autoMatchLocation(options = {}) {
     return null
   }
   try {
+    lastGeocodeError.value = ''
     geocoding.value = true
     const res = await geocodeVenue({
       name: modalForm.value.name.trim(),
@@ -294,9 +296,11 @@ async function autoMatchLocation(options = {}) {
       if (!silent) showSuccess('已匹配地图坐标')
       return modalForm.value.coordinate
     }
-    if (!silent) showError(res?.message || '未匹配到地图坐标')
+    lastGeocodeError.value = res?.message || '未匹配到地图坐标'
+    if (!silent) showError(lastGeocodeError.value)
   } catch (err) {
-    if (!silent) showError(err.message || '地图匹配失败')
+    lastGeocodeError.value = err?.message || '地图匹配失败'
+    if (!silent) showError(lastGeocodeError.value)
   } finally {
     geocoding.value = false
   }
@@ -304,28 +308,33 @@ async function autoMatchLocation(options = {}) {
 }
 
 function chooseVenueLocation() {
-  const api = (typeof wx !== 'undefined' && wx.chooseLocation) ? wx : uni
-  const keyword = modalForm.value.address || modalForm.value.name
-  api.chooseLocation({
-    keyword,
-    success: (res) => {
-      modalForm.value.name = modalForm.value.name || res.name || ''
-      modalForm.value.address = res.address || modalForm.value.address || res.name || ''
-      modalForm.value.coordinate = normalizeCoordinate({
-        latitude: res.latitude,
-        longitude: res.longitude,
-        title: res.name,
-        address: res.address,
-        source: 'manual-choose-location',
-        matched_at: Date.now()
-      })
-      showSuccess('已选择地图位置')
-    },
-    fail: (err) => {
-      if (!String(err?.errMsg || '').includes('cancel')) {
-        showError('地图选点失败，请检查定位权限')
+  return new Promise((resolve) => {
+    const api = (typeof wx !== 'undefined' && wx.chooseLocation) ? wx : uni
+    const keyword = modalForm.value.address || modalForm.value.name
+    api.chooseLocation({
+      keyword,
+      success: (res) => {
+        modalForm.value.name = modalForm.value.name || res.name || ''
+        modalForm.value.address = res.address || modalForm.value.address || res.name || ''
+        modalForm.value.coordinate = normalizeCoordinate({
+          latitude: res.latitude,
+          longitude: res.longitude,
+          title: res.name,
+          address: res.address,
+          source: 'manual-choose-location',
+          matched_at: Date.now()
+        })
+        lastGeocodeError.value = ''
+        showSuccess('已选择地图位置')
+        resolve(true)
+      },
+      fail: (err) => {
+        if (!String(err?.errMsg || '').includes('cancel')) {
+          showError('地图选点失败，请检查定位权限')
+        }
+        resolve(false)
       }
-    }
+    })
   })
 }
 
@@ -334,29 +343,43 @@ async function saveVenue() {
     uni.showToast({ title: '请输入场地名称', icon: 'none' })
     return
   }
-  if (shouldResolveCoordinate()) {
-    await autoMatchLocation({ silent: true })
-  }
-  const venue = {
-    id: editingVenue.value?.id || generateId(),
-    name: modalForm.value.name,
-    type: typeMap[venueTypes[modalForm.value.typeIndex]],
-    address: modalForm.value.address,
-    arrival_time: modalForm.value.arrivalTime,
-    contact_phone: modalForm.value.phone,
-    coordinate: modalForm.value.coordinate || null
-  }
-  if (editingVenue.value) {
+  const previousVenues = cloneVenues()
+  try {
+    if (shouldResolveCoordinate()) {
+      await autoMatchLocation({ silent: true })
+      if (!modalForm.value.coordinate?.latitude || !modalForm.value.coordinate?.longitude) {
+        const shouldChoose = await confirmMapFallback(lastGeocodeError.value)
+        if (shouldChoose) {
+          const picked = await chooseVenueLocation()
+          if (!picked) return
+        }
+      }
+    }
+    const venue = {
+      id: editingVenue.value?.id || generateId(),
+      name: modalForm.value.name,
+      type: typeMap[venueTypes[modalForm.value.typeIndex]],
+      address: modalForm.value.address,
+      arrival_time: modalForm.value.arrivalTime,
+      contact_phone: modalForm.value.phone,
+      coordinate: modalForm.value.coordinate || null
+    }
     if (!store.venues) store.venues = { venues: [], transportation: {}, accommodations: [] }
     if (!store.venues.venues) store.venues.venues = []
-    const idx = store.venues.venues.findIndex(v => v.id === editingVenue.value.id)
-    if (idx >= 0) store.venues.venues[idx] = venue
-  } else {
-    store.addVenue(venue)
+    if (editingVenue.value) {
+      const idx = store.venues.venues.findIndex(v => v.id === editingVenue.value.id)
+      if (idx >= 0) store.venues.venues[idx] = venue
+    } else {
+      store.addVenue(venue)
+    }
+    await saveToStorage()
+    showModal.value = false
+    showSuccess(venue.coordinate ? '保存成功，已匹配地图' : '已保存，待匹配地图')
+  } catch (err) {
+    store.venues = previousVenues
+    console.error('场地保存失败:', err)
+    showError(err?.message || '保存失败，请重试')
   }
-  await saveToStorage()
-  showModal.value = false
-  showSuccess(venue.coordinate ? '保存成功，已匹配地图' : '保存成功，请稍后补充地图坐标')
 }
 
 function shouldResolveCoordinate() {
@@ -384,13 +407,19 @@ function deleteVenue(id) {
   uni.showModal({
     title: '确认删除',
     content: '确定删除该场地？',
-    success: (res) => {
+    success: async (res) => {
       if (res.confirm) {
-        if (store.venues && Array.isArray(store.venues.venues)) {
-          store.venues.venues = store.venues.venues.filter(v => v.id !== id)
+        const previousVenues = cloneVenues()
+        try {
+          if (store.venues && Array.isArray(store.venues.venues)) {
+            store.venues.venues = store.venues.venues.filter(v => v.id !== id)
+          }
+          await saveToStorage()
+          showSuccess('已删除')
+        } catch (err) {
+          store.venues = previousVenues
+          showError(err?.message || '删除失败，请重试')
         }
-        saveToStorage()
-        showSuccess('已删除')
       }
     }
   })
@@ -410,12 +439,18 @@ function editTransportation() {
   showTransportModal.value = true
 }
 
-function saveTransportation() {
-  if (!store.venues) store.venues = { venues: [], transportation: {}, accommodations: [] }
-  store.venues.transportation = { ...transportForm.value }
-  saveToStorage()
-  showTransportModal.value = false
-  showSuccess('保存成功')
+async function saveTransportation() {
+  const previousVenues = cloneVenues()
+  try {
+    if (!store.venues) store.venues = { venues: [], transportation: {}, accommodations: [] }
+    store.venues.transportation = { ...transportForm.value }
+    await saveToStorage()
+    showTransportModal.value = false
+    showSuccess('保存成功')
+  } catch (err) {
+    store.venues = previousVenues
+    showError(err?.message || '保存失败，请重试')
+  }
 }
 
 // ========== 住宿 ==========
@@ -443,45 +478,55 @@ function editHotel(hotel) {
   showHotelM.value = true
 }
 
-function saveHotel() {
+async function saveHotel() {
   if (!hotelForm.value.name.trim()) {
     uni.showToast({ title: '请输入酒店名称', icon: 'none' })
     return
   }
-  const hotel = {
-    id: editingHotel.value?.id || generateId(),
-    name: hotelForm.value.name,
-    distance: hotelForm.value.distance,
-    price_range: hotelForm.value.price_range,
-    phone: hotelForm.value.phone,
-    notes: hotelForm.value.notes
-  }
-  if (editingHotel.value) {
+  const previousVenues = cloneVenues()
+  try {
+    const hotel = {
+      id: editingHotel.value?.id || generateId(),
+      name: hotelForm.value.name,
+      distance: hotelForm.value.distance,
+      price_range: hotelForm.value.price_range,
+      phone: hotelForm.value.phone,
+      notes: hotelForm.value.notes
+    }
     if (!store.venues) store.venues = { venues: [], transportation: {}, accommodations: [] }
     if (!store.venues.accommodations) store.venues.accommodations = []
-    const idx = store.venues.accommodations.findIndex(h => h.id === editingHotel.value.id)
-    if (idx >= 0) store.venues.accommodations[idx] = hotel
-  } else {
-    if (!store.venues) store.venues = { venues: [], transportation: {}, accommodations: [] }
-    if (!store.venues.accommodations) store.venues.accommodations = []
-    store.venues.accommodations.push(hotel)
+    if (editingHotel.value) {
+      const idx = store.venues.accommodations.findIndex(h => h.id === editingHotel.value.id)
+      if (idx >= 0) store.venues.accommodations[idx] = hotel
+    } else {
+      store.venues.accommodations.push(hotel)
+    }
+    await saveToStorage()
+    showHotelM.value = false
+    showSuccess('保存成功')
+  } catch (err) {
+    store.venues = previousVenues
+    showError(err?.message || '保存失败，请重试')
   }
-  saveToStorage()
-  showHotelM.value = false
-  showSuccess('保存成功')
 }
 
 function deleteHotel(id) {
   uni.showModal({
     title: '确认删除',
     content: '确定删除该住宿？',
-    success: (res) => {
+    success: async (res) => {
       if (res.confirm) {
-        if (store.venues && Array.isArray(store.venues.accommodations)) {
-          store.venues.accommodations = store.venues.accommodations.filter(h => h.id !== id)
+        const previousVenues = cloneVenues()
+        try {
+          if (store.venues && Array.isArray(store.venues.accommodations)) {
+            store.venues.accommodations = store.venues.accommodations.filter(h => h.id !== id)
+          }
+          await saveToStorage()
+          showSuccess('已删除')
+        } catch (err) {
+          store.venues = previousVenues
+          showError(err?.message || '删除失败，请重试')
         }
-        saveToStorage()
-        showSuccess('已删除')
       }
     }
   })
@@ -496,8 +541,7 @@ function callHotel(phone) {
 // ========== 数据持久化 ==========
 async function saveToStorage() {
   if (!userStore.weddingId) {
-    uni.showToast({ title: '未找到婚礼信息，请重新进入', icon: 'none' })
-    return
+    throw new Error('未找到婚礼信息，请重新进入')
   }
   if (!store.venues) {
     store.venues = { venues: [], transportation: {}, accommodations: [] }
@@ -506,7 +550,7 @@ async function saveToStorage() {
     await updateWedding(userStore.weddingId, 'venues', store.venues)
   } catch (err) {
     console.error(' venues 云端保存失败:', err)
-    uni.showToast({ title: '云端同步失败', icon: 'none' })
+    throw new Error(err?.message || '云端同步失败')
   }
   // 再缓存本地（离线兜底）
   const weddings = uni.getStorageSync('weddings') || {}
@@ -514,6 +558,28 @@ async function saveToStorage() {
     weddings[userStore.weddingId].venues = store.venues
     uni.setStorageSync('weddings', weddings)
   }
+}
+
+function cloneVenues() {
+  const venuesData = store.venues || { venues: [], transportation: {}, accommodations: [] }
+  return JSON.parse(JSON.stringify({
+    venues: venuesData.venues || [],
+    transportation: venuesData.transportation || {},
+    accommodations: venuesData.accommodations || []
+  }))
+}
+
+function confirmMapFallback(message) {
+  return new Promise((resolve) => {
+    uni.showModal({
+      title: '地图匹配失败',
+      content: `${message || '暂时无法自动匹配地图坐标'}。可以现在地图选点；也可以先保存，稍后补充坐标。`,
+      confirmText: '地图选点',
+      cancelText: '先保存',
+      success: (res) => resolve(Boolean(res.confirm)),
+      fail: () => resolve(false)
+    })
+  })
 }
 
 onShow(() => { useOwnerGuard() })

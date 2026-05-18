@@ -23,7 +23,7 @@ function requestJson(baseUrl, params) {
       })
     })
 
-    req.setTimeout(5000, () => {
+    req.setTimeout(1200, () => {
       req.destroy(new Error('地图服务请求超时'))
     })
 
@@ -47,7 +47,7 @@ function requestWeather(key, lon, lat) {
       })
     })
 
-    req.setTimeout(5000, () => {
+    req.setTimeout(1800, () => {
       req.destroy(new Error('天气服务请求超时'))
     })
 

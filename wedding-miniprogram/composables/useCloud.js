@@ -48,7 +48,11 @@ async function callFunction(name, data = {}, options = {}) {
       success: (res) => {
         console.log(`[cloud] ${name} success:`, res)
         if (res.result?.success === false) {
-          finish(reject, new Error(res.result.message || `${name} 调用失败`))
+          const error = new Error(res.result.message || `${name} 调用失败`)
+          error.code = res.result.code || ''
+          error.needConfig = Boolean(res.result.needConfig)
+          error.result = res.result
+          finish(reject, error)
           return
         }
         finish(resolve, res.result)
@@ -96,7 +100,7 @@ async function createWedding(data) {
 async function updateWedding(weddingId, collection, data) {
   // 过滤云数据库系统字段，避免 update 报错
   const { _id, created_at, updated_at, owner_openid, ...cleanData } = data || {}
-  return callFunction('updateWedding', { weddingId, collection, data: cleanData })
+  return callFunction('updateWedding', { weddingId, collection, data: cleanData }, { timeoutMs: 12000 })
 }
 
 // 删除婚礼邀请及关联数据
@@ -152,12 +156,12 @@ async function generatePoster(page, scene, width = 430) {
 
 // 获取婚礼当天天气
 async function getWeather(weddingId) {
-  return callFunction('getWeather', { weddingId }, { timeoutMs: 7000 })
+  return callFunction('getWeather', { weddingId }, { timeoutMs: 12000 })
 }
 
 // 根据场地名称/地址匹配地图坐标
 async function geocodeVenue(data) {
-  return callFunction('geocodeVenue', data, { timeoutMs: 7000 })
+  return callFunction('geocodeVenue', data, { timeoutMs: 12000 })
 }
 
 // 上传文件到云存储
@@ -183,6 +187,32 @@ async function uploadFile(filePath, cloudPath) {
       filePath,
       success: (res) => resolve(res),
       fail: (err) => reject(new Error(err?.errMsg || err?.message || '云存储上传失败'))
+    })
+  })
+}
+
+// 删除云存储文件。用于相册保存失败或删除照片后的清理；清理失败不阻断主流程。
+async function deleteFiles(fileList = []) {
+  const files = fileList.filter(Boolean)
+  if (!files.length) return { fileList: [] }
+
+  return new Promise((resolve) => {
+    const cloudApi = (typeof wx !== 'undefined' && wx.cloud?.deleteFile)
+      ? wx.cloud
+      : (typeof uni !== 'undefined' && uni.cloud?.deleteFile ? uni.cloud : null)
+
+    if (!cloudApi) {
+      resolve({ fileList: files, skipped: true })
+      return
+    }
+
+    cloudApi.deleteFile({
+      fileList: files,
+      success: (res) => resolve(res),
+      fail: (err) => {
+        console.warn('[cloud] deleteFile failed:', err)
+        resolve({ fileList: files, failed: true, err })
+      }
     })
   })
 }
@@ -215,5 +245,6 @@ export {
   getWeather,
   geocodeVenue,
   uploadFile,
+  deleteFiles,
   uploadBase64
 }

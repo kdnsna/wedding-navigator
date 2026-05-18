@@ -24,7 +24,7 @@
     "build:mp-baidu": "uni build -p mp-baidu",
     "build:mp-weixin": "UNI_INPUT_DIR=. npm exec --yes --package=node@20.19.6 -- node node_modules/.bin/uni build -p mp-weixin",
     "build:quickapp": "uni build -p quickapp",
-    "upload:mp-weixin": "npm exec --yes --package=miniprogram-ci -- node upload.mjs"
+    "upload:mp-weixin": "node upload.mjs"
   },
   "dependencies": {
     "@dcloudio/uni-app": "3.0.0-alpha-4010520240507001",

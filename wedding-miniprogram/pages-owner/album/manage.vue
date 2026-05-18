@@ -41,13 +41,14 @@ import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { generateId, showSuccess, showError, showLoading, hideLoading } from '@/utils/index.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
-import { updateWedding, uploadFile } from '@/composables/useCloud.js'
+import { fetchWedding, updateWedding, uploadFile, deleteFiles } from '@/composables/useCloud.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
 
 const photos = computed(() => store.album?.photos || [])
 const uploading = ref(false)
+const refreshing = ref(false)
 
 const uploadProgress = ref({ current: 0, total: 0 })
 
@@ -62,30 +63,46 @@ async function chooseImage() {
     const filePaths = await chooseAlbumImages()
     if (!filePaths.length) return
 
+    const previousAlbum = cloneAlbum()
+    const previousPhotos = previousAlbum.photos || []
+    const uploadedPhotos = []
+
     uploading.value = true
     uploadProgress.value = { current: 0, total: filePaths.length }
     showLoading(`上传中 0/${filePaths.length}`)
 
-    for (const localPath of filePaths) {
-      uploadProgress.value.current += 1
-      showLoading(`上传中 ${uploadProgress.value.current}/${filePaths.length}`)
-      const id = generateId()
-      const cloudPath = buildAlbumCloudPath(localPath, id)
-      const cloudRes = await uploadFile(localPath, cloudPath)
-      if (!cloudRes?.fileID) {
-        throw new Error('云存储未返回文件ID')
+    try {
+      for (const localPath of filePaths) {
+        uploadProgress.value.current += 1
+        showLoading(`上传中 ${uploadProgress.value.current}/${filePaths.length}`)
+        const id = generateId()
+        const cloudPath = buildAlbumCloudPath(localPath, id)
+        const cloudRes = await uploadFile(localPath, cloudPath)
+        if (!cloudRes?.fileID) {
+          throw new Error('云存储未返回文件ID')
+        }
+        uploadedPhotos.push({
+          id,
+          url: cloudRes.fileID,
+          type: previousPhotos.length === 0 && uploadedPhotos.length === 0 ? 'cover' : 'normal',
+          upload_time: new Date().toISOString()
+        })
       }
-      const photo = {
-        id,
-        url: cloudRes.fileID,
-        type: photos.value.length === 0 ? 'cover' : 'normal',
-        upload_time: new Date().toISOString()
-      }
-      store.addPhoto(photo)
-    }
 
-    await saveToStorage()
-    showSuccess('上传成功')
+      const nextAlbum = {
+        ...previousAlbum,
+        photos: [...previousPhotos, ...uploadedPhotos],
+        updated_at: new Date().toISOString()
+      }
+      store.album = nextAlbum
+      showLoading('保存相册中')
+      await saveAlbumData(nextAlbum)
+      showSuccess('上传成功')
+    } catch (err) {
+      store.album = previousAlbum
+      await deleteUploadedPhotos(uploadedPhotos)
+      throw err
+    }
   } catch (err) {
     console.error('照片上传失败:', err)
     showError(err?.message || '上传失败，请重试')
@@ -98,17 +115,42 @@ async function chooseImage() {
 
 function chooseAlbumImages() {
   return new Promise((resolve, reject) => {
+    const handleSuccess = (res) => {
+      const paths = (res.tempFilePaths || [])
+        .concat((res.tempFiles || []).map(item => item.tempFilePath || item.path))
+        .filter(Boolean)
+      resolve([...new Set(paths)])
+    }
+
     uni.chooseImage({
       count: 9,
       sizeType: ['compressed'],
       sourceType: ['album', 'camera'],
-      success: (res) => resolve(res.tempFilePaths || []),
+      success: handleSuccess,
       fail: (err) => {
         const msg = err?.errMsg || ''
         if (msg.includes('cancel')) { resolve([]); return }
-        reject(new Error(msg || '选择照片失败'))
+        chooseMediaFallback(handleSuccess, reject)
       }
     })
+  })
+}
+
+function chooseMediaFallback(resolve, reject) {
+  if (typeof wx === 'undefined' || !wx.chooseMedia) {
+    reject(new Error('选择照片失败，请检查相册权限'))
+    return
+  }
+  wx.chooseMedia({
+    count: 9,
+    mediaType: ['image'],
+    sourceType: ['album', 'camera'],
+    success: (res) => resolve(res),
+    fail: (err) => {
+      const msg = err?.errMsg || ''
+      if (msg.includes('cancel')) { resolve({ tempFiles: [] }); return }
+      reject(new Error(msg || '选择照片失败'))
+    }
   })
 }
 
@@ -118,36 +160,90 @@ function buildAlbumCloudPath(localPath, id) {
   return `weddings/${userStore.weddingId}/albums/${id}.${ext}`
 }
 
+function cloneAlbum() {
+  const album = store.album || { photos: [] }
+  return JSON.parse(JSON.stringify({ ...album, photos: album.photos || [] }))
+}
+
+async function deleteUploadedPhotos(photoList) {
+  const fileList = photoList.map(photo => photo.url).filter(Boolean)
+  if (fileList.length) {
+    await deleteFiles(fileList)
+  }
+}
+
+async function refreshAlbum() {
+  if (!useOwnerGuard()) return
+  if (!userStore.weddingId || refreshing.value) return
+
+  refreshing.value = true
+  try {
+    await fetchWedding(userStore.weddingId, true)
+  } catch (err) {
+    console.error('相册刷新失败:', err)
+    showError(err?.message || '相册刷新失败')
+  } finally {
+    refreshing.value = false
+  }
+}
+
 function deletePhoto(id) {
+  const photo = photos.value.find(item => item.id === id)
   uni.showModal({
     title: '确认删除',
     content: '确定删除这张照片？',
-    success: (res) => {
-      if (res.confirm) {
-        store.removePhoto(id)
-        saveToStorage()
+    success: async (res) => {
+      if (!res.confirm) return
+
+      const previousAlbum = cloneAlbum()
+      const nextPhotos = previousAlbum.photos.filter(item => item.id !== id)
+      if (previousAlbum.photos.some(item => item.id === id && item.type === 'cover') && nextPhotos[0]) {
+        nextPhotos[0].type = 'cover'
+      }
+
+      const nextAlbum = {
+        ...previousAlbum,
+        photos: nextPhotos,
+        updated_at: new Date().toISOString()
+      }
+
+      try {
+        store.album = nextAlbum
+        await saveAlbumData(nextAlbum)
+        if (photo?.url) await deleteFiles([photo.url])
         showSuccess('已删除')
+      } catch (err) {
+        store.album = previousAlbum
+        console.error('照片删除失败:', err)
+        showError(err?.message || '删除失败，请重试')
       }
     }
   })
 }
 
-async function saveToStorage() {
-  const albumData = store.album || { photos: [] }
+async function saveAlbumData(albumData) {
+  if (!userStore.weddingId) {
+    throw new Error('请先创建婚礼')
+  }
+  const cleanAlbum = {
+    ...(albumData || {}),
+    photos: albumData?.photos || []
+  }
   try {
-    await updateWedding(userStore.weddingId, 'albums', albumData)
+    await updateWedding(userStore.weddingId, 'albums', cleanAlbum)
   } catch (err) {
     console.error('album 云端保存失败:', err)
     throw new Error(err?.message || '相册保存失败')
   }
+
   const weddings = uni.getStorageSync('weddings') || {}
   if (weddings[userStore.weddingId]) {
-    weddings[userStore.weddingId].album = albumData
+    weddings[userStore.weddingId].album = cleanAlbum
     uni.setStorageSync('weddings', weddings)
   }
 }
 
-onShow(() => { useOwnerGuard() })
+onShow(refreshAlbum)
 </script>
 
 <style lang="scss" scoped>

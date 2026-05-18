@@ -7,6 +7,10 @@ function read(file) {
   return fs.readFileSync(path.join(root, file), 'utf8')
 }
 
+function readJson(file) {
+  return JSON.parse(read(file))
+}
+
 function assert(condition, message) {
   if (!condition) {
     throw new Error(message)
@@ -106,7 +110,13 @@ function checkCloudSafety() {
   assertIncludes('composables/useCloud.js', 'recordShare', 'useCloud must expose share tracking')
   assertIncludes('pages/index/index.vue', 'recordShare', 'index share handlers must track shares')
   assertIncludes('cloudfunctions/geocodeVenue/index.js', 'TENCENT_MAP_KEY', 'geocodeVenue must use configurable Tencent Map key')
+  assertIncludes('cloudfunctions/geocodeVenue/index.js', 'MISSING_MAP_KEY', 'geocodeVenue must expose a typed missing-key error')
   assertIncludes('composables/useCloud.js', 'geocodeVenue', 'useCloud must expose venue geocoding')
+  assert(readJson('cloudfunctions/geocodeVenue/config.json').timeout >= 20, 'geocodeVenue timeout must cover external map requests')
+  assert(readJson('cloudfunctions/getWeather/config.json').timeout >= 20, 'getWeather timeout must cover weather and geocoding requests')
+  assert(readJson('cloudfunctions/updateWedding/config.json').timeout >= 20, 'updateWedding timeout must cover larger owner-side saves')
+  assertIncludes('cloudbaserc.json', '"geocodeVenue"', 'cloudbaserc must include geocodeVenue deploy config')
+  assertIncludes('cloudbaserc.json', '"timeout": 20', 'cloudbaserc must keep cloud function timeout deploy config')
 }
 
 function checkDataContracts() {
@@ -153,19 +163,27 @@ function checkTemplateSystem() {
   assertIncludes('pages/album/index.vue', 'activeTemplate.albumMood', 'album page must adapt copy to the active template')
   assertIncludes('pages-owner/album/manage.vue', 'chooseAlbumImages', 'album manager must handle modern WeChat image selection')
   assertIncludes('pages-owner/album/manage.vue', 'buildAlbumCloudPath', 'album manager must upload into wedding-scoped cloud paths')
+  assertIncludes('pages-owner/album/manage.vue', 'fetchWedding(userStore.weddingId, true)', 'album manager must force-refresh cloud data on entry')
+  assertIncludes('pages-owner/album/manage.vue', 'previousAlbum', 'album manager must rollback local album state when cloud save fails')
+  assertIncludes('pages-owner/album/manage.vue', 'deleteUploadedPhotos', 'album manager must clean uploaded files after failed album saves')
+  assertIncludes('pages-owner/album/manage.vue', 'saveAlbumData', 'album manager must await cloud persistence before showing success')
   assertIncludes('composables/useCloud.js', 'wx.cloud?.uploadFile', 'uploadFile must prefer the native WeChat cloud upload API')
+  assertIncludes('composables/useCloud.js', 'deleteFiles', 'useCloud must expose cloud storage cleanup for failed album transactions')
   assertIncludes('pages/guide/index.vue', 'snow', 'guide weather icons must handle weather types returned by getWeather')
   assertIncludes('pages/guide/index.vue', 'geocodedVenues', 'guide map must only render venues with real coordinates')
   assertIncludes('pages/guide/index.vue', 'mapReady', 'guide map must expose an empty state when venues are not geocoded')
   assertIncludes('pages-owner/guide/edit.vue', 'autoMatchLocation', 'owner guide editor must auto-match venue coordinates')
   assertIncludes('pages-owner/guide/edit.vue', 'chooseVenueLocation', 'owner guide editor must allow manual map point selection')
+  assertIncludes('pages-owner/guide/edit.vue', 'confirmMapFallback', 'owner guide editor must surface geocoding failures instead of silently saving')
+  assertIncludes('pages-owner/guide/edit.vue', 'cloneVenues', 'owner guide editor must rollback venue state when cloud save fails')
   assertIncludes('cloudfunctions/getWeather/index.js', 'geocodeVenue', 'getWeather must geocode venue fallback when coordinates are missing')
 }
 
 function checkUploadScript() {
   const source = read('upload.mjs')
-  assert(source.includes('MINIPROGRAM_PRIVATE_KEY_PATH'), 'upload script must read private key path from environment')
+  assert(source.includes('WECHAT_DEVTOOLS_CLI_PATH'), 'upload script must allow overriding WeChat DevTools CLI path')
   assert(source.includes('MINIPROGRAM_PROJECT_PATH'), 'upload script must allow overriding project path')
+  assert(source.includes('cliPath'), 'upload script must use the WeChat DevTools CLI')
   assert(!source.includes('/Users/kdnsna/Desktop'), 'upload script must not hardcode local private key paths')
   assert(!source.includes('/Users/kdnsna/Documents/06-项目代码'), 'upload script must not hardcode local build paths')
   assertIncludes('package.json', 'upload:mp-weixin', 'package scripts must expose the miniprogram upload command')

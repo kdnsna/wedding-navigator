@@ -1,5 +1,7 @@
 {
   "permissions": {
     "openapi": []
-  }
+  },
+  "timeout": 20,
+  "desc": "根据场地名称和地址匹配地图坐标"
 }

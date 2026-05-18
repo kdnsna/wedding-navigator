@@ -1,0 +1,28 @@
+{
+  "$schema": "https://static.cloudbase.net/cli/cloudbaserc.schema.json",
+  "envId": "cloud1-d5gqyur7g5a4d3c8d",
+  "functionRoot": "cloudfunctions",
+  "functions": [
+    {
+      "name": "geocodeVenue",
+      "timeout": 20,
+      "runtime": "Nodejs16.13",
+      "handler": "index.main",
+      "description": "根据场地名称和地址匹配地图坐标"
+    },
+    {
+      "name": "getWeather",
+      "timeout": 20,
+      "runtime": "Nodejs16.13",
+      "handler": "index.main",
+      "description": "获取婚礼当天天气预报"
+    },
+    {
+      "name": "updateWedding",
+      "timeout": 20,
+      "runtime": "Nodejs16.13",
+      "handler": "index.main",
+      "description": "更新婚礼业务数据"
+    }
+  ]
+}

@@ -7,13 +7,14 @@ exports.main = async (event, context) => {
   const keyword = [address, name].filter(Boolean).join(' ').trim()
 
   if (!keyword) {
-    return { success: false, message: '缺少场地名称或地址' }
+    return { success: false, code: 'MISSING_KEYWORD', message: '缺少场地名称或地址' }
   }
 
   const key = process.env.TENCENT_MAP_KEY || process.env.QQMAP_KEY || process.env.MAP_KEY || ''
   if (!key) {
     return {
       success: false,
+      code: 'MISSING_MAP_KEY',
       needConfig: true,
       message: '请在 geocodeVenue 云函数环境变量中配置 TENCENT_MAP_KEY'
     }
@@ -28,6 +29,7 @@ exports.main = async (event, context) => {
     if (data.status !== 0 || !data.result?.location) {
       return {
         success: false,
+        code: 'NO_MATCH',
         message: data.message || '未匹配到地图坐标'
       }
     }
@@ -46,7 +48,12 @@ exports.main = async (event, context) => {
     }
   } catch (err) {
     console.error('[geocodeVenue] failed:', err)
-    return { success: false, message: err.message || '地图匹配失败' }
+    const message = err.message || '地图匹配失败'
+    return {
+      success: false,
+      code: message.includes('超时') || message.includes('timeout') ? 'MAP_TIMEOUT' : 'MAP_ERROR',
+      message
+    }
   }
 }
 
@@ -69,7 +76,7 @@ function requestJson(baseUrl, params) {
       })
     })
 
-    req.setTimeout(5000, () => {
+    req.setTimeout(1800, () => {
       req.destroy(new Error('地图服务请求超时'))
     })
     req.on('error', reject)
