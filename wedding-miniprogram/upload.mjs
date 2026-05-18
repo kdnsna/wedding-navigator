@@ -15,7 +15,7 @@ console.log('开始上传...');
 try {
   const res = await ci.upload({
     project,
-    version: '1.0.6',
+    version: '1.0.7',
     desc: '大爷通过锤子自动上传',
     onProgressUpdate: (info) => {
       if (info.status === 'doing') console.log('  →', info.message);
