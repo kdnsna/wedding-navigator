@@ -112,11 +112,55 @@ function checkReleaseDocs() {
   assert(readme.includes('发布前检查清单'), 'README must include a release checklist')
 }
 
+function readPngSize(file) {
+  const abs = path.join(root, file)
+  assert(fs.existsSync(abs), `visual asset is missing: ${file}`)
+  const buf = fs.readFileSync(abs)
+  assert(buf.slice(1, 4).toString('ascii') === 'PNG', `${file}: must be a PNG image`)
+  return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) }
+}
+
+function assertPngSize(file, width, height) {
+  const size = readPngSize(file)
+  assert(size.width === width && size.height === height, `${file}: expected ${width}x${height}, got ${size.width}x${size.height}`)
+}
+
+function checkVisualAssets() {
+  assertPngSize('static/visuals/default-cover.png', 640, 1349)
+
+  const visualsDir = path.join(root, 'static/visuals')
+  const visualFiles = fs.readdirSync(visualsDir).filter(name => name.endsWith('.png'))
+  for (const file of visualFiles) {
+    if (file.startsWith('empty-')) {
+      assertPngSize(`static/visuals/${file}`, 180, 180)
+    }
+    if (file.startsWith('icon-')) {
+      assertPngSize(`static/visuals/${file}`, 96, 96)
+    }
+  }
+  assertPngSize('static/visuals/venue-marker.png', 128, 128)
+
+  const files = walk(root).filter(file => /\.(vue|js|json)$/.test(file))
+  const visualRefPattern = /['"]((?:\/|@\/)?static\/visuals\/[^'"]+\.png)['"]/g
+  for (const abs of files) {
+    const rel = path.relative(root, abs)
+    const source = read(rel)
+    for (const match of source.matchAll(visualRefPattern)) {
+      const normalized = match[1].replace(/^@\//, '').replace(/^\//, '')
+      assert(fs.existsSync(path.join(root, normalized)), `${rel}: visual asset reference is missing: ${match[1]}`)
+    }
+  }
+
+  assertIncludes('pages/index/index.vue', 'coverImageMode', 'home hero must use default-cover safe display mode')
+  assertIncludes('pages/index/index.vue', 'hero-image.default', 'home hero must style default cover separately')
+}
+
 checkPagesExist()
 checkNavigationTargets()
 checkRsvpContract()
 checkOwnerGuard()
 checkCloudSafety()
 checkReleaseDocs()
+checkVisualAssets()
 
 console.log('release readiness checks passed')

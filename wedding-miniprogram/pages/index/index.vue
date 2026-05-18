@@ -2,7 +2,12 @@
   <view class="page" @touchstart="onPageTap">
     <!-- 封面大图 -->
     <view class="hero">
-      <image class="hero-image" :src="coverImage" mode="aspectFill" />
+      <image
+        class="hero-image"
+        :class="{ default: isDefaultCover }"
+        :src="coverImage"
+        :mode="coverImageMode"
+      />
       <view class="hero-gradient" />
       <text class="xi-watermark">囍</text>
       <view class="hero-content">
@@ -304,6 +309,8 @@ const coverImage = computed(() => {
   const cover = photos.find(p => p.type === 'cover')
   return cover?.url || photos[0]?.url || '/static/visuals/default-cover.png'
 })
+const isDefaultCover = computed(() => coverImage.value === '/static/visuals/default-cover.png')
+const coverImageMode = computed(() => isDefaultCover.value ? 'aspectFit' : 'aspectFill')
 
 const groomName = computed(() => store.invitation?.couple?.groom?.name || '新郎')
 const brideName = computed(() => store.invitation?.couple?.bride?.name || '新娘')
@@ -506,6 +513,10 @@ onUnmounted(() => {
   left: 0;
   width: 100%;
   height: 100%;
+  background: #fcf6f0;
+}
+.hero-image.default {
+  padding: 0;
 }
 .hero-gradient {
   position: absolute;
@@ -836,9 +847,12 @@ onUnmounted(() => {
 .photo-thumb {
   flex: 1;
   min-width: 0;
+  width: 100%;
   height: 168rpx;
   border-radius: $radius-md;
   background: $bg-muted;
+  display: block;
+  overflow: hidden;
 }
 .blessing-preview {
   padding: 20rpx 0;

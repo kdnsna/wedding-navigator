@@ -182,6 +182,8 @@ onShow(() => { useOwnerGuard() })
 .photo-img {
   width: 100%;
   height: 100%;
+  display: block;
+  background: $bg-muted;
 }
 .photo-overlay {
   position: absolute;
@@ -220,9 +222,11 @@ onShow(() => { useOwnerGuard() })
   padding: 150rpx 60rpx;
 }
 .empty-icon {
-  font-size: 80rpx;
+  width: 220rpx;
+  height: 220rpx;
+  font-size: 0;
   display: block;
-  margin-bottom: 20rpx;
+  margin: 0 auto 24rpx;
 }
 .empty-text {
   font-size: 28rpx;

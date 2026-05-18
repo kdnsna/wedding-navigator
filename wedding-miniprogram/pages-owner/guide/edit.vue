@@ -562,9 +562,9 @@ onShow(() => { useOwnerGuard() })
 }
 .empty-visual {
   display: block;
-  width: 200rpx;
-  height: 200rpx;
-  margin: 0 auto 12rpx;
+  width: 220rpx;
+  height: 220rpx;
+  margin: 0 auto 24rpx;
 }
 .empty-text {
   font-size: 26rpx;

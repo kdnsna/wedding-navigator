@@ -216,9 +216,11 @@ onShow(() => { useOwnerGuard() })
   padding: 160rpx 60rpx;
 }
 .empty-icon {
-  font-size: 80rpx;
+  width: 220rpx;
+  height: 220rpx;
+  font-size: 0;
   display: block;
-  margin-bottom: 20rpx;
+  margin: 0 auto 24rpx;
 }
 .empty-text {
   font-size: 28rpx;
