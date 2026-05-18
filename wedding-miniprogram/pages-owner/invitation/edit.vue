@@ -287,21 +287,33 @@ async function saveInvitation() {
     const invitationData = buildInvitationData()
     const weddingData = buildWeddingData()
 
-    // 先同步云端
-    await Promise.all([
-      updateWedding(userStore.weddingId, 'invitations', invitationData),
-      updateWedding(userStore.weddingId, 'weddings', weddingData)
-    ])
+    // 逐个同步云端，避免 Promise.all 部分成功导致状态不一致
+    let invitationOk = true
+    let weddingOk = true
+    try { await updateWedding(userStore.weddingId, 'invitations', invitationData) }
+    catch (err) { console.error('invitations 保存失败:', err); invitationOk = false }
+    try { await updateWedding(userStore.weddingId, 'weddings', weddingData) }
+    catch (err) { console.error('weddings 保存失败:', err); weddingOk = false }
 
-    // 再更新本地 store + 缓存
-    applyLocalPreviewData()
+    if (!invitationOk && !weddingOk) {
+      throw new Error('请柬和婚礼信息均保存失败')
+    }
+
+    // 更新本地 store + 缓存（只更新云端成功的部分）
+    if (invitationOk) {
+      applyLocalPreviewData()
+    }
     const weddings = uni.getStorageSync('weddings') || {}
     if (weddings[userStore.weddingId]) {
-      weddings[userStore.weddingId].invitation = { ...weddings[userStore.weddingId].invitation, ...invitationData }
+      if (invitationOk) {
+        weddings[userStore.weddingId].invitation = { ...weddings[userStore.weddingId].invitation, ...invitationData }
+      }
       weddings[userStore.weddingId] = { ...weddings[userStore.weddingId], ...weddingData }
       uni.setStorageSync('weddings', weddings)
     }
-    showSuccess('保存成功')
+    showSuccess(invitationOk && weddingOk ? '保存成功'
+      : invitationOk ? '请柬已保存，日期信息保存失败请重试'
+      : '日期已保存，请柬样式保存失败请重试')
   } catch (err) {
     console.error('保存请柬失败:', err)
     showError(err.message || '保存失败')

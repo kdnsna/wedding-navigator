@@ -1,9 +1,10 @@
 const cloud = require('wx-server-sdk')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
+const _ = db.command
 
 exports.main = async (event, context) => {
-  const { weddingId } = event
+  const { weddingId, guestLimit = 100, blessingLimit = 50 } = event
   const { OPENID } = cloud.getWXContext()
 
   if (!weddingId) {
@@ -11,15 +12,13 @@ exports.main = async (event, context) => {
   }
 
   try {
-    // 并行查询所有关联数据
+    // 并行查询核心数据
     const [
       weddingRes,
       invitationRes,
       albumRes,
       venuesRes,
       timelineRes,
-      guestsRes,
-      blessingsRes,
       statsRes
     ] = await Promise.all([
       db.collection('weddings').doc(weddingId).get().catch(() => ({ data: null })),
@@ -27,8 +26,6 @@ exports.main = async (event, context) => {
       db.collection('albums').doc(weddingId).get().catch(() => ({ data: null })),
       db.collection('venues').doc(weddingId).get().catch(() => ({ data: null })),
       db.collection('timelines').doc(weddingId).get().catch(() => ({ data: null })),
-      db.collection('guests').doc(weddingId).get().catch(() => ({ data: null })),
-      db.collection('blessings').doc(weddingId).get().catch(() => ({ data: null })),
       db.collection('share_stats').doc(weddingId).get().catch(() => ({ data: null }))
     ])
 
@@ -36,7 +33,6 @@ exports.main = async (event, context) => {
       return { success: false, message: '婚礼不存在' }
     }
 
-    // 判断是否为婚礼主人
     const isOwner = weddingRes.data.owner_openid === OPENID
 
     let weddingData = weddingRes.data
@@ -45,16 +41,63 @@ exports.main = async (event, context) => {
       weddingData = safeWedding
     }
 
-    let guestsData = normalizeListDocument(guestsRes.data, 'guests')
-    const blessingsData = normalizeListDocument(blessingsRes.data, 'blessings')
-    if (!isOwner && guestsData && guestsData.guests) {
-      guestsData = {
-        ...guestsData,
-        guests: guestsData.guests.map(g => {
-          const { phone, dietary, ...safeGuest } = g
-          return safeGuest
-        })
+    // 分页查询 guests 和 blessings，避免响应超限
+    const guestLimitNum = Math.min(Math.max(1, guestLimit), 500)
+    const blessingLimitNum = Math.min(Math.max(1, blessingLimit), 200)
+
+    let guestsData = null
+    let blessingsData = null
+
+    try {
+      const guestsRes = await db.collection('guests').doc(weddingId).get()
+      guestsData = normalizeListDocument(guestsRes.data, 'guests')
+      if (guestsData && guestsData.guests) {
+        const total = guestsData.guests.length
+        const sliced = guestsData.guests.slice(0, guestLimitNum)
+        if (!isOwner && sliced.length > 0) {
+          guestsData = {
+            ...guestsData,
+            guests: sliced.map(g => { const { phone, dietary, ...safe } = g; return safe }),
+            _totalGuests: total,
+            _truncated: sliced.length < total
+          }
+        } else if (isOwner) {
+          guestsData = {
+            ...guestsData,
+            guests: sliced,
+            _totalGuests: total,
+            _truncated: sliced.length < total
+          }
+        }
       }
+    } catch (err) {
+      console.warn('guests 查询失败:', err.message)
+    }
+
+    try {
+      const blessingsRes = await db.collection('blessings').doc(weddingId).get()
+      blessingsData = normalizeListDocument(blessingsRes.data, 'blessings')
+      if (blessingsData && blessingsData.blessings) {
+        const total = blessingsData.blessings.length
+        const sliced = blessingsData.blessings.slice(0, blessingLimitNum)
+        if (!isOwner && sliced.length > 0) {
+          blessingsData = {
+            ...blessingsData,
+            blessings: sliced.map(b => { const { openid, ...safe } = b; return safe }),
+            _totalBlessings: total,
+            _truncated: sliced.length < total
+          }
+        } else {
+          blessingsData = {
+            ...blessingsData,
+            blessings: sliced,
+            _totalBlessings: total,
+            _truncated: sliced.length < total
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('blessings 查询失败:', err.message)
     }
 
     return {

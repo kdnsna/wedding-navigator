@@ -31,22 +31,27 @@ exports.main = async (event, context) => {
   try {
     // 自动创建所有需要的集合（首次运行）
     await ensureCollection('weddings')
+    const collectionFailures = []
     for (const col of RELATED_COLLECTIONS) {
-      await ensureCollection(col)
+      try { await ensureCollection(col) }
+      catch (e) { collectionFailures.push(col) }
+    }
+    if (collectionFailures.length) {
+      return { success: false, message: `无法创建集合: ${collectionFailures.join(',')}` }
     }
 
-    weddingId = await generateUniqueId()
     const now = Date.now()
 
-    await db.collection('weddings').add({
+    // DB 自动分配 _id，消除 check-then-act 竞态
+    const weddingRes = await db.collection('weddings').add({
       data: {
-        _id: weddingId,
         ...weddingPayload,
         owner_openid: OPENID,
         created_at: now,
         updated_at: now
       }
     })
+    weddingId = weddingRes._id
 
     await Promise.all([
       db.collection('invitations').add({
@@ -87,21 +92,4 @@ async function cleanupPartialCreation(weddingId) {
   for (const col of RELATED_COLLECTIONS) {
     try { await db.collection(col).doc(weddingId).remove() } catch (e) {}
   }
-}
-
-async function generateUniqueId() {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-  for (let attempt = 0; attempt < 5; attempt++) {
-    let id = Date.now().toString(36).slice(-4)
-    for (let i = 0; i < 6; i++) {
-      id += chars.charAt(Math.floor(Math.random() * chars.length))
-    }
-    try {
-      const existing = await db.collection('weddings').doc(id).get()
-      if (!existing.data) return id
-    } catch (e) {
-      return id
-    }
-  }
-  return Date.now().toString(36) + Math.random().toString(36).substr(2, 8)
 }

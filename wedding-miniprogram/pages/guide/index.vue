@@ -384,7 +384,9 @@ onShow(async () => {
       if (first?.coordinate) {
         center.value = { latitude: first.coordinate.latitude, longitude: first.coordinate.longitude }
       }
-    } catch (err) {}
+    } catch (err) {
+      console.warn('路书数据加载失败:', err)
+      uni.showToast({ title: '加载失败，下拉重试', icon: 'none' })
   }
   if (userStore.weddingId && !weatherData.value && !weatherLoading.value) {
     await loadWeather()

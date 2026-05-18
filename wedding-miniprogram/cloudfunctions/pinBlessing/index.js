@@ -28,17 +28,23 @@ exports.main = async (event, context) => {
       return { success: false, message: '祝福不存在' }
     }
 
-    // 更新置顶状态
-    blessings[idx].is_pinned = isPinned
-    // 取消其他置顶
+    // 原子更新：只动一个数组元素
+    const updateFields = {
+      [`blessings.${idx}.is_pinned`]: isPinned,
+      updated_at: Date.now()
+    }
+    // 如果是置顶，需要取消其他置顶
     if (isPinned) {
-      blessings.forEach((b, i) => {
-        if (i !== idx) b.is_pinned = false
-      })
+      // 用 .set 操作符批量取消其他置顶
+      for (let i = 0; i < blessings.length; i++) {
+        if (i !== idx && blessings[i].is_pinned) {
+          updateFields[`blessings.${i}.is_pinned`] = false
+        }
+      }
     }
 
     await db.collection('blessings').doc(weddingId).update({
-      data: { blessings, updated_at: Date.now() }
+      data: updateFields
     })
 
     return { success: true }

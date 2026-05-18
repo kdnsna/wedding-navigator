@@ -62,12 +62,16 @@ exports.main = async (event, context) => {
     }
 
     if (idx >= 0) {
-      guests[idx] = newGuest
+      // 使用数组位置更新，避免全量覆盖导致的并发丢数据
       await db.collection('guests').doc(weddingId).update({
-        data: { guests, updated_at: now }
+        data: {
+          [`guests.${idx}`]: newGuest,
+          updated_at: now
+        }
       })
     } else {
       newGuest.created_at = now
+      // _.push 是原子操作，无竞态
       await db.collection('guests').doc(weddingId).update({
         data: { guests: _.push(newGuest), updated_at: now }
       })

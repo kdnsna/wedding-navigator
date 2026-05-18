@@ -39,23 +39,26 @@ exports.main = async (event, context) => {
       }
     })
 
+    // 幂等去重：用固定 _id 的 add，重复键自动跳过 unique_viewers 计数
     if (OPENID) {
+      const viewerId = `${weddingId}_${OPENID}`
       try {
-        const viewerId = `${weddingId}_${OPENID}`
-        await db.collection('viewers').doc(viewerId).get()
+        await db.collection('viewers').add({
+          data: {
+            _id: viewerId,
+            wedding_id: weddingId,
+            openid: OPENID,
+            created_at: Date.now()
+          }
+        })
+        // add 成功 → 新访客，递增 unique_viewers
+        await db.collection('share_stats').doc(weddingId).update({
+          data: { unique_viewers: _.inc(1), updated_at: Date.now() }
+        })
       } catch (e) {
-        if (isDocNotExistError(e)) {
-          await db.collection('viewers').add({
-            data: {
-              _id: `${weddingId}_${OPENID}`,
-              wedding_id: weddingId,
-              openid: OPENID,
-              created_at: Date.now()
-            }
-          })
-          await db.collection('share_stats').doc(weddingId).update({
-            data: { unique_viewers: _.inc(1), updated_at: Date.now() }
-          })
+        // 重复键 (errCode -502003) 表示访客已存在，正常跳过
+        if (e.errCode !== -502003) {
+          console.error('viewer insert error:', e)
         }
       }
     }

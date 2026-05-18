@@ -24,8 +24,13 @@ exports.main = async (event, context) => {
       }
     } else {
       // 非 weddings 集合也校验主人身份
-      const ownerRes = await db.collection('weddings').doc(weddingId).get().catch(() => null)
-      if (!ownerRes || ownerRes.data.owner_openid !== OPENID) {
+      let ownerRes
+      try {
+        ownerRes = await db.collection('weddings').doc(weddingId).get()
+      } catch (err) {
+        return { success: false, message: '查询婚礼失败，请稍后重试' }
+      }
+      if (!ownerRes.data || ownerRes.data.owner_openid !== OPENID) {
         return { success: false, message: '无权限修改' }
       }
     }
