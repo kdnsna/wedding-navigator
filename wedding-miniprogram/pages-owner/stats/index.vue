@@ -95,6 +95,32 @@
         </view>
       </view>
     </view>
+
+    <!-- 到场方式 -->
+    <view class="section">
+      <view class="section-header">
+        <text class="section-title">到场方式</text>
+      </view>
+      <view class="diet-list">
+        <view class="diet-item" v-for="item in transportStats" :key="item.label">
+          <text class="diet-label">{{ item.label }}</text>
+          <text class="diet-value">{{ item.count }} 人</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 关系来源 -->
+    <view class="section">
+      <view class="section-header">
+        <text class="section-title">关系来源</text>
+      </view>
+      <view class="diet-list">
+        <view class="diet-item" v-for="item in relationshipStats" :key="item.label">
+          <text class="diet-label">{{ item.label }}</text>
+          <text class="diet-value">{{ item.count }} 人</text>
+        </view>
+      </view>
+    </view>
   </view>
 </template>
 
@@ -127,6 +153,21 @@ const dietStats = computed(() => {
     other: guests.filter(g => g.diet_preference === 'other').length
   }
 })
+
+function groupGuestsBy(field, fallback = '未填写') {
+  const guests = store.guests?.guests || []
+  const map = new Map()
+  guests.forEach(guest => {
+    const label = guest[field] || fallback
+    map.set(label, (map.get(label) || 0) + 1)
+  })
+  return [...map.entries()]
+    .map(([label, count]) => ({ label, count }))
+    .sort((a, b) => b.count - a.count)
+}
+
+const transportStats = computed(() => groupGuestsBy('transport_mode'))
+const relationshipStats = computed(() => groupGuestsBy('relationship'))
 
 onShow(async () => {
   if (!useOwnerGuard()) return

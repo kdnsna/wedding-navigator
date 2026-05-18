@@ -1,5 +1,41 @@
 <template>
   <view class="page">
+    <!-- 到场助手 -->
+    <view class="arrival-pack">
+      <view class="arrival-head">
+        <view>
+          <text class="arrival-kicker">ARRIVAL PACK</text>
+          <text class="arrival-title">到场助手</text>
+        </view>
+        <text class="arrival-date">{{ formatDate(store.weddingDate) }}</text>
+      </view>
+      <view class="arrival-card">
+        <view class="arrival-main">
+          <text class="arrival-label">主场地</text>
+          <text class="arrival-name">{{ primaryVenue.name }}</text>
+          <text class="arrival-address">{{ primaryVenue.address || '主人正在补充详细地址' }}</text>
+        </view>
+        <view class="arrival-actions">
+          <button class="arrival-btn primary" @click="navigateTo(primaryVenue)">导航</button>
+          <button class="arrival-btn" v-if="primaryVenue.contact_phone" @click="callPhone(primaryVenue.contact_phone)">电话</button>
+        </view>
+      </view>
+      <view class="arrival-summary">
+        <view class="arrival-summary-item">
+          <text class="summary-label">建议到达</text>
+          <text class="summary-value">{{ primaryVenue.arrival_time || store.weddingTime || '以邀请为准' }}</text>
+        </view>
+        <view class="arrival-summary-item" @click="activeTab = 'weather'">
+          <text class="summary-label">天气提醒</text>
+          <text class="summary-value">{{ weatherHint }}</text>
+        </view>
+      </view>
+      <view class="parking-note" v-if="transportInfo.parking">
+        <image class="visual-icon-xs parking-icon" src="/static/visuals/icon-parking.png" mode="aspectFit" />
+        <text>{{ transportInfo.parking }}</text>
+      </view>
+    </view>
+
     <!-- 顶部 Tab 栏 -->
     <view class="tab-bar">
       <view
@@ -228,8 +264,15 @@ const weatherIcon = computed(() => {
 })
 
 const venues = computed(() => store.venues?.venues || [])
+const primaryVenue = computed(() => store.primaryVenue || venues.value[0] || {})
 const transportInfo = computed(() => store.venues?.transportation || {})
 const accommodations = computed(() => store.venues?.accommodations || [])
+const weatherHint = computed(() => {
+  if (weatherLoading.value) return '加载中'
+  if (!weatherData.value) return '点此查看'
+  if (weatherData.value.precip > 30) return `可能降雨 ${weatherData.value.precip}%`
+  return `${weatherData.value.text || '适合出行'} ${weatherData.value.temp_min || ''}-${weatherData.value.temp_max || ''}°`
+})
 
 const markers = computed(() => {
   return venues.value.map((v, i) => ({
@@ -338,6 +381,9 @@ onMounted(async () => {
       }
     } catch (err) {}
   }
+  if (userStore.weddingId && !weatherData.value && !weatherLoading.value) {
+    loadWeather().catch(() => {})
+  }
 })
 
 onShow(async () => {
@@ -353,6 +399,134 @@ onShow(async () => {
   flex-direction: column;
   height: 100vh;
   background: $bg-color;
+}
+
+/* 到场助手 */
+.arrival-pack {
+  padding: 36rpx 32rpx 24rpx;
+  border-bottom: 1rpx solid $border-color;
+  background: $bg-color;
+  flex-shrink: 0;
+}
+.arrival-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20rpx;
+  margin-bottom: 22rpx;
+}
+.arrival-kicker {
+  display: block;
+  font-size: 18rpx;
+  color: $color-primary;
+  letter-spacing: 5rpx;
+  margin-bottom: 8rpx;
+  font-weight: 600;
+}
+.arrival-title {
+  display: block;
+  font-size: 38rpx;
+  color: $text-primary;
+  font-weight: 600;
+}
+.arrival-date {
+  font-size: 24rpx;
+  color: $text-muted;
+  padding-top: 8rpx;
+}
+.arrival-card {
+  display: flex;
+  gap: 24rpx;
+  align-items: center;
+  padding: 28rpx;
+  background: $text-primary;
+  border-radius: $radius-lg;
+  margin-bottom: 16rpx;
+}
+.arrival-main {
+  flex: 1;
+  min-width: 0;
+}
+.arrival-label {
+  display: block;
+  font-size: 22rpx;
+  color: rgba(255,255,255,0.55);
+  margin-bottom: 8rpx;
+}
+.arrival-name {
+  display: block;
+  font-size: 32rpx;
+  color: #fff;
+  font-weight: 600;
+  margin-bottom: 8rpx;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.arrival-address {
+  display: block;
+  font-size: 24rpx;
+  color: rgba(255,255,255,0.72);
+  line-height: 1.5;
+}
+.arrival-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  flex-shrink: 0;
+}
+.arrival-btn {
+  width: 116rpx;
+  height: 58rpx;
+  line-height: 58rpx;
+  border-radius: $radius-full;
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  font-size: 24rpx;
+  padding: 0;
+}
+.arrival-btn.primary {
+  background: #fff;
+  color: $text-primary;
+}
+.arrival-btn::after { border: none; }
+.arrival-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14rpx;
+}
+.arrival-summary-item {
+  padding: 20rpx 22rpx;
+  background: $bg-muted;
+  border-radius: $radius-md;
+}
+.summary-label {
+  display: block;
+  font-size: 22rpx;
+  color: $text-muted;
+  margin-bottom: 8rpx;
+}
+.summary-value {
+  display: block;
+  font-size: 26rpx;
+  color: $text-primary;
+  font-weight: 600;
+}
+.parking-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10rpx;
+  margin-top: 16rpx;
+  padding: 18rpx 20rpx;
+  border-radius: $radius-md;
+  background: rgba(176,58,91,0.06);
+  color: $color-primary;
+  font-size: 24rpx;
+  line-height: 1.5;
+}
+.parking-icon {
+  margin-top: 4rpx;
+  flex-shrink: 0;
 }
 
 /* Tab 栏 */
