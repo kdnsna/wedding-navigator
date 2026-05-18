@@ -112,7 +112,7 @@ function chooseAlbumImages() {
         count: 9,
         mediaType: ['image'],
         sourceType: ['album', 'camera'],
-        sizeType: ['compressed'],
+        // 注意：wx.chooseMedia 不支持 sizeType，该参数仅 wx.chooseImage 有效
         success: (res) => {
           resolve((res.tempFiles || []).map(item => item.tempFilePath).filter(Boolean))
         },
