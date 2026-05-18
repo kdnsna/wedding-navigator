@@ -117,6 +117,21 @@ pnpm dev:mp-weixin
 7. **视觉系统**：高级简约无界设计（纯白背景 + 近黑文字 + 暗玫瑰红点缀）
 8. **动画规范**：fadeInUp / fadeInScale / gentleFloat / glowPulse
 
+## 全面检查修复记录
+
+### 2025 年 6 月 — 云端数据同步架构修复与边界安全加固
+
+本次全面遍历修复了以下关键问题：
+
+1. **向导页 `week_day` 自动计算**：`pages-owner/wizard/index.vue` 创建婚礼时自动根据日期计算星期几，不再留空；初始 `guests`/`blessings` 改为 `{guests:[]}`/`{blessings:[]}`，避免 store 中传入 `null`。
+2. **路书页生命周期修复**：`pages/guide/index.vue` 将 `onMounted` 改为 `onShow`，解决 tabBar 页面切换后数据不刷新问题。
+3. **海报页权限守卫修复**：`pages-owner/poster/index.vue` 将 `onLoad` 中生成海报逻辑移到 `onShow`，确保 `useOwnerGuard()` 先执行，避免未验证用户触发海报生成。
+4. **首页数据刷新增强**：`pages/index/index.vue` 的 `onShow` 增加 `fetchWedding` 兜底加载，解决从其他页面切回首页时数据缺失。
+5. **主人端页面 null 安全检查**：`timeline/edit.vue`、`guide/edit.vue`、`guests/manage.vue`、`blessing/manage.vue`、`album/manage.vue` 的删除/保存操作均增加 `store.xxx` 为 null 的防护，防止云函数返回空文档时报错。
+6. **路书编辑页数据同步修复**：`guide/edit.vue` 的 `saveToStorage` 原来从 `venueList`/`transportForm`/`hotelList` 同步回 store，实际 save 操作已直接修改 store，改为直接传递 `store.venues`，避免覆盖。
+7. **请柬编辑页数据构建修复**：`invitation/edit.vue` 的 `buildWeddingData` 原来使用 `...store.wedding` 展开全部字段，改为仅构建 `basic_info`，避免意外覆盖云端 `_id`、`owner_openid` 等系统字段。
+8. **统计页数据格式统一**：`pages-owner/stats/index.vue` 的 `onShow` 中将 `getStats` 返回的 `rsvp` 对象和 `blessings` 数字统一映射为 `rsvp_count`/`blessing_count`，与 `manage/index.vue` 的 stats computed 兼容。
+
 ## 常见问题与预防
 
 1. **云开发环境**：首次使用需在小程序后台开通云开发，并修改 `config/cloud.js` 中的 `CLOUD_ENV`

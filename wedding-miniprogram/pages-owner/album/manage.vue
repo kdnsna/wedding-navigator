@@ -152,15 +152,16 @@ function deletePhoto(id) {
 }
 
 async function saveToStorage() {
+  const albumData = store.album || { photos: [] }
   try {
-    await updateWedding(userStore.weddingId, 'albums', store.album)
+    await updateWedding(userStore.weddingId, 'albums', albumData)
   } catch (err) {
     console.error('album 云端保存失败:', err)
     throw new Error(err?.message || '相册保存失败')
   }
   const weddings = uni.getStorageSync('weddings') || {}
   if (weddings[userStore.weddingId]) {
-    weddings[userStore.weddingId].album = store.album
+    weddings[userStore.weddingId].album = albumData
     uni.setStorageSync('weddings', weddings)
   }
 }

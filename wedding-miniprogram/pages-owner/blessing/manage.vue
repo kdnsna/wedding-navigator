@@ -87,7 +87,9 @@ function deleteBlessing(id) {
     content: '确定删除这条祝福？',
     success: (res) => {
       if (res.confirm) {
-        store.blessings.blessings = store.blessings.blessings.filter(b => b.id !== id)
+        if (store.blessings && Array.isArray(store.blessings.blessings)) {
+          store.blessings.blessings = store.blessings.blessings.filter(b => b.id !== id)
+        }
         saveToStorage()
         showSuccess('已删除')
       }

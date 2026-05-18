@@ -113,7 +113,7 @@ import { ref } from 'vue'
 import { useUserStore } from '@/stores/user.js'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { createWedding } from '@/composables/useCloud.js'
-import { showSuccess, showError } from '@/utils/index.js'
+import { showSuccess, showError, getWeekDay } from '@/utils/index.js'
 import { WEDDING_TEMPLATES } from '@/utils/templates.js'
 
 const userStore = useUserStore()
@@ -165,7 +165,7 @@ async function createWeddingAction() {
     uni.showLoading({ title: '创建中...', mask: true })
 
     const weddingPayload = {
-      basic_info: { date: form.value.date, time: form.value.time, week_day: '' },
+      basic_info: { date: form.value.date, time: form.value.time, week_day: getWeekDay(form.value.date) },
       status: 'published',
       stats: { views: 0, shares: 0, rsvp_count: 0, blessing_count: 0, unique_viewers: 0 },
       share_config: {
@@ -218,9 +218,9 @@ async function createWeddingAction() {
       invitation: { wedding_id: weddingId, ...invitationPayload },
       album: { photos: [] },
       venues: { venues: [] },
-      timeline: null,
-      guests: null,
-      blessings: null
+      timeline: { events: [] },
+      guests: { guests: [] },
+      blessings: { blessings: [] }
     })
     userStore.setWeddingId(weddingId)
     userStore.verifyOwner(true)

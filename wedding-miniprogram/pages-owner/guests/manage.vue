@@ -240,6 +240,8 @@ function saveGuest() {
     created_at: editingGuest.value?.created_at || Date.now()
   }
   if (editingGuest.value) {
+    if (!store.guests) store.guests = { guests: [] }
+    if (!store.guests.guests) store.guests.guests = []
     const idx = store.guests.guests.findIndex(g => g.id === editingGuest.value.id)
     if (idx >= 0) store.guests.guests[idx] = guest
   } else {
@@ -256,7 +258,9 @@ function deleteGuest(id) {
     content: '确定删除该宾客？',
     success: (res) => {
       if (res.confirm) {
-        store.guests.guests = store.guests.guests.filter(g => g.id !== id)
+        if (store.guests && Array.isArray(store.guests.guests)) {
+          store.guests.guests = store.guests.guests.filter(g => g.id !== id)
+        }
         saveToStorage()
         showSuccess('已删除')
       }

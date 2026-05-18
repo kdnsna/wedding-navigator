@@ -175,7 +175,13 @@ onShow(async () => {
     await fetchWedding(userStore.weddingId)
     const res = await getStats(userStore.weddingId)
     if (res?.stats) {
-      store.wedding.stats = res.stats
+      store.wedding.stats = {
+        views: res.stats.views || 0,
+        shares: res.stats.shares || 0,
+        rsvp_count: res.stats.rsvp?.total || 0,
+        blessing_count: res.stats.blessings || 0,
+        unique_viewers: res.stats.unique_viewers || 0
+      }
     }
   } catch (err) {
     console.warn('统计数据加载失败:', err)

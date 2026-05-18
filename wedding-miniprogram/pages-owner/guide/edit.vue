@@ -263,6 +263,8 @@ function saveVenue() {
     coordinate: editingVenue.value?.coordinate || null
   }
   if (editingVenue.value) {
+    if (!store.venues) store.venues = { venues: [], transportation: {}, accommodations: [] }
+    if (!store.venues.venues) store.venues.venues = []
     const idx = store.venues.venues.findIndex(v => v.id === editingVenue.value.id)
     if (idx >= 0) store.venues.venues[idx] = venue
   } else {
@@ -279,7 +281,9 @@ function deleteVenue(id) {
     content: '确定删除该场地？',
     success: (res) => {
       if (res.confirm) {
-        store.venues.venues = store.venues.venues.filter(v => v.id !== id)
+        if (store.venues && Array.isArray(store.venues.venues)) {
+          store.venues.venues = store.venues.venues.filter(v => v.id !== id)
+        }
         saveToStorage()
         showSuccess('已删除')
       }
@@ -302,6 +306,7 @@ function editTransportation() {
 }
 
 function saveTransportation() {
+  if (!store.venues) store.venues = { venues: [], transportation: {}, accommodations: [] }
   store.venues.transportation = { ...transportForm.value }
   saveToStorage()
   showTransportModal.value = false
@@ -347,9 +352,12 @@ function saveHotel() {
     notes: hotelForm.value.notes
   }
   if (editingHotel.value) {
+    if (!store.venues) store.venues = { venues: [], transportation: {}, accommodations: [] }
+    if (!store.venues.accommodations) store.venues.accommodations = []
     const idx = store.venues.accommodations.findIndex(h => h.id === editingHotel.value.id)
     if (idx >= 0) store.venues.accommodations[idx] = hotel
   } else {
+    if (!store.venues) store.venues = { venues: [], transportation: {}, accommodations: [] }
     if (!store.venues.accommodations) store.venues.accommodations = []
     store.venues.accommodations.push(hotel)
   }
@@ -364,7 +372,9 @@ function deleteHotel(id) {
     content: '确定删除该住宿？',
     success: (res) => {
       if (res.confirm) {
-        store.venues.accommodations = store.venues.accommodations.filter(h => h.id !== id)
+        if (store.venues && Array.isArray(store.venues.accommodations)) {
+          store.venues.accommodations = store.venues.accommodations.filter(h => h.id !== id)
+        }
         saveToStorage()
         showSuccess('已删除')
       }
@@ -383,6 +393,9 @@ async function saveToStorage() {
   if (!userStore.weddingId) {
     uni.showToast({ title: '未找到婚礼信息，请重新进入', icon: 'none' })
     return
+  }
+  if (!store.venues) {
+    store.venues = { venues: [], transportation: {}, accommodations: [] }
   }
   try {
     await updateWedding(userStore.weddingId, 'venues', store.venues)

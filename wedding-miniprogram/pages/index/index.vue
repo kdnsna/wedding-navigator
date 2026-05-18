@@ -493,7 +493,19 @@ function startCountdownTimer() {
   }, interval)
 }
 
-onShow(() => { updateCountdown() })
+onShow(async () => {
+  updateCountdown()
+  const weddingId = userStore.weddingId
+  if (weddingId && !store.wedding?._id && !store.wedding?.wedding_id) {
+    try {
+      await fetchWedding(weddingId)
+      updateCountdown()
+      startCountdownTimer()
+    } catch (err) {
+      console.warn('首页 onShow 刷新数据失败:', err)
+    }
+  }
+})
 
 onUnmounted(() => {
   if (countdownTimer) clearInterval(countdownTimer)

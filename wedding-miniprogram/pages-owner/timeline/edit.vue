@@ -149,6 +149,8 @@ function saveEvent() {
     sort_order: 0
   }
   if (editingEvent.value) {
+    if (!store.timeline) store.timeline = { events: [] }
+    if (!store.timeline.events) store.timeline.events = []
     const idx = store.timeline.events.findIndex(e => e.id === editingEvent.value.id)
     if (idx >= 0) store.timeline.events[idx] = event
   } else {
@@ -165,7 +167,9 @@ function deleteEvent(id) {
     content: '确定删除该时间节点？',
     success: (res) => {
       if (res.confirm) {
-        store.timeline.events = store.timeline.events.filter(e => e.id !== id)
+        if (store.timeline && Array.isArray(store.timeline.events)) {
+          store.timeline.events = store.timeline.events.filter(e => e.id !== id)
+        }
         saveToStorage()
         showSuccess('已删除')
       }

@@ -226,7 +226,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
@@ -375,7 +375,7 @@ async function loadWeather() {
   }
 }
 
-onMounted(async () => {
+onShow(async () => {
   const hasLoadedWedding = Boolean(store.wedding?._id || store.wedding?.wedding_id)
   if (userStore.weddingId && !hasLoadedWedding) {
     try {
@@ -387,12 +387,6 @@ onMounted(async () => {
     } catch (err) {}
   }
   if (userStore.weddingId && !weatherData.value && !weatherLoading.value) {
-    loadWeather().catch(() => {})
-  }
-})
-
-onShow(async () => {
-  if (activeTab.value === 'weather' && !weatherData.value && !weatherLoading.value) {
     await loadWeather()
   }
 })

@@ -251,7 +251,6 @@ function buildInvitationData() {
 
 function buildWeddingData() {
   return {
-    ...store.wedding,
     basic_info: {
       ...(store.wedding?.basic_info || {}),
       date: form.value.date,
