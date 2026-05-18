@@ -54,6 +54,7 @@
     <view class="tab-content" v-show="activeTab === 'map'">
       <view class="map-container">
         <map
+          v-if="mapReady"
           id="weddingMap"
           class="map"
           :latitude="center.latitude"
@@ -64,6 +65,11 @@
           :show-location="true"
           @markertap="onMarkerTap"
         />
+        <view class="map-empty" v-else>
+          <image class="empty-visual compact" src="/static/visuals/empty-guide.svg" mode="aspectFit" />
+          <text class="map-empty-title">主场地还未匹配地图</text>
+          <text class="map-empty-sub">主人补充场地地址或地图选点后，这里会自动显示路线和当地天气</text>
+        </view>
       </view>
 
       <scroll-view class="venue-list" scroll-y>
@@ -80,9 +86,14 @@
           </view>
           <text class="venue-name">{{ venue.name }}</text>
           <text class="venue-address">{{ venue.address }}</text>
+          <text class="venue-geo" :class="{ missing: !hasCoordinate(venue) }">
+            {{ hasCoordinate(venue) ? '地图已匹配' : '待主人匹配地图' }}
+          </text>
           <view class="venue-actions">
             <button class="action-btn" @click.stop="callPhone(venue.contact_phone)" v-if="venue.contact_phone">电话</button>
-            <button class="action-btn primary" @click.stop="navigateTo(venue)">导航</button>
+            <button class="action-btn primary" :class="{ disabled: !hasCoordinate(venue) }" @click.stop="navigateTo(venue)">
+              {{ hasCoordinate(venue) ? '导航' : '待匹配' }}
+            </button>
           </view>
         </view>
       </scroll-view>
@@ -119,9 +130,9 @@
 
       <!-- 无天气数据 -->
       <view class="empty-state" v-if="!weatherLoading && !weatherData">
-        <image class="empty-visual" src="/static/visuals/empty-weather.png" mode="aspectFit" />
+        <image class="empty-visual" src="/static/visuals/empty-weather.svg" mode="aspectFit" />
         <text class="empty-text">暂无天气数据</text>
-        <text class="empty-sub">请在主人端设置场地坐标以获取天气</text>
+        <text class="empty-sub">请在主人端填写场地地址或地图选点后自动获取</text>
       </view>
 
       <!-- 天气详情 -->
@@ -184,7 +195,7 @@
       </view>
 
       <view class="empty-state" v-if="!transportInfo.transport && !transportInfo.parking">
-        <image class="empty-visual" src="/static/visuals/empty-transport.png" mode="aspectFit" />
+        <image class="empty-visual" src="/static/visuals/empty-transport.svg" mode="aspectFit" />
         <text class="empty-text">暂无交通指引</text>
         <text class="empty-sub">主人尚未添加交通信息</text>
       </view>
@@ -217,7 +228,7 @@
       </view>
 
       <view class="empty-state" v-if="accommodations.length === 0">
-        <image class="empty-visual" src="/static/visuals/empty-hotel.png" mode="aspectFit" />
+        <image class="empty-visual" src="/static/visuals/empty-hotel.svg" mode="aspectFit" />
         <text class="empty-text">暂无推荐住宿</text>
         <text class="empty-sub">主人尚未添加住宿推荐</text>
       </view>
@@ -269,9 +280,11 @@ const weatherIcon = computed(() => {
 })
 
 const venues = computed(() => store.venues?.venues || [])
+const geocodedVenues = computed(() => venues.value.filter(hasCoordinate))
 const primaryVenue = computed(() => store.primaryVenue || venues.value[0] || {})
 const transportInfo = computed(() => store.venues?.transportation || {})
 const accommodations = computed(() => store.venues?.accommodations || [])
+const mapReady = computed(() => geocodedVenues.value.length > 0)
 const weatherHint = computed(() => {
   if (weatherLoading.value) return '加载中'
   if (!weatherData.value) return '点此查看'
@@ -280,10 +293,10 @@ const weatherHint = computed(() => {
 })
 
 const markers = computed(() => {
-  return venues.value.map((v, i) => ({
+  return geocodedVenues.value.map((v, i) => ({
     id: i,
-    latitude: v.coordinate?.latitude || center.value.latitude,
-    longitude: v.coordinate?.longitude || center.value.longitude,
+    latitude: Number(v.coordinate.latitude),
+    longitude: Number(v.coordinate.longitude),
     title: v.name,
     iconPath: MARKER_ICON || '',
     width: 30,
@@ -296,8 +309,8 @@ const markers = computed(() => {
 })
 
 const polyline = computed(() => {
-  const points = venues.value.filter(v => v.coordinate).map(v => ({
-    latitude: v.coordinate.latitude, longitude: v.coordinate.longitude
+  const points = geocodedVenues.value.map(v => ({
+    latitude: Number(v.coordinate.latitude), longitude: Number(v.coordinate.longitude)
   }))
   if (points.length < 2) return []
   return [{ points, color: '#B03A5B', width: 3, dottedLine: false }]
@@ -308,10 +321,27 @@ function typeLabel(type) {
   return map[type] || '场地'
 }
 
+function hasCoordinate(venue) {
+  return Boolean(venue?.coordinate?.latitude && venue?.coordinate?.longitude)
+}
+
+function syncMapCenter() {
+  const selected = selectedVenue.value && hasCoordinate(selectedVenue.value) ? selectedVenue.value : null
+  const first = selected || geocodedVenues.value[0]
+  if (first?.coordinate) {
+    center.value = {
+      latitude: Number(first.coordinate.latitude),
+      longitude: Number(first.coordinate.longitude)
+    }
+    selectedVenue.value = first
+    scale.value = 15
+  }
+}
+
 function selectVenue(venue) {
   selectedVenue.value = venue
-  if (venue.coordinate) {
-    center.value = { latitude: venue.coordinate.latitude, longitude: venue.coordinate.longitude }
+  if (hasCoordinate(venue)) {
+    center.value = { latitude: Number(venue.coordinate.latitude), longitude: Number(venue.coordinate.longitude) }
     scale.value = 16
   }
   activeTab.value = 'map'
@@ -319,17 +349,17 @@ function selectVenue(venue) {
 
 function onMarkerTap(e) {
   const idx = e.detail.markerId
-  if (venues.value[idx]) selectVenue(venues.value[idx])
+  if (geocodedVenues.value[idx]) selectVenue(geocodedVenues.value[idx])
 }
 
 function navigateTo(venue) {
-  if (!venue.coordinate) {
-    uni.showToast({ title: '暂无坐标信息', icon: 'none' })
+  if (!hasCoordinate(venue)) {
+    uni.showToast({ title: '场地还未匹配地图', icon: 'none' })
     return
   }
   uni.openLocation({
-    latitude: venue.coordinate.latitude,
-    longitude: venue.coordinate.longitude,
+    latitude: Number(venue.coordinate.latitude),
+    longitude: Number(venue.coordinate.longitude),
     name: venue.name,
     address: venue.address
   })
@@ -380,15 +410,13 @@ onShow(async () => {
   if (userStore.weddingId && !hasLoadedWedding) {
     try {
       await fetchWedding(userStore.weddingId)
-      const first = venues.value[0]
-      if (first?.coordinate) {
-        center.value = { latitude: first.coordinate.latitude, longitude: first.coordinate.longitude }
-      }
+      syncMapCenter()
     } catch (err) {
       console.warn('路书数据加载失败:', err)
       uni.showToast({ title: '加载失败，下拉重试', icon: 'none' })
     }
   }
+  syncMapCenter()
   if (userStore.weddingId && !weatherData.value && !weatherLoading.value) {
     await loadWeather()
   }
@@ -577,10 +605,39 @@ onShow(async () => {
 .map-container {
   flex: 1;
   min-height: 300rpx;
+  background: $bg-muted;
 }
 .map {
   width: 100%;
   height: 100%;
+}
+.map-empty {
+  height: 100%;
+  padding: 42rpx;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.empty-visual.compact {
+  width: 150rpx;
+  height: 150rpx;
+  margin-bottom: 16rpx;
+}
+.map-empty-title {
+  display: block;
+  font-size: 28rpx;
+  color: $text-primary;
+  font-weight: 500;
+  margin-bottom: 8rpx;
+}
+.map-empty-sub {
+  display: block;
+  font-size: 23rpx;
+  color: $text-muted;
+  line-height: 1.55;
 }
 
 .venue-list {
@@ -604,7 +661,8 @@ onShow(async () => {
 .venue-card.active .venue-name,
 .venue-card.active .venue-address,
 .venue-card.active .venue-type,
-.venue-card.active .venue-time {
+.venue-card.active .venue-time,
+.venue-card.active .venue-geo {
   color: rgba(255,255,255,0.85);
 }
 .venue-meta {
@@ -633,7 +691,20 @@ onShow(async () => {
   display: block;
   font-size: 24rpx;
   color: $text-secondary;
+  margin-bottom: 8rpx;
+}
+.venue-geo {
+  display: inline-block;
   margin-bottom: 16rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 6rpx;
+  background: rgba(52,168,83,0.08);
+  color: $color-success;
+  font-size: 20rpx;
+}
+.venue-geo.missing {
+  background: rgba(249,171,0,0.12);
+  color: #A66A00;
 }
 .venue-actions {
   display: flex;
@@ -651,6 +722,10 @@ onShow(async () => {
 .action-btn.primary {
   background: $color-primary;
   color: #fff;
+}
+.action-btn.disabled {
+  background: $bg-muted;
+  color: $text-muted;
 }
 .action-btn::after { border: none; }
 

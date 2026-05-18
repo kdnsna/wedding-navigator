@@ -105,6 +105,8 @@ function checkCloudSafety() {
   assertIncludes('cloudfunctions/recordView/index.js', 'ensureStatsDocument', 'recordView must initialize missing stats documents')
   assertIncludes('composables/useCloud.js', 'recordShare', 'useCloud must expose share tracking')
   assertIncludes('pages/index/index.vue', 'recordShare', 'index share handlers must track shares')
+  assertIncludes('cloudfunctions/geocodeVenue/index.js', 'TENCENT_MAP_KEY', 'geocodeVenue must use configurable Tencent Map key')
+  assertIncludes('composables/useCloud.js', 'geocodeVenue', 'useCloud must expose venue geocoding')
 }
 
 function checkDataContracts() {
@@ -153,6 +155,11 @@ function checkTemplateSystem() {
   assertIncludes('pages-owner/album/manage.vue', 'buildAlbumCloudPath', 'album manager must upload into wedding-scoped cloud paths')
   assertIncludes('composables/useCloud.js', 'wx.cloud?.uploadFile', 'uploadFile must prefer the native WeChat cloud upload API')
   assertIncludes('pages/guide/index.vue', 'snow', 'guide weather icons must handle weather types returned by getWeather')
+  assertIncludes('pages/guide/index.vue', 'geocodedVenues', 'guide map must only render venues with real coordinates')
+  assertIncludes('pages/guide/index.vue', 'mapReady', 'guide map must expose an empty state when venues are not geocoded')
+  assertIncludes('pages-owner/guide/edit.vue', 'autoMatchLocation', 'owner guide editor must auto-match venue coordinates')
+  assertIncludes('pages-owner/guide/edit.vue', 'chooseVenueLocation', 'owner guide editor must allow manual map point selection')
+  assertIncludes('cloudfunctions/getWeather/index.js', 'geocodeVenue', 'getWeather must geocode venue fallback when coordinates are missing')
 }
 
 function checkUploadScript() {
@@ -184,11 +191,11 @@ function assertPngSize(file, width, height) {
   assert(size.width === width && size.height === height, `${file}: expected ${width}x${height}, got ${size.width}x${size.height}`)
 }
 
-function readSvg(file) {
+function readSvg(file, viewBox) {
   const abs = path.join(root, file)
   assert(fs.existsSync(abs), `vector asset is missing: ${file}`)
   const source = fs.readFileSync(abs, 'utf8')
-  assert(source.includes('<svg') && source.includes('viewBox="0 0 96 96"'), `${file}: must be a 96x96 SVG vector icon`)
+  assert(source.includes('<svg') && source.includes(`viewBox="${viewBox}"`), `${file}: must be an SVG vector asset with viewBox ${viewBox}`)
   assert(!source.includes('<rect width="96" height="96"'), `${file}: must not include a square background plate`)
   return source
 }
@@ -199,9 +206,7 @@ function checkVisualAssets() {
   const visualsDir = path.join(root, 'static/visuals')
   const visualFiles = fs.readdirSync(visualsDir).filter(name => name.endsWith('.png'))
   for (const file of visualFiles) {
-    if (file.startsWith('empty-')) {
-      assertPngSize(`static/visuals/${file}`, 180, 180)
-    }
+    assert(!file.startsWith('empty-'), `static/visuals/${file}: empty states must be SVG, not PNG`)
     assert(!file.startsWith('icon-'), `static/visuals/${file}: functional icons must be SVG, not square PNG`)
   }
   assertPngSize('static/visuals/venue-marker.png', 128, 128)
@@ -209,7 +214,13 @@ function checkVisualAssets() {
   const svgIcons = fs.readdirSync(visualsDir).filter(name => name.startsWith('icon-') && name.endsWith('.svg'))
   assert(svgIcons.length >= 28, `expected at least 28 SVG functional icons, got ${svgIcons.length}`)
   for (const file of svgIcons) {
-    readSvg(`static/visuals/${file}`)
+    readSvg(`static/visuals/${file}`, '0 0 96 96')
+  }
+
+  const svgEmptyAssets = fs.readdirSync(visualsDir).filter(name => name.startsWith('empty-') && name.endsWith('.svg'))
+  assert(svgEmptyAssets.length >= 11, `expected at least 11 SVG empty illustrations, got ${svgEmptyAssets.length}`)
+  for (const file of svgEmptyAssets) {
+    readSvg(`static/visuals/${file}`, '0 0 220 220')
   }
 
   const files = walk(root).filter(file => /\.(vue|js|json)$/.test(file))
@@ -222,10 +233,10 @@ function checkVisualAssets() {
       assert(fs.existsSync(path.join(root, normalized)), `${rel}: visual asset reference is missing: ${match[1]}`)
     }
   }
-  const legacyIconPngPattern = new RegExp('static/visuals/' + 'icon-[^\\\'"]+\\.png')
+  const legacyIconPngPattern = new RegExp('static/visuals/' + '(?:icon|empty)-[^\\\'"]+\\.png')
   for (const abs of files) {
     const rel = path.relative(root, abs)
-    assert(!legacyIconPngPattern.test(read(rel)), `${rel}: functional icon references must use SVG`)
+    assert(!legacyIconPngPattern.test(read(rel)), `${rel}: icon and empty-state references must use SVG`)
   }
 
   assertIncludes('pages/index/index.vue', 'coverImageMode', 'home hero must use default-cover safe display mode')

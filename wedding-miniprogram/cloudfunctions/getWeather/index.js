@@ -4,6 +4,33 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
 const db = cloud.database()
 
+function requestJson(baseUrl, params) {
+  const query = Object.keys(params)
+    .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
+    .join('&')
+  const url = `${baseUrl}?${query}`
+
+  return new Promise((resolve, reject) => {
+    const req = https.get(url, (res) => {
+      let body = ''
+      res.on('data', chunk => { body += chunk })
+      res.on('end', () => {
+        try {
+          resolve(JSON.parse(body))
+        } catch (err) {
+          reject(err)
+        }
+      })
+    })
+
+    req.setTimeout(5000, () => {
+      req.destroy(new Error('地图服务请求超时'))
+    })
+
+    req.on('error', reject)
+  })
+}
+
 function requestWeather(key, lon, lat) {
   const url = `https://devapi.qweather.com/v7/weather/3d?key=${encodeURIComponent(key)}&location=${encodeURIComponent(`${lon},${lat}`)}`
 
@@ -33,6 +60,7 @@ function buildMockWeather(weddingDate, tips = '天气服务暂时不可用，先
     success: true,
     isMock: true,
     data: {
+      isMock: true,
       text: '晴',
       temp_max: '28',
       temp_min: '18',
@@ -43,6 +71,29 @@ function buildMockWeather(weddingDate, tips = '天气服务暂时不可用，先
       date: weddingDate,
       tips
     }
+  }
+}
+
+async function geocodeVenue(venue) {
+  const key = process.env.TENCENT_MAP_KEY || process.env.QQMAP_KEY || process.env.MAP_KEY || ''
+  const keyword = [venue?.address, venue?.name].filter(Boolean).join(' ').trim()
+  if (!key || !keyword) return null
+
+  try {
+    const data = await requestJson('https://apis.map.qq.com/ws/geocoder/v1/', {
+      address: keyword,
+      key
+    })
+    const location = data.status === 0 ? data.result?.location : null
+    if (!location) return null
+    return {
+      latitude: Number(location.lat),
+      longitude: Number(location.lng),
+      source: 'tencent-geocoder'
+    }
+  } catch (err) {
+    console.warn('[getWeather] geocode fallback failed:', err)
+    return null
   }
 }
 
@@ -60,16 +111,24 @@ exports.main = async (event, context) => {
     ])
 
     const venues = venuesRes.data?.venues || []
-    const venue = venues.find(item => item.coordinate?.latitude && item.coordinate?.longitude)
+    const venue = venues.find(item => item.coordinate?.latitude && item.coordinate?.longitude) || venues[0]
+    let coordinate = venue?.coordinate
 
-    if (!venue?.coordinate?.latitude || !venue?.coordinate?.longitude) {
-      return { success: false, message: '场地缺少经纬度坐标' }
+    if (!coordinate?.latitude || !coordinate?.longitude) {
+      coordinate = await geocodeVenue(venue)
+    }
+
+    if (!coordinate?.latitude || !coordinate?.longitude) {
+      return buildMockWeather(
+        wedding.data?.basic_info?.date || '',
+        '请在主人端为主场地匹配地图坐标，或为 geocodeVenue 配置腾讯地图 Key'
+      )
     }
 
     // 生产环境请在云函数环境变量中配置 HEFENG_KEY。
     const WEATHER_KEY = process.env.HEFENG_KEY || ''
-    const lat = venue.coordinate.latitude
-    const lon = venue.coordinate.longitude
+    const lat = coordinate.latitude
+    const lon = coordinate.longitude
     const weddingDate = wedding.data?.basic_info?.date || ''
 
     if (!WEATHER_KEY) {
@@ -168,6 +227,8 @@ exports.main = async (event, context) => {
         sunrise: daily.sunrise,
         sunset: daily.sunset,
         date: weddingDate,
+        venue_name: venue?.name || '',
+        location_source: coordinate.source || venue?.coordinate?.source || 'venue-coordinate',
         tips
       }
     }

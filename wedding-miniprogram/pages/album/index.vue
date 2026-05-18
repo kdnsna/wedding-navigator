@@ -27,7 +27,7 @@
 
     <!-- 空状态 -->
     <view class="empty-state" v-if="photos.length === 0 && !loading">
-      <image class="empty-visual" src="/static/visuals/empty-album.png" mode="aspectFit" />
+      <image class="empty-visual" src="/static/visuals/empty-album.svg" mode="aspectFit" />
       <text class="empty-text">{{ emptyText }}</text>
       <text class="empty-sub" v-if="emptySub">{{ emptySub }}</text>
       <button class="empty-action" @click="goToGuide" v-if="userStore.weddingId">先看婚礼路书</button>

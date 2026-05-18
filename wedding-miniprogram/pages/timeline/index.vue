@@ -63,7 +63,7 @@
 
     <!-- 空状态 -->
     <view class="empty-state" v-if="events.length === 0">
-      <image class="empty-visual empty-icon" src="/static/visuals/empty-timeline.png" mode="aspectFit" />
+      <image class="empty-visual empty-icon" src="/static/visuals/empty-timeline.svg" mode="aspectFit" />
       <text class="empty-text">{{ emptyText }}</text>
       <text class="empty-sub">{{ emptySub }}</text>
     </view>

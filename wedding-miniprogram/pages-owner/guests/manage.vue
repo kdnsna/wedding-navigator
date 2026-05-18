@@ -67,7 +67,7 @@
 
     <!-- 空状态 -->
     <view class="empty-state" v-if="filteredGuests.length === 0">
-      <image class="empty-visual empty-icon" src="/static/visuals/empty-guests.png" mode="aspectFit" />
+      <image class="empty-visual empty-icon" src="/static/visuals/empty-guests.svg" mode="aspectFit" />
       <text class="empty-text">暂无宾客</text>
     </view>
 

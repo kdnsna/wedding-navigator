@@ -20,6 +20,9 @@
         </view>
         <text class="venue-name">{{ venue.name }}</text>
         <text class="venue-address">{{ venue.address }}</text>
+        <text class="venue-geo" :class="{ missing: !hasCoordinate(venue) }">
+          {{ hasCoordinate(venue) ? '已匹配地图和天气' : '未匹配地图坐标' }}
+        </text>
         <view class="venue-actions">
           <text class="venue-action" @click="editVenue(venue)">编辑</text>
           <text class="venue-action delete" @click="deleteVenue(venue.id)">删除</text>
@@ -28,7 +31,7 @@
     </view>
 
     <view class="empty-state" v-if="venues.length === 0">
-      <image class="empty-visual" src="/static/visuals/empty-venue.png" mode="aspectFit" />
+      <image class="empty-visual" src="/static/visuals/empty-venue.svg" mode="aspectFit" />
       <text class="empty-text">还没有添加场地</text>
     </view>
 
@@ -87,7 +90,7 @@
     </view>
 
     <view class="empty-state" v-if="accommodations.length === 0">
-      <image class="empty-visual" src="/static/visuals/empty-hotel.png" mode="aspectFit" />
+      <image class="empty-visual" src="/static/visuals/empty-hotel.svg" mode="aspectFit" />
       <text class="empty-text">还没有添加推荐住宿</text>
     </view>
 
@@ -119,6 +122,16 @@
           <view class="form-group">
             <text class="form-label">详细地址</text>
             <input class="form-input" v-model="modalForm.address" placeholder="请输入地址" />
+          </view>
+          <view class="geo-box">
+            <view class="geo-meta">
+              <text class="geo-title">地图与天气匹配</text>
+              <text class="geo-desc">{{ geoStatusText }}</text>
+            </view>
+            <view class="geo-actions">
+              <button class="geo-btn" :loading="geocoding" :disabled="geocoding" @click="autoMatchLocation">自动匹配</button>
+              <button class="geo-btn primary" :disabled="geocoding" @click="chooseVenueLocation">地图选点</button>
+            </view>
           </view>
           <view class="form-group">
             <text class="form-label">到达时间</text>
@@ -205,9 +218,9 @@ import { ref, computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
-import { generateId, showSuccess } from '@/utils/index.js'
+import { generateId, showError, showSuccess } from '@/utils/index.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
-import { updateWedding } from '@/composables/useCloud.js'
+import { geocodeVenue, updateWedding } from '@/composables/useCloud.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
@@ -218,18 +231,30 @@ const editingVenue = ref(null)
 const venueTypes = ['家', '酒店', '场地', '住宿', '摄影点']
 const typeMap = { '家': 'home', '酒店': 'hotel', '场地': 'venue', '住宿': 'hotel_guest', '摄影点': 'photo' }
 const typeReverseMap = { 'home': 0, 'hotel': 1, 'venue': 2, 'hotel_guest': 3, 'photo': 4 }
-const modalForm = ref({ name: '', typeIndex: 2, address: '', arrivalTime: '', phone: '' })
+const modalForm = ref({ name: '', typeIndex: 2, address: '', arrivalTime: '', phone: '', coordinate: null })
+const geocoding = ref(false)
 
 const venues = computed(() => store.venues?.venues || [])
+const geoStatusText = computed(() => {
+  const coord = modalForm.value.coordinate
+  if (coord?.latitude && coord?.longitude) {
+    return `已匹配 ${Number(coord.latitude).toFixed(5)}, ${Number(coord.longitude).toFixed(5)}`
+  }
+  return '保存时会按场地名称和详细地址自动匹配；也可以手动地图选点'
+})
 
 function typeLabel(type) {
   const map = { home: '家', hotel: '酒店', venue: '场地', hotel_guest: '住宿', photo: '摄影' }
   return map[type] || '场地'
 }
 
+function hasCoordinate(venue) {
+  return Boolean(venue?.coordinate?.latitude && venue?.coordinate?.longitude)
+}
+
 function showAddModal() {
   editingVenue.value = null
-  modalForm.value = { name: '', typeIndex: 2, address: '', arrivalTime: '', phone: '' }
+  modalForm.value = { name: '', typeIndex: 2, address: '', arrivalTime: '', phone: '', coordinate: null }
   showModal.value = true
 }
 
@@ -240,7 +265,8 @@ function editVenue(venue) {
     typeIndex: typeReverseMap[venue.type] || 2,
     address: venue.address,
     arrivalTime: venue.arrival_time || '',
-    phone: venue.contact_phone || ''
+    phone: venue.contact_phone || '',
+    coordinate: venue.coordinate || null
   }
   showModal.value = true
 }
@@ -248,10 +274,68 @@ function editVenue(venue) {
 function onTypeChange(e) { modalForm.value.typeIndex = e.detail.value }
 function onArrivalTimeChange(e) { modalForm.value.arrivalTime = e.detail.value }
 
-function saveVenue() {
+async function autoMatchLocation(options = {}) {
+  const { silent = false } = options
+  if (!modalForm.value.name.trim() && !modalForm.value.address.trim()) {
+    if (!silent) showError('请先填写场地名称或地址')
+    return null
+  }
+  try {
+    geocoding.value = true
+    const res = await geocodeVenue({
+      name: modalForm.value.name.trim(),
+      address: modalForm.value.address.trim()
+    })
+    if (res?.data?.latitude && res?.data?.longitude) {
+      modalForm.value.coordinate = normalizeCoordinate(res.data)
+      if (res.data.address && !modalForm.value.address.trim()) {
+        modalForm.value.address = res.data.address
+      }
+      if (!silent) showSuccess('已匹配地图坐标')
+      return modalForm.value.coordinate
+    }
+    if (!silent) showError(res?.message || '未匹配到地图坐标')
+  } catch (err) {
+    if (!silent) showError(err.message || '地图匹配失败')
+  } finally {
+    geocoding.value = false
+  }
+  return null
+}
+
+function chooseVenueLocation() {
+  const api = (typeof wx !== 'undefined' && wx.chooseLocation) ? wx : uni
+  const keyword = modalForm.value.address || modalForm.value.name
+  api.chooseLocation({
+    keyword,
+    success: (res) => {
+      modalForm.value.name = modalForm.value.name || res.name || ''
+      modalForm.value.address = res.address || modalForm.value.address || res.name || ''
+      modalForm.value.coordinate = normalizeCoordinate({
+        latitude: res.latitude,
+        longitude: res.longitude,
+        title: res.name,
+        address: res.address,
+        source: 'manual-choose-location',
+        matched_at: Date.now()
+      })
+      showSuccess('已选择地图位置')
+    },
+    fail: (err) => {
+      if (!String(err?.errMsg || '').includes('cancel')) {
+        showError('地图选点失败，请检查定位权限')
+      }
+    }
+  })
+}
+
+async function saveVenue() {
   if (!modalForm.value.name.trim()) {
     uni.showToast({ title: '请输入场地名称', icon: 'none' })
     return
+  }
+  if (shouldResolveCoordinate()) {
+    await autoMatchLocation({ silent: true })
   }
   const venue = {
     id: editingVenue.value?.id || generateId(),
@@ -260,7 +344,7 @@ function saveVenue() {
     address: modalForm.value.address,
     arrival_time: modalForm.value.arrivalTime,
     contact_phone: modalForm.value.phone,
-    coordinate: editingVenue.value?.coordinate || null
+    coordinate: modalForm.value.coordinate || null
   }
   if (editingVenue.value) {
     if (!store.venues) store.venues = { venues: [], transportation: {}, accommodations: [] }
@@ -270,9 +354,30 @@ function saveVenue() {
   } else {
     store.addVenue(venue)
   }
-  saveToStorage()
+  await saveToStorage()
   showModal.value = false
-  showSuccess('保存成功')
+  showSuccess(venue.coordinate ? '保存成功，已匹配地图' : '保存成功，请稍后补充地图坐标')
+}
+
+function shouldResolveCoordinate() {
+  const current = modalForm.value.coordinate
+  if (!current?.latitude || !current?.longitude) return true
+  if (!editingVenue.value) return false
+  return modalForm.value.name !== editingVenue.value.name || modalForm.value.address !== editingVenue.value.address
+}
+
+function normalizeCoordinate(coord) {
+  const latitude = Number(coord?.latitude)
+  const longitude = Number(coord?.longitude)
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null
+  return {
+    latitude,
+    longitude,
+    title: coord.title || modalForm.value.name,
+    address: coord.address || modalForm.value.address,
+    source: coord.source || 'unknown',
+    matched_at: coord.matched_at || Date.now()
+  }
 }
 
 function deleteVenue(id) {
@@ -492,7 +597,20 @@ onShow(() => { useOwnerGuard() })
   display: block;
   font-size: 24rpx;
   color: $text-secondary;
+  margin-bottom: 8rpx;
+}
+.venue-geo {
+  display: inline-block;
   margin-bottom: 12rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 6rpx;
+  background: rgba(52,168,83,0.08);
+  color: $color-success;
+  font-size: 20rpx;
+}
+.venue-geo.missing {
+  background: rgba(249,171,0,0.12);
+  color: #A66A00;
 }
 .venue-actions, .hotel-actions {
   display: flex;
@@ -669,6 +787,49 @@ onShow(() => { useOwnerGuard() })
   color: #fff;
 }
 .modal-btn:active { transform: scale(0.98); opacity: 0.85; }
+
+.geo-box {
+  margin: -8rpx 0 28rpx;
+  padding: 24rpx;
+  border-radius: $radius-lg;
+  border: 1rpx solid $border-color;
+  background: $bg-elevated;
+}
+.geo-title {
+  display: block;
+  font-size: 26rpx;
+  color: $text-primary;
+  font-weight: 500;
+  margin-bottom: 6rpx;
+}
+.geo-desc {
+  display: block;
+  font-size: 22rpx;
+  color: $text-secondary;
+  line-height: 1.45;
+}
+.geo-actions {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 20rpx;
+}
+.geo-btn {
+  flex: 1;
+  height: 72rpx;
+  line-height: 72rpx;
+  border-radius: $radius-full;
+  background: $bg-muted;
+  color: $text-primary;
+  font-size: 24rpx;
+}
+.geo-btn.primary {
+  background: $text-primary;
+  color: #fff;
+}
+.geo-btn::after { border: none; }
+.geo-btn[disabled] {
+  opacity: 0.62;
+}
 
 /* 表单 */
 .form-group {

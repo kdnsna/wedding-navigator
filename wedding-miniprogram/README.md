@@ -129,11 +129,12 @@ npm install
 
 1. 在 `manifest.json` 中配置你的微信小程序 AppID
 2. 在 `config/cloud.js` 中配置云开发环境 ID：`CLOUD_ENV`
-3. 如需真实天气，在 `getWeather` 云函数环境变量中配置 `HEFENG_KEY`
-4. 如需内容安全接口失败时阻断提交，在 `submitRSVP`、`submitBlessing` 云函数环境变量中配置 `CONTENT_SAFETY_MODE=strict`
-5. 如需生成体验版/开发版小程序码，在 `generatePoster` 云函数环境变量中配置 `WXACODE_ENV_VERSION=trial` 或 `develop`
-6. 在 `cloudfunctions/*/config.json` 中按需配置权限
-7. 需要支持主人删除邀请时，确认 `deleteWedding` 已部署；该函数会校验 `owner_openid`，并删除婚礼、请柬、相册记录、路书、流程、宾客、祝福、统计和访客记录
+3. 如需路书自动匹配地图坐标，在 `geocodeVenue` 和 `getWeather` 云函数环境变量中配置 `TENCENT_MAP_KEY`
+4. 如需真实天气，在 `getWeather` 云函数环境变量中配置 `HEFENG_KEY`
+5. 如需内容安全接口失败时阻断提交，在 `submitRSVP`、`submitBlessing` 云函数环境变量中配置 `CONTENT_SAFETY_MODE=strict`
+6. 如需生成体验版/开发版小程序码，在 `generatePoster` 云函数环境变量中配置 `WXACODE_ENV_VERSION=trial` 或 `develop`
+7. 在 `cloudfunctions/*/config.json` 中按需配置权限
+8. 需要支持主人删除邀请时，确认 `deleteWedding` 已部署；该函数会校验 `owner_openid`，并删除婚礼、请柬、相册记录、路书、流程、宾客、祝福、统计和访客记录
 
 ### 运行到微信开发者工具
 
@@ -178,6 +179,14 @@ HEFENG_KEY=你的和风天气Key
 ```
 
 未配置时会返回模拟天气，不会阻断路书页。
+
+路书自动匹配地图坐标依赖腾讯位置服务 Key。请为 `geocodeVenue` 和 `getWeather` 配置：
+
+```
+TENCENT_MAP_KEY=你的腾讯位置服务Key
+```
+
+主人端保存场地时会按「详细地址 + 场地名称」自动匹配坐标，也可手动地图选点。宾客端只会展示已匹配坐标的地图标记，避免无坐标场地被错误打到默认城市。
 
 祝福和 RSVP 留言会调用微信内容安全接口。默认策略为“接口不可用时降级放行，接口明确判定违规时阻断”；如果希望接口不可用也阻断提交，请为 `submitRSVP`、`submitBlessing` 配置：
 
@@ -231,6 +240,7 @@ MINIPROGRAM_PRIVATE_KEY_PATH=/path/to/private.key npm run upload:mp-weixin
 - `config/cloud.js` 中 `CLOUD_ENV` 已替换为正式云开发环境 ID
 - 已部署所有 `cloudfunctions/*`，选择「云端安装依赖」
 - 已部署 `deleteWedding`，并在主人端管理后台验证删除后旧邀请链接失效、新建向导可重新打开
+- 已部署 `geocodeVenue`，并为 `geocodeVenue`、`getWeather` 配置 `TENCENT_MAP_KEY` 后验证场地能自动匹配地图和天气
 - 数据库集合已创建：`weddings`、`invitations`、`albums`、`venues`、`timelines`、`guests`、`blessings`、`share_stats`、`viewers`
 - 数据库索引已创建：`viewers.wedding_id + viewers.openid`、`guests.guests.phone`、`blessings.blessings.id`
 - 已运行 `npm run check:release` 并通过

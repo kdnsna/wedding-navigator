@@ -50,7 +50,7 @@
 
     <!-- 空状态 -->
     <view class="empty-state" v-if="blessings.length === 0">
-      <image class="empty-visual" src="/static/visuals/empty-blessing.png" mode="aspectFit" />
+      <image class="empty-visual" src="/static/visuals/empty-blessing.svg" mode="aspectFit" />
       <text class="empty-text">{{ emptyText }}</text>
       <text class="empty-sub" v-if="emptySub">{{ emptySub }}</text>
       <button class="empty-action" @click="focusBlessing" v-if="userStore.weddingId && !loadError">写第一条祝福</button>

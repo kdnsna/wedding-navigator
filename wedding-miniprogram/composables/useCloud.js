@@ -155,6 +155,11 @@ async function getWeather(weddingId) {
   return callFunction('getWeather', { weddingId }, { timeoutMs: 7000 })
 }
 
+// 根据场地名称/地址匹配地图坐标
+async function geocodeVenue(data) {
+  return callFunction('geocodeVenue', data, { timeoutMs: 7000 })
+}
+
 // 上传文件到云存储
 async function uploadFile(filePath, cloudPath) {
   return new Promise((resolve, reject) => {
@@ -208,6 +213,7 @@ export {
   checkOwnership,
   generatePoster,
   getWeather,
+  geocodeVenue,
   uploadFile,
   uploadBase64
 }

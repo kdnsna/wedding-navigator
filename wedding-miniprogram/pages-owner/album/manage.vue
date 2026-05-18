@@ -28,7 +28,7 @@
 
     <!-- 空状态 -->
     <view class="empty-state" v-if="photos.length === 0">
-      <image class="empty-visual empty-icon" src="/static/visuals/empty-album.png" mode="aspectFit" />
+      <image class="empty-visual empty-icon" src="/static/visuals/empty-album.svg" mode="aspectFit" />
       <text class="empty-text">还没有照片</text>
     </view>
   </view>
