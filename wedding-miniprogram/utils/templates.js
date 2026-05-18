@@ -12,7 +12,11 @@ export const WEDDING_TEMPLATES = [
     preview: 'linear-gradient(145deg, #4B111E 0%, #B03A5B 52%, #C9A96E 100%)',
     photoMood: '建议使用竖版主封面，人物居中偏上，留出底部文字空间',
     albumMood: '高定相册',
-    copy: '适合酒店、宴会厅、正式仪式和大多数婚礼场景'
+    copy: '适合酒店、宴会厅、正式仪式和大多数婚礼场景',
+    preset: {
+      mainText: '以爱为名，以余生为约。诚挚邀请您莅临我们的婚礼，在玫瑰与灯光之间，见证我们人生中最珍贵的一刻。',
+      venueName: '玫瑰宴会厅'
+    }
   },
   {
     id: 'champagne-editorial',
@@ -27,7 +31,11 @@ export const WEDDING_TEMPLATES = [
     preview: 'linear-gradient(145deg, #F7EEE4 0%, #FFFFFF 52%, #C9A96E 100%)',
     photoMood: '建议使用浅色、户外或白纱照片，画面保留自然留白',
     albumMood: '杂志影像',
-    copy: '适合草坪、极简、白绿色或香槟色婚礼'
+    copy: '适合草坪、极简、白绿色或香槟色婚礼',
+    preset: {
+      mainText: '我们把这一天折进一页温柔的请柬里。愿您与我们一起，在香槟色的光影中，共赴一场关于爱与承诺的仪式。',
+      venueName: '香槟花园厅'
+    }
   },
   {
     id: 'noir-banquet',
@@ -42,7 +50,11 @@ export const WEDDING_TEMPLATES = [
     preview: 'linear-gradient(145deg, #050505 0%, #2C2C2C 58%, #C9A96E 100%)',
     photoMood: '建议使用夜景、宴会厅、灯光或黑礼服照片',
     albumMood: '晚宴片场',
-    copy: '适合晚宴、酒店宴会厅、高级餐厅和黑金主题'
+    copy: '适合晚宴、酒店宴会厅、高级餐厅和黑金主题',
+    preset: {
+      mainText: '夜幕、灯火、挚爱与挚友。诚邀您出席我们的婚礼晚宴，与我们一同举杯，见证这场属于爱意的黑金时刻。',
+      venueName: '黑金宴会厅'
+    }
   },
   {
     id: 'garden-film',
@@ -57,7 +69,11 @@ export const WEDDING_TEMPLATES = [
     preview: 'linear-gradient(145deg, #EAF0E2 0%, #FFFFFF 54%, #6F7E5D 100%)',
     photoMood: '建议使用草坪、花园、旅拍或自然光照片',
     albumMood: '胶片故事',
-    copy: '适合户外、草坪、旅拍和温柔生活感婚礼'
+    copy: '适合户外、草坪、旅拍和温柔生活感婚礼',
+    preset: {
+      mainText: '在花香、微风与自然光里，我们将把相爱的日常郑重写成誓言。期待您来到现场，和我们一起收藏这段春日般的记忆。',
+      venueName: '花园草坪仪式区'
+    }
   }
 ]
 

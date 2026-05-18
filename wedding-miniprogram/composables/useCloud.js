@@ -153,12 +153,16 @@ async function getWeather(weddingId) {
 // 上传文件到云存储
 async function uploadFile(filePath, cloudPath) {
   return new Promise((resolve, reject) => {
-    const cloudApi = (typeof uni !== 'undefined' && uni.cloud?.uploadFile)
-      ? uni.cloud
-      : (typeof wx !== 'undefined' && wx.cloud?.uploadFile ? wx.cloud : null)
+    const cloudApi = (typeof wx !== 'undefined' && wx.cloud?.uploadFile)
+      ? wx.cloud
+      : (typeof uni !== 'undefined' && uni.cloud?.uploadFile ? uni.cloud : null)
 
     if (!cloudApi) {
       reject(new Error('云存储能力不可用，请在微信小程序环境中打开'))
+      return
+    }
+    if (!filePath) {
+      reject(new Error('缺少本地文件路径'))
       return
     }
 
@@ -168,7 +172,7 @@ async function uploadFile(filePath, cloudPath) {
       cloudPath: cloudPath || `uploads/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`,
       filePath,
       success: (res) => resolve(res),
-      fail: (err) => reject(err)
+      fail: (err) => reject(new Error(err?.errMsg || err?.message || '云存储上传失败'))
     })
   })
 }

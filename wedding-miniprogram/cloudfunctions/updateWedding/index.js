@@ -40,13 +40,29 @@ exports.main = async (event, context) => {
     // 直接写对象，避免把 invitations 写成 { invitations: {...} } 或把 guests 写成 { guests: { guests: [...] } }。
     const updateData = { ...cleanData, updated_at: Date.now() }
 
-    await db.collection(collection).doc(weddingId).update({
-      data: updateData
-    })
+    try {
+      await db.collection(collection).doc(weddingId).update({
+        data: updateData
+      })
+    } catch (err) {
+      if (!isDocNotExistError(err) || collection === 'weddings') {
+        throw err
+      }
+      await db.collection(collection).doc(weddingId).set({
+        data: { ...updateData, created_at: Date.now() }
+      })
+    }
 
     return { success: true }
   } catch (err) {
     console.error(err)
     return { success: false, message: err.message }
   }
+}
+
+function isDocNotExistError(err) {
+  if (!err) return false
+  if (err.errCode === -1 || err.errCode === -502005 || err.errCode === 'DATABASE_COLLECTION_NOT_EXIST') return true
+  const msg = (err.errMsg || err.message || '').toLowerCase()
+  return msg.includes('not exist') || msg.includes('does not exist') || msg.includes('not found')
 }

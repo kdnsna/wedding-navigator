@@ -15,7 +15,7 @@
           v-for="tpl in templates"
           :key="tpl.id"
           :class="{ active: form.template === tpl.id }"
-          @click="form.template = tpl.id"
+          @click="selectTemplate(tpl)"
         >
           <view class="template-preview" :style="{ background: tpl.preview }">
             <text class="template-kicker">{{ tpl.kicker }}</text>
@@ -24,6 +24,20 @@
           <text class="template-desc">{{ tpl.copy }}</text>
         </view>
       </scroll-view>
+      <view class="template-panel">
+        <view class="template-panel-head">
+          <view>
+            <text class="template-panel-kicker">{{ activeTemplate.kicker }}</text>
+            <text class="template-panel-title">{{ activeTemplate.name }}</text>
+          </view>
+          <text class="template-panel-status">当前选择</text>
+        </view>
+        <text class="template-panel-copy">{{ activeTemplate.photoMood }}</text>
+        <view class="template-panel-actions">
+          <button class="template-panel-btn primary" @click="previewTemplate">预览此模板</button>
+          <button class="template-panel-btn" @click="applyTemplatePreset">套用预设文案</button>
+        </view>
+      </view>
     </view>
 
     <!-- 邀请文案 -->
@@ -133,19 +147,20 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { showSuccess, showError } from '@/utils/index.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
 import { updateWedding } from '@/composables/useCloud.js'
-import { WEDDING_TEMPLATES, normalizeTemplateId } from '@/utils/templates.js'
+import { WEDDING_TEMPLATES, getWeddingTemplate, normalizeTemplateId } from '@/utils/templates.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
 
 const templates = WEDDING_TEMPLATES
+const activeTemplate = computed(() => getWeddingTemplate(form.value.template))
 
 const musicPresets = [
   { id: 'piano-dream', name: '梦中的钢琴', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
@@ -196,48 +211,95 @@ function selectMusic(music) {
   form.value.bgMusicUrl = music.url
 }
 
+function selectTemplate(tpl) {
+  form.value.template = normalizeTemplateId(tpl.id)
+}
+
 function onDateChange(e) { form.value.date = e.detail.value }
 function onTimeChange(e) { form.value.time = e.detail.value }
+
+function buildInvitationData() {
+  return {
+    template: form.value.template,
+    content: {
+      title: '婚礼请柬',
+      main_text: form.value.content,
+      sub_text: '',
+      story: ''
+    },
+    couple: {
+      groom: { name: form.value.groomName, phone: store.invitation?.couple?.groom?.phone || '', photo: '' },
+      bride: { name: form.value.brideName, phone: store.invitation?.couple?.bride?.phone || '', photo: '' }
+    },
+    wedding: {
+      date: form.value.date,
+      time: form.value.time,
+      venue_name: form.value.venueName,
+      venue_address: store.invitation?.wedding?.venue_address || ''
+    },
+    features: {
+      show_countdown: form.value.showCountdown,
+      show_rsvp: form.value.showRsvp,
+      show_blessing: form.value.showBlessing,
+      show_timeline: form.value.showTimeline,
+      bg_music_enabled: form.value.bgMusicEnabled,
+      bg_music_id: form.value.bgMusicId,
+      bg_music_url: form.value.bgMusicUrl
+    }
+  }
+}
+
+function buildWeddingData() {
+  return {
+    ...store.wedding,
+    basic_info: {
+      ...(store.wedding?.basic_info || {}),
+      date: form.value.date,
+      time: form.value.time
+    }
+  }
+}
+
+function applyLocalPreviewData() {
+  store.updateInvitation(buildInvitationData())
+  store.updateWeddingField('basic_info', buildWeddingData().basic_info)
+}
+
+function applyTemplatePreset() {
+  uni.showModal({
+    title: '套用预设文案',
+    content: '会替换邀请文案，并在场地为空时填入示例场景；不会修改新人姓名、日期和已上传照片。',
+    confirmText: '套用',
+    success: (res) => {
+      if (!res.confirm) return
+      form.value.content = activeTemplate.value.preset?.mainText || form.value.content
+      if (!form.value.venueName) {
+        form.value.venueName = activeTemplate.value.preset?.venueName || ''
+      }
+      applyLocalPreviewData()
+      uni.showToast({ title: '已套用，可预览', icon: 'success' })
+    }
+  })
+}
 
 async function saveInvitation() {
   try {
     uni.showLoading({ title: '保存中...', mask: true })
-    const invitationData = {
-      template: form.value.template,
-      content: {
-        title: '婚礼请柬',
-        main_text: form.value.content,
-        sub_text: '',
-        story: ''
-      },
-      couple: {
-        groom: { name: form.value.groomName, phone: store.invitation?.couple?.groom?.phone || '', photo: '' },
-        bride: { name: form.value.brideName, phone: store.invitation?.couple?.bride?.phone || '', photo: '' }
-      },
-      wedding: {
-        date: form.value.date,
-        time: form.value.time,
-        venue_name: form.value.venueName
-      },
-      features: {
-        show_countdown: form.value.showCountdown,
-        show_rsvp: form.value.showRsvp,
-        show_blessing: form.value.showBlessing,
-        show_timeline: form.value.showTimeline,
-        bg_music_enabled: form.value.bgMusicEnabled,
-        bg_music_id: form.value.bgMusicId,
-        bg_music_url: form.value.bgMusicUrl
-      }
-    }
+    const invitationData = buildInvitationData()
+    const weddingData = buildWeddingData()
 
     // 先同步云端
-    await updateWedding(userStore.weddingId, 'invitations', invitationData)
+    await Promise.all([
+      updateWedding(userStore.weddingId, 'invitations', invitationData),
+      updateWedding(userStore.weddingId, 'weddings', weddingData)
+    ])
 
     // 再更新本地 store + 缓存
-    store.updateInvitation(invitationData)
+    applyLocalPreviewData()
     const weddings = uni.getStorageSync('weddings') || {}
     if (weddings[userStore.weddingId]) {
       weddings[userStore.weddingId].invitation = { ...weddings[userStore.weddingId].invitation, ...invitationData }
+      weddings[userStore.weddingId] = { ...weddings[userStore.weddingId], ...weddingData }
       uni.setStorageSync('weddings', weddings)
     }
     showSuccess('保存成功')
@@ -250,10 +312,14 @@ async function saveInvitation() {
 }
 
 function previewInvitation() {
+  applyLocalPreviewData()
   uni.switchTab({ url: '/pages/index/index' })
 }
 
-const inv = store.invitation || {}
+function previewTemplate() {
+  previewInvitation()
+}
+
 onShow(() => { useOwnerGuard(); loadFromStore() })
 </script>
 
@@ -347,6 +413,70 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
   color: $text-muted;
   line-height: 1.45;
   white-space: normal;
+}
+.template-panel {
+  margin-top: 24rpx;
+  padding: 28rpx;
+  border-radius: $radius-xl;
+  background: $text-primary;
+  color: #fff;
+  box-shadow: 0 16rpx 42rpx rgba(0,0,0,0.12);
+}
+.template-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24rpx;
+  margin-bottom: 18rpx;
+}
+.template-panel-kicker {
+  display: block;
+  font-size: 18rpx;
+  color: rgba(255,255,255,0.52);
+  letter-spacing: 4rpx;
+  margin-bottom: 8rpx;
+}
+.template-panel-title {
+  display: block;
+  font-size: 34rpx;
+  color: #fff;
+  font-weight: 600;
+}
+.template-panel-status {
+  padding: 8rpx 16rpx;
+  border-radius: $radius-full;
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.72);
+  font-size: 22rpx;
+  flex-shrink: 0;
+}
+.template-panel-copy {
+  display: block;
+  font-size: 24rpx;
+  line-height: 1.55;
+  color: rgba(255,255,255,0.72);
+  margin-bottom: 24rpx;
+}
+.template-panel-actions {
+  display: flex;
+  gap: 16rpx;
+}
+.template-panel-btn {
+  flex: 1;
+  height: 76rpx;
+  line-height: 76rpx;
+  border-radius: $radius-full;
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  font-size: 26rpx;
+  padding: 0;
+}
+.template-panel-btn.primary {
+  background: #fff;
+  color: $text-primary;
+}
+.template-panel-btn::after {
+  border: none;
 }
 
 /* 表单 */

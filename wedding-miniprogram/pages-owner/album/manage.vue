@@ -7,10 +7,10 @@
     </view>
 
     <!-- 上传区域 -->
-    <view class="upload-area" @click="chooseImage">
+    <view class="upload-area" :class="{ disabled: uploading }" @click="chooseImage">
       <text class="upload-icon">+</text>
-      <text class="upload-text">上传照片</text>
-      <text class="upload-hint">支持 JPG、PNG 格式</text>
+      <text class="upload-text">{{ uploading ? `上传中 ${uploadProgress.current}/${uploadProgress.total}` : '上传照片' }}</text>
+      <text class="upload-hint">{{ uploading ? '请保持页面打开' : '支持 JPG、PNG 格式，建议先上传竖版封面' }}</text>
     </view>
 
     <!-- 照片网格 -->
@@ -49,39 +49,92 @@ const userStore = useUserStore()
 const photos = computed(() => store.album?.photos || [])
 const uploading = ref(false)
 
+const uploadProgress = ref({ current: 0, total: 0 })
+
 async function chooseImage() {
-  uni.chooseImage({
-    count: 9,
-    sizeType: ['compressed'],
-    sourceType: ['album', 'camera'],
-    success: async (res) => {
-      uploading.value = true
-      showLoading('上传中...')
-      
-      try {
-        for (const path of res.tempFilePaths) {
-          const cloudRes = await uploadFile(path)
-          const photo = {
-            id: generateId(),
-            url: cloudRes.fileID,
-            type: photos.value.length === 0 ? 'cover' : 'normal',
-            upload_time: new Date().toISOString()
-          }
-          store.addPhoto(photo)
-        }
-        await saveToStorage()
-        hideLoading()
-        showSuccess('上传成功')
-      } catch (err) {
-        hideLoading()
-        console.error('照片上传失败:', err)
-        showError('上传失败，请重试')
-      } finally {
-        uploading.value = false
+  if (uploading.value) return
+  if (!userStore.weddingId) {
+    showError('请先创建婚礼')
+    return
+  }
+
+  try {
+    const filePaths = await chooseAlbumImages()
+    if (!filePaths.length) return
+
+    uploading.value = true
+    uploadProgress.value = { current: 0, total: filePaths.length }
+    showLoading(`上传中 0/${filePaths.length}`)
+
+    for (const localPath of filePaths) {
+      uploadProgress.value.current += 1
+      showLoading(`上传中 ${uploadProgress.value.current}/${filePaths.length}`)
+      const id = generateId()
+      const cloudPath = buildAlbumCloudPath(localPath, id)
+      const cloudRes = await uploadFile(localPath, cloudPath)
+      if (!cloudRes?.fileID) {
+        throw new Error('云存储未返回文件ID')
       }
-    },
-    fail: () => { showError('选择照片失败') }
+      const photo = {
+        id,
+        url: cloudRes.fileID,
+        type: photos.value.length === 0 ? 'cover' : 'normal',
+        upload_time: new Date().toISOString()
+      }
+      store.addPhoto(photo)
+    }
+
+    await saveToStorage()
+    showSuccess('上传成功')
+  } catch (err) {
+    console.error('照片上传失败:', err)
+    showError(err?.message || '上传失败，请重试')
+  } finally {
+    hideLoading()
+    uploading.value = false
+    uploadProgress.value = { current: 0, total: 0 }
+  }
+}
+
+function chooseAlbumImages() {
+  return new Promise((resolve, reject) => {
+    const fail = (err) => {
+      const message = err?.errMsg || ''
+      if (message.includes('cancel')) {
+        resolve([])
+        return
+      }
+      reject(new Error(message || '选择照片失败'))
+    }
+
+    if (typeof wx !== 'undefined' && wx.chooseMedia) {
+      wx.chooseMedia({
+        count: 9,
+        mediaType: ['image'],
+        sourceType: ['album', 'camera'],
+        sizeType: ['compressed'],
+        success: (res) => {
+          resolve((res.tempFiles || []).map(item => item.tempFilePath).filter(Boolean))
+        },
+        fail
+      })
+      return
+    }
+
+    uni.chooseImage({
+      count: 9,
+      sizeType: ['compressed'],
+      sourceType: ['album', 'camera'],
+      success: (res) => resolve(res.tempFilePaths || []),
+      fail
+    })
   })
+}
+
+function buildAlbumCloudPath(localPath, id) {
+  const extMatch = String(localPath || '').match(/\.([a-zA-Z0-9]+)(?:\?|$)/)
+  const ext = (extMatch?.[1] || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg'
+  return `weddings/${userStore.weddingId}/albums/${id}.${ext}`
 }
 
 function deletePhoto(id) {
@@ -103,6 +156,7 @@ async function saveToStorage() {
     await updateWedding(userStore.weddingId, 'albums', store.album)
   } catch (err) {
     console.error('album 云端保存失败:', err)
+    throw new Error(err?.message || '相册保存失败')
   }
   const weddings = uni.getStorageSync('weddings') || {}
   if (weddings[userStore.weddingId]) {
@@ -150,6 +204,10 @@ onShow(() => { useOwnerGuard() })
   background: $bg-muted;
   border-radius: $radius-lg;
   border: 2rpx dashed $border-color;
+}
+.upload-area.disabled {
+  opacity: 0.62;
+  pointer-events: none;
 }
 .upload-icon {
   font-size: 48rpx;
