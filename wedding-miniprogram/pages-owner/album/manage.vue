@@ -98,40 +98,17 @@ async function chooseImage() {
 
 function chooseAlbumImages() {
   return new Promise((resolve, reject) => {
-    const tryChooseImage = () => {
-      uni.chooseImage({
-        count: 9,
-        sizeType: ['compressed'],
-        sourceType: ['album', 'camera'],
-        success: (res) => resolve(res.tempFilePaths || []),
-        fail: (err) => {
-          const msg = err?.errMsg || ''
-          if (msg.includes('cancel')) { resolve([]); return }
-          reject(new Error(msg || '选择照片失败'))
-        }
-      })
-    }
-
-    if (typeof wx !== 'undefined' && wx.chooseMedia) {
-      wx.chooseMedia({
-        count: 9,
-        mediaType: ['image'],
-        sourceType: ['album', 'camera'],
-        success: (res) => {
-          resolve((res.tempFiles || []).map(item => item.tempFilePath).filter(Boolean))
-        },
-        fail: (err) => {
-          const msg = err?.errMsg || ''
-          if (msg.includes('cancel')) { resolve([]); return }
-          // wx.chooseMedia 失败，降级到 uni.chooseImage
-          console.warn('wx.chooseMedia 失败，降级到 uni.chooseImage:', msg)
-          tryChooseImage()
-        }
-      })
-      return
-    }
-
-    tryChooseImage()
+    uni.chooseImage({
+      count: 9,
+      sizeType: ['compressed'],
+      sourceType: ['album', 'camera'],
+      success: (res) => resolve(res.tempFilePaths || []),
+      fail: (err) => {
+        const msg = err?.errMsg || ''
+        if (msg.includes('cancel')) { resolve([]); return }
+        reject(new Error(msg || '选择照片失败'))
+      }
+    })
   })
 }
 
