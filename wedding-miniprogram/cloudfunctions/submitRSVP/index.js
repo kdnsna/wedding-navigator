@@ -91,6 +91,10 @@ function normalizeRSVP(data, openid) {
     attending_count: status === 'declined' ? 0 : Math.max(1, attendingCount || 1),
     diet_preference: data.diet_preference || normalizeDiet(data.dietary),
     dietary: data.dietary || '',
+    relationship: String(data.relationship || '').trim(),
+    arrival_time: String(data.arrival_time || '').trim(),
+    transport_mode: String(data.transport_mode || '').trim(),
+    companion_note: String(data.companion_note || data.companion_names || '').trim(),
     message: String(data.message || '').trim(),
     source: data.source || 'guest'
   }

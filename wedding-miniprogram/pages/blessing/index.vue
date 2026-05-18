@@ -26,7 +26,7 @@
       />
       <view class="send-bar">
         <text class="char-count">{{ newBlessing.length }}/500</text>
-        <button class="send-btn" @click="sendTextBlessing">发送</button>
+        <button class="send-btn" :disabled="sending" @click="sendTextBlessing">{{ sending ? '发送中' : '发送' }}</button>
       </view>
     </view>
 
@@ -52,6 +52,7 @@
       <image class="empty-visual" src="/static/visuals/empty-blessing.png" mode="aspectFit" />
       <text class="empty-text">{{ emptyText }}</text>
       <text class="empty-sub" v-if="emptySub">{{ emptySub }}</text>
+      <button class="empty-action" @click="focusBlessing" v-if="userStore.weddingId && !loadError">写第一条祝福</button>
     </view>
   </view>
 </template>
@@ -92,6 +93,10 @@ const emptySub = computed(() => {
 
 function formatTime(ts) {
   return formatRelativeTime(ts)
+}
+
+function focusBlessing() {
+  uni.pageScrollTo({ scrollTop: 0, duration: 250 })
 }
 
 async function sendTextBlessing() {
@@ -208,6 +213,7 @@ onShow(async () => {
 }
 .send-btn::after { border: none; }
 .send-btn:active { opacity: 0.8; }
+.send-btn[disabled] { opacity: 0.55; }
 
 /* 祝福列表 */
 .blessing-list {
@@ -259,6 +265,17 @@ onShow(async () => {
   border-radius: 4rpx;
   font-weight: 500;
 }
+.empty-action {
+  margin-top: 32rpx;
+  width: 260rpx;
+  height: 76rpx;
+  line-height: 76rpx;
+  border-radius: $radius-full;
+  background: $text-primary;
+  color: #fff;
+  font-size: 26rpx;
+}
+.empty-action::after { border: none; }
 
 /* 空状态 */
 .empty-state {

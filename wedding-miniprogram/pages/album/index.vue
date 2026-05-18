@@ -29,6 +29,7 @@
       <image class="empty-visual" src="/static/visuals/empty-album.png" mode="aspectFit" />
       <text class="empty-text">{{ emptyText }}</text>
       <text class="empty-sub" v-if="emptySub">{{ emptySub }}</text>
+      <button class="empty-action" @click="goToGuide" v-if="userStore.weddingId">先看婚礼路书</button>
     </view>
 
     <!-- 加载中 -->
@@ -65,6 +66,10 @@ const emptySub = computed(() => {
 function previewImage(index) {
   const urls = photos.value.map(p => p.url)
   uni.previewImage({ urls, current: urls[index] })
+}
+
+function goToGuide() {
+  uni.switchTab({ url: '/pages/guide/index' })
 }
 
 onShow(async () => {
@@ -140,6 +145,17 @@ onShow(async () => {
   font-size: 24rpx;
   color: $text-placeholder;
 }
+.empty-action {
+  margin-top: 32rpx;
+  width: 260rpx;
+  height: 76rpx;
+  line-height: 76rpx;
+  border-radius: $radius-full;
+  background: $text-primary;
+  color: #fff;
+  font-size: 26rpx;
+}
+.empty-action::after { border: none; }
 
 .loading-state {
   text-align: center;

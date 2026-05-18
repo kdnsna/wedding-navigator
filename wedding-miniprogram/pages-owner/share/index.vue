@@ -58,15 +58,24 @@ function loadFromStore() {
 }
 
 function copyPath() {
+  if (!weddingId.value) {
+    uni.showToast({ title: '请先创建婚礼', icon: 'none' })
+    return
+  }
   const path = `pages/index/index?id=${weddingId.value}`
   uni.setClipboardData({ data: path, success: () => showSuccess('已复制') })
 }
 
-onShareAppMessage(() => ({
-  title: shareForm.value.title,
-  path: `pages/index/index?id=${weddingId.value}`,
-  desc: shareForm.value.description
-}))
+onShareAppMessage(() => {
+  if (!weddingId.value) {
+    return { title: '甜囍手册', path: '/pages-owner/wizard/index' }
+  }
+  return {
+    title: shareForm.value.title,
+    path: `/pages/index/index?id=${weddingId.value}`,
+    desc: shareForm.value.description
+  }
+})
 
 onShow(() => { useOwnerGuard(); loadFromStore() })
 </script>

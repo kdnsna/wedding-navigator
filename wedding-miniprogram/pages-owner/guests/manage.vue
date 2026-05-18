@@ -52,6 +52,12 @@
           </text>
           <text class="guest-count" v-if="guest.attending_count > 0">{{ guest.attending_count }}人</text>
         </view>
+        <view class="guest-extra" v-if="guest.relationship || guest.arrival_time || guest.transport_mode || guest.companion_note">
+          <text v-if="guest.relationship">{{ guest.relationship }}</text>
+          <text v-if="guest.arrival_time">{{ guest.arrival_time }}到达</text>
+          <text v-if="guest.transport_mode">{{ guest.transport_mode }}</text>
+          <text v-if="guest.companion_note">{{ guest.companion_note }}</text>
+        </view>
         <view class="guest-actions">
           <text class="action-link" @click="editGuest(guest)">编辑</text>
           <text class="action-link delete" @click="deleteGuest(guest.id)">删除</text>
@@ -101,10 +107,32 @@
             </view>
           </view>
           <view class="form-group">
+            <text class="form-label">关系</text>
+            <picker mode="selector" :range="relationshipOptions" :value="modalForm.relationshipIndex" @change="onRelationshipChange">
+              <view class="picker-value">{{ relationshipOptions[modalForm.relationshipIndex] }}</view>
+            </picker>
+          </view>
+          <view class="form-group">
+            <text class="form-label">预计到达</text>
+            <picker mode="time" :value="modalForm.arrivalTime" @change="onArrivalTimeChange">
+              <view class="picker-value">{{ modalForm.arrivalTime || '请选择' }}</view>
+            </picker>
+          </view>
+          <view class="form-group">
+            <text class="form-label">交通方式</text>
+            <picker mode="selector" :range="transportOptions" :value="modalForm.transportIndex" @change="onTransportChange">
+              <view class="picker-value">{{ transportOptions[modalForm.transportIndex] }}</view>
+            </picker>
+          </view>
+          <view class="form-group">
             <text class="form-label">饮食偏好</text>
             <picker mode="selector" :range="dietOptions" :value="modalForm.dietIndex" @change="onDietChange">
               <view class="picker-value">{{ dietOptions[modalForm.dietIndex] }}</view>
             </picker>
+          </view>
+          <view class="form-group">
+            <text class="form-label">随行备注</text>
+            <input class="form-input" v-model="modalForm.companionNote" placeholder="选填" />
           </view>
         </view>
         <view class="modal-footer">
@@ -139,8 +167,10 @@ const reverseStatusMap = { 'pending': 0, 'attending': 1, 'uncertain': 2, 'declin
 const dietOptions = ['普通', '素食', '清真', '其他']
 const dietMap = { '普通': 'normal', '素食': 'vegetarian', '清真': 'halal', '其他': 'other' }
 const reverseDietMap = { 'normal': 0, 'vegetarian': 1, 'halal': 2, 'other': 3 }
+const relationshipOptions = ['未填写', '亲友', '同学', '同事', '家人', '其他']
+const transportOptions = ['未填写', '自驾', '打车', '公共交通', '跟车', '待定']
 
-const modalForm = ref({ name: '', phone: '', statusIndex: 0, count: 1, dietIndex: 0 })
+const modalForm = ref({ name: '', phone: '', statusIndex: 0, count: 1, dietIndex: 0, relationshipIndex: 0, arrivalTime: '', transportIndex: 0, companionNote: '' })
 
 const guests = computed(() => store.guests?.guests || [])
 const stats = computed(() => store.rsvpStats)
@@ -169,7 +199,7 @@ function maskPhone(phone) {
 
 function showAddModal() {
   editingGuest.value = null
-  modalForm.value = { name: '', phone: '', statusIndex: 0, count: 1, dietIndex: 0 }
+  modalForm.value = { name: '', phone: '', statusIndex: 0, count: 1, dietIndex: 0, relationshipIndex: 0, arrivalTime: '', transportIndex: 0, companionNote: '' }
   showModal.value = true
 }
 
@@ -180,13 +210,20 @@ function editGuest(guest) {
     phone: guest.phone,
     statusIndex: reverseStatusMap[guest.rsvp_status] || 0,
     count: guest.attending_count || 1,
-    dietIndex: reverseDietMap[guest.diet_preference] || 0
+    dietIndex: reverseDietMap[guest.diet_preference] || 0,
+    relationshipIndex: Math.max(relationshipOptions.indexOf(guest.relationship || '未填写'), 0),
+    arrivalTime: guest.arrival_time || '',
+    transportIndex: Math.max(transportOptions.indexOf(guest.transport_mode || '未填写'), 0),
+    companionNote: guest.companion_note || ''
   }
   showModal.value = true
 }
 
 function onStatusChange(e) { modalForm.value.statusIndex = e.detail.value }
 function onDietChange(e) { modalForm.value.dietIndex = e.detail.value }
+function onRelationshipChange(e) { modalForm.value.relationshipIndex = e.detail.value }
+function onArrivalTimeChange(e) { modalForm.value.arrivalTime = e.detail.value }
+function onTransportChange(e) { modalForm.value.transportIndex = e.detail.value }
 
 function saveGuest() {
   const guest = {
@@ -196,6 +233,10 @@ function saveGuest() {
     rsvp_status: statusMap[rsvpOptions[modalForm.value.statusIndex]],
     attending_count: modalForm.value.count,
     diet_preference: dietMap[dietOptions[modalForm.value.dietIndex]],
+    relationship: relationshipOptions[modalForm.value.relationshipIndex] === '未填写' ? '' : relationshipOptions[modalForm.value.relationshipIndex],
+    arrival_time: modalForm.value.arrivalTime,
+    transport_mode: transportOptions[modalForm.value.transportIndex] === '未填写' ? '' : transportOptions[modalForm.value.transportIndex],
+    companion_note: modalForm.value.companionNote,
     created_at: editingGuest.value?.created_at || Date.now()
   }
   if (editingGuest.value) {
@@ -350,6 +391,19 @@ onShow(() => { useOwnerGuard() })
 .guest-count {
   font-size: 22rpx;
   color: $text-secondary;
+}
+.guest-extra {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  margin-bottom: 14rpx;
+}
+.guest-extra text {
+  padding: 6rpx 12rpx;
+  border-radius: 6rpx;
+  background: $bg-muted;
+  color: $text-secondary;
+  font-size: 22rpx;
 }
 .guest-actions {
   display: flex;

@@ -30,6 +30,41 @@
       </view>
     </view>
 
+    <!-- 婚礼当天行动台 -->
+    <view class="section daypack-section">
+      <view class="daypack-head">
+        <view>
+          <text class="daypack-kicker">{{ countdown?.isToday ? 'TODAY PACK' : 'GUEST PACK' }}</text>
+          <text class="daypack-title">{{ countdown?.isToday ? '婚礼当天助手' : '宾客行动台' }}</text>
+        </view>
+        <view class="daypack-status" :class="{ done: hasSubmittedRsvp }" @click="goToRSVP">
+          <text>{{ hasSubmittedRsvp ? '已回执' : '待回执' }}</text>
+        </view>
+      </view>
+      <view class="daypack-card primary" @click="goToGuide">
+        <view class="daypack-card-main">
+          <text class="daypack-label">主场地</text>
+          <text class="daypack-value">{{ primaryVenue.name }}</text>
+          <text class="daypack-sub">{{ primaryVenue.address || venueAddress || '主人正在补充详细地址' }}</text>
+        </view>
+        <button class="daypack-action" @click.stop="openNavigation">导航</button>
+      </view>
+      <view class="daypack-grid">
+        <view class="daypack-mini" @click="goToTimeline">
+          <text class="mini-label">最近流程</text>
+          <text class="mini-value">{{ nextEventText }}</text>
+        </view>
+        <view class="daypack-mini" @click="openCalendar">
+          <text class="mini-label">婚礼时间</text>
+          <text class="mini-value">{{ weddingTime || '12:00' }}</text>
+        </view>
+      </view>
+      <view class="daypack-actions">
+        <button class="daypack-pill primary" @click="goToRSVP">{{ hasSubmittedRsvp ? '修改回执' : '确认出席' }}</button>
+        <button class="daypack-pill" @click="goToBlessing">写祝福</button>
+      </view>
+    </view>
+
     <!-- 婚书正文 -->
     <view class="section invitation-section">
       <view class="quote-top">
@@ -109,8 +144,8 @@
       <view class="section-header stagger-1">
         <view class="header-line" />
         <view class="header-text">
-          <text class="quick-title">探索更多</text>
-          <text class="quick-sub">EXPLORE</text>
+          <text class="quick-title">接下来做什么</text>
+          <text class="quick-sub">NEXT STEPS</text>
         </view>
         <view class="header-line" />
       </view>
@@ -146,6 +181,35 @@
             <text class="quick-en">BLESSING</text>
           </view>
           <text class="quick-arrow">›</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 精选预览 -->
+    <view class="section preview-section">
+      <view class="preview-block" v-if="featuredPhotos.length > 0" @click="goToAlbum">
+        <view class="preview-header">
+          <text class="preview-title">婚纱相册</text>
+          <text class="preview-more">查看全部</text>
+        </view>
+        <view class="photo-strip">
+          <image
+            class="photo-thumb"
+            v-for="photo in featuredPhotos"
+            :key="photo.id || photo.url"
+            :src="photo.url"
+            mode="aspectFill"
+          />
+        </view>
+      </view>
+      <view class="preview-block" v-if="latestBlessings.length > 0" @click="goToBlessing">
+        <view class="preview-header">
+          <text class="preview-title">最近祝福</text>
+          <text class="preview-more">去祝福墙</text>
+        </view>
+        <view class="blessing-preview" v-for="item in latestBlessings" :key="item.id">
+          <text class="blessing-name">{{ item.sender?.name || '宾客' }}</text>
+          <text class="blessing-text">{{ item.content }}</text>
         </view>
       </view>
     </view>
@@ -247,6 +311,21 @@ const weddingDate = computed(() => store.weddingDate)
 const weddingTime = computed(() => store.weddingTime)
 const venueName = computed(() => store.venueName)
 const venueAddress = computed(() => store.invitation?.wedding?.venue_address || '')
+const primaryVenue = computed(() => store.primaryVenue || { name: venueName.value || '婚礼场地', address: venueAddress.value })
+const latestBlessings = computed(() => store.latestBlessings || [])
+const featuredPhotos = computed(() => store.featuredPhotos || [])
+const hasSubmittedRsvp = computed(() => {
+  const list = store.guests?.guests || []
+  return list.some(item => {
+    if (userStore.openid && item.openid === userStore.openid) return true
+    return item.rsvp_status && item.rsvp_status !== 'pending'
+  })
+})
+const nextEventText = computed(() => {
+  const event = store.nextTimelineEvent
+  if (!event) return '待公布'
+  return event.time ? `${event.time} ${event.title}` : event.title
+})
 const invitationText = computed(() => {
   return store.invitation?.content?.main_text || '诚挚邀请您参加我们的婚礼，见证我们的幸福时刻。'
 })
@@ -587,6 +666,199 @@ onUnmounted(() => {
 /* ========== 通用 section ========== */
 .section {
   padding: 80rpx 48rpx;
+}
+
+/* ========== 宾客行动台 ========== */
+.daypack-section {
+  padding-top: 52rpx;
+  padding-bottom: 60rpx;
+}
+.daypack-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24rpx;
+  margin-bottom: 28rpx;
+}
+.daypack-kicker {
+  display: block;
+  font-size: 20rpx;
+  color: $color-primary;
+  letter-spacing: 5rpx;
+  margin-bottom: 8rpx;
+  font-weight: 600;
+}
+.daypack-title {
+  display: block;
+  font-size: 40rpx;
+  color: $text-primary;
+  font-weight: 600;
+}
+.daypack-status {
+  padding: 10rpx 20rpx;
+  border-radius: $radius-full;
+  background: rgba(176,58,91,0.08);
+  color: $color-primary;
+  font-size: 24rpx;
+  flex-shrink: 0;
+}
+.daypack-status.done {
+  background: rgba(52,168,83,0.1);
+  color: $color-success;
+}
+.daypack-card {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  padding: 32rpx;
+  border-radius: $radius-lg;
+  border: 1rpx solid $border-color;
+  margin-bottom: 16rpx;
+}
+.daypack-card.primary {
+  background: $text-primary;
+}
+.daypack-card-main {
+  flex: 1;
+  min-width: 0;
+}
+.daypack-label {
+  display: block;
+  font-size: 22rpx;
+  color: rgba(255,255,255,0.52);
+  margin-bottom: 8rpx;
+}
+.daypack-value {
+  display: block;
+  font-size: 34rpx;
+  color: #fff;
+  font-weight: 600;
+  margin-bottom: 8rpx;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.daypack-sub {
+  display: block;
+  font-size: 24rpx;
+  color: rgba(255,255,255,0.7);
+  line-height: 1.5;
+}
+.daypack-action {
+  width: 116rpx;
+  height: 64rpx;
+  line-height: 64rpx;
+  border-radius: $radius-full;
+  background: #fff;
+  color: $text-primary;
+  font-size: 26rpx;
+  padding: 0;
+  flex-shrink: 0;
+}
+.daypack-action::after { border: none; }
+.daypack-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16rpx;
+  margin-bottom: 20rpx;
+}
+.daypack-mini {
+  padding: 28rpx;
+  background: $bg-muted;
+  border-radius: $radius-lg;
+}
+.mini-label {
+  display: block;
+  font-size: 22rpx;
+  color: $text-muted;
+  margin-bottom: 10rpx;
+}
+.mini-value {
+  display: block;
+  font-size: 28rpx;
+  color: $text-primary;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.daypack-actions {
+  display: flex;
+  gap: 16rpx;
+}
+.daypack-pill {
+  flex: 1;
+  height: 84rpx;
+  line-height: 84rpx;
+  border-radius: $radius-full;
+  background: $bg-muted;
+  color: $text-primary;
+  font-size: 28rpx;
+}
+.daypack-pill.primary {
+  background: $color-primary;
+  color: #fff;
+}
+.daypack-pill::after { border: none; }
+
+.preview-section {
+  padding-top: 32rpx;
+  padding-bottom: 32rpx;
+  background: $bg-muted;
+}
+.preview-block {
+  background: $bg-surface;
+  border-radius: $radius-lg;
+  padding: 28rpx;
+  margin-bottom: 20rpx;
+  border: 1rpx solid $border-color;
+}
+.preview-block:last-child {
+  margin-bottom: 0;
+}
+.preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22rpx;
+}
+.preview-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: $text-primary;
+}
+.preview-more {
+  font-size: 24rpx;
+  color: $color-primary;
+}
+.photo-strip {
+  display: flex;
+  gap: 12rpx;
+}
+.photo-thumb {
+  flex: 1;
+  min-width: 0;
+  height: 168rpx;
+  border-radius: $radius-md;
+  background: $bg-muted;
+}
+.blessing-preview {
+  padding: 20rpx 0;
+  border-top: 1rpx solid $border-color;
+}
+.blessing-preview:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+.blessing-name {
+  display: block;
+  font-size: 24rpx;
+  color: $text-muted;
+  margin-bottom: 8rpx;
+}
+.blessing-text {
+  display: block;
+  font-size: 28rpx;
+  color: $text-primary;
+  line-height: 1.6;
 }
 
 /* ========== 婚书正文 ========== */

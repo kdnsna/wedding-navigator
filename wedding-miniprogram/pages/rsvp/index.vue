@@ -58,6 +58,25 @@
         </view>
       </view>
 
+      <!-- 与新人关系 -->
+      <view class="form-group">
+        <view class="form-label">
+          <text class="label-text">与新人关系</text>
+          <text class="label-en">RELATION</text>
+        </view>
+        <view class="tag-group">
+          <view
+            class="tag-item"
+            v-for="relation in relationshipOptions"
+            :key="relation"
+            :class="{ active: form.relationship === relation }"
+            @click="form.relationship = relation"
+          >
+            <text>{{ relation }}</text>
+          </view>
+        </view>
+      </view>
+
       <!-- 出席人数 -->
       <view class="form-group" v-if="form.status === 'attending' || form.status === 'uncertain'">
         <view class="form-label">
@@ -90,6 +109,36 @@
         />
       </view>
 
+      <!-- 到达时间 -->
+      <view class="form-group" v-if="form.status !== 'declined'">
+        <view class="form-label">
+          <text class="label-text">预计到达</text>
+          <text class="label-en">ARRIVAL</text>
+        </view>
+        <picker mode="time" :value="form.arrivalTime" @change="onArrivalTimeChange">
+          <view class="picker-value">{{ form.arrivalTime || '选择预计到达时间' }}</view>
+        </picker>
+      </view>
+
+      <!-- 交通方式 -->
+      <view class="form-group" v-if="form.status !== 'declined'">
+        <view class="form-label">
+          <text class="label-text">交通方式</text>
+          <text class="label-en">TRANSPORT</text>
+        </view>
+        <view class="tag-group">
+          <view
+            class="tag-item"
+            v-for="mode in transportOptions"
+            :key="mode"
+            :class="{ active: form.transportMode === mode }"
+            @click="form.transportMode = mode"
+          >
+            <text>{{ mode }}</text>
+          </view>
+        </view>
+      </view>
+
       <!-- 饮食偏好 -->
       <view class="form-group" v-if="form.status !== 'declined'">
         <view class="form-label">
@@ -107,6 +156,20 @@
             <text>{{ diet }}</text>
           </view>
         </view>
+      </view>
+
+      <!-- 随行备注 -->
+      <view class="form-group" v-if="form.status !== 'declined' && form.guestCount > 1">
+        <view class="form-label">
+          <text class="label-text">随行备注</text>
+          <text class="label-en">COMPANION</text>
+        </view>
+        <input
+          class="form-input"
+          v-model="form.companionNote"
+          placeholder="如：携伴 1 位 / 儿童座椅 / 家人同行"
+          placeholder-class="placeholder"
+        />
       </view>
 
       <!-- 留言 -->
@@ -170,6 +233,11 @@
       <button class="back-btn" @click="resetForm">
         <text>返回首页</text>
       </button>
+      <view class="success-actions" v-if="form.status !== 'declined'">
+        <button class="success-action" @click="goToGuide">查看路线</button>
+        <button class="success-action" @click="openCalendar">加入日历</button>
+        <button class="success-action" @click="goToBlessing">写祝福</button>
+      </view>
     </view>
   </view>
 </template>
@@ -190,12 +258,18 @@ const submitting = ref(false)
 const form = reactive({
   name: '',
   status: 'attending',
+  relationship: '',
   guestCount: 1,
   phone: '',
+  arrivalTime: '',
+  transportMode: '',
+  companionNote: '',
   dietary: [],
   message: ''
 })
 
+const relationshipOptions = ['亲友', '同学', '同事', '家人', '其他']
+const transportOptions = ['自驾', '打车', '公共交通', '跟车', '待定']
 const dietOptions = ['无特殊要求', '素食', '清真', '海鲜过敏', '不吃辣']
 const statusText = {
   attending: '确认出席',
@@ -217,6 +291,10 @@ function toggleDiet(diet) {
   } else {
     form.dietary.push(diet)
   }
+}
+
+function onArrivalTimeChange(e) {
+  form.arrivalTime = e.detail.value
 }
 
 async function handleSubmit() {
@@ -244,6 +322,10 @@ async function handleSubmit() {
       attending_count: attendingCount,
       diet_preference: getDietPreference(),
       dietary: form.dietary.join('、'),
+      relationship: form.relationship,
+      arrival_time: form.arrivalTime,
+      transport_mode: form.transportMode,
+      companion_note: form.companionNote.trim(),
       message: form.message.trim()
     })
     store.updateGuestRSVP(form.phone.trim() || `${userStore.openid || 'guest'}_${form.name.trim()}`, {
@@ -254,6 +336,10 @@ async function handleSubmit() {
       attending_count: attendingCount,
       diet_preference: getDietPreference(),
       dietary: form.dietary.join('、'),
+      relationship: form.relationship,
+      arrival_time: form.arrivalTime,
+      transport_mode: form.transportMode,
+      companion_note: form.companionNote.trim(),
       message: form.message.trim()
     })
     submitted.value = true
@@ -268,11 +354,44 @@ function resetForm() {
   submitted.value = false
   form.name = ''
   form.status = 'attending'
+  form.relationship = ''
   form.guestCount = 1
   form.phone = ''
+  form.arrivalTime = ''
+  form.transportMode = ''
+  form.companionNote = ''
   form.dietary = []
   form.message = ''
   uni.reLaunch({ url: '/pages/index/index' })
+}
+
+function goToGuide() {
+  uni.switchTab({ url: '/pages/guide/index' })
+}
+
+function goToBlessing() {
+  uni.navigateTo({ url: '/pages/blessing/index' })
+}
+
+function openCalendar() {
+  const date = store.weddingDate
+  const time = store.weddingTime || '12:00'
+  if (!date) {
+    uni.showToast({ title: '暂无婚礼日期', icon: 'none' })
+    return
+  }
+  const startTime = Math.floor(new Date(`${date}T${time}`).getTime() / 1000)
+  if (typeof wx !== 'undefined' && wx.addPhoneCalendar) {
+    wx.addPhoneCalendar({
+      title: `${store.coupleName} 的婚礼`,
+      startTime,
+      endTime: startTime + 4 * 3600,
+      location: store.primaryVenue?.name || store.venueName || '',
+      description: '甜囍手册婚礼提醒'
+    })
+  } else {
+    uni.showToast({ title: '请手动添加到日历', icon: 'none' })
+  }
 }
 
 onLoad(async (options) => {
@@ -288,8 +407,12 @@ onLoad(async (options) => {
   if (rsvp) {
     form.name = rsvp.name || ''
     form.status = rsvp.rsvp_status || rsvp.status || 'attending'
+    form.relationship = rsvp.relationship || ''
     form.guestCount = rsvp.attending_count || rsvp.guest_count || rsvp.guestCount || 1
     form.phone = rsvp.phone || ''
+    form.arrivalTime = rsvp.arrival_time || ''
+    form.transportMode = rsvp.transport_mode || ''
+    form.companionNote = rsvp.companion_note || ''
     form.dietary = rsvp.dietary ? rsvp.dietary.split('、') : []
     form.message = rsvp.message || ''
   }
@@ -367,6 +490,13 @@ onLoad(async (options) => {
 }
 .form-input:focus {
   border-color: $text-primary;
+}
+.picker-value {
+  height: 88rpx;
+  line-height: 88rpx;
+  border-bottom: 2rpx solid $border-color;
+  font-size: 30rpx;
+  color: $text-primary;
 }
 .placeholder {
   color: $text-placeholder;
@@ -633,5 +763,27 @@ onLoad(async (options) => {
 .back-btn:active {
   background: $bg-muted;
   transform: scale(0.97);
+}
+.success-actions {
+  width: 100%;
+  display: flex;
+  gap: 14rpx;
+  margin-top: 24rpx;
+  animation: fadeInUp 0.6s $ease-out 0.85s both;
+}
+.success-action {
+  flex: 1;
+  height: 72rpx;
+  line-height: 72rpx;
+  border-radius: $radius-full;
+  background: $bg-muted;
+  color: $text-primary;
+  font-size: 24rpx;
+  padding: 0;
+}
+.success-action::after { border: none; }
+.success-action:active {
+  background: $text-primary;
+  color: #fff;
 }
 </style>

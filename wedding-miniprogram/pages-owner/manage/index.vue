@@ -15,6 +15,35 @@
       <view class="status-tag" :class="weddingStatus">{{ statusText }}</view>
     </view>
 
+    <!-- 发布准备 -->
+    <view class="readiness-card">
+      <view class="readiness-head">
+        <view>
+          <text class="readiness-kicker">PUBLISH READY</text>
+          <text class="readiness-title">发布准备度</text>
+        </view>
+        <text class="readiness-score">{{ checklist.percent }}%</text>
+      </view>
+      <view class="readiness-bar">
+        <view class="readiness-fill" :style="{ width: checklist.percent + '%' }" />
+      </view>
+      <view class="readiness-list">
+        <view
+          class="readiness-item"
+          v-for="item in checklist.items"
+          :key="item.key"
+          @click="goToRoute(item.route)"
+        >
+          <view class="readiness-dot" :class="{ done: item.done }" />
+          <view class="readiness-meta">
+            <text class="readiness-item-title">{{ item.title }}</text>
+            <text class="readiness-item-desc">{{ item.desc }}</text>
+          </view>
+          <text class="readiness-arrow">›</text>
+        </view>
+      </view>
+    </view>
+
     <!-- 数据概览 -->
     <view class="stats-row">
       <view class="stat-item">
@@ -101,6 +130,7 @@ const userStore = useUserStore()
 const coupleName = computed(() => store.coupleName)
 const weddingDate = computed(() => store.weddingDate)
 const weddingStatus = computed(() => store.wedding?.status || 'draft')
+const checklist = computed(() => store.publishChecklist)
 
 const statusText = computed(() => {
   const map = { draft: '草稿', published: '已发布', ended: '已结束' }
@@ -119,6 +149,9 @@ const stats = computed(() => {
 
 function goTo(path) {
   uni.navigateTo({ url: `/pages-owner/${path}` })
+}
+function goToRoute(route) {
+  uni.navigateTo({ url: route })
 }
 function previewWedding() {
   uni.switchTab({ url: '/pages/index/index' })
@@ -202,6 +235,95 @@ onShow(async () => {
 .status-tag.published {
   background: $color-success;
   color: #fff;
+}
+
+/* 发布准备 */
+.readiness-card {
+  margin: 0 48rpx 40rpx;
+  padding: 32rpx;
+  border-radius: $radius-lg;
+  background: $text-primary;
+  color: #fff;
+}
+.readiness-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24rpx;
+  margin-bottom: 24rpx;
+}
+.readiness-kicker {
+  display: block;
+  font-size: 18rpx;
+  color: rgba(255,255,255,0.55);
+  letter-spacing: 5rpx;
+  margin-bottom: 8rpx;
+}
+.readiness-title {
+  display: block;
+  font-size: 34rpx;
+  font-weight: 600;
+}
+.readiness-score {
+  font-size: 48rpx;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.readiness-bar {
+  height: 8rpx;
+  border-radius: 4rpx;
+  background: rgba(255,255,255,0.16);
+  overflow: hidden;
+  margin-bottom: 22rpx;
+}
+.readiness-fill {
+  height: 100%;
+  border-radius: 4rpx;
+  background: $color-primary-light;
+  transition: width 0.45s ease;
+}
+.readiness-list {
+  display: flex;
+  flex-direction: column;
+}
+.readiness-item {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  padding: 20rpx 0;
+  border-top: 1rpx solid rgba(255,255,255,0.08);
+}
+.readiness-dot {
+  width: 18rpx;
+  height: 18rpx;
+  border-radius: 50%;
+  border: 2rpx solid rgba(255,255,255,0.36);
+  flex-shrink: 0;
+}
+.readiness-dot.done {
+  background: $color-success;
+  border-color: $color-success;
+}
+.readiness-meta {
+  flex: 1;
+  min-width: 0;
+}
+.readiness-item-title {
+  display: block;
+  font-size: 28rpx;
+  color: #fff;
+  font-weight: 500;
+  margin-bottom: 4rpx;
+}
+.readiness-item-desc {
+  display: block;
+  font-size: 22rpx;
+  color: rgba(255,255,255,0.62);
+  line-height: 1.4;
+}
+.readiness-arrow {
+  color: rgba(255,255,255,0.45);
+  font-size: 34rpx;
 }
 
 /* 数据概览 */
