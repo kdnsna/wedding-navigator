@@ -37,7 +37,7 @@
     <!-- 说明 -->
     <view class="tips">
       <view class="tip-header">
-        <image class="tip-icon" src="/static/visuals/icon-tip.png" mode="aspectFit" />
+        <image class="tip-icon" src="/static/visuals/icon-tip.svg" mode="aspectFit" />
         <text class="tip-title">使用说明</text>
       </view>
       <view class="tip-item">1. 保存海报到手机相册</view>

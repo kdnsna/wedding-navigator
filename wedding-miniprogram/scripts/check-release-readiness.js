@@ -184,6 +184,15 @@ function assertPngSize(file, width, height) {
   assert(size.width === width && size.height === height, `${file}: expected ${width}x${height}, got ${size.width}x${size.height}`)
 }
 
+function readSvg(file) {
+  const abs = path.join(root, file)
+  assert(fs.existsSync(abs), `vector asset is missing: ${file}`)
+  const source = fs.readFileSync(abs, 'utf8')
+  assert(source.includes('<svg') && source.includes('viewBox="0 0 96 96"'), `${file}: must be a 96x96 SVG vector icon`)
+  assert(!source.includes('<rect width="96" height="96"'), `${file}: must not include a square background plate`)
+  return source
+}
+
 function checkVisualAssets() {
   assertPngSize('static/visuals/default-cover.png', 640, 1349)
 
@@ -193,14 +202,18 @@ function checkVisualAssets() {
     if (file.startsWith('empty-')) {
       assertPngSize(`static/visuals/${file}`, 180, 180)
     }
-    if (file.startsWith('icon-')) {
-      assertPngSize(`static/visuals/${file}`, 96, 96)
-    }
+    assert(!file.startsWith('icon-'), `static/visuals/${file}: functional icons must be SVG, not square PNG`)
   }
   assertPngSize('static/visuals/venue-marker.png', 128, 128)
 
+  const svgIcons = fs.readdirSync(visualsDir).filter(name => name.startsWith('icon-') && name.endsWith('.svg'))
+  assert(svgIcons.length >= 28, `expected at least 28 SVG functional icons, got ${svgIcons.length}`)
+  for (const file of svgIcons) {
+    readSvg(`static/visuals/${file}`)
+  }
+
   const files = walk(root).filter(file => /\.(vue|js|json)$/.test(file))
-  const visualRefPattern = /['"]((?:\/|@\/)?static\/visuals\/[^'"]+\.png)['"]/g
+  const visualRefPattern = /['"]((?:\/|@\/)?static\/visuals\/[^'"]+\.(?:png|svg))['"]/g
   for (const abs of files) {
     const rel = path.relative(root, abs)
     const source = read(rel)
@@ -208,6 +221,11 @@ function checkVisualAssets() {
       const normalized = match[1].replace(/^@\//, '').replace(/^\//, '')
       assert(fs.existsSync(path.join(root, normalized)), `${rel}: visual asset reference is missing: ${match[1]}`)
     }
+  }
+  const legacyIconPngPattern = new RegExp('static/visuals/' + 'icon-[^\\\'"]+\\.png')
+  for (const abs of files) {
+    const rel = path.relative(root, abs)
+    assert(!legacyIconPngPattern.test(read(rel)), `${rel}: functional icon references must use SVG`)
   }
 
   assertIncludes('pages/index/index.vue', 'coverImageMode', 'home hero must use default-cover safe display mode')

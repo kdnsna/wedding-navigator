@@ -31,7 +31,7 @@
         </view>
       </view>
       <view class="parking-note" v-if="transportInfo.parking">
-        <image class="visual-icon-xs parking-icon" src="/static/visuals/icon-parking.png" mode="aspectFit" />
+        <image class="visual-icon-xs parking-icon" src="/static/visuals/icon-parking.svg" mode="aspectFit" />
         <text>{{ transportInfo.parking }}</text>
       </view>
     </view>
@@ -105,7 +105,7 @@
         </view>
         <view class="weather-tags" v-if="weatherData.tips">
           <view class="weather-tag" :class="{ rain: weatherData.precip > 30 }">
-            <image class="visual-icon-xs weather-tag-icon" src="/static/visuals/icon-tip.png" mode="aspectFit" />
+            <image class="visual-icon-xs weather-tag-icon" src="/static/visuals/icon-tip.svg" mode="aspectFit" />
             <text>{{ weatherData.tips }}</text>
           </view>
         </view>
@@ -127,29 +127,29 @@
       <!-- 天气详情 -->
       <view class="weather-details" v-if="weatherData && !weatherLoading">
         <view class="detail-row">
-          <image class="visual-icon-sm detail-icon" src="/static/visuals/icon-weather-wind.png" mode="aspectFit" />
+          <image class="visual-icon-sm detail-icon" src="/static/visuals/icon-weather-wind.svg" mode="aspectFit" />
           <text class="detail-text">{{ weatherData.wind }}</text>
         </view>
         <view class="detail-divider" />
         <view class="detail-row">
-          <image class="visual-icon-sm detail-icon" src="/static/visuals/icon-weather-precip.png" mode="aspectFit" />
+          <image class="visual-icon-sm detail-icon" src="/static/visuals/icon-weather-precip.svg" mode="aspectFit" />
           <text class="detail-text">降水概率 {{ weatherData.precip }}%</text>
         </view>
         <view class="detail-divider" v-if="weatherData.sunrise" />
         <view class="detail-row" v-if="weatherData.sunrise">
-          <image class="visual-icon-sm detail-icon" src="/static/visuals/icon-weather-sunrise.png" mode="aspectFit" />
+          <image class="visual-icon-sm detail-icon" src="/static/visuals/icon-weather-sunrise.svg" mode="aspectFit" />
           <text class="detail-text">{{ weatherData.sunrise }} 日出</text>
         </view>
         <view class="detail-divider" v-if="weatherData.sunset" />
         <view class="detail-row" v-if="weatherData.sunset">
-          <image class="visual-icon-sm detail-icon" src="/static/visuals/icon-weather-sunset.png" mode="aspectFit" />
+          <image class="visual-icon-sm detail-icon" src="/static/visuals/icon-weather-sunset.svg" mode="aspectFit" />
           <text class="detail-text">{{ weatherData.sunset }} 日落</text>
         </view>
       </view>
 
       <!-- 无天气 API 说明 -->
       <view class="api-note" v-if="weatherData?.isMock">
-        <image class="visual-icon-xs note-icon" src="/static/visuals/icon-warning.png" mode="aspectFit" />
+        <image class="visual-icon-xs note-icon" src="/static/visuals/icon-warning.svg" mode="aspectFit" />
         <text class="note-text">当前为模拟数据，请配置天气 API Key 以获取真实天气</text>
       </view>
     </view>
@@ -164,7 +164,7 @@
       <view v-if="transportInfo.transport || transportInfo.parking" class="info-card">
         <view class="info-row" v-if="transportInfo.transport">
           <view class="info-icon-wrap">
-            <image class="visual-icon info-row-icon" src="/static/visuals/icon-transport.png" mode="aspectFit" />
+            <image class="visual-icon info-row-icon" src="/static/visuals/icon-transport.svg" mode="aspectFit" />
           </view>
           <view class="info-content">
             <text class="info-label">出行方式</text>
@@ -174,7 +174,7 @@
         <view class="info-divider" v-if="transportInfo.transport && transportInfo.parking" />
         <view class="info-row" v-if="transportInfo.parking">
           <view class="info-icon-wrap">
-            <image class="visual-icon info-row-icon" src="/static/visuals/icon-parking.png" mode="aspectFit" />
+            <image class="visual-icon info-row-icon" src="/static/visuals/icon-parking.svg" mode="aspectFit" />
           </view>
           <view class="info-content">
             <text class="info-label">停车信息</text>
@@ -209,7 +209,7 @@
           </view>
           <view class="hotel-actions">
             <button class="hotel-btn" v-if="hotel.phone" @click="callHotel(hotel.phone)">
-              <image class="visual-icon-xs hotel-btn-icon" src="/static/visuals/icon-phone.png" mode="aspectFit" />
+              <image class="visual-icon-xs hotel-btn-icon" src="/static/visuals/icon-phone.svg" mode="aspectFit" />
               <text>一键拨打</text>
             </button>
           </view>
@@ -255,17 +255,17 @@ const weatherData = ref(null)
 const weatherLoading = ref(false)
 const weatherIcon = computed(() => {
   const iconMap = {
-    sunny: '/static/visuals/icon-weather-sunny.png',
-    cloudy: '/static/visuals/icon-weather-cloudy.png',
-    overcast: '/static/visuals/icon-weather-cloudy.png',
-    rain: '/static/visuals/icon-weather-rain.png',
-    thunder: '/static/visuals/icon-weather-rain.png',
-    fog: '/static/visuals/icon-weather-cloudy.png',
-    snow: '/static/visuals/icon-weather-rain.png',
-    dust: '/static/visuals/icon-weather-cloudy.png',
-    unknown: '/static/visuals/icon-weather-sunny.png'
+    sunny: '/static/visuals/icon-weather-sunny.svg',
+    cloudy: '/static/visuals/icon-weather-cloudy.svg',
+    overcast: '/static/visuals/icon-weather-cloudy.svg',
+    rain: '/static/visuals/icon-weather-rain.svg',
+    thunder: '/static/visuals/icon-weather-rain.svg',
+    fog: '/static/visuals/icon-weather-cloudy.svg',
+    snow: '/static/visuals/icon-weather-rain.svg',
+    dust: '/static/visuals/icon-weather-cloudy.svg',
+    unknown: '/static/visuals/icon-weather-sunny.svg'
   }
-  return iconMap[weatherData.value?.icon] || '/static/visuals/icon-weather-sunny.png'
+  return iconMap[weatherData.value?.icon] || '/static/visuals/icon-weather-sunny.svg'
 })
 
 const venues = computed(() => store.venues?.venues || [])

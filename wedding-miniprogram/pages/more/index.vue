@@ -15,31 +15,31 @@
     <!-- 功能列表 -->
     <view class="menu-group">
       <view class="menu-item" @click="goToRSVP">
-        <image class="visual-icon menu-icon" src="/static/visuals/icon-rsvp.png" mode="aspectFit" />
+        <image class="visual-icon menu-icon" src="/static/visuals/icon-rsvp.svg" mode="aspectFit" />
         <text class="menu-title">出席回执</text>
         <text class="menu-arrow">›</text>
       </view>
       <view class="divider" />
       <view class="menu-item" @click="goToBlessing">
-        <image class="visual-icon menu-icon" src="/static/visuals/icon-blessing.png" mode="aspectFit" />
+        <image class="visual-icon menu-icon" src="/static/visuals/icon-blessing.svg" mode="aspectFit" />
         <text class="menu-title">祝福墙</text>
         <text class="menu-arrow">›</text>
       </view>
       <view class="divider" />
       <view class="menu-item" @click="goToGuide">
-        <image class="visual-icon menu-icon" src="/static/visuals/icon-guide.png" mode="aspectFit" />
+        <image class="visual-icon menu-icon" src="/static/visuals/icon-guide.svg" mode="aspectFit" />
         <text class="menu-title">婚礼路书</text>
         <text class="menu-arrow">›</text>
       </view>
       <view class="divider" />
       <view class="menu-item" @click="goToTimeline">
-        <image class="visual-icon menu-icon" src="/static/visuals/icon-timeline.png" mode="aspectFit" />
+        <image class="visual-icon menu-icon" src="/static/visuals/icon-timeline.svg" mode="aspectFit" />
         <text class="menu-title">婚礼流程</text>
         <text class="menu-arrow">›</text>
       </view>
       <view class="divider" />
       <view class="menu-item" @click="goToAlbum">
-        <image class="visual-icon menu-icon" src="/static/visuals/icon-album.png" mode="aspectFit" />
+        <image class="visual-icon menu-icon" src="/static/visuals/icon-album.svg" mode="aspectFit" />
         <text class="menu-title">婚纱相册</text>
         <text class="menu-arrow">›</text>
       </view>
@@ -47,13 +47,13 @@
 
     <view class="menu-group">
       <view class="menu-item" @click="goToManage">
-        <image class="visual-icon menu-icon" src="/static/visuals/icon-manage.png" mode="aspectFit" />
+        <image class="visual-icon menu-icon" src="/static/visuals/icon-manage.svg" mode="aspectFit" />
         <text class="menu-title">管理后台</text>
         <text class="menu-arrow">›</text>
       </view>
       <view class="divider" />
       <button class="menu-item contact-btn" open-type="contact">
-        <image class="visual-icon menu-icon" src="/static/visuals/icon-phone.png" mode="aspectFit" />
+        <image class="visual-icon menu-icon" src="/static/visuals/icon-phone.svg" mode="aspectFit" />
         <text class="menu-title">联系客服</text>
         <text class="menu-arrow">›</text>
       </button>

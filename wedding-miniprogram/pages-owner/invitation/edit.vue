@@ -127,7 +127,7 @@
         >
           <image
             class="visual-icon-sm music-icon"
-            :src="form.bgMusicId === music.id ? '/static/visuals/icon-speaker.png' : '/static/visuals/icon-music.png'"
+            :src="form.bgMusicId === music.id ? '/static/visuals/icon-speaker.svg' : '/static/visuals/icon-music.svg'"
             mode="aspectFit"
           />
           <text class="music-name">{{ music.name }}</text>

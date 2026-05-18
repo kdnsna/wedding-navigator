@@ -248,6 +248,12 @@ MINIPROGRAM_PRIVATE_KEY_PATH=/path/to/private.key npm run upload:mp-weixin
 
 模板配置集中在 `utils/templates.js`，创建向导会先展示四套模板并套用对应预设文案，婚书编辑、首页、RSVP、相册、路书、流程和更多页都会读取同一份模板配置。
 
+功能图标统一使用 `static/visuals/icon-*.svg` 矢量线性图标，透明画布、无方形底板，主描边为近黑，局部使用玫瑰红和香槟金点缀。需要调整或重新生成图标时运行：
+
+```bash
+node scripts/generate-vector-icons.js
+```
+
 ## 双角色架构
 
 | 维度 | 主人端 | 宾客端 |

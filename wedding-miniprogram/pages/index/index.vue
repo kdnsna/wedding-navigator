@@ -117,7 +117,7 @@
       <view class="info-list stagger-2">
         <view class="info-row" @click="openCalendar">
           <view class="info-icon-wrap">
-            <image class="visual-icon info-icon" src="/static/visuals/icon-date.png" mode="aspectFit" />
+            <image class="visual-icon info-icon" src="/static/visuals/icon-date.svg" mode="aspectFit" />
           </view>
           <view class="info-meta">
             <text class="info-label">日期 DATE</text>
@@ -128,7 +128,7 @@
         <view class="info-divider" />
         <view class="info-row">
           <view class="info-icon-wrap">
-            <image class="visual-icon info-icon" src="/static/visuals/icon-time.png" mode="aspectFit" />
+            <image class="visual-icon info-icon" src="/static/visuals/icon-time.svg" mode="aspectFit" />
           </view>
           <view class="info-meta">
             <text class="info-label">时间 TIME</text>
@@ -138,7 +138,7 @@
         <view class="info-divider" />
         <view class="info-row" @click="openNavigation">
           <view class="info-icon-wrap">
-            <image class="visual-icon info-icon" src="/static/visuals/icon-location.png" mode="aspectFit" />
+            <image class="visual-icon info-icon" src="/static/visuals/icon-location.svg" mode="aspectFit" />
           </view>
           <view class="info-meta">
             <text class="info-label">地点 VENUE</text>
@@ -162,7 +162,7 @@
       </view>
       <view class="quick-grid">
         <view class="quick-item stagger-1" @click="goToAlbum">
-          <image class="visual-icon quick-icon" src="/static/visuals/icon-album.png" mode="aspectFit" />
+          <image class="visual-icon quick-icon" src="/static/visuals/icon-album.svg" mode="aspectFit" />
           <view class="quick-meta">
             <text class="quick-label">婚纱相册</text>
             <text class="quick-en">ALBUM</text>
@@ -170,7 +170,7 @@
           <text class="quick-arrow">›</text>
         </view>
         <view class="quick-item stagger-2" @click="goToGuide">
-          <image class="visual-icon quick-icon" src="/static/visuals/icon-guide.png" mode="aspectFit" />
+          <image class="visual-icon quick-icon" src="/static/visuals/icon-guide.svg" mode="aspectFit" />
           <view class="quick-meta">
             <text class="quick-label">婚礼路书</text>
             <text class="quick-en">GUIDE</text>
@@ -178,7 +178,7 @@
           <text class="quick-arrow">›</text>
         </view>
         <view class="quick-item stagger-3" @click="goToTimeline">
-          <image class="visual-icon quick-icon" src="/static/visuals/icon-timeline.png" mode="aspectFit" />
+          <image class="visual-icon quick-icon" src="/static/visuals/icon-timeline.svg" mode="aspectFit" />
           <view class="quick-meta">
             <text class="quick-label">婚礼流程</text>
             <text class="quick-en">TIMELINE</text>
@@ -186,7 +186,7 @@
           <text class="quick-arrow">›</text>
         </view>
         <view class="quick-item stagger-4" @click="goToBlessing">
-          <image class="visual-icon quick-icon" src="/static/visuals/icon-blessing.png" mode="aspectFit" />
+          <image class="visual-icon quick-icon" src="/static/visuals/icon-blessing.svg" mode="aspectFit" />
           <view class="quick-meta">
             <text class="quick-label">祝福留言</text>
             <text class="quick-en">BLESSING</text>
@@ -248,7 +248,7 @@
       <image
         class="music-icon"
         :class="{ playing: isMusicPlaying }"
-        :src="isMusicPlaying ? '/static/visuals/icon-speaker.png' : '/static/visuals/icon-music.png'"
+        :src="isMusicPlaying ? '/static/visuals/icon-speaker.svg' : '/static/visuals/icon-music.svg'"
         mode="aspectFit"
       />
     </view>

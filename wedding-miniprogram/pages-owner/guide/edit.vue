@@ -75,7 +75,7 @@
             <text class="hotel-tag" v-if="hotel.price_range">{{ hotel.price_range }}</text>
           </view>
           <view class="hotel-phone" v-if="hotel.phone" @click="callHotel(hotel.phone)">
-            <image class="visual-icon-xs hotel-phone-icon" src="/static/visuals/icon-phone.png" mode="aspectFit" />
+            <image class="visual-icon-xs hotel-phone-icon" src="/static/visuals/icon-phone.svg" mode="aspectFit" />
             <text>{{ hotel.phone }}</text>
           </view>
         </view>

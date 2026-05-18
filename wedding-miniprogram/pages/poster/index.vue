@@ -27,7 +27,7 @@
     <!-- 操作按钮 -->
     <view class="actions">
       <button class="action-btn primary" @click="saveToAlbum" :disabled="!posterReady">
-        <image class="action-visual-icon" src="/static/visuals/icon-save.png" mode="aspectFit" />
+        <image class="action-visual-icon" src="/static/visuals/icon-save.svg" mode="aspectFit" />
         <text class="action-text">保存到相册</text>
       </button>
       <button class="action-btn" open-type="share" :disabled="!posterReady">
