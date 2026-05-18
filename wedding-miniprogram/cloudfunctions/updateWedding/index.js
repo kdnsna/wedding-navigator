@@ -36,9 +36,9 @@ exports.main = async (event, context) => {
       delete cleanData[field]
     }
 
-    // timelines 集合结构为 { events: [...] }，venues 为 { venues: [], transportation: {}, accommodations: [] }，
-    // albums 为 { photos: [...] }，均不需要 [collection] 包装，直接存储对象本身（与 createWedding 初始化格式保持一致）
-    const isObjectCollection = ['venues', 'timelines', 'albums'].includes(collection)
+    // 这些集合的文档本身就是业务对象，例如 albums: { photos: [] }、guests: { guests: [] }。
+    // 直接写对象，避免把 guests 写成 { guests: { guests: [...] } } 这类嵌套结构。
+    const isObjectCollection = ['venues', 'timelines', 'albums', 'guests', 'blessings'].includes(collection)
     const updateData = isObjectCollection
       ? { ...cleanData, updated_at: Date.now() }
       : { [collection]: cleanData, updated_at: Date.now() }

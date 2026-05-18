@@ -66,13 +66,16 @@ async function callFunction(name, data = {}, options = {}) {
 async function fetchWedding(weddingId, forceRefresh = false) {
   const store = useWeddingStore()
   const userStore = useUserStore()
-  if (!forceRefresh && store.isCacheValid) {
+  if (!weddingId) {
+    throw new Error('缺少婚礼ID')
+  }
+  if (!forceRefresh && store.isCacheValidFor(weddingId)) {
     return { data: true, fromCache: true }
   }
   try {
     const res = await callFunction('getWedding', { weddingId }, { timeoutMs: 10000 })
     if (res?.data) {
-      store.setWeddingData(res.data)
+      store.setWeddingData(res.data, weddingId)
       if (res.isOwner || res.data.isOwner || res.data.is_owner) {
         userStore.verifyOwner(true)
       }
@@ -159,8 +162,10 @@ async function uploadFile(filePath, cloudPath) {
       return
     }
 
+    const extMatch = String(filePath || '').match(/\.([a-zA-Z0-9]+)(?:\?|$)/)
+    const ext = (extMatch?.[1] || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg'
     cloudApi.uploadFile({
-      cloudPath: cloudPath || `uploads/${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`,
+      cloudPath: cloudPath || `uploads/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`,
       filePath,
       success: (res) => resolve(res),
       fail: (err) => reject(err)

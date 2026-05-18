@@ -100,9 +100,29 @@ function checkOwnerGuard() {
 function checkCloudSafety() {
   const weatherSource = stripComments(read('cloudfunctions/getWeather/index.js'))
   assert(!weatherSource.includes('ea363fcdd56742fa84a17c4b11b37bdc'), 'getWeather must not hardcode a production API key')
+  assertIncludes('cloudfunctions/submitRSVP/index.js', 'CONTENT_SAFETY_MODE', 'submitRSVP must support configurable content safety fallback')
+  assertIncludes('cloudfunctions/submitBlessing/index.js', 'CONTENT_SAFETY_MODE', 'submitBlessing must support configurable content safety fallback')
   assertIncludes('cloudfunctions/recordView/index.js', 'ensureStatsDocument', 'recordView must initialize missing stats documents')
   assertIncludes('composables/useCloud.js', 'recordShare', 'useCloud must expose share tracking')
   assertIncludes('pages/index/index.vue', 'recordShare', 'index share handlers must track shares')
+}
+
+function checkDataContracts() {
+  assertIncludes('stores/wedding.js', 'cachedWeddingId', 'wedding store must bind cache to the current weddingId')
+  assertIncludes('stores/wedding.js', 'isCacheValidFor', 'wedding store must expose weddingId-aware cache validation')
+  assertIncludes('stores/wedding.js', 'normalizeListDocument', 'wedding store must normalize legacy nested list documents')
+  assertIncludes('composables/useCloud.js', 'isCacheValidFor(weddingId)', 'fetchWedding must not reuse cache across weddingId values')
+  assertIncludes('cloudfunctions/updateWedding/index.js', "'guests'", 'updateWedding must persist guests without nested wrappers')
+  assertIncludes('cloudfunctions/updateWedding/index.js', "'blessings'", 'updateWedding must persist blessings without nested wrappers')
+}
+
+function checkUploadScript() {
+  const source = read('upload.mjs')
+  assert(source.includes('MINIPROGRAM_PRIVATE_KEY_PATH'), 'upload script must read private key path from environment')
+  assert(source.includes('MINIPROGRAM_PROJECT_PATH'), 'upload script must allow overriding project path')
+  assert(!source.includes('/Users/kdnsna/Desktop'), 'upload script must not hardcode local private key paths')
+  assert(!source.includes('/Users/kdnsna/Documents/06-项目代码'), 'upload script must not hardcode local build paths')
+  assertIncludes('package.json', 'upload:mp-weixin', 'package scripts must expose the miniprogram upload command')
 }
 
 function checkReleaseDocs() {
@@ -160,6 +180,8 @@ checkNavigationTargets()
 checkRsvpContract()
 checkOwnerGuard()
 checkCloudSafety()
+checkDataContracts()
+checkUploadScript()
 checkReleaseDocs()
 checkVisualAssets()
 

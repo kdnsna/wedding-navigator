@@ -46,12 +46,17 @@ export const useWeddingStore = defineStore('wedding', () => {
   const loading = ref(false)
   const error = ref(null)
   const lastFetchTime = ref(0)
+  const cachedWeddingId = ref('')
 
   const CACHE_TTL = 5 * 60 * 1000
 
   const isCacheValid = computed(() => {
     return lastFetchTime.value > 0 && (Date.now() - lastFetchTime.value) < CACHE_TTL
   })
+
+  function isCacheValidFor(weddingId) {
+    return Boolean(weddingId && cachedWeddingId.value === weddingId && isCacheValid.value)
+  }
 
   // Getters
   function guestStatus(guest) {
@@ -60,6 +65,16 @@ export const useWeddingStore = defineStore('wedding', () => {
 
   function guestCount(guest) {
     return Number(guest?.attending_count ?? guest?.guestCount ?? guest?.guest_count ?? 1)
+  }
+
+  function normalizeListDocument(doc, key) {
+    if (!doc) return null
+    const nested = doc[key]
+    if (Array.isArray(nested)) return doc
+    if (nested && Array.isArray(nested[key])) {
+      return { ...doc, [key]: nested[key] }
+    }
+    return { ...doc, [key]: [] }
   }
 
   const coupleName = computed(() => {
@@ -224,7 +239,7 @@ export const useWeddingStore = defineStore('wedding', () => {
   })
 
   // Actions
-  function setWeddingData(data) {
+  function setWeddingData(data, weddingId = '') {
     wedding.value = data.wedding || fallbackWedding
     invitation.value = data.invitation || fallbackInvitation
     album.value = data.album || { photos: [] }
@@ -234,9 +249,10 @@ export const useWeddingStore = defineStore('wedding', () => {
       accommodations: data.venues.accommodations || []
     } : fallbackVenues
     timeline.value = data.timeline || null
-    guests.value = data.guests || null
-    blessings.value = data.blessings || null
+    guests.value = normalizeListDocument(data.guests, 'guests')
+    blessings.value = normalizeListDocument(data.blessings, 'blessings')
     lastFetchTime.value = Date.now()
+    cachedWeddingId.value = weddingId || data.wedding?._id || data.wedding?.wedding_id || ''
   }
 
   function updateWeddingField(field, value) {
@@ -323,7 +339,9 @@ export const useWeddingStore = defineStore('wedding', () => {
     loading,
     error,
     lastFetchTime,
+    cachedWeddingId,
     isCacheValid,
+    isCacheValidFor,
     coupleName,
     weddingDate,
     weddingTime,

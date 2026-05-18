@@ -128,7 +128,8 @@ npm install
 1. 在 `manifest.json` 中配置你的微信小程序 AppID
 2. 在 `config/cloud.js` 中配置云开发环境 ID：`CLOUD_ENV`
 3. 如需真实天气，在 `getWeather` 云函数环境变量中配置 `HEFENG_KEY`
-4. 在 `cloudfunctions/*/config.json` 中按需配置权限
+4. 如需内容安全接口失败时阻断提交，在 `submitRSVP`、`submitBlessing` 云函数环境变量中配置 `CONTENT_SAFETY_MODE=strict`
+5. 在 `cloudfunctions/*/config.json` 中按需配置权限
 
 ### 运行到微信开发者工具
 
@@ -174,6 +175,12 @@ HEFENG_KEY=你的和风天气Key
 
 未配置时会返回模拟天气，不会阻断路书页。
 
+祝福和 RSVP 留言会调用微信内容安全接口。默认策略为“接口不可用时降级放行，接口明确判定违规时阻断”；如果希望接口不可用也阻断提交，请为 `submitRSVP`、`submitBlessing` 配置：
+
+```
+CONTENT_SAFETY_MODE=strict
+```
+
 ### 3. 创建数据库索引
 
 在云开发数据库控制台中，为以下字段创建索引：
@@ -191,6 +198,19 @@ HEFENG_KEY=你的和风天气Key
 
 或在微信开发者工具中点击【上传】。
 
+也可以使用 CLI 上传，避免把本机路径或密钥写进代码：
+
+```bash
+npm run build:mp-weixin
+MINIPROGRAM_PRIVATE_KEY_PATH=/path/to/private.key npm run upload:mp-weixin
+```
+
+可选环境变量：
+- `MINIPROGRAM_APPID`：覆盖 `manifest.json` 中的 AppID
+- `MINIPROGRAM_PROJECT_PATH`：覆盖默认的 `dist/build/mp-weixin`
+- `MINIPROGRAM_VERSION`：覆盖上传版本号
+- `MINIPROGRAM_UPLOAD_DESC`：覆盖上传描述
+
 ### 5. 配置分享
 
 在小程序后台配置页面分享权限，确保 `pages/index/index` 可被分享。
@@ -204,6 +224,7 @@ HEFENG_KEY=你的和风天气Key
 - 数据库索引已创建：`viewers.wedding_id + viewers.openid`、`guests.guests.phone`、`blessings.blessings.id`
 - 已运行 `npm run check:release` 并通过
 - 已运行 `npm run build:mp-weixin`，并确认 `dist/build/mp-weixin` 可由微信开发者工具打开
+- 如使用 CLI 上传，已设置 `MINIPROGRAM_PRIVATE_KEY_PATH`，且未把上传密钥路径写入仓库
 - 在微信开发者工具中完成首页宾客行动台、RSVP 新字段、祝福墙、到场助手、管理后台发布准备度、宾客管理、统计页的模拟器检查
 
 ## 设计系统

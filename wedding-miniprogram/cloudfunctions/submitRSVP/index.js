@@ -117,6 +117,9 @@ async function checkContentSafety(content) {
     }
   } catch (err) {
     console.error('msgSecCheck failed:', err)
-    return { safe: false, message: '内容安全校验暂不可用，请稍后重试' }
+    if (process.env.CONTENT_SAFETY_MODE === 'strict') {
+      return { safe: false, message: '内容安全校验暂不可用，请稍后重试' }
+    }
+    return { safe: true, degraded: true, message: '内容安全校验暂不可用，已按降级策略提交' }
   }
 }
