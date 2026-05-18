@@ -35,11 +35,11 @@ exports.main = async (event, context) => {
       }
     }).catch(async (err) => {
       // 文档不存在则创建
-      if (err.errCode === -502005) {
-        await db.collection('blessings').add({
+      if (isDocNotExistError(err)) {
+        await db.collection('blessings').doc(weddingId).set({
           data: {
-            _id: weddingId,
             blessings: [newBlessing],
+            created_at: Date.now(),
             updated_at: Date.now()
           }
         })
@@ -53,6 +53,13 @@ exports.main = async (event, context) => {
     console.error(err)
     return { success: false, message: err.message }
   }
+}
+
+function isDocNotExistError(err) {
+  if (!err) return false
+  if (err.errCode === -1 || err.errCode === -502005 || err.errCode === 'DATABASE_COLLECTION_NOT_EXIST') return true
+  const msg = String(err.errMsg || err.message || '').toLowerCase()
+  return msg.includes('not exist') || msg.includes('does not exist') || msg.includes('not found')
 }
 
 async function checkContentSafety(content) {

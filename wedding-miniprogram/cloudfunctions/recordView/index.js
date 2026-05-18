@@ -30,9 +30,15 @@ exports.main = async (event, context) => {
       data: updateData
     }).catch(async (err) => {
       // 文档不存在则创建
-      if (err.errCode === -502005) {
-        await db.collection('share_stats').add({
-          data: { _id: weddingId, views: type === 'view' ? 1 : 0, shares: type === 'share' ? 1 : 0, unique_viewers: 0, updated_at: Date.now() }
+      if (isDocNotExistError(err)) {
+        await db.collection('share_stats').doc(weddingId).set({
+          data: {
+            views: type === 'view' ? 1 : 0,
+            shares: type === 'share' ? 1 : 0,
+            unique_viewers: 0,
+            created_at: Date.now(),
+            updated_at: Date.now()
+          }
         })
       } else {
         throw err
@@ -91,6 +97,7 @@ async function ensureStatsDocument(weddingId) {
   try {
     await db.collection('share_stats').doc(weddingId).get()
   } catch (err) {
+    if (!isDocNotExistError(err)) throw err
     await db.collection('share_stats').doc(weddingId).set({
       data: {
         views: 0,

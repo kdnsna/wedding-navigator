@@ -21,6 +21,10 @@ function assertIncludes(file, text, message) {
   assert(read(file).includes(text), `${file}: ${message}`)
 }
 
+function countOccurrences(source, text) {
+  return source.split(text).length - 1
+}
+
 function stripComments(source) {
   return source
     .replace(/\/\*[\s\S]*?\*\//g, '')
@@ -105,8 +109,11 @@ function checkCloudSafety() {
   const weatherSource = stripComments(read('cloudfunctions/getWeather/index.js'))
   assert(!weatherSource.includes('ea363fcdd56742fa84a17c4b11b37bdc'), 'getWeather must not hardcode a production API key')
   assertIncludes('cloudfunctions/submitRSVP/index.js', 'CONTENT_SAFETY_MODE', 'submitRSVP must support configurable content safety fallback')
+  assertIncludes('cloudfunctions/submitRSVP/index.js', 'err.errCode === -502005', 'submitRSVP must handle missing guest documents consistently')
   assertIncludes('cloudfunctions/submitBlessing/index.js', 'CONTENT_SAFETY_MODE', 'submitBlessing must support configurable content safety fallback')
+  assertIncludes('cloudfunctions/submitBlessing/index.js', 'isDocNotExistError', 'submitBlessing must create missing blessing documents for older weddings')
   assertIncludes('cloudfunctions/recordView/index.js', 'ensureStatsDocument', 'recordView must initialize missing stats documents')
+  assertIncludes('cloudfunctions/recordView/index.js', 'isDocNotExistError(err)', 'recordView must distinguish missing stats docs from transient failures')
   assertIncludes('composables/useCloud.js', 'recordShare', 'useCloud must expose share tracking')
   assertIncludes('pages/index/index.vue', 'recordShare', 'index share handlers must track shares')
   assertIncludes('cloudfunctions/geocodeVenue/index.js', 'TENCENT_MAP_KEY', 'geocodeVenue must use configurable Tencent Map key')
@@ -176,6 +183,12 @@ function checkTemplateSystem() {
   assertIncludes('pages-owner/guide/edit.vue', 'chooseVenueLocation', 'owner guide editor must allow manual map point selection')
   assertIncludes('pages-owner/guide/edit.vue', 'confirmMapFallback', 'owner guide editor must surface geocoding failures instead of silently saving')
   assertIncludes('pages-owner/guide/edit.vue', 'cloneVenues', 'owner guide editor must rollback venue state when cloud save fails')
+  for (const file of ['pages-owner/guests/manage.vue', 'pages-owner/blessing/manage.vue', 'pages-owner/timeline/edit.vue']) {
+    assertIncludes(file, 'fetchWedding(userStore.weddingId, true)', `${file} must force-refresh cloud data on entry`)
+    assertIncludes(file, 'await saveToStorage()', `${file} must await cloud persistence before success feedback`)
+    assertIncludes(file, 'clone', `${file} must keep a rollback snapshot for failed saves`)
+  }
+  assert(countOccurrences(read('pages/index/index.vue'), '<view class="preview-header">') === 2, 'home page must not contain duplicated preview headers')
   assertIncludes('cloudfunctions/getWeather/index.js', 'geocodeVenue', 'getWeather must geocode venue fallback when coordinates are missing')
 }
 
@@ -183,6 +196,7 @@ function checkUploadScript() {
   const source = read('upload.mjs')
   assert(source.includes('WECHAT_DEVTOOLS_CLI_PATH'), 'upload script must allow overriding WeChat DevTools CLI path')
   assert(source.includes('MINIPROGRAM_PROJECT_PATH'), 'upload script must allow overriding project path')
+  assert(source.includes('pkg.version'), 'upload script must default to package.json version for consistent releases')
   assert(source.includes('cliPath'), 'upload script must use the WeChat DevTools CLI')
   assert(!source.includes('/Users/kdnsna/Desktop'), 'upload script must not hardcode local private key paths')
   assert(!source.includes('/Users/kdnsna/Documents/06-项目代码'), 'upload script must not hardcode local build paths')

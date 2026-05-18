@@ -81,7 +81,7 @@
         </view>
         <view class="modal-footer">
           <button class="modal-btn secondary" @click="showModal = false">取消</button>
-          <button class="modal-btn primary" @click="saveEvent">确定</button>
+          <button class="modal-btn primary" :loading="saving" :disabled="saving" @click="saveEvent">确定</button>
         </view>
       </view>
     </view>
@@ -93,15 +93,17 @@ import { ref, computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
-import { generateId, showSuccess } from '@/utils/index.js'
+import { generateId, showSuccess, showError } from '@/utils/index.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
-import { updateWedding } from '@/composables/useCloud.js'
+import { fetchWedding, updateWedding } from '@/composables/useCloud.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
 
 const showModal = ref(false)
 const editingEvent = ref(null)
+const saving = ref(false)
+const refreshing = ref(false)
 
 const modalForm = ref({ time: '', title: '', venueIndex: 0, notes: '', isImportant: false })
 
@@ -137,53 +139,85 @@ function editEvent(event) {
 function onTimeChange(e) { modalForm.value.time = e.detail.value }
 function onVenueChange(e) { modalForm.value.venueIndex = e.detail.value }
 
-function saveEvent() {
+async function saveEvent() {
+  if (saving.value) return
+  if (!modalForm.value.time) {
+    showError('请选择时间')
+    return
+  }
+  if (!modalForm.value.title.trim()) {
+    showError('请输入事件名称')
+    return
+  }
+  const previousTimeline = cloneTimeline()
+  saving.value = true
   const venueId = modalForm.value.venueIndex > 0 ? venues.value[modalForm.value.venueIndex - 1]?.id : ''
   const event = {
     id: editingEvent.value?.id || generateId(),
     time: modalForm.value.time,
-    title: modalForm.value.title,
+    title: modalForm.value.title.trim(),
     venue_id: venueId,
-    notes: modalForm.value.notes,
+    notes: modalForm.value.notes.trim(),
     is_important: modalForm.value.isImportant,
     sort_order: 0
   }
-  if (editingEvent.value) {
+  try {
     if (!store.timeline) store.timeline = { events: [] }
     if (!store.timeline.events) store.timeline.events = []
-    const idx = store.timeline.events.findIndex(e => e.id === editingEvent.value.id)
-    if (idx >= 0) store.timeline.events[idx] = event
-  } else {
-    store.addTimelineEvent(event)
+    if (editingEvent.value) {
+      const idx = store.timeline.events.findIndex(e => e.id === editingEvent.value.id)
+      if (idx >= 0) store.timeline.events[idx] = event
+    } else {
+      store.timeline.events.push(event)
+    }
+    sortTimelineEvents()
+    await saveToStorage()
+    showModal.value = false
+    showSuccess('保存成功')
+  } catch (err) {
+    store.timeline = previousTimeline
+    console.error('流程保存失败:', err)
+    showError(err?.message || '保存失败，请重试')
+  } finally {
+    saving.value = false
   }
-  saveToStorage()
-  showModal.value = false
-  showSuccess('保存成功')
 }
 
 function deleteEvent(id) {
   uni.showModal({
     title: '确认删除',
     content: '确定删除该时间节点？',
-    success: (res) => {
+    success: async (res) => {
       if (res.confirm) {
-        if (store.timeline && Array.isArray(store.timeline.events)) {
-          store.timeline.events = store.timeline.events.filter(e => e.id !== id)
+        const previousTimeline = cloneTimeline()
+        try {
+          if (store.timeline && Array.isArray(store.timeline.events)) {
+            store.timeline.events = store.timeline.events.filter(e => e.id !== id)
+          }
+          await saveToStorage()
+          showSuccess('已删除')
+        } catch (err) {
+          store.timeline = previousTimeline
+          console.error('流程删除失败:', err)
+          showError(err?.message || '删除失败，请重试')
         }
-        saveToStorage()
-        showSuccess('已删除')
       }
     }
   })
 }
 
 async function saveToStorage() {
+  if (!userStore.weddingId) {
+    throw new Error('未找到婚礼信息，请重新进入')
+  }
+  if (!store.timeline) store.timeline = { events: [] }
+  if (!store.timeline.events) store.timeline.events = []
   try {
     // 先同步云端
     await updateWedding(userStore.weddingId, 'timelines', store.timeline)
   } catch (err) {
     console.error('timeline 云端保存失败:', err)
-    uni.showToast({ title: '云端同步失败', icon: 'none' })
+    throw new Error(err?.message || '云端同步失败')
   }
   // 再缓存本地（离线兜底）
   const weddings = uni.getStorageSync('weddings') || {}
@@ -193,7 +227,35 @@ async function saveToStorage() {
   }
 }
 
-onShow(() => { useOwnerGuard() })
+function cloneTimeline() {
+  const timelineData = store.timeline || { events: [] }
+  return JSON.parse(JSON.stringify({
+    ...timelineData,
+    events: timelineData.events || []
+  }))
+}
+
+function sortTimelineEvents() {
+  if (store.timeline?.events) {
+    store.timeline.events.sort((a, b) => String(a.time || '').localeCompare(String(b.time || '')))
+  }
+}
+
+async function refreshTimeline() {
+  if (!useOwnerGuard()) return
+  if (!userStore.weddingId || refreshing.value) return
+  refreshing.value = true
+  try {
+    await fetchWedding(userStore.weddingId, true)
+  } catch (err) {
+    console.error('流程刷新失败:', err)
+    showError(err?.message || '流程刷新失败')
+  } finally {
+    refreshing.value = false
+  }
+}
+
+onShow(refreshTimeline)
 </script>
 
 <style lang="scss" scoped>

@@ -5,7 +5,7 @@ const _ = db.command
 
 function isDocNotExistError(err) {
   if (!err) return false
-  if (err.errCode === -1 || err.errCode === 'DATABASE_COLLECTION_NOT_EXIST') return true
+  if (err.errCode === -1 || err.errCode === -502005 || err.errCode === 'DATABASE_COLLECTION_NOT_EXIST') return true
   const msg = (err.errMsg || err.message || '').toLowerCase()
   return msg.includes('not exist') || msg.includes('does not exist') || msg.includes('not found')
 }

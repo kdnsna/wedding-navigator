@@ -137,7 +137,7 @@
         </view>
         <view class="modal-footer">
           <button class="modal-btn secondary" @click="showModal = false">取消</button>
-          <button class="modal-btn primary" @click="saveGuest">确定</button>
+          <button class="modal-btn primary" :loading="saving" :disabled="saving" @click="saveGuest">确定</button>
         </view>
       </view>
     </view>
@@ -149,9 +149,9 @@ import { ref, computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
-import { generateId, showSuccess } from '@/utils/index.js'
+import { generateId, showSuccess, showError } from '@/utils/index.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
-import { updateWedding } from '@/composables/useCloud.js'
+import { fetchWedding, updateWedding } from '@/composables/useCloud.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
@@ -159,6 +159,8 @@ const userStore = useUserStore()
 const showModal = ref(false)
 const editingGuest = ref(null)
 const currentFilter = ref('all')
+const saving = ref(false)
+const refreshing = ref(false)
 
 const rsvpOptions = ['未填写', '出席', '待定', '缺席']
 const statusMap = { '未填写': 'pending', '出席': 'attending', '待定': 'uncertain', '缺席': 'declined' }
@@ -225,54 +227,86 @@ function onRelationshipChange(e) { modalForm.value.relationshipIndex = e.detail.
 function onArrivalTimeChange(e) { modalForm.value.arrivalTime = e.detail.value }
 function onTransportChange(e) { modalForm.value.transportIndex = e.detail.value }
 
-function saveGuest() {
+async function saveGuest() {
+  if (saving.value) return
+  if (!modalForm.value.name.trim()) {
+    showError('请输入宾客姓名')
+    return
+  }
+  if (!modalForm.value.phone.trim()) {
+    showError('请输入手机号')
+    return
+  }
+  const previousGuests = cloneGuests()
+  saving.value = true
   const guest = {
     id: editingGuest.value?.id || generateId(),
-    name: modalForm.value.name,
-    phone: modalForm.value.phone,
+    name: modalForm.value.name.trim(),
+    phone: modalForm.value.phone.trim(),
     rsvp_status: statusMap[rsvpOptions[modalForm.value.statusIndex]],
-    attending_count: modalForm.value.count,
+    attending_count: statusMap[rsvpOptions[modalForm.value.statusIndex]] === 'declined' ? 0 : Math.max(1, Number(modalForm.value.count) || 1),
     diet_preference: dietMap[dietOptions[modalForm.value.dietIndex]],
     relationship: relationshipOptions[modalForm.value.relationshipIndex] === '未填写' ? '' : relationshipOptions[modalForm.value.relationshipIndex],
     arrival_time: modalForm.value.arrivalTime,
     transport_mode: transportOptions[modalForm.value.transportIndex] === '未填写' ? '' : transportOptions[modalForm.value.transportIndex],
-    companion_note: modalForm.value.companionNote,
+    companion_note: modalForm.value.companionNote.trim(),
     created_at: editingGuest.value?.created_at || Date.now()
   }
-  if (editingGuest.value) {
+  try {
     if (!store.guests) store.guests = { guests: [] }
     if (!store.guests.guests) store.guests.guests = []
-    const idx = store.guests.guests.findIndex(g => g.id === editingGuest.value.id)
-    if (idx >= 0) store.guests.guests[idx] = guest
-  } else {
-    store.addGuest(guest)
+    if (editingGuest.value) {
+      const idx = store.guests.guests.findIndex(g => g.id === editingGuest.value.id)
+      if (idx >= 0) store.guests.guests[idx] = guest
+    } else {
+      store.addGuest(guest)
+    }
+    await saveToStorage()
+    showModal.value = false
+    showSuccess('保存成功')
+  } catch (err) {
+    store.guests = previousGuests
+    console.error('宾客保存失败:', err)
+    showError(err?.message || '保存失败，请重试')
+  } finally {
+    saving.value = false
   }
-  saveToStorage()
-  showModal.value = false
-  showSuccess('保存成功')
 }
 
 function deleteGuest(id) {
   uni.showModal({
     title: '确认删除',
     content: '确定删除该宾客？',
-    success: (res) => {
+    success: async (res) => {
       if (res.confirm) {
-        if (store.guests && Array.isArray(store.guests.guests)) {
-          store.guests.guests = store.guests.guests.filter(g => g.id !== id)
+        const previousGuests = cloneGuests()
+        try {
+          if (store.guests && Array.isArray(store.guests.guests)) {
+            store.guests.guests = store.guests.guests.filter(g => g.id !== id)
+          }
+          await saveToStorage()
+          showSuccess('已删除')
+        } catch (err) {
+          store.guests = previousGuests
+          console.error('宾客删除失败:', err)
+          showError(err?.message || '删除失败，请重试')
         }
-        saveToStorage()
-        showSuccess('已删除')
       }
     }
   })
 }
 
 async function saveToStorage() {
+  if (!userStore.weddingId) {
+    throw new Error('未找到婚礼信息，请重新进入')
+  }
+  if (!store.guests) store.guests = { guests: [] }
+  if (!store.guests.guests) store.guests.guests = []
   try {
     await updateWedding(userStore.weddingId, 'guests', store.guests)
   } catch (err) {
     console.error('guests 云端保存失败:', err)
+    throw new Error(err?.message || '云端同步失败')
   }
   const weddings = uni.getStorageSync('weddings') || {}
   if (weddings[userStore.weddingId]) {
@@ -281,7 +315,26 @@ async function saveToStorage() {
   }
 }
 
-onShow(() => { useOwnerGuard() })
+function cloneGuests() {
+  const guestsData = store.guests || { guests: [] }
+  return JSON.parse(JSON.stringify({ guests: guestsData.guests || [] }))
+}
+
+async function refreshGuests() {
+  if (!useOwnerGuard()) return
+  if (!userStore.weddingId || refreshing.value) return
+  refreshing.value = true
+  try {
+    await fetchWedding(userStore.weddingId, true)
+  } catch (err) {
+    console.error('宾客刷新失败:', err)
+    showError(err?.message || '宾客刷新失败')
+  } finally {
+    refreshing.value = false
+  }
+}
+
+onShow(refreshGuests)
 </script>
 
 <style lang="scss" scoped>
