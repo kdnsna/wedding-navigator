@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { getWeddingTemplate, getTemplateClass, normalizeTemplateId } from '@/utils/templates.js'
 
 export const useWeddingStore = defineStore('wedding', () => {
   const fallbackWedding = {
@@ -13,6 +14,7 @@ export const useWeddingStore = defineStore('wedding', () => {
   }
 
   const fallbackInvitation = {
+    template: 'rose-couture',
     couple: {
       groom: { name: '新郎' },
       bride: { name: '新娘' }
@@ -135,6 +137,10 @@ export const useWeddingStore = defineStore('wedding', () => {
     return photos.slice(0, 3)
   })
 
+  const activeTemplate = computed(() => getWeddingTemplate(invitation.value?.template))
+
+  const templateClass = computed(() => getTemplateClass(invitation.value?.template))
+
   const publishChecklist = computed(() => {
     const coverReady = Boolean(album.value?.photos?.some(p => p.type === 'cover') || album.value?.photos?.[0]?.url)
     const primary = primaryVenue.value
@@ -241,7 +247,11 @@ export const useWeddingStore = defineStore('wedding', () => {
   // Actions
   function setWeddingData(data, weddingId = '') {
     wedding.value = data.wedding || fallbackWedding
-    invitation.value = data.invitation || fallbackInvitation
+    invitation.value = {
+      ...fallbackInvitation,
+      ...(data.invitation || {}),
+      template: normalizeTemplateId(data.invitation?.template || fallbackInvitation.template)
+    }
     album.value = data.album || { photos: [] }
     venues.value = data.venues ? {
       venues: data.venues.venues || data.venues,
@@ -262,7 +272,11 @@ export const useWeddingStore = defineStore('wedding', () => {
   }
 
   function updateInvitation(data) {
-    invitation.value = { ...invitation.value, ...data }
+    invitation.value = {
+      ...invitation.value,
+      ...data,
+      template: normalizeTemplateId(data?.template || invitation.value?.template)
+    }
   }
 
   function addPhoto(photo) {
@@ -350,6 +364,8 @@ export const useWeddingStore = defineStore('wedding', () => {
     nextTimelineEvent,
     latestBlessings,
     featuredPhotos,
+    activeTemplate,
+    templateClass,
     publishChecklist,
     countdown,
     getLiveCountdown,

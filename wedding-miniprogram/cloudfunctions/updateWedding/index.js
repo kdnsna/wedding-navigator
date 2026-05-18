@@ -36,12 +36,9 @@ exports.main = async (event, context) => {
       delete cleanData[field]
     }
 
-    // 这些集合的文档本身就是业务对象，例如 albums: { photos: [] }、guests: { guests: [] }。
-    // 直接写对象，避免把 guests 写成 { guests: { guests: [...] } } 这类嵌套结构。
-    const isObjectCollection = ['venues', 'timelines', 'albums', 'guests', 'blessings'].includes(collection)
-    const updateData = isObjectCollection
-      ? { ...cleanData, updated_at: Date.now() }
-      : { [collection]: cleanData, updated_at: Date.now() }
+    // 所有白名单集合的文档本身就是业务对象。
+    // 直接写对象，避免把 invitations 写成 { invitations: {...} } 或把 guests 写成 { guests: { guests: [...] } }。
+    const updateData = { ...cleanData, updated_at: Date.now() }
 
     await db.collection(collection).doc(weddingId).update({
       data: updateData

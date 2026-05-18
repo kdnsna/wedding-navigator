@@ -1,11 +1,32 @@
 <template>
-  <view class="page">
+  <view class="page" :class="templateClass">
     <!-- 顶部标题 -->
     <view class="page-header" v-if="!submitted">
       <text class="page-tag">RSVP</text>
       <text class="page-title">确认出席</text>
       <view class="page-divider" />
       <text class="page-desc">请告诉我们是否能见证这美好时刻</text>
+    </view>
+
+    <view class="rsvp-brief" v-if="!submitted">
+      <view>
+        <text class="brief-kicker">{{ activeTemplate.shortName }} RSVP CARD</text>
+        <text class="brief-title">{{ store.coupleName || '新人婚礼' }}</text>
+      </view>
+      <view class="brief-grid">
+        <view class="brief-item">
+          <text class="brief-label">DATE</text>
+          <text class="brief-value">{{ formatDate(store.weddingDate) || '待公布' }}</text>
+        </view>
+        <view class="brief-item">
+          <text class="brief-label">TIME</text>
+          <text class="brief-value">{{ store.weddingTime || '12:00' }}</text>
+        </view>
+        <view class="brief-item wide">
+          <text class="brief-label">VENUE</text>
+          <text class="brief-value">{{ store.venueName || '婚礼场地' }}</text>
+        </view>
+      </view>
     </view>
 
     <!-- 表单 -->
@@ -243,17 +264,20 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { fetchWedding, submitRSVP } from '@/composables/useCloud.js'
+import { formatDate } from '@/utils/index.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
 
 const submitted = ref(false)
 const submitting = ref(false)
+const activeTemplate = computed(() => store.activeTemplate)
+const templateClass = computed(() => store.templateClass)
 
 const form = reactive({
   name: '',
@@ -456,6 +480,65 @@ onLoad(async (options) => {
   color: $text-secondary;
 }
 
+.rsvp-brief {
+  margin: 0 48rpx 44rpx;
+  padding: 32rpx;
+  border-radius: $radius-xl;
+  background: $text-primary;
+  color: #fff;
+  box-shadow: 0 18rpx 48rpx rgba(0,0,0,0.14);
+  position: relative;
+  overflow: hidden;
+}
+.rsvp-brief::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 8rpx;
+  background: $color-primary;
+}
+.brief-kicker {
+  display: block;
+  font-size: 18rpx;
+  color: rgba(255,255,255,0.56);
+  letter-spacing: 4rpx;
+  margin-bottom: 10rpx;
+}
+.brief-title {
+  display: block;
+  font-size: 34rpx;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.brief-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18rpx;
+  margin-top: 28rpx;
+}
+.brief-item {
+  padding-top: 18rpx;
+  border-top: 1rpx solid rgba(255,255,255,0.12);
+}
+.brief-item.wide {
+  grid-column: 1 / -1;
+}
+.brief-label {
+  display: block;
+  font-size: 18rpx;
+  letter-spacing: 3rpx;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 6rpx;
+}
+.brief-value {
+  display: block;
+  font-size: 26rpx;
+  color: rgba(255,255,255,0.92);
+  line-height: 1.4;
+}
+
 /* 表单 */
 .form {
   padding: 0 48rpx;
@@ -648,6 +731,84 @@ onLoad(async (options) => {
 }
 .submit-btn[disabled] {
   opacity: 0.5;
+}
+
+.tpl-rose .rsvp-brief::before {
+  background: $color-primary;
+}
+.tpl-champagne {
+  background: #fbf7f1;
+  .rsvp-brief {
+    background: #fff;
+    color: #1a1a1a;
+    border: 1rpx solid rgba(164,120,59,0.16);
+    box-shadow: 0 18rpx 48rpx rgba(164,120,59,0.10);
+  }
+  .rsvp-brief::before {
+    background: #A4783B;
+  }
+  .brief-kicker,
+  .brief-label {
+    color: #A4783B;
+  }
+  .brief-title,
+  .brief-value {
+    color: #1a1a1a;
+  }
+  .brief-item {
+    border-top-color: rgba(164,120,59,0.16);
+  }
+  .submit-btn,
+  .radio-item.active,
+  .tag-item.active {
+    background: #A4783B;
+    border-color: #A4783B;
+  }
+}
+.tpl-noir {
+  background: #111;
+  .page-title,
+  .label-text,
+  .radio-label,
+  .step-icon,
+  .step-value {
+    color: #fff;
+  }
+  .page-desc,
+  .label-en,
+  .tag-item,
+  .form-input,
+  .picker-value,
+  .form-textarea {
+    color: rgba(255,255,255,0.72);
+  }
+  .rsvp-brief,
+  .radio-item,
+  .tag-item {
+    background: #191919;
+    border-color: rgba(201,169,110,0.18);
+  }
+  .rsvp-brief::before,
+  .submit-btn,
+  .radio-item.active,
+  .tag-item.active {
+    background: $color-gold;
+    color: #111;
+    border-color: $color-gold;
+  }
+}
+.tpl-garden {
+  background: #f5f6ef;
+  .rsvp-brief {
+    background: #506247;
+  }
+  .rsvp-brief::before,
+  .submit-btn,
+  .radio-item.active,
+  .tag-item.active {
+    background: #6F7E5D;
+    border-color: #6F7E5D;
+  }
 }
 
 /* ========== 成功页 ========== */

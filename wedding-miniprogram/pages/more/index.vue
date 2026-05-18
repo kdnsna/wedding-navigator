@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page" :class="templateClass">
     <!-- 顶部标题 -->
     <view class="page-header">
       <text class="page-tag">MORE</text>
@@ -84,6 +84,7 @@ const userStore = useUserStore()
 
 const coupleName = computed(() => store.coupleName)
 const weddingDate = computed(() => store.weddingDate)
+const templateClass = computed(() => store.templateClass)
 
 function goToRSVP() { uni.navigateTo({ url: '/pages/rsvp/index' }) }
 function goToBlessing() { uni.navigateTo({ url: '/pages/blessing/index' }) }
@@ -240,5 +241,47 @@ onShow(async () => {
   padding: 20rpx;
   font-size: 26rpx;
   color: $text-muted;
+}
+
+.tpl-champagne {
+  background: #fbf7f1;
+  .menu-group {
+    border: 1rpx solid rgba(164,120,59,0.14);
+  }
+  .share-btn {
+    background: #A4783B;
+  }
+}
+.tpl-noir {
+  background: #111;
+  .page-title,
+  .couple-name,
+  .menu-title {
+    color: #fff;
+  }
+  .couple-date,
+  .promo-link {
+    color: rgba(255,255,255,0.62);
+  }
+  .menu-group {
+    background: #191919;
+    border: 1rpx solid rgba(201,169,110,0.16);
+  }
+  .divider {
+    background: rgba(201,169,110,0.12);
+  }
+  .share-btn {
+    background: $color-gold;
+    color: #111;
+  }
+}
+.tpl-garden {
+  background: #f5f6ef;
+  .menu-group {
+    border: 1rpx solid rgba(80,98,71,0.12);
+  }
+  .share-btn {
+    background: #506247;
+  }
 }
 </style>

@@ -63,12 +63,13 @@
           :class="{ active: form.template === tpl.id }"
           @click="form.template = tpl.id"
         >
-          <view class="template-color" :style="{ background: tpl.color }">
+          <view class="template-color" :style="{ background: tpl.preview }">
             <text v-if="form.template === tpl.id" class="template-check">✓</text>
           </view>
           <view class="template-meta">
             <text class="template-name">{{ tpl.name }}</text>
             <text class="template-desc">{{ tpl.desc }}</text>
+            <text class="template-photo">{{ tpl.photoMood }}</text>
           </view>
         </view>
       </view>
@@ -113,6 +114,7 @@ import { useUserStore } from '@/stores/user.js'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { createWedding } from '@/composables/useCloud.js'
 import { showSuccess, showError } from '@/utils/index.js'
+import { WEDDING_TEMPLATES } from '@/utils/templates.js'
 
 const userStore = useUserStore()
 const weddingStore = useWeddingStore()
@@ -124,18 +126,14 @@ const form = ref({
   time: '12:00',
   venueName: '',
   venueAddress: '',
-  template: 'classic',
+  template: 'rose-couture',
   groomName: '',
   groomPhone: '',
   brideName: '',
   bridePhone: ''
 })
 
-const templates = [
-  { id: 'classic', name: '传统红金', desc: '喜庆庄重，经典中式', color: '#B03A5B' },
-  { id: 'modern', name: '现代简约', desc: '清新优雅，时尚大方', color: '#2C2C2C' },
-  { id: 'luxury', name: '极简纯白', desc: '纯白极简，去装饰', color: '#E8E8E8' }
-]
+const templates = WEDDING_TEMPLATES
 
 function onDateChange(e) { form.value.date = e.detail.value }
 function onTimeChange(e) { form.value.time = e.detail.value }
@@ -172,7 +170,7 @@ async function createWeddingAction() {
       stats: { views: 0, shares: 0, rsvp_count: 0, blessing_count: 0, unique_viewers: 0 },
       share_config: {
         title: `${form.value.groomName} & ${form.value.brideName}的婚礼邀请`,
-        description: `${form.value.date}，我们结婚啦！诚邀您的见证~`,
+        description: `${form.value.date}，我们结婚啦！诚邀您的见证`,
         cover_image: ''
       }
     }
@@ -341,18 +339,20 @@ async function createWeddingAction() {
 }
 .template-item.active {
   border-color: $text-primary;
+  box-shadow: 0 12rpx 34rpx rgba(0,0,0,0.08);
 }
 .template-item:active {
   background: $bg-muted;
 }
 .template-color {
-  width: 72rpx;
-  height: 72rpx;
-  border-radius: $radius-md;
+  width: 108rpx;
+  height: 144rpx;
+  border-radius: $radius-lg;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-shadow: inset 0 0 0 1rpx rgba(255,255,255,0.34);
 }
 .template-check {
   color: #fff;
@@ -370,8 +370,17 @@ async function createWeddingAction() {
   margin-bottom: 4rpx;
 }
 .template-desc {
+  display: block;
   font-size: 24rpx;
   color: $text-secondary;
+  line-height: 1.45;
+}
+.template-photo {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 22rpx;
+  color: $text-muted;
+  line-height: 1.45;
 }
 
 /* 底部按钮 */

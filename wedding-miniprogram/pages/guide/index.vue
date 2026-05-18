@@ -1,10 +1,10 @@
 <template>
-  <view class="page">
+  <view class="page" :class="templateClass">
     <!-- 到场助手 -->
     <view class="arrival-pack">
       <view class="arrival-head">
         <view>
-          <text class="arrival-kicker">ARRIVAL PACK</text>
+          <text class="arrival-kicker">{{ activeTemplate.shortName }} ARRIVAL PACK</text>
           <text class="arrival-title">到场助手</text>
         </view>
         <text class="arrival-date">{{ formatDate(store.weddingDate) }}</text>
@@ -235,6 +235,8 @@ import { MARKER_ICON } from '@/config/cloud.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
+const activeTemplate = computed(() => store.activeTemplate)
+const templateClass = computed(() => store.templateClass)
 
 const activeTab = ref('map')
 const tabs = [
@@ -258,7 +260,10 @@ const weatherIcon = computed(() => {
     overcast: '/static/visuals/icon-weather-cloudy.png',
     rain: '/static/visuals/icon-weather-rain.png',
     thunder: '/static/visuals/icon-weather-rain.png',
-    fog: '/static/visuals/icon-weather-cloudy.png'
+    fog: '/static/visuals/icon-weather-cloudy.png',
+    snow: '/static/visuals/icon-weather-rain.png',
+    dust: '/static/visuals/icon-weather-cloudy.png',
+    unknown: '/static/visuals/icon-weather-sunny.png'
   }
   return iconMap[weatherData.value?.icon] || '/static/visuals/icon-weather-sunny.png'
 })
@@ -899,5 +904,67 @@ onShow(async () => {
   display: block;
   font-size: 24rpx;
   color: $text-muted;
+}
+
+.tpl-champagne {
+  background: #fbf7f1;
+  .arrival-pack {
+    background: #f7eee4;
+  }
+  .arrival-btn.primary,
+  .action-btn.primary,
+  .hotel-btn {
+    background: #A4783B;
+  }
+}
+.tpl-noir {
+  background: #111;
+  .arrival-pack,
+  .venue-card,
+  .info-card,
+  .hotel-card,
+  .weather-banner,
+  .weather-details {
+    background: #191919;
+    border-color: rgba(201,169,110,0.16);
+  }
+  .arrival-title,
+  .arrival-name,
+  .summary-value,
+  .venue-name,
+  .section-title,
+  .info-value,
+  .hotel-name,
+  .weather-text,
+  .temp-max,
+  .temp-min {
+    color: #fff;
+  }
+  .arrival-date,
+  .arrival-address,
+  .summary-label,
+  .venue-address,
+  .section-date,
+  .info-label,
+  .hotel-notes {
+    color: rgba(255,255,255,0.62);
+  }
+  .arrival-btn.primary,
+  .action-btn.primary,
+  .hotel-btn {
+    background: $color-gold;
+    color: #111;
+  }
+}
+.tpl-garden {
+  background: #f5f6ef;
+  .arrival-pack {
+    background: #eef2e7;
+  }
+  .arrival-btn.primary,
+  .action-btn.primary,
+  .hotel-btn {
+    background: #506247;
+  }
 }
 </style>

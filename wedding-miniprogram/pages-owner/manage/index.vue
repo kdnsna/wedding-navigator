@@ -27,6 +27,9 @@
       <view class="readiness-bar">
         <view class="readiness-fill" :style="{ width: checklist.percent + '%' }" />
       </view>
+      <view class="readiness-summary">
+        <text>{{ readinessSummary }}</text>
+      </view>
       <view class="readiness-list">
         <view
           class="readiness-item"
@@ -131,6 +134,11 @@ const coupleName = computed(() => store.coupleName)
 const weddingDate = computed(() => store.weddingDate)
 const weddingStatus = computed(() => store.wedding?.status || 'draft')
 const checklist = computed(() => store.publishChecklist)
+const readinessSummary = computed(() => {
+  const left = checklist.value.total - checklist.value.doneCount
+  if (checklist.value.ready) return '发布项已齐，可以放心分享给宾客'
+  return `还差 ${left} 项，补齐后首页、回执、路线和分享链路会更完整`
+})
 
 const statusText = computed(() => {
   const map = { draft: '草稿', published: '已发布', ended: '已结束' }
@@ -281,6 +289,15 @@ onShow(async () => {
   border-radius: 4rpx;
   background: $color-primary-light;
   transition: width 0.45s ease;
+}
+.readiness-summary {
+  padding: 18rpx 22rpx;
+  margin-bottom: 14rpx;
+  border-radius: $radius-lg;
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.78);
+  font-size: 24rpx;
+  line-height: 1.45;
 }
 .readiness-list {
   display: flex;

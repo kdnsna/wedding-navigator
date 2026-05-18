@@ -12,6 +12,10 @@ exports.main = async (event, context) => {
   }
 
   try {
+    await Promise.all([
+      ensureCollection('share_stats'),
+      ensureCollection('viewers')
+    ])
     await ensureStatsDocument(weddingId)
 
     const updateData = { updated_at: Date.now() }
@@ -40,7 +44,7 @@ exports.main = async (event, context) => {
         const viewerId = `${weddingId}_${OPENID}`
         await db.collection('viewers').doc(viewerId).get()
       } catch (e) {
-        if (e.errCode === -1 || e.message?.includes('not exist')) {
+        if (isDocNotExistError(e)) {
           await db.collection('viewers').add({
             data: {
               _id: `${weddingId}_${OPENID}`,
@@ -61,6 +65,23 @@ exports.main = async (event, context) => {
     console.error(err)
     return { success: false, message: err.message }
   }
+}
+
+async function ensureCollection(collectionName) {
+  try {
+    await db.createCollection(collectionName)
+  } catch (err) {
+    if (err.errCode !== -501005) {
+      console.warn(`[ensureCollection] ${collectionName}:`, err.message)
+    }
+  }
+}
+
+function isDocNotExistError(err) {
+  if (!err) return false
+  if (err.errCode === -1 || err.errCode === -502005 || err.errCode === 'DATABASE_COLLECTION_NOT_EXIST') return true
+  const msg = (err.errMsg || err.message || '').toLowerCase()
+  return msg.includes('not exist') || msg.includes('does not exist') || msg.includes('not found')
 }
 
 async function ensureStatsDocument(weddingId) {

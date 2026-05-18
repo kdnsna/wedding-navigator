@@ -1,5 +1,5 @@
 <template>
-  <view class="page" @touchstart="onPageTap">
+  <view class="page" :class="templateClass" @touchstart="onPageTap">
     <!-- 封面大图 -->
     <view class="hero">
       <image
@@ -11,12 +11,17 @@
       <view class="hero-gradient" />
       <text class="xi-watermark">囍</text>
       <view class="hero-content">
-        <text class="hero-tag animate-fade-in delay-2">WEDDING INVITATION</text>
+        <text class="hero-tag animate-fade-in delay-2">{{ activeTemplate.kicker }}</text>
         <view class="hero-divider animate-draw-line delay-3" />
         <text class="hero-names animate-fade-up delay-4">{{ groomName }} & {{ brideName }}</text>
         <text class="hero-sub animate-fade-up delay-5">We're getting married</text>
         <text class="hero-date animate-fade-up delay-6">{{ formatDate(weddingDate) }}</text>
-        <view class="hero-countdown animate-fade-up delay-7" v-if="countdown && !countdown.isToday">
+        <view class="hero-meta-line animate-fade-up delay-7">
+          <text>{{ weddingTime || '12:00' }}</text>
+          <view class="hero-meta-dot" />
+          <text>{{ venueName || '婚礼场地' }}</text>
+        </view>
+        <view class="hero-countdown animate-fade-up delay-8" v-if="countdown && !countdown.isToday">
           <text class="countdown-num">{{ countdown.days }}</text>
           <view class="countdown-divider" />
           <view class="countdown-info">
@@ -24,7 +29,7 @@
             <text class="countdown-desc">距离我们结婚</text>
           </view>
         </view>
-        <view class="hero-today animate-fade-up delay-7" v-if="countdown?.isToday">
+        <view class="hero-today animate-fade-up delay-8" v-if="countdown?.isToday">
           <text class="today-label">TODAY</text>
           <text class="today-desc">就是今天</text>
         </view>
@@ -41,6 +46,7 @@
         <view>
           <text class="daypack-kicker">{{ countdown?.isToday ? 'TODAY PACK' : 'GUEST PACK' }}</text>
           <text class="daypack-title">{{ countdown?.isToday ? '婚礼当天助手' : '宾客行动台' }}</text>
+          <text class="daypack-template">{{ activeTemplate.shortName }} · {{ activeTemplate.albumMood }}</text>
         </view>
         <view class="daypack-status" :class="{ done: hasSubmittedRsvp }" @click="goToRSVP">
           <text>{{ hasSubmittedRsvp ? '已回执' : '待回执' }}</text>
@@ -194,7 +200,10 @@
     <view class="section preview-section">
       <view class="preview-block" v-if="featuredPhotos.length > 0" @click="goToAlbum">
         <view class="preview-header">
-          <text class="preview-title">婚纱相册</text>
+          <view>
+            <text class="preview-title">{{ activeTemplate.albumMood }}</text>
+            <text class="preview-sub">{{ activeTemplate.photoMood }}</text>
+          </view>
           <text class="preview-more">查看全部</text>
         </view>
         <view class="photo-strip">
@@ -318,6 +327,8 @@ const weddingDate = computed(() => store.weddingDate)
 const weddingTime = computed(() => store.weddingTime)
 const venueName = computed(() => store.venueName)
 const venueAddress = computed(() => store.invitation?.wedding?.venue_address || '')
+const activeTemplate = computed(() => store.activeTemplate)
+const templateClass = computed(() => store.templateClass)
 const primaryVenue = computed(() => store.primaryVenue || { name: venueName.value || '婚礼场地', address: venueAddress.value })
 const latestBlessings = computed(() => store.latestBlessings || [])
 const featuredPhotos = computed(() => store.featuredPhotos || [])
@@ -591,8 +602,31 @@ onUnmounted(() => {
   font-size: 28rpx;
   color: rgba(255,255,255,0.95);
   letter-spacing: 6rpx;
-  margin-bottom: 48rpx;
+  margin-bottom: 18rpx;
   text-shadow: 0 2rpx 12rpx rgba(0,0,0,0.25);
+}
+.hero-meta-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16rpx;
+  min-height: 48rpx;
+  margin-bottom: 42rpx;
+  padding: 0 22rpx;
+  border-radius: $radius-full;
+  border: 1rpx solid rgba(255,255,255,0.26);
+  color: rgba(255,255,255,0.86);
+  font-size: 22rpx;
+  letter-spacing: 2rpx;
+  background: rgba(20,20,20,0.18);
+  backdrop-filter: blur(12rpx);
+}
+.hero-meta-dot {
+  width: 6rpx;
+  height: 6rpx;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.58);
+  flex-shrink: 0;
 }
 
 .hero-countdown {
@@ -704,6 +738,13 @@ onUnmounted(() => {
   font-size: 40rpx;
   color: $text-primary;
   font-weight: 600;
+}
+.daypack-template {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  color: $text-muted;
+  letter-spacing: 2rpx;
 }
 .daypack-status {
   padding: 10rpx 20rpx;
@@ -832,9 +873,18 @@ onUnmounted(() => {
   margin-bottom: 22rpx;
 }
 .preview-title {
+  display: block;
   font-size: 30rpx;
   font-weight: 600;
   color: $text-primary;
+}
+.preview-sub {
+  display: block;
+  max-width: 470rpx;
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  line-height: 1.45;
+  color: $text-muted;
 }
 .preview-more {
   font-size: 24rpx;
@@ -1220,5 +1270,137 @@ onUnmounted(() => {
 @keyframes musicPulse {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.08); }
+}
+
+/* ========== 内置模板氛围 ========== */
+.tpl-rose {
+  .hero-gradient {
+    background:
+      radial-gradient(circle at 50% 34%, rgba(176,58,91,0.08), transparent 42%),
+      linear-gradient(to bottom, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0.05) 28%, rgba(24,8,12,0.68) 72%, rgba(255,255,255,0.98) 94%, #fff 100%);
+  }
+  .hero-divider,
+  .daypack-pill.primary,
+  .couple-heart,
+  .couple-heart::before,
+  .couple-heart::after {
+    background: $color-primary;
+  }
+  .hero-tag,
+  .daypack-kicker,
+  .preview-more {
+    color: $color-gold;
+  }
+}
+
+.tpl-champagne {
+  background: #fbf7f1;
+  .hero-image.default {
+    background: #f7eee4;
+  }
+  .hero-gradient {
+    background: linear-gradient(to bottom, rgba(255,255,255,0.08), rgba(255,255,255,0.12) 38%, rgba(247,238,228,0.84) 82%, #fbf7f1 100%);
+  }
+  .hero-content,
+  .hero-names,
+  .hero-date,
+  .countdown-num {
+    color: #1a1a1a;
+    text-shadow: none;
+  }
+  .hero-sub,
+  .hero-tag,
+  .countdown-label,
+  .countdown-desc,
+  .today-label,
+  .today-desc {
+    color: rgba(26,26,26,0.62);
+  }
+  .hero-divider,
+  .countdown-divider,
+  .scroll-line {
+    background: rgba(164,120,59,0.42);
+  }
+  .hero-meta-line {
+    color: #7c5725;
+    background: rgba(255,255,255,0.6);
+    border-color: rgba(164,120,59,0.22);
+  }
+  .daypack-section,
+  .info-section,
+  .preview-section {
+    background: #f7eee4;
+  }
+  .daypack-pill.primary,
+  .float-btn.rsvp {
+    background: #A4783B;
+  }
+}
+
+.tpl-noir {
+  background: #111;
+  .hero-gradient {
+    background:
+      radial-gradient(circle at 50% 18%, rgba(201,169,110,0.20), transparent 35%),
+      linear-gradient(to bottom, rgba(0,0,0,0.10), rgba(0,0,0,0.35) 34%, rgba(3,3,3,0.92) 88%, #111 100%);
+  }
+  .section,
+  .preview-section,
+  .info-section {
+    background: #111;
+  }
+  .daypack-section,
+  .preview-block,
+  .info-list,
+  .quick-item,
+  .invitation-section {
+    background: #191919;
+    border-color: rgba(201,169,110,0.16);
+  }
+  .daypack-title,
+  .mini-value,
+  .preview-title,
+  .blessing-text,
+  .invitation-text,
+  .couple-name,
+  .info-title,
+  .info-value,
+  .quick-title,
+  .quick-label,
+  .footer-text {
+    color: #fff;
+  }
+  .daypack-pill.primary,
+  .float-btn.rsvp {
+    background: $color-gold;
+    color: #111;
+  }
+}
+
+.tpl-garden {
+  background: #f5f6ef;
+  .hero-image.default {
+    background: #eef2e7;
+  }
+  .hero-gradient {
+    background: linear-gradient(to bottom, rgba(255,255,255,0.04), rgba(255,255,255,0.08) 40%, rgba(38,55,42,0.54) 76%, #f5f6ef 100%);
+  }
+  .hero-tag,
+  .daypack-kicker,
+  .preview-more {
+    color: #6F7E5D;
+  }
+  .daypack-section,
+  .info-section,
+  .preview-section {
+    background: #eef2e7;
+  }
+  .daypack-pill.primary,
+  .float-btn.rsvp {
+    background: #506247;
+  }
+  .photo-thumb {
+    border-radius: 8rpx;
+  }
 }
 </style>

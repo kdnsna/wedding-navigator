@@ -17,9 +17,11 @@
           :class="{ active: form.template === tpl.id }"
           @click="form.template = tpl.id"
         >
-          <view class="template-preview" :style="{ background: tpl.color }">
-            <text class="template-text">{{ tpl.name }}</text>
+          <view class="template-preview" :style="{ background: tpl.preview }">
+            <text class="template-kicker">{{ tpl.kicker }}</text>
+            <text class="template-text">{{ tpl.shortName }}</text>
           </view>
+          <text class="template-desc">{{ tpl.copy }}</text>
         </view>
       </scroll-view>
     </view>
@@ -138,15 +140,12 @@ import { useUserStore } from '@/stores/user.js'
 import { showSuccess, showError } from '@/utils/index.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
 import { updateWedding } from '@/composables/useCloud.js'
+import { WEDDING_TEMPLATES, normalizeTemplateId } from '@/utils/templates.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
 
-const templates = [
-  { id: 'classic', name: '传统', color: '#B03A5B' },
-  { id: 'modern', name: '简约', color: '#2C2C2C' },
-  { id: 'luxury', name: '纯白', color: '#E8E8E8' }
-]
+const templates = WEDDING_TEMPLATES
 
 const musicPresets = [
   { id: 'piano-dream', name: '梦中的钢琴', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
@@ -155,7 +154,7 @@ const musicPresets = [
 ]
 
 const form = ref({
-  template: 'classic',
+  template: 'rose-couture',
   content: '',
   groomName: '',
   brideName: '',
@@ -175,7 +174,7 @@ function loadFromStore() {
   const inv = store.invitation || {}
   const wedding = store.wedding || {}
   form.value = {
-    template: inv.template || 'classic',
+    template: normalizeTemplateId(inv.template),
     content: inv.content?.main_text || '',
     groomName: inv.couple?.groom?.name || '',
     brideName: inv.couple?.bride?.name || '',
@@ -302,25 +301,52 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
 .template-item {
   display: inline-block;
   margin-right: 20rpx;
-  border-radius: $radius-md;
-  overflow: hidden;
+  width: 220rpx;
+  vertical-align: top;
+  border-radius: $radius-lg;
   border: 3rpx solid transparent;
+  padding: 10rpx;
   transition: all 0.2s ease;
 }
 .template-item.active {
   border-color: $text-primary;
+  background: $bg-surface;
+  box-shadow: 0 12rpx 34rpx rgba(0,0,0,0.08);
 }
 .template-preview {
-  width: 180rpx;
+  width: 200rpx;
   height: 240rpx;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  border-radius: $radius-lg;
+  overflow: hidden;
+  padding: 20rpx;
+  box-sizing: border-box;
+}
+.template-kicker {
+  display: block;
+  font-size: 16rpx;
+  color: rgba(255,255,255,0.72);
+  letter-spacing: 3rpx;
+  text-align: center;
+  margin-bottom: 18rpx;
+  white-space: normal;
 }
 .template-text {
-  font-size: 28rpx;
+  font-size: 30rpx;
   font-weight: 600;
   color: #fff;
+  text-align: center;
+}
+.template-desc {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 22rpx;
+  color: $text-muted;
+  line-height: 1.45;
+  white-space: normal;
 }
 
 /* 表单 */

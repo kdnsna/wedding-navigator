@@ -31,7 +31,7 @@
 - **样式**：SCSS + CSS 变量设计系统
 - **后端**：微信云开发（CloudBase）
 - **地图**：腾讯位置服务 / 微信小程序原生 map 组件
-- **数据库**：云开发 MongoDB（8个集合）
+- **数据库**：云开发 MongoDB（9个集合）
 
 ## 目录结构
 
@@ -72,7 +72,8 @@ wedding-miniprogram/
 ├── composables/             # 组合式函数
 │   └── useCloud.js          # 云开发 API 封装
 ├── utils/                   # 工具函数
-│   └── index.js             # 通用工具
+│   ├── index.js             # 通用工具
+│   └── templates.js         # 内置婚礼模板配置
 ├── static/                  # 静态资源
 ├── App.vue                  # 应用根组件
 ├── main.js                  # 应用入口
@@ -129,7 +130,8 @@ npm install
 2. 在 `config/cloud.js` 中配置云开发环境 ID：`CLOUD_ENV`
 3. 如需真实天气，在 `getWeather` 云函数环境变量中配置 `HEFENG_KEY`
 4. 如需内容安全接口失败时阻断提交，在 `submitRSVP`、`submitBlessing` 云函数环境变量中配置 `CONTENT_SAFETY_MODE=strict`
-5. 在 `cloudfunctions/*/config.json` 中按需配置权限
+5. 如需生成体验版/开发版小程序码，在 `generatePoster` 云函数环境变量中配置 `WXACODE_ENV_VERSION=trial` 或 `develop`
+6. 在 `cloudfunctions/*/config.json` 中按需配置权限
 
 ### 运行到微信开发者工具
 
@@ -181,6 +183,12 @@ HEFENG_KEY=你的和风天气Key
 CONTENT_SAFETY_MODE=strict
 ```
 
+小程序码默认生成正式版。如需主人端预览体验版或开发版小程序码，请为 `generatePoster` 配置：
+
+```
+WXACODE_ENV_VERSION=trial
+```
+
 ### 3. 创建数据库索引
 
 在云开发数据库控制台中，为以下字段创建索引：
@@ -229,12 +237,13 @@ MINIPROGRAM_PRIVATE_KEY_PATH=/path/to/private.key npm run upload:mp-weixin
 
 ## 设计系统
 
-三套配色方案：
-- **传统中国风**（默认）：中国红 + 金色
-- **现代简约风**：香槟金 + 象牙白
-- **轻奢金棕风**：深棕 + 玫瑰金
+四套内置模板方案：
+- **红玫瑰高定**（默认主推）：红玫瑰 + 近黑 + 暖金，适合正式婚礼和大多数酒店/宴会厅场景
+- **香槟杂志**：香槟金 + 象牙白，适合草坪、极简、浅色照片
+- **黑金晚宴**：近黑 + 暖金，适合晚宴、酒店宴会厅、高级餐厅
+- **花园胶片**：自然绿 + 胶片留白，适合户外、旅拍、生活感婚礼
 
-修改 `uni.scss` 中的颜色变量即可切换主题。
+模板配置集中在 `utils/templates.js`，创建向导、婚书编辑、首页、RSVP、相册、路书、流程和更多页都会读取同一份模板配置。
 
 ## 双角色架构
 

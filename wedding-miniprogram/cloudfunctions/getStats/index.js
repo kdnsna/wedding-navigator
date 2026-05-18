@@ -23,8 +23,8 @@ exports.main = async (event, context) => {
       db.collection('blessings').doc(weddingId).get().catch(() => ({ data: { blessings: [] } }))
     ])
 
-    const guests = guestsRes.data.guests || []
-    const blessings = blessingsRes.data.blessings || []
+    const guests = normalizeListDocument(guestsRes.data, 'guests').guests
+    const blessings = normalizeListDocument(blessingsRes.data, 'blessings').blessings
 
     return {
       success: true,
@@ -57,4 +57,14 @@ function getGuestStatus(guest) {
 
 function getGuestCount(guest) {
   return Number(guest.attending_count ?? guest.guestCount ?? guest.guest_count ?? 1)
+}
+
+function normalizeListDocument(doc, key) {
+  if (!doc) return { [key]: [] }
+  const value = doc[key]
+  if (Array.isArray(value)) return doc
+  if (value && Array.isArray(value[key])) {
+    return { ...doc, [key]: value[key] }
+  }
+  return { ...doc, [key]: [] }
 }

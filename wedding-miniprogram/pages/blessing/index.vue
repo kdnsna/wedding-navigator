@@ -1,10 +1,11 @@
 <template>
-  <view class="page">
+  <view class="page" :class="templateClass">
     <!-- 顶部标题 -->
     <view class="page-header">
       <text class="page-tag">BLESSINGS</text>
       <text class="page-title">祝福墙</text>
       <text class="page-count" v-if="blessings.length > 0">{{ blessings.length }} 条祝福</text>
+      <text class="page-template">{{ activeTemplate.shortName }} · 为新人留下第一眼会被看见的祝福</text>
     </view>
 
     <!-- 发送区域 -->
@@ -71,6 +72,8 @@ const newBlessing = ref('')
 const senderName = ref('')
 const sending = ref(false)
 const loadError = ref('')
+const activeTemplate = computed(() => store.activeTemplate)
+const templateClass = computed(() => store.templateClass)
 
 const blessings = computed(() => {
   const list = store.blessings?.blessings || []
@@ -167,6 +170,13 @@ onShow(async () => {
   display: block;
   font-size: $font-body;
   color: $text-secondary;
+}
+.page-template {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: $text-muted;
+  line-height: 1.5;
 }
 
 /* 发送区域 */
@@ -292,5 +302,54 @@ onShow(async () => {
   margin-top: 12rpx;
   font-size: 24rpx;
   color: $text-placeholder;
+}
+
+.tpl-champagne {
+  background: #fbf7f1;
+  .send-btn,
+  .pinned-tag,
+  .empty-action {
+    background: #A4783B;
+  }
+  .blessing-item.pinned {
+    background: #f7eee4;
+  }
+}
+.tpl-noir {
+  background: #111;
+  .page-title,
+  .item-name,
+  .item-content,
+  .sender-input,
+  .send-input {
+    color: #fff;
+  }
+  .page-count,
+  .page-template {
+    color: rgba(255,255,255,0.62);
+  }
+  .send-btn,
+  .pinned-tag,
+  .empty-action {
+    background: $color-gold;
+    color: #111;
+  }
+  .blessing-item {
+    border-bottom-color: rgba(201,169,110,0.16);
+  }
+  .blessing-item.pinned {
+    background: #191919;
+  }
+}
+.tpl-garden {
+  background: #f5f6ef;
+  .send-btn,
+  .pinned-tag,
+  .empty-action {
+    background: #506247;
+  }
+  .blessing-item.pinned {
+    background: #eef2e7;
+  }
 }
 </style>

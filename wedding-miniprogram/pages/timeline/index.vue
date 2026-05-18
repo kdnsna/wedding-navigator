@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page" :class="templateClass">
     <!-- 顶部标题 -->
     <view class="page-header">
       <text class="page-tag">TIMELINE</text>
@@ -86,6 +86,7 @@ import { fetchWedding } from '@/composables/useCloud.js'
 const store = useWeddingStore()
 const userStore = useUserStore()
 const loadError = ref('')
+const templateClass = computed(() => store.templateClass)
 
 const weddingDate = computed(() => store.weddingDate)
 const countdown = computed(() => store.countdown)
@@ -412,5 +413,64 @@ onShow(async () => {
 .footer-text {
   font-size: 22rpx;
   color: $text-muted;
+}
+
+.tpl-champagne {
+  background: #fbf7f1;
+  .date-banner,
+  .timeline-content {
+    background: #fff;
+    border-color: rgba(164,120,59,0.14);
+  }
+  .timeline-dot,
+  .timeline-item.current .timeline-dot {
+    background: #A4783B;
+  }
+  .timeline-item.current .timeline-time {
+    color: #A4783B;
+  }
+}
+.tpl-noir {
+  background: #111;
+  .page-title,
+  .date-num,
+  .content-title {
+    color: #fff;
+  }
+  .page-desc,
+  .date-month,
+  .date-week,
+  .meta-text,
+  .content-notes,
+  .footer-text {
+    color: rgba(255,255,255,0.62);
+  }
+  .date-banner,
+  .timeline-content {
+    background: #191919;
+    border-color: rgba(201,169,110,0.16);
+  }
+  .timeline-dot,
+  .timeline-item.current .timeline-dot {
+    background: $color-gold;
+  }
+  .timeline-item.current .timeline-time {
+    color: $color-gold;
+  }
+}
+.tpl-garden {
+  background: #f5f6ef;
+  .date-banner,
+  .timeline-content {
+    background: #fff;
+    border-color: rgba(80,98,71,0.14);
+  }
+  .timeline-dot,
+  .timeline-item.current .timeline-dot {
+    background: #506247;
+  }
+  .timeline-item.current .timeline-time {
+    color: #506247;
+  }
 }
 </style>

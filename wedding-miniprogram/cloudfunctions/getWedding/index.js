@@ -45,7 +45,8 @@ exports.main = async (event, context) => {
       weddingData = safeWedding
     }
 
-    let guestsData = guestsRes.data
+    let guestsData = normalizeListDocument(guestsRes.data, 'guests')
+    const blessingsData = normalizeListDocument(blessingsRes.data, 'blessings')
     if (!isOwner && guestsData && guestsData.guests) {
       guestsData = {
         ...guestsData,
@@ -66,7 +67,7 @@ exports.main = async (event, context) => {
         venues: venuesRes.data,
         timeline: timelineRes.data,
         guests: guestsData,
-        blessings: blessingsRes.data,
+        blessings: blessingsData,
         stats: statsRes.data,
         isOwner
       }
@@ -75,4 +76,14 @@ exports.main = async (event, context) => {
     console.error(err)
     return { success: false, message: err.message }
   }
+}
+
+function normalizeListDocument(doc, key) {
+  if (!doc) return null
+  const value = doc[key]
+  if (Array.isArray(value)) return doc
+  if (value && Array.isArray(value[key])) {
+    return { ...doc, [key]: value[key] }
+  }
+  return { ...doc, [key]: [] }
 }

@@ -1,9 +1,10 @@
 <template>
-  <view class="page">
+  <view class="page" :class="templateClass">
     <!-- 顶部标题 -->
     <view class="page-header">
       <text class="page-tag">ALBUM</text>
       <text class="page-title">婚纱相册</text>
+      <text class="page-desc">{{ activeTemplate.albumMood }} · {{ activeTemplate.photoMood }}</text>
     </view>
 
     <!-- 瀑布流相册 -->
@@ -52,6 +53,8 @@ const loading = ref(false)
 const loadError = ref('')
 
 const photos = computed(() => store.album?.photos || [])
+const activeTemplate = computed(() => store.activeTemplate)
+const templateClass = computed(() => store.templateClass)
 const emptyText = computed(() => {
   if (!userStore.weddingId) return '请从有效婚礼邀请进入'
   if (loadError.value) return '相册加载失败'
@@ -103,6 +106,13 @@ onShow(async () => {
   font-size: $font-h1;
   font-weight: 600;
   color: $text-primary;
+}
+.page-desc {
+  display: block;
+  margin-top: 14rpx;
+  font-size: 24rpx;
+  color: $text-secondary;
+  line-height: 1.55;
 }
 
 .album-container {
@@ -162,5 +172,36 @@ onShow(async () => {
   padding: 120rpx;
   color: $text-muted;
   font-size: 28rpx;
+}
+
+.tpl-rose .photo-item {
+  box-shadow: 0 10rpx 28rpx rgba(176,58,91,0.12);
+}
+.tpl-champagne {
+  background: #fbf7f1;
+  .photo-item {
+    border-radius: $radius-xl;
+    box-shadow: 0 12rpx 32rpx rgba(164,120,59,0.10);
+  }
+}
+.tpl-noir {
+  background: #111;
+  .page-title {
+    color: #fff;
+  }
+  .page-desc {
+    color: rgba(255,255,255,0.62);
+  }
+  .photo-item {
+    border: 1rpx solid rgba(201,169,110,0.18);
+    box-shadow: 0 14rpx 36rpx rgba(0,0,0,0.32);
+  }
+}
+.tpl-garden {
+  background: #f5f6ef;
+  .photo-item {
+    border-radius: 8rpx;
+    box-shadow: 0 10rpx 26rpx rgba(80,98,71,0.12);
+  }
 }
 </style>

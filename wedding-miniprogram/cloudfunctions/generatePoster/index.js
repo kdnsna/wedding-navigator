@@ -3,6 +3,7 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
 exports.main = async (event, context) => {
   const { page, scene, width = 430 } = event
+  const envVersion = normalizeEnvVersion(event.envVersion || process.env.WXACODE_ENV_VERSION || 'release')
 
   if (!page) {
     return { success: false, message: '缺少 page 参数' }
@@ -17,7 +18,7 @@ exports.main = async (event, context) => {
       scene: scene || '',
       page,
       width: parseInt(width),
-      env_version: 'release' // 生产环境
+      env_version: envVersion
     })
 
     // 返回临时文件流
@@ -42,4 +43,9 @@ exports.main = async (event, context) => {
       message: err.message || '生成二维码失败'
     }
   }
+}
+
+function normalizeEnvVersion(value) {
+  const allowed = ['release', 'trial', 'develop']
+  return allowed.includes(value) ? value : 'release'
 }
