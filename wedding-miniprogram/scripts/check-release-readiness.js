@@ -192,6 +192,35 @@ function checkTemplateSystem() {
   assertIncludes('cloudfunctions/getWeather/index.js', 'geocodeVenue', 'getWeather must geocode venue fallback when coordinates are missing')
 }
 
+function checkCommercializationFoundations() {
+  const routes = new Set(collectVueRoutes())
+  assert(routes.has('pages-owner/profile/index'), 'pages.json must register owner profile and entitlements page')
+  assert(routes.has('pages-owner/diagnostics/index'), 'pages.json must register release diagnostics page')
+  assert(fs.existsSync(path.join(root, 'utils/commercial.js')), 'commercial config helper must exist')
+  assertIncludes('utils/commercial.js', 'PLAN_TIERS', 'commercial helper must define plan tiers')
+  assertIncludes('utils/commercial.js', 'DEFAULT_ENTITLEMENTS', 'commercial helper must define default entitlements')
+  assertIncludes('utils/commercial.js', 'buildTemplateCommercialState', 'commercial helper must build template billing state')
+  assertIncludes('utils/templates.js', "tier: 'premium'", 'templates must mark premium template candidates')
+  assertIncludes('utils/templates.js', 'premium_templates', 'templates must bind premium templates to entitlement keys')
+  assertIncludes('pages-owner/wizard/index.vue', 'getTemplateTierLabel', 'wizard must show template tier labels')
+  assertIncludes('pages-owner/wizard/index.vue', 'buildTemplateCommercialState', 'wizard must persist template commercial state')
+  assertIncludes('pages-owner/invitation/edit.vue', 'getCommercialHint', 'invitation editor must explain commercial template state')
+  assertIncludes('pages-owner/invitation/edit.vue', 'buildTemplateCommercialState', 'invitation editor must persist template commercial state')
+  assertIncludes('cloudfunctions/syncOwnerProfile/index.js', 'owners', 'syncOwnerProfile must persist owner profiles')
+  assertIncludes('cloudfunctions/syncOwnerProfile/index.js', 'workspaces', 'syncOwnerProfile must return wedding workspaces')
+  assertIncludes('cloudfunctions/syncOwnerProfile/index.js', 'entitlements', 'syncOwnerProfile must return commercial entitlements')
+  assertIncludes('cloudfunctions/createWedding/index.js', 'owner_profile_id', 'createWedding must link weddings to owner profiles')
+  assertIncludes('stores/user.js', 'setOwnerProfile', 'user store must persist owner profile sync results')
+  assertIncludes('stores/user.js', 'workspaces', 'user store must track owner workspaces')
+  assertIncludes('composables/useCloud.js', 'syncOwnerProfile', 'useCloud must expose owner profile sync')
+  assertIncludes('utils/releaseDiagnostics.js', 'buildReleaseDiagnostics', 'release diagnostics helper must exist')
+  assertIncludes('utils/releaseDiagnostics.js', 'TENCENT_MAP_KEY', 'diagnostics must remind about cloud map key readiness')
+  assertIncludes('pages-owner/diagnostics/index.vue', 'buildReleaseDiagnostics', 'diagnostics page must render release readiness')
+  assertIncludes('pages-owner/profile/index.vue', 'ENTITLEMENT_LABELS', 'profile page must render entitlement boundaries')
+  assertIncludes('pages-owner/manage/index.vue', "goTo('diagnostics/index')", 'manage page must link to release diagnostics')
+  assertIncludes('pages-owner/manage/index.vue', "goTo('profile/index')", 'manage page must link to account and entitlements')
+}
+
 function checkUploadScript() {
   const source = read('upload.mjs')
   assert(source.includes('WECHAT_DEVTOOLS_CLI_PATH'), 'upload script must allow overriding WeChat DevTools CLI path')
@@ -208,6 +237,8 @@ function checkReleaseDocs() {
   const readme = read('README.md')
   assert(readme.includes('Node.js 20 LTS'), 'README must document Node.js 20 LTS')
   assert(readme.includes('发布前检查清单'), 'README must include a release checklist')
+  assert(readme.includes('P2 大众化/商业化'), 'README must document P2 commercialization foundations')
+  assert(readme.includes('syncOwnerProfile'), 'README must document owner profile sync deployment')
 }
 
 function readPngSize(file) {
@@ -282,6 +313,7 @@ checkOwnerGuard()
 checkCloudSafety()
 checkDataContracts()
 checkTemplateSystem()
+checkCommercializationFoundations()
 checkUploadScript()
 checkReleaseDocs()
 checkVisualAssets()

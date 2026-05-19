@@ -20,6 +20,7 @@
           <view class="template-preview" :style="{ background: tpl.preview }">
             <text class="template-kicker">{{ tpl.kicker }}</text>
             <text class="template-text">{{ tpl.shortName }}</text>
+            <text class="template-tier" :class="{ premium: isTemplatePremium(tpl) }">{{ getTemplateTierLabel(tpl) }}</text>
           </view>
           <text class="template-desc">{{ tpl.copy }}</text>
         </view>
@@ -30,9 +31,13 @@
             <text class="template-panel-kicker">{{ activeTemplate.kicker }}</text>
             <text class="template-panel-title">{{ activeTemplate.name }}</text>
           </view>
-          <text class="template-panel-status">当前选择</text>
+          <view class="template-panel-badges">
+            <text class="template-panel-tier" :class="{ premium: isTemplatePremium(activeTemplate) }">{{ getTemplateTierLabel(activeTemplate) }}</text>
+            <text class="template-panel-status">当前选择</text>
+          </view>
         </view>
         <text class="template-panel-copy">{{ activeTemplate.photoMood }}</text>
+        <text class="template-panel-hint">{{ activeTemplateHint }}</text>
         <view class="template-panel-actions">
           <button class="template-panel-btn primary" @click="previewTemplate">预览此模板</button>
           <button class="template-panel-btn" @click="applyTemplatePreset">套用预设文案</button>
@@ -171,12 +176,14 @@ import { showSuccess, showError } from '@/utils/index.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
 import { updateWedding } from '@/composables/useCloud.js'
 import { WEDDING_TEMPLATES, getWeddingTemplate, normalizeTemplateId } from '@/utils/templates.js'
+import { buildTemplateCommercialState, getCommercialHint, getTemplateTierLabel, isTemplatePremium } from '@/utils/commercial.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
 
 const templates = WEDDING_TEMPLATES
 const activeTemplate = computed(() => getWeddingTemplate(form.value.template))
+const activeTemplateHint = computed(() => getCommercialHint(activeTemplate.value, userStore.entitlements))
 
 const musicPresets = [
   { id: 'piano-dream', name: '梦中的钢琴', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
@@ -243,8 +250,10 @@ function onDateChange(e) { form.value.date = e.detail.value }
 function onTimeChange(e) { form.value.time = e.detail.value }
 
 function buildInvitationData() {
+  const commercial = buildTemplateCommercialState(activeTemplate.value, userStore.entitlements)
   return {
     template: form.value.template,
+    commercial,
     content: {
       title: '婚礼请柬',
       main_text: form.value.content,
@@ -283,13 +292,21 @@ function buildWeddingData() {
       ...(store.wedding?.basic_info || {}),
       date: form.value.date,
       time: form.value.time
+    },
+    commercial: {
+      ...(store.wedding?.commercial || {}),
+      plan: userStore.plan || store.wedding?.commercial?.plan || 'free',
+      template_id: form.value.template,
+      ...buildTemplateCommercialState(activeTemplate.value, userStore.entitlements)
     }
   }
 }
 
 function applyLocalPreviewData() {
+  const weddingData = buildWeddingData()
   store.updateInvitation(buildInvitationData())
-  store.updateWeddingField('basic_info', buildWeddingData().basic_info)
+  store.updateWeddingField('basic_info', weddingData.basic_info)
+  store.updateWeddingField('commercial', weddingData.commercial)
 }
 
 function applyTemplatePreset() {
@@ -429,6 +446,7 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
   overflow: hidden;
   padding: 20rpx;
   box-sizing: border-box;
+  position: relative;
 }
 .template-kicker {
   display: block;
@@ -444,6 +462,20 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
   font-weight: 600;
   color: #fff;
   text-align: center;
+}
+.template-tier {
+  position: absolute;
+  left: 18rpx;
+  bottom: 18rpx;
+  padding: 5rpx 12rpx;
+  border-radius: $radius-full;
+  background: rgba(255,255,255,0.86);
+  color: $color-success;
+  font-size: 18rpx;
+  line-height: 1.2;
+}
+.template-tier.premium {
+  color: #8F6B2E;
 }
 .template-desc {
   display: block;
@@ -484,20 +516,48 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
   white-space: nowrap;
   text-overflow: ellipsis;
 }
+.template-panel-badges {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8rpx;
+  flex-shrink: 0;
+}
+.template-panel-tier {
+  padding: 8rpx 16rpx;
+  border-radius: $radius-full;
+  background: rgba(52,168,83,0.16);
+  color: #A6E2B9;
+  font-size: 22rpx;
+  line-height: 1.2;
+}
+.template-panel-tier.premium {
+  background: rgba(201,169,110,0.18);
+  color: #F0D49A;
+}
 .template-panel-status {
   padding: 8rpx 16rpx;
   border-radius: $radius-full;
   background: rgba(255,255,255,0.1);
   color: rgba(255,255,255,0.72);
   font-size: 22rpx;
-  flex-shrink: 0;
 }
 .template-panel-copy {
   display: block;
   font-size: 24rpx;
   line-height: 1.55;
   color: rgba(255,255,255,0.72);
+  margin-bottom: 14rpx;
+}
+.template-panel-hint {
+  display: block;
+  padding: 18rpx 20rpx;
   margin-bottom: 24rpx;
+  border-radius: $radius-md;
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.72);
+  font-size: 23rpx;
+  line-height: 1.45;
 }
 .template-panel-actions {
   display: flex;

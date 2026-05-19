@@ -21,6 +21,14 @@
 - 大面积英文装饰字距归零，过重阴影降级，卡片圆角收敛，避免风格漂移
 - 长标题、长地址、长祝福、长流程名称增加省略或换行策略，降低小屏文本溢出风险
 
+P2 大众化/商业化基础已完成第一版：
+
+- 新增 `syncOwnerProfile` 云函数，使用微信 `OPENID` 同步主人资料、权益、套餐和婚礼工作区
+- 主人端新增“账号与权益”页面，展示免费版/高级版/商家版边界，以及高级模板、海报套装、去品牌水印、多工作区等权益位
+- 主人端新增“发布诊断”页面，集中检查云环境、婚书、封面、场地坐标、天气/地图 Key、隐私、分享、小程序码海报和模板权益
+- 模板配置新增 `tier` 与 `commercial` 字段，创建向导和婚书编辑会展示免费/高级模板状态，并把商业化状态写入云端
+- 发布检查脚本已加入账号、权益、诊断和模板分层断言，避免后续迭代漏掉 P2 基础设施
+
 ## 功能特性
 
 ### 宾客端（客人展示）
@@ -42,6 +50,8 @@
 - **祝福管理**：查看祝福、置顶/取消置顶、删除
 - **分享设置**：分享卡片文案、分享图配置、云端保存、小程序路径复制、海报生成入口
 - **数据统计**：浏览量、分享次数、RSVP统计、饮食偏好、到场方式、关系来源
+- **账号与权益**：主人资料、权益边界、婚礼工作区，为手机号授权和模板付费预留结构
+- **发布诊断**：上线前检查云环境、地图天气配置、隐私、分享海报和模板权益状态
 
 ## 技术栈
 
@@ -50,7 +60,7 @@
 - **样式**：SCSS + CSS 变量设计系统
 - **后端**：微信云开发（CloudBase）
 - **地图**：腾讯位置服务 / 微信小程序原生 map 组件
-- **数据库**：云开发 MongoDB（9个集合）
+- **数据库**：云开发 MongoDB（10个集合）
 
 ## 目录结构
 
@@ -66,7 +76,12 @@ wedding-miniprogram/
 │   ├── submitBlessing/      # 提交祝福
 │   ├── pinBlessing/         # 置顶祝福
 │   ├── recordView/          # 记录浏览/分享
-│   └── getStats/            # 获取统计数据
+│   ├── getStats/            # 获取统计数据
+│   ├── syncOwnerProfile/    # 主人账号、权益和工作区
+│   ├── geocodeVenue/        # 场地坐标匹配
+│   ├── getWeather/          # 天气预报
+│   ├── generatePoster/      # 小程序码海报
+│   └── checkOwnership/      # 主人身份校验
 ├── pages/                   # 宾客端页面
 │   ├── index/               # 婚书首页
 │   ├── album/               # 婚纱相册
@@ -85,7 +100,9 @@ wedding-miniprogram/
 │   ├── guests/manage        # 宾客管理
 │   ├── blessing/manage      # 祝福管理
 │   ├── share/index          # 分享设置
-│   └── stats/index          # 数据统计
+│   ├── stats/index          # 数据统计
+│   ├── diagnostics/index    # 发布诊断
+│   └── profile/index        # 账号与权益
 ├── stores/                  # Pinia 状态管理
 │   ├── user.js              # 用户状态
 │   └── wedding.js           # 婚礼数据状态
@@ -93,7 +110,9 @@ wedding-miniprogram/
 │   └── useCloud.js          # 云开发 API 封装
 ├── utils/                   # 工具函数
 │   ├── index.js             # 通用工具
-│   └── templates.js         # 内置婚礼模板配置
+│   ├── templates.js         # 内置婚礼模板配置
+│   ├── commercial.js        # 套餐与权益配置
+│   └── releaseDiagnostics.js # 发布诊断规则
 ├── static/                  # 静态资源
 ├── App.vue                  # 应用根组件
 ├── main.js                  # 应用入口
@@ -115,6 +134,22 @@ wedding-miniprogram/
 | blessings | 祝福数据（文字/语音祝福） |
 | share_stats | 分享统计（浏览量、分享次数） |
 | viewers | 访客记录（独立访客去重） |
+| owners | 主人账号资料、套餐、权益、工作区索引 |
+
+### 主人账号与商业化字段
+
+`owners` 以微信 `OPENID` 作为文档 ID，核心字段为：
+
+- `profile.nickname`：主人称呼，可为空
+- `profile.phone`：主人手机号，仅主人端使用，不展示给宾客
+- `profile.role`：主人/策划师/家人等身份
+- `plan`：`free` / `pro` / `business`
+- `entitlements.premium_templates`：是否拥有高级模板
+- `entitlements.poster_pack`：是否拥有海报套装
+- `entitlements.remove_branding`：是否允许去品牌水印
+- `entitlements.workspace_multi`：是否允许多婚礼工作区
+
+`weddings.commercial` 与 `invitations.commercial` 会记录当前模板的 `template_tier`、`template_entitlement` 和 `billing_state`。当前版本为体验期，不阻断个人婚礼发布；正式商业化时可在这里接微信支付结果。
 
 ### RSVP 字段契约
 
@@ -170,6 +205,7 @@ npm install
 7. 在 `cloudfunctions/*/config.json` 中按需配置权限
 8. 需要支持主人删除邀请时，确认 `deleteWedding` 已部署；该函数会校验 `owner_openid`，并删除婚礼、请柬、相册记录、路书、流程、宾客、祝福、统计和访客记录
 9. 本次产品化能力依赖 `createWedding`、`getWedding`、`submitRSVP`、`submitBlessing`、`updateWedding`，上线前请重新部署这些云函数
+10. P2 账号与商业化基础依赖 `syncOwnerProfile`，上线前请部署该云函数并在主人端“账号与权益”页面确认可同步
 
 ### 运行到微信开发者工具
 
@@ -275,14 +311,16 @@ MINIPROGRAM_PRIVATE_KEY_PATH=/path/to/private.key npm run upload:mp-weixin
 - `config/cloud.js` 中 `CLOUD_ENV` 已替换为正式云开发环境 ID
 - 已部署所有 `cloudfunctions/*`，选择「云端安装依赖」
 - 已重新部署 `createWedding`、`getWedding`、`submitRSVP`、`submitBlessing`、`updateWedding`，并验证模板初始化、功能开关、隐私控制和分享设置保存
+- 已部署 `syncOwnerProfile`，并验证主人端“账号与权益”能同步 openid、套餐、权益和工作区
 - 已部署 `deleteWedding`，并在主人端管理后台验证删除后旧邀请链接失效、新建向导可重新打开
 - 已部署 `geocodeVenue`，并为 `geocodeVenue`、`getWeather` 配置 `TENCENT_MAP_KEY` 后验证场地能自动匹配地图和天气
-- 数据库集合已创建：`weddings`、`invitations`、`albums`、`venues`、`timelines`、`guests`、`blessings`、`share_stats`、`viewers`
+- 数据库集合已创建：`owners`、`weddings`、`invitations`、`albums`、`venues`、`timelines`、`guests`、`blessings`、`share_stats`、`viewers`
 - 数据库索引已创建：`viewers.wedding_id + viewers.openid`、`guests.guests.phone`、`blessings.blessings.id`
 - 已运行 `npm run check:release` 并通过
 - 已运行 `npm run build:mp-weixin`，并确认 `dist/build/mp-weixin` 可由微信开发者工具打开
 - 如使用 CLI 上传，已设置 `MINIPROGRAM_PRIVATE_KEY_PATH`，且未把上传密钥路径写入仓库
 - 在微信开发者工具中完成首页宾客行动台、RSVP 新字段、祝福墙、到场助手、管理后台发布准备度、宾客管理、统计页的模拟器检查
+- 在主人端“发布诊断”页确认无阻断项；天气 Key、小程序码、内容安全策略等人工项已真机验证
 
 ## 设计系统
 
@@ -297,6 +335,13 @@ MINIPROGRAM_PRIVATE_KEY_PATH=/path/to/private.key npm run upload:mp-weixin
 - **异地宾客友好**：清爽白底 + 蓝绿点缀，强调到达时间、交通、住宿、天气和提醒
 
 模板配置集中在 `utils/templates.js`，创建向导会先展示模板并套用对应预设文案、流程角色、路书提示和默认场地信息，婚书编辑、首页、RSVP、相册、路书、流程和更多页都会读取同一份模板配置。
+
+模板商业化配置集中在 `utils/commercial.js` 与 `utils/templates.js`：
+
+- 免费模板：不限制发布，适合个人婚礼基本上线
+- 高级模板：当前体验期可预览和发布，会记录 `billing_state=trial`
+- 推荐收费边界：优先收费高级模板、海报套装、去品牌水印，不锁 RSVP、路书、流程等宾客刚需功能
+- 后续接微信支付时，只需要根据支付结果更新 `owners.entitlements`，页面会自动读取权益状态
 
 功能图标统一使用 `static/visuals/icon-*.svg` 矢量线性图标，透明画布、无方形底板，主描边为近黑，局部使用玫瑰红和香槟金点缀。需要调整或重新生成图标时运行：
 
@@ -317,9 +362,9 @@ node scripts/generate-vector-icons.js
 
 | 维度 | 主人端 | 宾客端 |
 |------|--------|--------|
-| 入口 | 手机号+验证码 | 分享卡片/小程序码 |
+| 入口 | 微信身份 + 主人校验 | 分享卡片/小程序码 |
 | 权限 | 读写全部 | 只读 + RSVP/祝福 |
-| 页面 | 管理后台（10+页） | Tab导航（5 Tab） |
+| 页面 | 管理后台（含发布诊断、账号权益） | Tab导航（5 Tab） |
 | 分包 | pages-owner | pages |
 
 ## 注意事项
@@ -327,9 +372,9 @@ node scripts/generate-vector-icons.js
 1. **云开发免费额度**：注意图片存储按量计费，建议压缩后上传
 2. **主包大小**：主人端使用 subPackages 分包，确保主包不超过 2MB
 3. **地图Key**：生产环境需申请腾讯位置服务 Key
-4. **手机号验证**：主人端目前使用模拟验证，生产环境建议接入微信手机号验证组件
+4. **手机号验证**：主人端已预留主人资料与手机号字段，生产环境建议接入微信手机号授权组件
 5. **音乐播放**：婚书首页背景音乐需配置合法域名或使用 base64 音频
-6. **商业化边界**：当前已具备模板分层、分享保存和隐私开关基础，模板付费、去品牌水印、正式账号体系仍需在后续版本接入
+6. **商业化边界**：当前已具备模板分层、账号权益和发布诊断基础；微信支付、订单表、退款与发票等交易闭环仍需后续接入
 
 ## License
 

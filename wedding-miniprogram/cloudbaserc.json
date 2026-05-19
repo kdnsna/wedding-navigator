@@ -23,6 +23,13 @@
       "runtime": "Nodejs16.13",
       "handler": "index.main",
       "description": "更新婚礼业务数据"
+    },
+    {
+      "name": "syncOwnerProfile",
+      "timeout": 20,
+      "runtime": "Nodejs16.13",
+      "handler": "index.main",
+      "description": "同步主人账号、权益和婚礼工作区"
     }
   ]
 }

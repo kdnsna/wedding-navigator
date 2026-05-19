@@ -36,7 +36,10 @@
           <view class="template-meta">
             <view class="template-head">
               <text class="template-name">{{ tpl.name }}</text>
-              <text class="template-status">{{ form.template === tpl.id ? '已选择' : '选择' }}</text>
+              <view class="template-badges">
+                <text class="template-tier" :class="{ premium: isTemplatePremium(tpl) }">{{ getTemplateTierLabel(tpl) }}</text>
+                <text class="template-status">{{ form.template === tpl.id ? '已选择' : '选择' }}</text>
+              </view>
             </view>
             <text class="template-desc">{{ tpl.desc }}</text>
             <text class="template-copy">{{ tpl.copy }}</text>
@@ -47,6 +50,7 @@
       <view class="template-note" v-if="selectedTemplate">
         <text class="template-note-title">预设文案</text>
         <text class="template-note-copy">{{ selectedTemplate.preset?.mainText }}</text>
+        <text class="template-note-hint">{{ selectedTemplateHint }}</text>
       </view>
     </view>
 
@@ -126,6 +130,7 @@ import { useWeddingStore } from '@/stores/wedding.js'
 import { createWedding } from '@/composables/useCloud.js'
 import { showSuccess, showError, getWeekDay } from '@/utils/index.js'
 import { WEDDING_TEMPLATES, buildTemplateGuide, buildTemplateTimeline, getWeddingTemplate } from '@/utils/templates.js'
+import { buildTemplateCommercialState, getCommercialHint, getTemplateTierLabel, isTemplatePremium } from '@/utils/commercial.js'
 
 const userStore = useUserStore()
 const weddingStore = useWeddingStore()
@@ -146,6 +151,7 @@ const form = ref({
 
 const templates = WEDDING_TEMPLATES
 const selectedTemplate = computed(() => getWeddingTemplate(form.value.template))
+const selectedTemplateHint = computed(() => getCommercialHint(selectedTemplate.value, userStore.entitlements))
 
 function onDateChange(e) { form.value.date = e.detail.value }
 function onTimeChange(e) { form.value.time = e.detail.value }
@@ -194,6 +200,16 @@ async function createWeddingAction() {
       basic_info: { date: form.value.date, time: form.value.time, week_day: getWeekDay(form.value.date) },
       status: 'published',
       stats: { views: 0, shares: 0, rsvp_count: 0, blessing_count: 0, unique_viewers: 0 },
+      commercial: {
+        plan: userStore.plan || 'free',
+        template_id: form.value.template,
+        ...buildTemplateCommercialState(tpl, userStore.entitlements)
+      },
+      workspace: {
+        plan: userStore.plan || 'free',
+        template_id: form.value.template,
+        commercial_status: 'trial'
+      },
       share_config: {
         title: `${form.value.groomName} & ${form.value.brideName}的婚礼邀请`,
         description: `${form.value.date}，我们结婚啦！诚邀您的见证`,
@@ -202,6 +218,7 @@ async function createWeddingAction() {
     }
     const invitationPayload = {
       template: form.value.template,
+      commercial: buildTemplateCommercialState(tpl, userStore.entitlements),
       content: {
         title: '婚礼请柬',
         main_text: tpl?.preset?.mainText || '诚挚邀请您参加我们的婚礼，见证我们的幸福时刻。',
@@ -441,7 +458,7 @@ async function createWeddingAction() {
 }
 .template-head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 16rpx;
   margin-bottom: 8rpx;
 }
@@ -455,6 +472,25 @@ async function createWeddingAction() {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+.template-badges {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8rpx;
+  flex-shrink: 0;
+}
+.template-tier {
+  padding: 5rpx 12rpx;
+  border-radius: $radius-full;
+  background: rgba(52,168,83,0.1);
+  color: $color-success;
+  font-size: 19rpx;
+  line-height: 1.2;
+}
+.template-tier.premium {
+  background: rgba(201,169,110,0.14);
+  color: #8F6B2E;
 }
 .template-status {
   flex-shrink: 0;
@@ -518,6 +554,15 @@ async function createWeddingAction() {
   font-size: 26rpx;
   color: $text-primary;
   line-height: 1.65;
+}
+.template-note-hint {
+  display: block;
+  margin-top: 18rpx;
+  padding-top: 18rpx;
+  border-top: 1rpx solid rgba(201,169,110,0.22);
+  font-size: 23rpx;
+  color: $text-secondary;
+  line-height: 1.5;
 }
 
 /* 底部按钮 */

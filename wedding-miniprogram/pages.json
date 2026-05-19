@@ -121,6 +121,18 @@
           "style": {
             "navigationBarTitleText": "数据统计"
           }
+        },
+        {
+          "path": "diagnostics/index",
+          "style": {
+            "navigationBarTitleText": "发布诊断"
+          }
+        },
+        {
+          "path": "profile/index",
+          "style": {
+            "navigationBarTitleText": "账号与权益"
+          }
         }
       ]
     }

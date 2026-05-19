@@ -149,6 +149,11 @@ async function checkOwnership(weddingId) {
   return callFunction('checkOwnership', { weddingId }, { timeoutMs: 5000 })
 }
 
+// 同步主人账号、权益和婚礼工作区
+async function syncOwnerProfile(profile = {}) {
+  return callFunction('syncOwnerProfile', { profile }, { timeoutMs: 10000 })
+}
+
 // 生成小程序码海报
 async function generatePoster(page, scene, width = 430) {
   return callFunction('generatePoster', { page, scene, width }, { timeoutMs: 15000 })
@@ -241,6 +246,7 @@ export {
   getStats,
   getRSVPStats,
   checkOwnership,
+  syncOwnerProfile,
   generatePoster,
   getWeather,
   geocodeVenue,

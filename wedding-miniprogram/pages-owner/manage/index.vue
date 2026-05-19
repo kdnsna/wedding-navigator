@@ -108,6 +108,18 @@
         <text class="menu-title">数据统计</text>
         <text class="menu-arrow">›</text>
       </view>
+      <view class="divider" />
+      <view class="menu-item" @click="goTo('diagnostics/index')">
+        <text class="menu-title">发布诊断</text>
+        <text class="menu-badge" :class="{ danger: !checklist.ready }">{{ checklist.ready ? '可发布' : '需补齐' }}</text>
+        <text class="menu-arrow">›</text>
+      </view>
+      <view class="divider" />
+      <view class="menu-item" @click="goTo('profile/index')">
+        <text class="menu-title">账号与权益</text>
+        <text class="menu-badge">{{ userStore.planTier.label }}</text>
+        <text class="menu-arrow">›</text>
+      </view>
     </view>
 
     <!-- 底部操作 -->
@@ -132,7 +144,7 @@ import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { formatDate, showError, showSuccess } from '@/utils/index.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
-import { deleteWedding, fetchWedding, getStats } from '@/composables/useCloud.js'
+import { deleteWedding, fetchWedding, getStats, syncOwnerProfile } from '@/composables/useCloud.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
@@ -243,6 +255,13 @@ onShow(async () => {
   if (!useOwnerGuard()) return
   try {
     await fetchWedding(userStore.weddingId)
+    const profileRes = await syncOwnerProfile().catch((err) => {
+      console.warn('主人账号同步失败:', err)
+      return null
+    })
+    if (profileRes?.success) {
+      userStore.setOwnerProfile(profileRes)
+    }
     const res = await getStats(userStore.weddingId)
     if (res?.stats) {
       store.wedding.stats = {
@@ -472,6 +491,20 @@ onShow(async () => {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+.menu-badge {
+  flex-shrink: 0;
+  margin-right: 12rpx;
+  padding: 7rpx 14rpx;
+  border-radius: $radius-full;
+  background: $bg-muted;
+  color: $text-secondary;
+  font-size: 22rpx;
+  line-height: 1.2;
+}
+.menu-badge.danger {
+  background: rgba(234,67,53,0.1);
+  color: $color-error;
 }
 .menu-arrow {
   font-size: 28rpx;

@@ -13,6 +13,13 @@ export const WEDDING_TEMPLATES = [
     photoMood: '建议使用竖版主封面，人物居中偏上，留出底部文字空间',
     albumMood: '高定相册',
     copy: '适合酒店、宴会厅、正式仪式和大多数婚礼场景',
+    tier: 'free',
+    commercial: {
+      tier: 'free',
+      entitlement: '',
+      priceLabel: '免费模板',
+      unlockText: '基础免费，适合直接上线'
+    },
     preset: {
       mainText: '以爱为名，以余生为约。诚挚邀请您莅临我们的婚礼，在玫瑰与灯光之间，见证我们人生中最珍贵的一刻。',
       venueName: '玫瑰宴会厅'
@@ -55,6 +62,13 @@ export const WEDDING_TEMPLATES = [
     photoMood: '建议使用浅色、户外或白纱照片，画面保留自然留白',
     albumMood: '杂志影像',
     copy: '适合草坪、极简、白绿色或香槟色婚礼',
+    tier: 'free',
+    commercial: {
+      tier: 'free',
+      entitlement: '',
+      priceLabel: '免费模板',
+      unlockText: '基础免费，适合直接上线'
+    },
     preset: {
       mainText: '我们把这一天折进一页温柔的请柬里。愿您与我们一起，在香槟色的光影中，共赴一场关于爱与承诺的仪式。',
       venueName: '香槟花园厅'
@@ -96,6 +110,13 @@ export const WEDDING_TEMPLATES = [
     photoMood: '建议使用夜景、宴会厅、灯光或黑礼服照片',
     albumMood: '晚宴片场',
     copy: '适合晚宴、酒店宴会厅、高级餐厅和黑金主题',
+    tier: 'premium',
+    commercial: {
+      tier: 'premium',
+      entitlement: 'premium_templates',
+      priceLabel: '高级模板',
+      unlockText: '适合作为视觉高级模板收费'
+    },
     preset: {
       mainText: '夜幕、灯火、挚爱与挚友。诚邀您出席我们的婚礼晚宴，与我们一同举杯，见证这场属于爱意的黑金时刻。',
       venueName: '黑金宴会厅'
@@ -137,6 +158,13 @@ export const WEDDING_TEMPLATES = [
     photoMood: '建议使用草坪、花园、旅拍或自然光照片',
     albumMood: '胶片故事',
     copy: '适合户外、草坪、旅拍和温柔生活感婚礼',
+    tier: 'free',
+    commercial: {
+      tier: 'free',
+      entitlement: '',
+      priceLabel: '免费模板',
+      unlockText: '基础免费，适合直接上线'
+    },
     preset: {
       mainText: '在花香、微风与自然光里，我们将把相爱的日常郑重写成誓言。期待您来到现场，和我们一起收藏这段春日般的记忆。',
       venueName: '花园草坪仪式区'
@@ -178,6 +206,13 @@ export const WEDDING_TEMPLATES = [
     photoMood: '建议使用中式礼服、敬茶或家宴场景照片，画面要端正、留白充足',
     albumMood: '礼序影像',
     copy: '适合中式礼服、敬茶改口、证婚和家庭仪式感较强的婚礼',
+    tier: 'premium',
+    commercial: {
+      tier: 'premium',
+      entitlement: 'premium_templates',
+      priceLabel: '高级模板',
+      unlockText: '适合作为礼序方案模板收费'
+    },
     preset: {
       mainText: '良辰已定，喜期将至。谨以此函敬邀亲友莅临喜宴，见证我们结为连理，也与家人同享这份团圆与欢喜。',
       venueName: '中式礼宴厅'
@@ -220,6 +255,13 @@ export const WEDDING_TEMPLATES = [
     photoMood: '建议使用端正合影、家宴或仪式照片，信息区域保持清晰易读',
     albumMood: '家宴纪实',
     copy: '适合重视亲友到场、接亲、会亲、回门和席位安排的山东家庭婚礼',
+    tier: 'premium',
+    commercial: {
+      tier: 'premium',
+      entitlement: 'premium_templates',
+      priceLabel: '高级模板',
+      unlockText: '适合作为地域习俗方案模板收费'
+    },
     preset: {
       mainText: '喜期已定，敬备薄酌。诚邀亲友拨冗赴宴，见证新人礼成，同叙亲情，共贺良缘。',
       venueName: '喜宴大厅'
@@ -263,6 +305,13 @@ export const WEDDING_TEMPLATES = [
     photoMood: '建议使用城市、酒店、合影或旅拍照片，信息层要足够清楚',
     albumMood: '到场手册',
     copy: '适合异地宾客较多、需要重点说明住宿交通和时间安排的婚礼',
+    tier: 'premium',
+    commercial: {
+      tier: 'premium',
+      entitlement: 'premium_templates',
+      priceLabel: '高级模板',
+      unlockText: '适合作为路书方案模板收费'
+    },
     preset: {
       mainText: '为了让远道而来的亲友更安心，我们把时间、地点、路线和住宿整理成这本手册。期待您顺利抵达，与我们相聚。',
       venueName: '婚礼主场地'
