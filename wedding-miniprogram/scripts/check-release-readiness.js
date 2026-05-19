@@ -86,6 +86,14 @@ function walk(dir) {
   return result
 }
 
+function listCloudFunctionDirs() {
+  const cloudRoot = path.join(root, 'cloudfunctions')
+  return fs.readdirSync(cloudRoot, { withFileTypes: true })
+    .filter(entry => entry.isDirectory() && fs.existsSync(path.join(cloudRoot, entry.name, 'index.js')))
+    .map(entry => entry.name)
+    .sort()
+}
+
 function checkRsvpContract() {
   const rsvpPage = read('pages/rsvp/index.vue')
   assert(rsvpPage.includes('rsvp_status'), 'pages/rsvp/index.vue must submit canonical rsvp_status')
@@ -94,7 +102,9 @@ function checkRsvpContract() {
   assert(rsvpPage.includes('relationship'), 'pages/rsvp/index.vue must collect guest relationship')
   assert(rsvpPage.includes('arrival_time'), 'pages/rsvp/index.vue must submit arrival_time for real-world planning')
   assert(rsvpPage.includes('transport_mode'), 'pages/rsvp/index.vue must submit transport_mode for arrival planning')
+  assert(rsvpPage.includes('is_current_user'), 'pages/rsvp/index.vue must detect the current guest RSVP returned by getWedding')
   assertIncludes('cloudfunctions/submitRSVP/index.js', 'normalizeRSVP', 'submitRSVP must normalize canonical and legacy RSVP fields')
+  assertIncludes('cloudfunctions/submitRSVP/index.js', 'validateRSVP', 'submitRSVP must validate required RSVP fields server-side')
   assertIncludes('cloudfunctions/submitRSVP/index.js', 'companion_note', 'submitRSVP must persist companion notes')
 }
 
@@ -128,6 +138,46 @@ function checkCloudSafety() {
   assertIncludes('cloudbaserc.json', '"timeout": 20', 'cloudbaserc must keep cloud function timeout deploy config')
 }
 
+function checkCloudFunctionDeployConfig() {
+  const cloudFunctions = listCloudFunctionDirs()
+  assert(cloudFunctions.length === 15, `expected 15 cloud functions, got ${cloudFunctions.length}: ${cloudFunctions.join(', ')}`)
+
+  const cloudbaserc = readJson('cloudbaserc.json')
+  assert(cloudbaserc.envId === 'cloud1-d5gqyur7g5a4d3c8d', 'cloudbaserc must target the production CloudBase env')
+  assert(cloudbaserc.functionRoot === 'cloudfunctions', 'cloudbaserc must deploy from cloudfunctions root')
+  assert(Array.isArray(cloudbaserc.functions), 'cloudbaserc must declare deployable functions')
+
+  const deployNames = cloudbaserc.functions.map(fn => fn.name).sort()
+  assert(new Set(deployNames).size === deployNames.length, 'cloudbaserc must not contain duplicate cloud function entries')
+  assert(JSON.stringify(deployNames) === JSON.stringify(cloudFunctions), `cloudbaserc must include every cloud function. expected ${cloudFunctions.join(', ')}, got ${deployNames.join(', ')}`)
+
+  const deployByName = new Map(cloudbaserc.functions.map(fn => [fn.name, fn]))
+  for (const name of cloudFunctions) {
+    const configPath = `cloudfunctions/${name}/config.json`
+    const packagePath = `cloudfunctions/${name}/package.json`
+    assert(fs.existsSync(path.join(root, configPath)), `${name}: config.json is required for deployment permissions`)
+    assert(fs.existsSync(path.join(root, packagePath)), `${name}: package.json is required for cloud dependency install`)
+
+    const config = readJson(configPath)
+    const pkg = readJson(packagePath)
+    const deploy = deployByName.get(name)
+    assert(config.permissions && Array.isArray(config.permissions.openapi), `${name}: config.json must declare permissions.openapi`)
+    assert(pkg.main === 'index.js', `${name}: package main must be index.js`)
+    assert(pkg.dependencies && pkg.dependencies['wx-server-sdk'], `${name}: package.json must depend on wx-server-sdk`)
+    assert(deploy.runtime === 'Nodejs16.13', `${name}: cloudbaserc runtime must be Nodejs16.13`)
+    assert(deploy.handler === 'index.main', `${name}: cloudbaserc handler must be index.main`)
+    assert(Number(deploy.timeout) >= 10, `${name}: cloudbaserc timeout must be at least 10 seconds`)
+    assert(typeof deploy.description === 'string' && deploy.description.length > 0, `${name}: cloudbaserc description is required`)
+  }
+
+  const posterOpenapi = readJson('cloudfunctions/generatePoster/config.json').permissions.openapi
+  assert(posterOpenapi.includes('wxacode.getUnlimited'), 'generatePoster must declare wxacode.getUnlimited permission')
+  for (const name of ['submitRSVP', 'submitBlessing']) {
+    const openapi = readJson(`cloudfunctions/${name}/config.json`).permissions.openapi
+    assert(openapi.includes('security.msgSecCheck'), `${name} must declare security.msgSecCheck permission`)
+  }
+}
+
 function checkDataContracts() {
   assertIncludes('stores/wedding.js', 'cachedWeddingId', 'wedding store must bind cache to the current weddingId')
   assertIncludes('stores/wedding.js', 'isCacheValidFor', 'wedding store must expose weddingId-aware cache validation')
@@ -143,6 +193,7 @@ function checkDataContracts() {
   assertIncludes('cloudfunctions/createWedding/index.js', "'viewers'", 'createWedding must create the viewers collection used by view tracking')
   assertIncludes('cloudfunctions/recordView/index.js', "ensureCollection('viewers')", 'recordView must initialize the viewers collection')
   assertIncludes('cloudfunctions/getWedding/index.js', 'normalizeListDocument', 'getWedding must normalize legacy nested list documents')
+  assertIncludes('cloudfunctions/getWedding/index.js', 'is_current_user', 'getWedding must mark the current guest RSVP without exposing other guests')
   assertIncludes('cloudfunctions/getStats/index.js', 'normalizeListDocument', 'getStats must normalize legacy nested list documents')
   assertIncludes('cloudfunctions/getRSVPStats/index.js', 'normalizeListDocument', 'getRSVPStats must normalize legacy nested guest documents')
   assertIncludes('cloudfunctions/generatePoster/index.js', 'WXACODE_ENV_VERSION', 'generatePoster must support configurable wxacode env version')
@@ -259,18 +310,37 @@ function checkUploadScript() {
   const source = read('upload.mjs')
   assert(source.includes('WECHAT_DEVTOOLS_CLI_PATH'), 'upload script must allow overriding WeChat DevTools CLI path')
   assert(source.includes('MINIPROGRAM_PROJECT_PATH'), 'upload script must allow overriding project path')
-  assert(source.includes('pkg.version'), 'upload script must default to package.json version for consistent releases')
+  assert(source.includes('manifest.versionName'), 'upload script must use manifest versionName for miniprogram releases')
+  assert(source.includes('pkg.version'), 'upload script must keep package.json version as a fallback')
+  assert(source.indexOf('manifest.versionName') < source.indexOf('pkg.version'), 'upload script must prefer manifest versionName before package.json version')
   assert(source.includes('cliPath'), 'upload script must use the WeChat DevTools CLI')
   assert(!source.includes('/Users/kdnsna/Desktop'), 'upload script must not hardcode local private key paths')
   assert(!source.includes('/Users/kdnsna/Documents/06-项目代码'), 'upload script must not hardcode local build paths')
+
+  const ciSource = read('upload-ci.mjs')
+  assert(ciSource.includes('MINIPROGRAM_PRIVATE_KEY_PATH'), 'miniprogram-ci upload script must read private key path from env')
+  assert(ciSource.includes('MINIPROGRAM_PROJECT_PATH'), 'miniprogram-ci upload script must allow overriding project path')
+  assert(ciSource.includes('MINIPROGRAM_VERSION'), 'miniprogram-ci upload script must allow overriding version')
+  assert(ciSource.includes('manifest.versionName'), 'miniprogram-ci upload script must use manifest versionName')
+  assert(ciSource.includes('await import(\'miniprogram-ci\')'), 'miniprogram-ci upload script must load miniprogram-ci with a helpful missing-dependency error')
+  assert(!ciSource.includes('Desktop/private'), 'miniprogram-ci upload script must not hardcode local private key paths')
+  assert(!ciSource.includes('/Users/kdnsna'), 'miniprogram-ci upload script must not hardcode local user paths')
   assertIncludes('package.json', 'upload:mp-weixin', 'package scripts must expose the miniprogram upload command')
+  assertIncludes('package.json', 'postbuild:mp-weixin', 'package scripts must copy cloudfunctions into the WeChat build output')
+  assert(fs.existsSync(path.join(root, 'scripts/copy-cloudfunctions-to-dist.js')), 'cloud function copy script must exist')
+  assertIncludes('scripts/copy-cloudfunctions-to-dist.js', 'cloudbaserc.json', 'cloud function copy script must copy cloudbaserc into build output')
 }
 
 function checkReleaseDocs() {
   assert(fs.existsSync(path.join(root, '.nvmrc')), '.nvmrc must pin the preferred Node LTS version')
+  assert(fs.existsSync(path.join(root, 'RELEASE-AUDIT.md')), 'RELEASE-AUDIT.md must document the pre-launch full audit')
+  const audit = read('RELEASE-AUDIT.md')
+  assert(audit.includes('15 个云函数'), 'RELEASE-AUDIT.md must cover all 15 cloud functions')
+  assert(audit.includes('真云必验清单'), 'RELEASE-AUDIT.md must include true-cloud manual verification steps')
   const readme = read('README.md')
   assert(readme.includes('Node.js 20 LTS'), 'README must document Node.js 20 LTS')
   assert(readme.includes('发布前检查清单'), 'README must include a release checklist')
+  assert(readme.includes('RELEASE-AUDIT.md'), 'README must link the pre-launch full audit')
   assert(readme.includes('P2 大众化/商业化'), 'README must document P2 commercialization foundations')
   assert(readme.includes('写实模板主图'), 'README must document photorealistic template hero images')
   assert(readme.includes('syncOwnerProfile'), 'README must document owner profile sync deployment')
@@ -389,6 +459,7 @@ checkNavigationTargets()
 checkRsvpContract()
 checkOwnerGuard()
 checkCloudSafety()
+checkCloudFunctionDeployConfig()
 checkDataContracts()
 checkTemplateSystem()
 checkCommercializationFoundations()

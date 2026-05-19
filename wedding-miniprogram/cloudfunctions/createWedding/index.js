@@ -34,6 +34,9 @@ exports.main = async (event, context) => {
   if (!weddingPayload) {
     return { success: false, message: '缺少婚礼数据' }
   }
+  if (!OPENID) {
+    return { success: false, message: '无法识别微信身份，请重新打开小程序' }
+  }
 
   let weddingId = null
   try {

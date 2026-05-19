@@ -347,6 +347,7 @@ async function handleSubmit() {
   }
   if (!allowRsvpUpdate.value) {
     const existing = (store.guests?.guests || []).find(item => {
+      if (item.is_current_user === true) return true
       if (form.phone && item.phone === form.phone) return true
       return userStore.openid && item.openid === userStore.openid
     })
@@ -447,6 +448,7 @@ onLoad(async (options) => {
     try { await fetchWedding(userStore.weddingId) } catch (err) {}
   }
   const rsvp = (store.guests?.guests || []).find(item => {
+    if (item.is_current_user === true) return true
     return (form.phone && item.phone === form.phone) || (userStore.openid && item.openid === userStore.openid)
   })
   if (rsvp) {

@@ -59,8 +59,8 @@ exports.main = async (event, context) => {
           guestsData = {
             ...guestsData,
             guests: ownGuests.map(g => {
-              const { phone, dietary, openid, ...safe } = g
-              return safe
+              const { openid, ...safe } = g
+              return { ...safe, is_current_user: true }
             }),
             _totalGuests: total,
             _truncated: false

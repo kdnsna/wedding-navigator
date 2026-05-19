@@ -23,6 +23,7 @@
     "build:mp-alipay": "uni build -p mp-alipay",
     "build:mp-baidu": "uni build -p mp-baidu",
     "build:mp-weixin": "UNI_INPUT_DIR=. npm exec --yes --package=node@20.19.6 -- node node_modules/.bin/uni build -p mp-weixin",
+    "postbuild:mp-weixin": "node scripts/copy-cloudfunctions-to-dist.js dist/build/mp-weixin",
     "build:quickapp": "uni build -p quickapp",
     "upload:mp-weixin": "node upload.mjs"
   },

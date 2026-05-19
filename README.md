@@ -56,6 +56,15 @@ P2 大众化/商业化基础已完成第一版，重点不锁刚需功能，先�
 - 完整模板预览的首页封面已拉高并轻微下移主体，减少竖版婚纱照在手机预览壳里被顶部裁切或被底部文案压住的问题
 - 旧的 `default-cover.png` 保留为极端兜底，不再作为模板首屏的主要视觉
 
+上线前全功能审查已完成代码侧修复，并新增 [RELEASE-AUDIT.md](wedding-miniprogram/RELEASE-AUDIT.md)：
+
+- `cloudbaserc.json` 已补齐 15 个云函数的部署清单，统一 runtime、handler、timeout 和描述
+- `submitRSVP`、`submitBlessing` 已补 `security.msgSecCheck` 权限，并增加服务端必填、长度和内容安全校验
+- `getWedding` 只向普通宾客返回当前宾客自己的 RSVP，并用 `is_current_user` 支持重复打开识别
+- `upload.mjs` 上传版本优先读取 `manifest.versionName`，`upload-ci.mjs` 移除本机私钥硬编码，改为环境变量配置
+- `build:mp-weixin` 完成后会自动把 `cloudfunctions/` 和 `cloudbaserc.json` 同步到构建产物，避免开发者工具打开构建目录时看不到云函数
+- 发布检查脚本新增云函数全量部署、OpenAPI 权限、CI 上传脚本安全和宾客回执识别断言
+
 ## 项目简介
 
 「甜囍手册」是一款专为婚礼当天打造的微信小程序，定位不是普通电子请柬，而是给宾客看的**婚礼行动手册**。它集**婚书请柬**、**今日行动台**、**婚礼路书**、**流程时间线**、**RSVP宾客管理**、**祝福墙**于一体，建立「主人编辑端 + 宾客展示端」双角色体系。
@@ -150,3 +159,4 @@ wedding-miniprogram/
 | Phase 10 | 模板主题一致性：封面主图、宾客页背景、模块色彩和海报调色板统一 | ✅ |
 | Phase 11 | 模板完整预览：虚拟婚礼数据 + 首页/路书/流程/RSVP/祝福/相册/海报模拟 | ✅ |
 | Phase 12 | 写实模板主图：每套模板绑定竖版婚纱照，首页/模板预览/分享海报统一兜底 | ✅ |
+| Phase 13 | 上线前全功能审查：15 个云函数部署清单、内容安全权限、上传脚本、RSVP/祝福服务端校验 | ✅ |

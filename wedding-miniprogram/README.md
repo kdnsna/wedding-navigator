@@ -47,6 +47,15 @@ P2 大众化/商业化基础已完成第一版：
 - 首页默认窄竖封面改为满屏裁切和底部信息渐变，移除两侧色带与灰雾遮罩
 - 首页“确认出席/分享”操作不再固定悬浮遮挡宾客行动台，改为页面底部动作区
 
+上线前全功能审查已完成代码侧修复，并新增 `RELEASE-AUDIT.md`：
+
+- `cloudbaserc.json` 已补齐全部 15 个云函数，避免上线时漏部署创建、更新、RSVP、祝福、统计等核心函数
+- `submitRSVP`、`submitBlessing` 已补 `security.msgSecCheck` 权限，并增加服务端姓名、祝福内容、长度和内容安全校验
+- 普通宾客重新打开 RSVP 时，`getWedding` 只返回自己的回执并标记 `is_current_user`，页面可识别已提交状态
+- `upload.mjs` 上传版本优先读取 `manifest.versionName`，`upload-ci.mjs` 移除本机私钥路径硬编码，改为环境变量配置
+- `postbuild:mp-weixin` 会把 `cloudfunctions/` 和 `cloudbaserc.json` 自动同步到 `dist/build/mp-weixin`，开发者工具打开构建目录时也能看到云函数
+- `npm run check:release` 新增云函数全量部署、OpenAPI 权限、上传脚本安全和当前宾客回执识别断言
+
 ## 功能特性
 
 ### 宾客端（客人展示）
@@ -201,7 +210,7 @@ wedding-miniprogram/
 
 ### 环境要求
 - Node.js 20 LTS（项目已提供 `.nvmrc`，建议 `nvm use` 后再构建）
-- npm >= 10（当前仓库使用 `package-lock.json`，推荐 npm 安装依赖）
+- npm >= 10（推荐 npm 安装依赖；如本机使用 pnpm，也请确保 Node 版本一致）
 - HBuilderX 或 VS Code + uni-app 插件
 - 微信开发者工具
 
@@ -221,7 +230,7 @@ npm install
 4. 如需真实天气，在 `getWeather` 云函数环境变量中配置 `HEFENG_KEY`，也兼容 `QWEATHER_KEY` / `WEATHER_KEY`
 5. 如需内容安全接口失败时阻断提交，在 `submitRSVP`、`submitBlessing` 云函数环境变量中配置 `CONTENT_SAFETY_MODE=strict`
 6. 如需生成体验版/开发版小程序码，在 `generatePoster` 云函数环境变量中配置 `WXACODE_ENV_VERSION=trial` 或 `develop`
-7. 在 `cloudfunctions/*/config.json` 中按需配置权限
+7. 在 `cloudfunctions/*/config.json` 中确认权限：`generatePoster` 需要 `wxacode.getUnlimited`，`submitRSVP` / `submitBlessing` 需要 `security.msgSecCheck`
 8. 需要支持主人删除邀请时，确认 `deleteWedding` 已部署；该函数会校验 `owner_openid`，并删除婚礼、请柬、相册记录、路书、流程、宾客、祝福、统计和访客记录
 9. 本次产品化能力依赖 `createWedding`、`getWedding`、`submitRSVP`、`submitBlessing`、`updateWedding`，上线前请重新部署这些云函数
 10. P2 账号与商业化基础依赖 `syncOwnerProfile`，上线前请部署该云函数并在主人端“账号与权益”页面确认可同步
@@ -248,6 +257,7 @@ npm run build:mp-weixin
 ```
 
 构建完成后，在微信开发者工具中打开 `dist/build/mp-weixin` 目录进行模拟器预览。
+构建脚本会自动把 `cloudfunctions/` 和 `cloudbaserc.json` 同步到该目录，便于在开发者工具里直接查看和部署云函数。
 
 ## 部署
 
@@ -294,7 +304,7 @@ CONTENT_SAFETY_MODE=strict
 WXACODE_ENV_VERSION=trial
 ```
 
-`generatePoster` 已加入 `cloudbaserc.json`。如果分享设置页提示小程序码生成失败，请优先确认该云函数已部署，并已在云函数权限中开启 `wxacode.getUnlimited`。
+`cloudbaserc.json` 已包含全部 15 个云函数。如果分享设置页提示小程序码生成失败，请优先确认 `generatePoster` 已部署，并已在云函数权限中开启 `wxacode.getUnlimited`。
 
 ### 3. 创建数据库索引
 
@@ -332,9 +342,12 @@ MINIPROGRAM_PRIVATE_KEY_PATH=/path/to/private.key npm run upload:mp-weixin
 
 ## 发布前检查清单
 
+- 已阅读 `RELEASE-AUDIT.md`，并完成其中的真云必验清单
 - `manifest.json` 中 `mp-weixin.appid` 已替换为正式小程序 AppID
 - `config/cloud.js` 中 `CLOUD_ENV` 已替换为正式云开发环境 ID
-- 已部署所有 `cloudfunctions/*`，选择「云端安装依赖」
+- 已按 `cloudbaserc.json` 部署全部 15 个 `cloudfunctions/*`，选择「云端安装依赖」
+- 已确认 `dist/build/mp-weixin/cloudfunctions` 存在 15 个云函数目录；如不存在，请重新运行 `npm run build:mp-weixin`
+- 已确认 `submitRSVP`、`submitBlessing` 具备 `security.msgSecCheck` 权限，`generatePoster` 具备 `wxacode.getUnlimited` 权限
 - 已重新部署 `createWedding`、`getWedding`、`submitRSVP`、`submitBlessing`、`updateWedding`，并验证模板初始化、功能开关、隐私控制和分享设置保存
 - 已部署 `syncOwnerProfile`，并验证主人端“账号与权益”能同步 openid、套餐、权益和工作区
 - 已部署 `deleteWedding`，并在主人端管理后台验证删除后旧邀请链接失效、新建向导可重新打开

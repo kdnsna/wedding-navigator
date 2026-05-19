@@ -4,18 +4,25 @@
   "functionRoot": "cloudfunctions",
   "functions": [
     {
-      "name": "geocodeVenue",
-      "timeout": 20,
+      "name": "checkOwnership",
+      "timeout": 10,
       "runtime": "Nodejs16.13",
       "handler": "index.main",
-      "description": "根据场地名称和地址匹配地图坐标"
+      "description": "校验当前用户是否为婚礼主人"
     },
     {
-      "name": "getWeather",
+      "name": "createWedding",
       "timeout": 20,
       "runtime": "Nodejs16.13",
       "handler": "index.main",
-      "description": "获取婚礼当天天气预报"
+      "description": "创建婚礼及关联业务文档"
+    },
+    {
+      "name": "deleteWedding",
+      "timeout": 20,
+      "runtime": "Nodejs16.13",
+      "handler": "index.main",
+      "description": "删除婚礼及关联数据"
     },
     {
       "name": "generatePoster",
@@ -25,11 +32,67 @@
       "description": "生成小程序码海报"
     },
     {
-      "name": "updateWedding",
+      "name": "geocodeVenue",
       "timeout": 20,
       "runtime": "Nodejs16.13",
       "handler": "index.main",
-      "description": "更新婚礼业务数据"
+      "description": "根据场地名称和地址匹配地图坐标"
+    },
+    {
+      "name": "getRSVPStats",
+      "timeout": 10,
+      "runtime": "Nodejs16.13",
+      "handler": "index.main",
+      "description": "获取 RSVP 统计"
+    },
+    {
+      "name": "getStats",
+      "timeout": 10,
+      "runtime": "Nodejs16.13",
+      "handler": "index.main",
+      "description": "获取主人端统计数据"
+    },
+    {
+      "name": "getWeather",
+      "timeout": 20,
+      "runtime": "Nodejs16.13",
+      "handler": "index.main",
+      "description": "获取婚礼当天天气预报"
+    },
+    {
+      "name": "getWedding",
+      "timeout": 15,
+      "runtime": "Nodejs16.13",
+      "handler": "index.main",
+      "description": "获取婚礼完整展示数据"
+    },
+    {
+      "name": "pinBlessing",
+      "timeout": 10,
+      "runtime": "Nodejs16.13",
+      "handler": "index.main",
+      "description": "置顶或取消置顶祝福"
+    },
+    {
+      "name": "recordView",
+      "timeout": 10,
+      "runtime": "Nodejs16.13",
+      "handler": "index.main",
+      "description": "记录浏览与分享统计"
+    },
+    {
+      "name": "submitBlessing",
+      "timeout": 15,
+      "runtime": "Nodejs16.13",
+      "handler": "index.main",
+      "description": "提交祝福留言"
+    },
+    {
+      "name": "submitRSVP",
+      "timeout": 15,
+      "runtime": "Nodejs16.13",
+      "handler": "index.main",
+      "description": "提交宾客出席回执"
     },
     {
       "name": "syncOwnerProfile",
@@ -37,6 +100,13 @@
       "runtime": "Nodejs16.13",
       "handler": "index.main",
       "description": "同步主人账号、权益和婚礼工作区"
+    },
+    {
+      "name": "updateWedding",
+      "timeout": 20,
+      "runtime": "Nodejs16.13",
+      "handler": "index.main",
+      "description": "更新婚礼业务数据"
     }
   ]
 }

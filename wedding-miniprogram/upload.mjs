@@ -9,7 +9,7 @@ const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'), 'ut
 
 const cliPath = process.env.WECHAT_DEVTOOLS_CLI_PATH || '/Applications/wechatwebdevtools.app/Contents/MacOS/cli'
 const projectPath = process.env.MINIPROGRAM_PROJECT_PATH || path.join(__dirname, 'dist/build/mp-weixin')
-const version = process.env.MINIPROGRAM_VERSION || pkg.version || manifest.versionName || '1.0.0'
+const version = process.env.MINIPROGRAM_VERSION || manifest.versionName || pkg.version || '1.0.0'
 const desc = process.env.MINIPROGRAM_UPLOAD_DESC || `甜囍手册 ${version} 发布`
 const port = process.env.WECHAT_DEVTOOLS_PORT || '9420'
 const infoOutput = process.env.MINIPROGRAM_UPLOAD_INFO_OUTPUT || path.join(__dirname, '.release', `upload-${version}.json`)
