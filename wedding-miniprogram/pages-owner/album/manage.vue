@@ -250,18 +250,18 @@ onShow(refreshAlbum)
 .page {
   background-color: $bg-color;
   min-height: 100vh;
-  padding-bottom: 60rpx;
+  padding-bottom: calc(80rpx + env(safe-area-inset-bottom));
 }
 
 /* 顶部标题 */
 .page-header {
-  padding: 60rpx 48rpx 36rpx;
+  padding: $page-header-top $page-gutter $page-header-bottom;
 }
 .page-tag {
   display: block;
   font-size: 22rpx;
   color: $text-muted;
-  letter-spacing: 6rpx;
+  letter-spacing: 0;
   margin-bottom: 12rpx;
 }
 .page-title {
@@ -278,9 +278,9 @@ onShow(refreshAlbum)
   align-items: center;
   justify-content: center;
   padding: 80rpx 40rpx;
-  margin: 0 48rpx 36rpx;
+  margin: 0 $page-gutter 36rpx;
   background: $bg-muted;
-  border-radius: $radius-lg;
+  border-radius: $card-radius;
   border: 2rpx dashed $border-color;
 }
 .upload-area.disabled {
@@ -307,7 +307,7 @@ onShow(refreshAlbum)
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 12rpx;
-  padding: 0 48rpx;
+  padding: 0 $page-gutter;
 }
 .photo-item {
   position: relative;

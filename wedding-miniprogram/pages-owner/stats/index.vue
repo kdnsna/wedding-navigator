@@ -193,17 +193,17 @@ onShow(async () => {
 .page {
   background-color: $bg-color;
   min-height: 100vh;
-  padding-bottom: 60rpx;
+  padding-bottom: calc(80rpx + env(safe-area-inset-bottom));
 }
 
 .page-header {
-  padding: 60rpx 48rpx 36rpx;
+  padding: $page-header-top $page-gutter $page-header-bottom;
 }
 .page-tag {
   display: block;
   font-size: 22rpx;
   color: $text-muted;
-  letter-spacing: 6rpx;
+  letter-spacing: 0;
   margin-bottom: 12rpx;
 }
 .page-title {
@@ -216,7 +216,7 @@ onShow(async () => {
 /* 概览 */
 .overview-row {
   display: flex;
-  padding: 0 48rpx 48rpx;
+  padding: 0 $page-gutter 48rpx;
 }
 .overview-item {
   flex: 1;
@@ -234,12 +234,12 @@ onShow(async () => {
 .overview-label {
   font-size: 22rpx;
   color: $text-muted;
-  letter-spacing: 2rpx;
+  letter-spacing: 0;
 }
 
 /* 区块 */
 .section {
-  padding: 0 48rpx;
+  padding: 0 $page-gutter;
   margin-bottom: 48rpx;
 }
 .section-header {
@@ -285,24 +285,32 @@ onShow(async () => {
 }
 .chart-meta {
   flex: 1;
+  min-width: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16rpx;
 }
 .chart-label {
+  flex: 1;
+  min-width: 0;
   font-size: 28rpx;
   color: $text-primary;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .chart-value {
   font-size: 26rpx;
   color: $text-secondary;
   font-weight: 500;
+  flex-shrink: 0;
 }
 
 /* 饮食 */
 .diet-list {
   background: $bg-surface;
-  border-radius: $radius-lg;
+  border-radius: $card-radius;
   overflow: hidden;
 }
 .diet-item {
@@ -312,13 +320,18 @@ onShow(async () => {
   padding: 28rpx;
 }
 .diet-label {
+  min-width: 0;
   font-size: 28rpx;
   color: $text-primary;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .diet-value {
   font-size: 26rpx;
   color: $text-secondary;
   font-weight: 500;
+  flex-shrink: 0;
 }
 
 .divider {

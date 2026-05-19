@@ -163,18 +163,18 @@ onShow(refreshBlessings)
 .page {
   background-color: $bg-color;
   min-height: 100vh;
-  padding-bottom: 60rpx;
+  padding-bottom: calc(80rpx + env(safe-area-inset-bottom));
 }
 
 /* 顶部标题 */
 .page-header {
-  padding: 60rpx 48rpx 24rpx;
+  padding: $page-header-top $page-gutter 24rpx;
 }
 .page-tag {
   display: block;
   font-size: 22rpx;
   color: $text-muted;
-  letter-spacing: 6rpx;
+  letter-spacing: 0;
   margin-bottom: 12rpx;
 }
 .page-title {
@@ -187,7 +187,7 @@ onShow(refreshBlessings)
 /* 统计 */
 .stats-row {
   display: flex;
-  padding: 24rpx 48rpx 32rpx;
+  padding: 24rpx $page-gutter 32rpx;
 }
 .stat-item {
   flex: 1;
@@ -209,7 +209,7 @@ onShow(refreshBlessings)
 
 /* 祝福列表 */
 .blessing-list {
-  padding: 0 48rpx;
+  padding: 0 $page-gutter;
 }
 .blessing-item {
   padding: 32rpx 0;
@@ -217,8 +217,8 @@ onShow(refreshBlessings)
 }
 .blessing-item.pinned {
   background: $bg-muted;
-  margin: 0 -48rpx;
-  padding: 32rpx 48rpx;
+  margin: 0 (-$page-gutter);
+  padding: 32rpx $page-gutter;
 }
 .blessing-item:last-child {
   border-bottom: none;
@@ -228,16 +228,23 @@ onShow(refreshBlessings)
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16rpx;
   margin-bottom: 12rpx;
 }
 .item-name {
+  flex: 1;
+  min-width: 0;
   font-size: 28rpx;
   font-weight: 600;
   color: $text-primary;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .item-time {
   font-size: 22rpx;
   color: $text-muted;
+  flex-shrink: 0;
 }
 .item-content {
   display: block;
@@ -245,6 +252,7 @@ onShow(refreshBlessings)
   color: $text-primary;
   line-height: 1.7;
   margin-bottom: 16rpx;
+  word-break: break-word;
 }
 .item-actions {
   display: flex;

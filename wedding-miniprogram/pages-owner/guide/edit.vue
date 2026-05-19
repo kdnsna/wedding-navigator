@@ -601,17 +601,17 @@ onShow(() => { useOwnerGuard() })
 .page {
   background-color: $bg-color;
   min-height: 100vh;
-  padding-bottom: 80rpx;
+  padding-bottom: calc(80rpx + env(safe-area-inset-bottom));
 }
 
 .page-header {
-  padding: 60rpx 48rpx 36rpx;
+  padding: $page-header-top $page-gutter $page-header-bottom;
 }
 .page-tag {
   display: block;
   font-size: 22rpx;
   color: $text-muted;
-  letter-spacing: 6rpx;
+  letter-spacing: 0;
   margin-bottom: 12rpx;
 }
 .page-title {
@@ -626,7 +626,7 @@ onShow(() => { useOwnerGuard() })
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  padding: 40rpx 48rpx 20rpx;
+  padding: 40rpx $page-gutter 20rpx;
 }
 .section-label {
   font-size: 30rpx;
@@ -640,7 +640,7 @@ onShow(() => { useOwnerGuard() })
 
 /* 场地列表 */
 .venue-list, .hotel-list {
-  padding: 0 48rpx;
+  padding: 0 $page-gutter;
 }
 .venue-item, .hotel-item {
   padding: 28rpx 0;
@@ -670,12 +670,19 @@ onShow(() => { useOwnerGuard() })
   color: $text-primary;
   font-weight: 500;
   margin-bottom: 6rpx;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .venue-address {
   display: block;
   font-size: 24rpx;
   color: $text-secondary;
   margin-bottom: 8rpx;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 .venue-geo {
   display: inline-block;
@@ -729,9 +736,9 @@ onShow(() => { useOwnerGuard() })
 
 /* 信息列表 */
 .info-section {
-  margin: 0 48rpx;
+  margin: 0 $page-gutter;
   background: $bg-surface;
-  border-radius: $radius-lg;
+  border-radius: $card-radius;
   border: 1rpx solid $border-color;
   overflow: hidden;
 }
@@ -752,6 +759,9 @@ onShow(() => { useOwnerGuard() })
   font-size: 24rpx;
   color: $text-secondary;
   max-width: 480rpx;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .info-arrow {
   font-size: 28rpx;
@@ -782,9 +792,9 @@ onShow(() => { useOwnerGuard() })
 
 /* 添加按钮 */
 .add-btn {
-  margin: 24rpx 48rpx 0;
-  height: 88rpx;
-  line-height: 88rpx;
+  margin: 24rpx $page-gutter 0;
+  height: $control-height;
+  line-height: $control-height;
   text-align: center;
   border-radius: $radius-full;
   font-size: 28rpx;
@@ -813,7 +823,7 @@ onShow(() => { useOwnerGuard() })
 .modal-content {
   width: 100%;
   background: $bg-surface;
-  border-radius: 32rpx 32rpx 0 0;
+  border-radius: $modal-radius $modal-radius 0 0;
   max-height: 85vh;
   overflow-y: auto;
 }
@@ -821,7 +831,7 @@ onShow(() => { useOwnerGuard() })
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 36rpx 48rpx 24rpx;
+  padding: 36rpx $page-gutter 24rpx;
   border-bottom: 1rpx solid $border-color;
   position: sticky;
   top: 0;
@@ -838,17 +848,17 @@ onShow(() => { useOwnerGuard() })
   padding: 8rpx;
 }
 .modal-body {
-  padding: 32rpx 48rpx;
+  padding: 32rpx $page-gutter;
 }
 .modal-footer {
   display: flex;
   gap: 20rpx;
-  padding: 24rpx 48rpx calc(48rpx + env(safe-area-inset-bottom));
+  padding: 24rpx $page-gutter calc(48rpx + env(safe-area-inset-bottom));
 }
 .modal-btn {
   flex: 1;
-  height: 88rpx;
-  line-height: 88rpx;
+  height: $control-height;
+  line-height: $control-height;
   text-align: center;
   border-radius: $radius-full;
   font-size: 30rpx;
@@ -869,7 +879,7 @@ onShow(() => { useOwnerGuard() })
 .geo-box {
   margin: -8rpx 0 28rpx;
   padding: 24rpx;
-  border-radius: $radius-lg;
+  border-radius: $card-radius;
   border: 1rpx solid $border-color;
   background: $bg-elevated;
 }
@@ -893,8 +903,8 @@ onShow(() => { useOwnerGuard() })
 }
 .geo-btn {
   flex: 1;
-  height: 72rpx;
-  line-height: 72rpx;
+  height: $control-height-sm;
+  line-height: $control-height-sm;
   border-radius: $radius-full;
   background: $bg-muted;
   color: $text-primary;
@@ -918,10 +928,10 @@ onShow(() => { useOwnerGuard() })
   font-size: 24rpx;
   color: $text-muted;
   margin-bottom: 12rpx;
-  letter-spacing: 2rpx;
+  letter-spacing: 0;
 }
 .form-input {
-  height: 88rpx;
+  height: $control-height;
   font-size: 28rpx;
   color: $text-primary;
   border-bottom: 2rpx solid $border-color;
@@ -935,7 +945,7 @@ onShow(() => { useOwnerGuard() })
   line-height: 1.6;
 }
 .picker-value {
-  height: 88rpx;
+  height: $control-height;
   font-size: 28rpx;
   color: $text-primary;
   border-bottom: 2rpx solid $border-color;

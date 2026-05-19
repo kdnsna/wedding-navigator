@@ -126,18 +126,18 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
 .page {
   background-color: $bg-color;
   min-height: 100vh;
-  padding-bottom: 60rpx;
+  padding-bottom: calc(80rpx + env(safe-area-inset-bottom));
 }
 
 /* 顶部标题 */
 .page-header {
-  padding: 60rpx 48rpx 36rpx;
+  padding: $page-header-top $page-gutter $page-header-bottom;
 }
 .page-tag {
   display: block;
   font-size: 22rpx;
   color: $text-muted;
-  letter-spacing: 6rpx;
+  letter-spacing: 0;
   margin-bottom: 12rpx;
 }
 .page-title {
@@ -150,14 +150,14 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
 /* 小程序码 */
 .qrcode-section {
   text-align: center;
-  padding: 48rpx;
+  padding: $page-gutter;
 }
 .qrcode-box {
   width: 280rpx;
   height: 280rpx;
   margin: 0 auto 32rpx;
   background: $bg-muted;
-  border-radius: $radius-lg;
+  border-radius: $card-radius;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -179,7 +179,7 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
 
 /* 表单 */
 .section {
-  padding: 0 48rpx;
+  padding: 0 $page-gutter;
   margin-bottom: 48rpx;
 }
 .section-label {
@@ -199,7 +199,7 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
 }
 .form-input {
   width: 100%;
-  height: 80rpx;
+  height: $control-height;
   padding: 0 4rpx;
   border-bottom: 2rpx solid $border-color;
   font-size: 30rpx;
@@ -209,15 +209,15 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
 
 /* 分享按钮 */
 .share-actions {
-  padding: 0 48rpx;
+  padding: 0 $page-gutter;
   display: flex;
   flex-direction: column;
   gap: 16rpx;
 }
 .share-btn {
   width: 100%;
-  height: 96rpx;
-  line-height: 96rpx;
+  height: $control-height;
+  line-height: $control-height;
   text-align: center;
   border-radius: $radius-full;
   background: $bg-muted;

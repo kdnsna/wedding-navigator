@@ -188,17 +188,17 @@ onShow(async () => {
 .page {
   background-color: $bg-color;
   min-height: 100vh;
-  padding-bottom: 80rpx;
+  padding-bottom: calc(80rpx + env(safe-area-inset-bottom));
 }
 
 .page-header {
-  padding: 60rpx 48rpx 24rpx;
+  padding: $page-header-top $page-gutter 24rpx;
 }
 .page-tag {
   display: block;
   font-size: 22rpx;
   color: $text-muted;
-  letter-spacing: 6rpx;
+  letter-spacing: 0;
   margin-bottom: 12rpx;
 }
 .page-title {
@@ -224,14 +224,14 @@ onShow(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24rpx 48rpx;
+  padding: 24rpx $page-gutter;
 }
 .poster-container {
   width: 375px;
   height: 667px;
-  border-radius: 32rpx;
+  border-radius: $card-radius;
   overflow: hidden;
-  box-shadow: 0 24rpx 80rpx rgba(0, 0, 0, 0.18);
+  box-shadow: $shadow-md;
 }
 .poster-wrapper {
   display: flex;
@@ -240,18 +240,18 @@ onShow(async () => {
 }
 .poster-canvas {
   border-radius: 16rpx;
-  box-shadow: 0 16rpx 48rpx rgba(0, 0, 0, 0.25);
+  box-shadow: $shadow-sm;
 }
 
 .actions {
   display: flex;
   gap: 20rpx;
-  padding: 24rpx 48rpx;
+  padding: 24rpx $page-gutter;
 }
 .action-btn {
   flex: 1;
-  height: 96rpx;
-  line-height: 96rpx;
+  height: $control-height;
+  line-height: $control-height;
   text-align: center;
   border-radius: $radius-full;
   font-size: 30rpx;
@@ -263,7 +263,7 @@ onShow(async () => {
 .action-btn.primary {
   background: $text-primary;
   color: #fff;
-  box-shadow: 0 8rpx 24rpx rgba(0,0,0,0.12);
+  box-shadow: $shadow-sm;
 }
 .action-btn.secondary {
   background: $bg-surface;
@@ -274,10 +274,10 @@ onShow(async () => {
 
 /* 说明 */
 .tips {
-  margin: 32rpx 48rpx 0;
+  margin: 32rpx $page-gutter 0;
   padding: 28rpx 32rpx;
   background: $bg-muted;
-  border-radius: $radius-lg;
+  border-radius: $card-radius;
 }
 .tip-header {
   display: flex;
@@ -318,7 +318,7 @@ onShow(async () => {
 .loading-content {
   background: $bg-surface;
   border-radius: $radius-lg;
-  padding: 48rpx 64rpx;
+  padding: $page-gutter 56rpx;
   display: flex;
   flex-direction: column;
   align-items: center;

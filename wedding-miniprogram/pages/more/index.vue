@@ -151,18 +151,18 @@ onShow(async () => {
 .page {
   background-color: $bg-color;
   min-height: 100vh;
-  padding-bottom: 60rpx;
+  padding-bottom: calc(80rpx + env(safe-area-inset-bottom));
 }
 
 /* 顶部标题 */
 .page-header {
-  padding: 60rpx 48rpx 24rpx;
+  padding: $page-header-top $page-gutter 24rpx;
 }
 .page-tag {
   display: block;
   font-size: 22rpx;
   color: $text-muted;
-  letter-spacing: 6rpx;
+  letter-spacing: 0;
   margin-bottom: 12rpx;
 }
 .page-title {
@@ -174,7 +174,7 @@ onShow(async () => {
 
 /* 新人信息 */
 .couple-info {
-  padding: 24rpx 48rpx 48rpx;
+  padding: 24rpx $page-gutter 48rpx;
 }
 .couple-name {
   display: block;
@@ -182,6 +182,9 @@ onShow(async () => {
   font-weight: 600;
   color: $text-primary;
   margin-bottom: 8rpx;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .couple-date {
   display: block;
@@ -191,15 +194,16 @@ onShow(async () => {
 
 /* 菜单组 */
 .menu-group {
-  margin: 0 48rpx 24rpx;
+  margin: 0 $page-gutter 24rpx;
   background: $bg-surface;
-  border-radius: $radius-lg;
+  border-radius: $card-radius;
   overflow: hidden;
 }
 .menu-item {
   display: flex;
   align-items: center;
-  padding: 32rpx 28rpx;
+  min-height: $tap-min-height;
+  padding: 28rpx;
   transition: background 0.15s ease;
 }
 .menu-item:active {
@@ -208,7 +212,7 @@ onShow(async () => {
 .contact-btn {
   background: transparent;
   border: none;
-  padding: 32rpx 28rpx;
+  padding: 28rpx;
   margin: 0;
   line-height: inherit;
   text-align: left;
@@ -222,9 +226,13 @@ onShow(async () => {
 }
 .menu-title {
   flex: 1;
+  min-width: 0;
   font-size: 30rpx;
   color: $text-primary;
   font-weight: 500;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .menu-arrow {
   font-size: 28rpx;
@@ -239,12 +247,12 @@ onShow(async () => {
 
 /* 分享 */
 .share-area {
-  padding: 48rpx;
+  padding: 40rpx $page-gutter 24rpx;
 }
 .share-btn {
   width: 100%;
-  height: 96rpx;
-  line-height: 96rpx;
+  height: $control-height;
+  line-height: $control-height;
   text-align: center;
   border-radius: $radius-full;
   background: $text-primary;

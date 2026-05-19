@@ -74,17 +74,17 @@ onShareAppMessage(() => ({
 .page {
   background-color: $bg-color;
   min-height: 100vh;
-  padding-bottom: 60rpx;
+  padding-bottom: calc(80rpx + env(safe-area-inset-bottom));
 }
 
 .page-header {
-  padding: 60rpx 48rpx 36rpx;
+  padding: $page-header-top $page-gutter $page-header-bottom;
 }
 .page-tag {
   display: block;
   font-size: 22rpx;
   color: $text-muted;
-  letter-spacing: 6rpx;
+  letter-spacing: 0;
   margin-bottom: 12rpx;
 }
 .page-title {
@@ -95,7 +95,7 @@ onShareAppMessage(() => ({
 }
 
 .content {
-  padding: 0 48rpx 48rpx;
+  padding: 0 $page-gutter 48rpx;
 }
 
 .section-title {

@@ -468,18 +468,18 @@ onLoad(async (options) => {
 .page {
   background-color: $bg-color;
   min-height: 100vh;
-  padding-bottom: 80rpx;
+  padding-bottom: calc(80rpx + env(safe-area-inset-bottom));
 }
 
 /* 顶部标题 */
 .page-header {
-  padding: 60rpx 48rpx 36rpx;
+  padding: $page-header-top $page-gutter $page-header-bottom;
 }
 .page-tag {
   display: block;
   font-size: 22rpx;
   color: $text-muted;
-  letter-spacing: 6rpx;
+  letter-spacing: 0;
   margin-bottom: 12rpx;
 }
 .page-title {
@@ -502,12 +502,13 @@ onLoad(async (options) => {
 }
 
 .rsvp-brief {
-  margin: 0 48rpx 44rpx;
+  width: calc(100vw - 96rpx);
+  margin: 0 auto 44rpx;
   padding: 32rpx;
-  border-radius: $radius-xl;
+  border-radius: $card-radius;
   background: $text-primary;
   color: #fff;
-  box-shadow: 0 18rpx 48rpx rgba(0,0,0,0.14);
+  box-shadow: $shadow-sm;
   position: relative;
   overflow: hidden;
 }
@@ -524,7 +525,7 @@ onLoad(async (options) => {
   display: block;
   font-size: 18rpx;
   color: rgba(255,255,255,0.56);
-  letter-spacing: 4rpx;
+  letter-spacing: 0;
   margin-bottom: 10rpx;
 }
 .brief-title {
@@ -532,6 +533,9 @@ onLoad(async (options) => {
   font-size: 34rpx;
   font-weight: 600;
   line-height: 1.3;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .brief-grid {
   display: grid;
@@ -549,7 +553,7 @@ onLoad(async (options) => {
 .brief-label {
   display: block;
   font-size: 18rpx;
-  letter-spacing: 3rpx;
+  letter-spacing: 0;
   color: rgba(255,255,255,0.45);
   margin-bottom: 6rpx;
 }
@@ -558,14 +562,20 @@ onLoad(async (options) => {
   font-size: 26rpx;
   color: rgba(255,255,255,0.92);
   line-height: 1.4;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 /* 表单 */
 .form {
-  padding: 0 48rpx;
+  width: calc(100vw - 96rpx);
+  margin: 0 auto;
+  padding: 0;
+  box-sizing: border-box;
 }
 .form-group {
-  margin-bottom: 48rpx;
+  margin-bottom: 40rpx;
 }
 .form-label {
   display: flex;
@@ -588,11 +598,11 @@ onLoad(async (options) => {
 .label-en {
   font-size: 20rpx;
   color: $text-muted;
-  letter-spacing: 3rpx;
+  letter-spacing: 0;
 }
 
 .form-input {
-  height: 96rpx;
+  height: $control-height;
   font-size: 30rpx;
   color: $text-primary;
   border-bottom: 2rpx solid $border-color;
@@ -603,8 +613,8 @@ onLoad(async (options) => {
   border-color: $text-primary;
 }
 .picker-value {
-  height: 88rpx;
-  line-height: 88rpx;
+  height: $control-height;
+  line-height: $control-height;
   border-bottom: 2rpx solid $border-color;
   font-size: 30rpx;
   color: $text-primary;
@@ -634,8 +644,8 @@ onLoad(async (options) => {
 }
 .feature-action {
   width: 260rpx;
-  height: 76rpx;
-  line-height: 76rpx;
+  height: $control-height-sm;
+  line-height: $control-height-sm;
   border-radius: $radius-full;
   background: $text-primary;
   color: #fff;
@@ -645,18 +655,18 @@ onLoad(async (options) => {
 
 /* 单选 */
 .radio-group {
-  display: flex;
-  gap: 16rpx;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12rpx;
 }
 .radio-item {
-  flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12rpx;
-  padding: 28rpx 16rpx;
-  border-radius: $radius-lg;
+  padding: 24rpx 8rpx;
+  border-radius: $card-radius;
   border: 2rpx solid $border-color;
   background: $bg-surface;
   transition: all 0.25s ease;
@@ -681,10 +691,13 @@ onLoad(async (options) => {
   background: #fff;
 }
 .radio-label {
-  font-size: 26rpx;
+  max-width: 100%;
+  font-size: 24rpx;
   color: $text-primary;
   transition: color 0.25s ease;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .radio-item.active .radio-label {
   color: #fff;
@@ -697,8 +710,8 @@ onLoad(async (options) => {
   gap: 32rpx;
 }
 .step-btn {
-  width: 72rpx;
-  height: 72rpx;
+  width: $tap-min-height;
+  height: $tap-min-height;
   border-radius: 50%;
   border: 2rpx solid $border-color;
   display: flex;
@@ -737,6 +750,9 @@ onLoad(async (options) => {
   font-size: 26rpx;
   color: $text-primary;
   transition: all 0.25s ease;
+  min-height: $control-height-sm;
+  display: flex;
+  align-items: center;
 }
 .tag-item:active {
   transform: scale(0.95);
@@ -770,8 +786,8 @@ onLoad(async (options) => {
   padding-top: 24rpx;
 }
 .submit-btn {
-  height: 96rpx;
-  line-height: 96rpx;
+  height: $control-height;
+  line-height: $control-height;
   text-align: center;
   border-radius: $radius-full;
   background: $text-primary;
@@ -779,12 +795,12 @@ onLoad(async (options) => {
   font-size: 30rpx;
   font-weight: 500;
   transition: all 0.2s ease;
-  box-shadow: 0 8rpx 24rpx rgba(0,0,0,0.12);
+  box-shadow: $shadow-sm;
 }
 .submit-btn::after { border: none; }
 .submit-btn:active {
   transform: scale(0.97);
-  box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.1);
+  box-shadow: $shadow-xs;
 }
 .submit-btn[disabled] {
   opacity: 0.5;
@@ -799,7 +815,7 @@ onLoad(async (options) => {
     background: #fff;
     color: #1a1a1a;
     border: 1rpx solid rgba(164,120,59,0.16);
-    box-shadow: 0 18rpx 48rpx rgba(164,120,59,0.10);
+    box-shadow: $shadow-sm;
   }
   .rsvp-brief::before {
     background: #A4783B;
@@ -878,7 +894,7 @@ onLoad(async (options) => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 80rpx 48rpx;
+  padding: 80rpx $page-gutter;
   min-height: 100vh;
 }
 
@@ -928,7 +944,7 @@ onLoad(async (options) => {
   font-weight: 600;
   color: $text-primary;
   margin-bottom: 16rpx;
-  letter-spacing: 4rpx;
+  letter-spacing: 0;
   animation: fadeInUp 0.6s $ease-out 0.3s both;
 }
 .success-desc {
@@ -943,7 +959,7 @@ onLoad(async (options) => {
   width: 100%;
   max-width: 560rpx;
   background: $bg-surface;
-  border-radius: $radius-lg;
+  border-radius: $card-radius;
   border: 1rpx solid $border-color;
   padding: 32rpx;
   margin-bottom: 48rpx;
@@ -996,8 +1012,8 @@ onLoad(async (options) => {
 }
 .success-action {
   flex: 1;
-  height: 72rpx;
-  line-height: 72rpx;
+  height: $control-height-sm;
+  line-height: $control-height-sm;
   border-radius: $radius-full;
   background: $bg-muted;
   color: $text-primary;

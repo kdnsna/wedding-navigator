@@ -198,7 +198,7 @@ onLoad(async (options) => {
 }
 
 .page-header {
-  padding: 48rpx 48rpx 24rpx;
+  padding: $page-gutter $page-gutter 24rpx;
   flex-shrink: 0;
 }
 .header-top {
@@ -237,14 +237,14 @@ onLoad(async (options) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24rpx 48rpx;
+  padding: 24rpx $page-gutter;
 }
 .poster-container {
   width: 375px;
   height: 667px;
-  border-radius: 32rpx;
+  border-radius: $card-radius;
   overflow: hidden;
-  box-shadow: 0 24rpx 80rpx rgba(0, 0, 0, 0.18);
+  box-shadow: $shadow-md;
 }
 .poster-wrapper {
   display: flex;
@@ -253,19 +253,19 @@ onLoad(async (options) => {
 }
 .poster-canvas {
   border-radius: 16rpx;
-  box-shadow: 0 16rpx 48rpx rgba(0, 0, 0, 0.25);
+  box-shadow: $shadow-sm;
 }
 
 .actions {
   display: flex;
   gap: 20rpx;
-  padding: 24rpx 48rpx calc(48rpx + constant(safe-area-inset-bottom));
+  padding: 24rpx $page-gutter calc(48rpx + constant(safe-area-inset-bottom));
   padding-bottom: calc(48rpx + env(safe-area-inset-bottom));
   flex-shrink: 0;
 }
 .action-btn {
   flex: 1;
-  height: 96rpx;
+  height: $control-height;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -308,7 +308,7 @@ onLoad(async (options) => {
 .loading-content {
   background: $bg-surface;
   border-radius: $radius-lg;
-  padding: 48rpx 64rpx;
+  padding: $page-gutter 56rpx;
   display: flex;
   flex-direction: column;
   align-items: center;

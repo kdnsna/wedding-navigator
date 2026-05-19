@@ -202,18 +202,18 @@ onShow(async () => {
 .page {
   background-color: $bg-color;
   min-height: 100vh;
-  padding-bottom: 80rpx;
+  padding-bottom: calc(80rpx + env(safe-area-inset-bottom));
 }
 
 /* 顶部标题 */
 .page-header {
-  padding: 60rpx 48rpx 36rpx;
+  padding: $page-header-top $page-gutter $page-header-bottom;
 }
 .page-tag {
   display: block;
   font-size: 22rpx;
   color: $text-muted;
-  letter-spacing: 6rpx;
+  letter-spacing: 0;
   margin-bottom: 12rpx;
 }
 .page-title {
@@ -259,8 +259,8 @@ onShow(async () => {
 }
 .feature-action {
   width: 260rpx;
-  height: 76rpx;
-  line-height: 76rpx;
+  height: $control-height-sm;
+  line-height: $control-height-sm;
   border-radius: $radius-full;
   background: $text-primary;
   color: #fff;
@@ -274,7 +274,7 @@ onShow(async () => {
   align-items: center;
   justify-content: center;
   gap: 20rpx;
-  padding: 24rpx 48rpx 48rpx;
+  padding: 24rpx $page-gutter 48rpx;
 }
 .date-num {
   font-size: 80rpx;
@@ -291,7 +291,7 @@ onShow(async () => {
 .date-month {
   font-size: 24rpx;
   color: $text-primary;
-  letter-spacing: 4rpx;
+  letter-spacing: 0;
   font-weight: 500;
 }
 .date-week {
@@ -301,21 +301,25 @@ onShow(async () => {
 
 /* 时间轴 */
 .timeline {
-  padding: 0 48rpx;
+  padding: 0 $page-gutter;
 }
 .role-filter {
   display: flex;
   gap: 12rpx;
-  padding: 0 48rpx 32rpx;
+  padding: 0 $page-gutter 32rpx;
   overflow-x: auto;
 }
 .role-pill {
-  padding: 12rpx 26rpx;
+  min-height: $control-height-sm;
+  padding: 0 26rpx;
   border-radius: $radius-full;
   background: $bg-muted;
   color: $text-secondary;
   font-size: 24rpx;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .role-pill.active {
   background: $text-primary;
@@ -404,6 +408,11 @@ onShow(async () => {
   font-size: 32rpx;
   font-weight: 600;
   color: $text-primary;
+  min-width: 0;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 .status-badge {
   padding: 4rpx 12rpx;
@@ -444,6 +453,7 @@ onShow(async () => {
   color: $text-muted;
   margin-top: 8rpx;
   line-height: 1.5;
+  word-break: break-word;
 }
 
 /* 状态样式 */

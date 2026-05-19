@@ -449,7 +449,7 @@ onShow(async () => {
 
 /* 到场助手 */
 .arrival-pack {
-  padding: 36rpx 32rpx 24rpx;
+  padding: 36rpx $page-gutter-sm 24rpx;
   border-bottom: 1rpx solid $border-color;
   background: $bg-color;
   flex-shrink: 0;
@@ -465,7 +465,7 @@ onShow(async () => {
   display: block;
   font-size: 18rpx;
   color: $color-primary;
-  letter-spacing: 5rpx;
+  letter-spacing: 0;
   margin-bottom: 8rpx;
   font-weight: 600;
 }
@@ -482,12 +482,17 @@ onShow(async () => {
 }
 .arrival-card {
   display: flex;
+  flex-direction: column;
   gap: 24rpx;
-  align-items: center;
+  align-items: stretch;
   padding: 28rpx;
   background: $text-primary;
-  border-radius: $radius-lg;
+  border-radius: $card-radius;
   margin-bottom: 16rpx;
+  width: calc(100vw - 64rpx);
+  margin-left: auto;
+  margin-right: auto;
+  overflow: hidden;
 }
 .arrival-main {
   flex: 1;
@@ -514,17 +519,24 @@ onShow(async () => {
   font-size: 24rpx;
   color: rgba(255,255,255,0.72);
   line-height: 1.5;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 .arrival-actions {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 12rpx;
   flex-shrink: 0;
+  width: 100%;
 }
 .arrival-btn {
-  width: 116rpx;
-  height: 58rpx;
-  line-height: 58rpx;
+  flex: 1;
+  min-width: 0;
+  width: auto;
+  height: $control-height-sm;
+  line-height: $control-height-sm;
   border-radius: $radius-full;
   background: rgba(255,255,255,0.12);
   color: #fff;
@@ -540,11 +552,15 @@ onShow(async () => {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14rpx;
+  width: calc(100vw - 64rpx);
+  margin-left: auto;
+  margin-right: auto;
 }
 .arrival-summary-item {
   padding: 20rpx 22rpx;
   background: $bg-muted;
-  border-radius: $radius-md;
+  border-radius: $card-radius;
+  min-width: 0;
 }
 .summary-label {
   display: block;
@@ -557,6 +573,9 @@ onShow(async () => {
   font-size: 26rpx;
   color: $text-primary;
   font-weight: 600;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .parking-note {
   display: flex;
@@ -679,7 +698,7 @@ onShow(async () => {
 
 .venue-card {
   background: $bg-surface;
-  border-radius: $radius-lg;
+  border-radius: $card-radius;
   padding: 32rpx;
   margin-bottom: 16rpx;
   transition: all 0.2s ease;
@@ -717,12 +736,19 @@ onShow(async () => {
   font-weight: 500;
   color: $text-primary;
   margin-bottom: 4rpx;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .venue-address {
   display: block;
   font-size: 24rpx;
   color: $text-secondary;
   margin-bottom: 8rpx;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 .venue-geo {
   display: inline-block;
@@ -742,7 +768,10 @@ onShow(async () => {
   gap: 12rpx;
 }
 .action-btn {
-  padding: 10rpx 28rpx;
+  min-width: 116rpx;
+  height: $control-height-sm;
+  line-height: $control-height-sm;
+  padding: 0 24rpx;
   font-size: 24rpx;
   border-radius: $radius-full;
   background: $bg-muted;
@@ -762,10 +791,10 @@ onShow(async () => {
 
 /* 天气 */
 .weather-banner {
-  padding: 48rpx;
+  padding: $page-gutter;
   background: linear-gradient(135deg, #fef9f3 0%, #fdf2eb 100%);
   margin: 24rpx;
-  border-radius: $radius-lg;
+  border-radius: $card-radius;
 }
 .weather-main {
   display: flex;
@@ -775,7 +804,7 @@ onShow(async () => {
 }
 .weather-icon {
   width: 88rpx;
-  height: 88rpx;
+  height: $control-height;
   flex-shrink: 0;
 }
 .weather-temp {
@@ -832,7 +861,7 @@ onShow(async () => {
 .weather-details {
   margin: 24rpx;
   background: $bg-surface;
-  border-radius: $radius-lg;
+  border-radius: $card-radius;
   border: 1rpx solid $border-color;
   overflow: hidden;
 }
@@ -873,7 +902,7 @@ onShow(async () => {
   margin: 24rpx;
   padding: 20rpx 24rpx;
   background: #FFF7E6;
-  border-radius: $radius-lg;
+  border-radius: $card-radius;
 }
 .note-icon { flex-shrink: 0; }
 .note-text { font-size: 22rpx; color: #B8860B; }
@@ -901,7 +930,7 @@ onShow(async () => {
 
 .info-card {
   background: $bg-surface;
-  border-radius: $radius-lg;
+  border-radius: $card-radius;
   border: 1rpx solid $border-color;
   overflow: hidden;
   margin-bottom: 24rpx;
@@ -927,19 +956,23 @@ onShow(async () => {
   width: 52rpx;
   height: 52rpx;
 }
-.info-content { flex: 1; }
+.info-content {
+  flex: 1;
+  min-width: 0;
+}
 .info-label {
   display: block;
   font-size: 22rpx;
   color: $text-muted;
   margin-bottom: 6rpx;
-  letter-spacing: 2rpx;
+  letter-spacing: 0;
 }
 .info-value {
   display: block;
   font-size: 28rpx;
   color: $text-primary;
   line-height: 1.5;
+  word-break: break-word;
 }
 .info-divider { height: 1rpx; background: $border-color; margin: 0 32rpx; }
 
@@ -947,7 +980,7 @@ onShow(async () => {
 .hotel-list { display: flex; flex-direction: column; gap: 16rpx; }
 .hotel-card {
   background: $bg-surface;
-  border-radius: $radius-lg;
+  border-radius: $card-radius;
   border: 1rpx solid $border-color;
   padding: 32rpx;
 }
@@ -957,6 +990,9 @@ onShow(async () => {
   font-weight: 500;
   color: $text-primary;
   margin-bottom: 8rpx;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .hotel-tags { display: flex; gap: 12rpx; margin: 8rpx 0; }
 .hotel-tag {
@@ -971,13 +1007,16 @@ onShow(async () => {
   font-size: 24rpx;
   color: $text-muted;
   margin-top: 8rpx;
+  line-height: 1.5;
+  word-break: break-word;
 }
 .hotel-actions { margin-top: 20rpx; }
 .hotel-btn {
   display: inline-flex;
   align-items: center;
   gap: 10rpx;
-  padding: 14rpx 32rpx;
+  height: $control-height-sm;
+  padding: 0 32rpx;
   background: $text-primary;
   color: #fff;
   border-radius: $radius-full;

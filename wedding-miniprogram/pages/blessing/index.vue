@@ -166,18 +166,18 @@ onShow(async () => {
 .page {
   background-color: $bg-color;
   min-height: 100vh;
-  padding-bottom: 60rpx;
+  padding-bottom: calc(80rpx + env(safe-area-inset-bottom));
 }
 
 /* 顶部标题 */
 .page-header {
-  padding: 60rpx 48rpx 36rpx;
+  padding: $page-header-top $page-gutter $page-header-bottom;
 }
 .page-tag {
   display: block;
   font-size: 22rpx;
   color: $text-muted;
-  letter-spacing: 6rpx;
+  letter-spacing: 0;
   margin-bottom: 12rpx;
 }
 .page-title {
@@ -202,13 +202,13 @@ onShow(async () => {
 
 /* 发送区域 */
 .send-area {
-  padding: 0 48rpx 36rpx;
+  padding: 0 $page-gutter 36rpx;
 }
 .sender-row {
   margin-bottom: 16rpx;
 }
 .sender-input {
-  height: 72rpx;
+  height: $control-height-sm;
   font-size: 28rpx;
   color: $text-primary;
   border-bottom: 2rpx solid $border-color;
@@ -234,7 +234,10 @@ onShow(async () => {
   color: $text-muted;
 }
 .send-btn {
-  padding: 16rpx 48rpx;
+  min-width: 160rpx;
+  height: $control-height-sm;
+  line-height: $control-height-sm;
+  padding: 0 32rpx;
   border-radius: $radius-full;
   background: $text-primary;
   color: #fff;
@@ -266,8 +269,8 @@ onShow(async () => {
 }
 .feature-action {
   width: 260rpx;
-  height: 76rpx;
-  line-height: 76rpx;
+  height: $control-height-sm;
+  line-height: $control-height-sm;
   border-radius: $radius-full;
   background: $text-primary;
   color: #fff;
@@ -277,7 +280,7 @@ onShow(async () => {
 
 /* 祝福列表 */
 .blessing-list {
-  padding: 0 48rpx;
+  padding: 0 $page-gutter;
 }
 .blessing-item {
   padding: 32rpx 0;
@@ -289,8 +292,8 @@ onShow(async () => {
 }
 .blessing-item.pinned {
   background: $bg-muted;
-  margin: 0 -48rpx;
-  padding: 32rpx 48rpx;
+  margin: 0 (-$page-gutter);
+  padding: 32rpx $page-gutter;
 }
 
 .item-header {
@@ -303,21 +306,29 @@ onShow(async () => {
   font-size: 28rpx;
   font-weight: 600;
   color: $text-primary;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .item-time {
   font-size: 22rpx;
   color: $text-muted;
+  flex-shrink: 0;
+  margin-left: 16rpx;
 }
 .item-content {
   display: block;
   font-size: 28rpx;
   color: $text-primary;
   line-height: 1.7;
+  word-break: break-word;
 }
 .pinned-tag {
   position: absolute;
   top: 32rpx;
-  right: 0;
+  right: $page-gutter;
   padding: 4rpx 12rpx;
   background: $text-primary;
   color: #fff;
@@ -328,8 +339,8 @@ onShow(async () => {
 .empty-action {
   margin-top: 32rpx;
   width: 260rpx;
-  height: 76rpx;
-  line-height: 76rpx;
+  height: $control-height-sm;
+  line-height: $control-height-sm;
   border-radius: $radius-full;
   background: $text-primary;
   color: #fff;

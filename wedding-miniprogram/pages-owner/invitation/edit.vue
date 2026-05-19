@@ -366,18 +366,18 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
 .page {
   background-color: $bg-color;
   min-height: 100vh;
-  padding-bottom: 160rpx;
+  padding-bottom: calc(160rpx + env(safe-area-inset-bottom));
 }
 
 /* 顶部标题 */
 .page-header {
-  padding: 60rpx 48rpx 36rpx;
+  padding: $page-header-top $page-gutter $page-header-bottom;
 }
 .page-tag {
   display: block;
   font-size: 22rpx;
   color: $text-muted;
-  letter-spacing: 6rpx;
+  letter-spacing: 0;
   margin-bottom: 12rpx;
 }
 .page-title {
@@ -389,7 +389,7 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
 
 /* 区块 */
 .section {
-  padding: 0 48rpx;
+  padding: 0 $page-gutter;
   margin-bottom: 48rpx;
 }
 .section-label {
@@ -408,7 +408,7 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
   margin-right: 20rpx;
   width: 220rpx;
   vertical-align: top;
-  border-radius: $radius-lg;
+  border-radius: $card-radius;
   border: 3rpx solid transparent;
   padding: 10rpx;
   transition: all 0.2s ease;
@@ -416,7 +416,7 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
 .template-item.active {
   border-color: $text-primary;
   background: $bg-surface;
-  box-shadow: 0 12rpx 34rpx rgba(0,0,0,0.08);
+  box-shadow: $shadow-sm;
 }
 .template-preview {
   width: 200rpx;
@@ -425,7 +425,7 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  border-radius: $radius-lg;
+  border-radius: $card-radius;
   overflow: hidden;
   padding: 20rpx;
   box-sizing: border-box;
@@ -434,7 +434,7 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
   display: block;
   font-size: 16rpx;
   color: rgba(255,255,255,0.72);
-  letter-spacing: 3rpx;
+  letter-spacing: 0;
   text-align: center;
   margin-bottom: 18rpx;
   white-space: normal;
@@ -456,10 +456,10 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
 .template-panel {
   margin-top: 24rpx;
   padding: 28rpx;
-  border-radius: $radius-xl;
+  border-radius: $card-radius;
   background: $text-primary;
   color: #fff;
-  box-shadow: 0 16rpx 42rpx rgba(0,0,0,0.12);
+  box-shadow: $shadow-sm;
 }
 .template-panel-head {
   display: flex;
@@ -472,7 +472,7 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
   display: block;
   font-size: 18rpx;
   color: rgba(255,255,255,0.52);
-  letter-spacing: 4rpx;
+  letter-spacing: 0;
   margin-bottom: 8rpx;
 }
 .template-panel-title {
@@ -480,6 +480,9 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
   font-size: 34rpx;
   color: #fff;
   font-weight: 600;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .template-panel-status {
   padding: 8rpx 16rpx;
@@ -502,8 +505,8 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
 }
 .template-panel-btn {
   flex: 1;
-  height: 76rpx;
-  line-height: 76rpx;
+  height: $control-height-sm;
+  line-height: $control-height-sm;
   border-radius: $radius-full;
   background: rgba(255,255,255,0.1);
   color: #fff;
@@ -544,7 +547,7 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
 }
 .form-input {
   width: 100%;
-  height: 80rpx;
+  height: $control-height;
   padding: 0 4rpx;
   border-bottom: 2rpx solid $border-color;
   font-size: 30rpx;
@@ -553,8 +556,8 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
 }
 .picker-value {
   width: 100%;
-  height: 80rpx;
-  line-height: 80rpx;
+  height: $control-height;
+  line-height: $control-height;
   font-size: 30rpx;
   color: $text-primary;
   border-bottom: 2rpx solid $border-color;
@@ -570,7 +573,7 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
 /* 开关列表 */
 .switch-list {
   background: $bg-surface;
-  border-radius: $radius-lg;
+  border-radius: $card-radius;
   overflow: hidden;
 }
 .switch-item {
@@ -600,15 +603,15 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
   position: fixed;
   bottom: calc(40rpx + constant(safe-area-inset-bottom));
   bottom: calc(40rpx + env(safe-area-inset-bottom));
-  left: 48rpx;
-  right: 48rpx;
+  left: $page-gutter;
+  right: $page-gutter;
   display: flex;
   gap: 16rpx;
 }
 .action-btn {
   flex: 1;
-  height: 88rpx;
-  line-height: 88rpx;
+  height: $control-height;
+  line-height: $control-height;
   text-align: center;
   border-radius: $radius-full;
   background: $bg-muted;
@@ -637,7 +640,7 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
   gap: 16rpx;
   padding: 24rpx 28rpx;
   background: $bg-surface;
-  border-radius: $radius-lg;
+  border-radius: $card-radius;
   border: 2rpx solid $border-color;
   transition: all 0.2s ease;
 }

@@ -273,6 +273,6 @@ defineExpose({ redraw: drawPoster })
 }
 .poster-canvas {
   border-radius: 16rpx;
-  box-shadow: 0 16rpx 48rpx rgba(0, 0, 0, 0.25);
+  box-shadow: $shadow-md;
 }
 </style>

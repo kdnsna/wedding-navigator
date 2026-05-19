@@ -341,18 +341,18 @@ onShow(refreshGuests)
 .page {
   background-color: $bg-color;
   min-height: 100vh;
-  padding-bottom: 160rpx;
+  padding-bottom: calc(160rpx + env(safe-area-inset-bottom));
 }
 
 /* 顶部标题 */
 .page-header {
-  padding: 60rpx 48rpx 24rpx;
+  padding: $page-header-top $page-gutter 24rpx;
 }
 .page-tag {
   display: block;
   font-size: 22rpx;
   color: $text-muted;
-  letter-spacing: 6rpx;
+  letter-spacing: 0;
   margin-bottom: 12rpx;
 }
 .page-title {
@@ -365,7 +365,7 @@ onShow(refreshGuests)
 /* 统计 */
 .stats-row {
   display: flex;
-  padding: 24rpx 48rpx 32rpx;
+  padding: 24rpx $page-gutter 32rpx;
 }
 .stat-item {
   flex: 1;
@@ -389,7 +389,7 @@ onShow(refreshGuests)
 .filter-row {
   display: flex;
   gap: 12rpx;
-  padding: 0 48rpx 24rpx;
+  padding: 0 $page-gutter 24rpx;
   overflow-x: auto;
 }
 .filter-pill {
@@ -408,7 +408,7 @@ onShow(refreshGuests)
 
 /* 宾客列表 */
 .guest-list {
-  padding: 0 48rpx;
+  padding: 0 $page-gutter;
 }
 .guest-item {
   padding: 28rpx 0;
@@ -419,21 +419,29 @@ onShow(refreshGuests)
   align-items: center;
   gap: 16rpx;
   margin-bottom: 8rpx;
+  min-width: 0;
 }
 .guest-name {
+  flex: 1;
   font-size: 30rpx;
   font-weight: 600;
   color: $text-primary;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .guest-phone {
   font-size: 22rpx;
   color: $text-muted;
+  flex-shrink: 0;
 }
 .guest-meta {
   display: flex;
   align-items: center;
   gap: 12rpx;
   margin-bottom: 12rpx;
+  flex-wrap: wrap;
 }
 .guest-status {
   padding: 4rpx 12rpx;
@@ -496,10 +504,10 @@ onShow(refreshGuests)
   position: fixed;
   bottom: calc(40rpx + constant(safe-area-inset-bottom));
   bottom: calc(40rpx + env(safe-area-inset-bottom));
-  left: 48rpx;
-  right: 48rpx;
-  height: 96rpx;
-  line-height: 96rpx;
+  left: $page-gutter;
+  right: $page-gutter;
+  height: $control-height;
+  line-height: $control-height;
   text-align: center;
   border-radius: $radius-full;
   background: $text-primary;
@@ -523,8 +531,8 @@ onShow(refreshGuests)
 .modal-content {
   width: 100%;
   background: $bg-surface;
-  border-radius: 32rpx 32rpx 0 0;
-  padding: 40rpx 48rpx calc(40rpx + constant(safe-area-inset-bottom));
+  border-radius: $modal-radius $modal-radius 0 0;
+  padding: 40rpx $page-gutter calc(40rpx + constant(safe-area-inset-bottom));
   padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
 }
 .modal-header {
@@ -555,7 +563,7 @@ onShow(refreshGuests)
 }
 .form-input {
   width: 100%;
-  height: 80rpx;
+  height: $control-height;
   padding: 0 4rpx;
   border-bottom: 2rpx solid $border-color;
   font-size: 30rpx;
@@ -564,8 +572,8 @@ onShow(refreshGuests)
 }
 .picker-value {
   width: 100%;
-  height: 80rpx;
-  line-height: 80rpx;
+  height: $control-height;
+  line-height: $control-height;
   font-size: 30rpx;
   color: $text-primary;
   border-bottom: 2rpx solid $border-color;
@@ -577,9 +585,9 @@ onShow(refreshGuests)
   gap: 36rpx;
 }
 .stepper-btn {
-  width: 56rpx;
-  height: 56rpx;
-  line-height: 56rpx;
+  width: $tap-min-height;
+  height: $tap-min-height;
+  line-height: $tap-min-height;
   text-align: center;
   border-radius: 50%;
   background: $bg-muted;
@@ -604,8 +612,8 @@ onShow(refreshGuests)
 }
 .modal-btn {
   flex: 1;
-  height: 88rpx;
-  line-height: 88rpx;
+  height: $control-height;
+  line-height: $control-height;
   text-align: center;
   border-radius: $radius-full;
   font-size: 28rpx;

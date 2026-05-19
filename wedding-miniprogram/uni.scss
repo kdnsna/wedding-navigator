@@ -73,6 +73,20 @@ $spacing-xl: 48rpx;
 $spacing-2xl: 64rpx;
 $spacing-3xl: 96rpx;
 
+/* ========== P1 像素级一致性 token ========== */
+$page-gutter: 48rpx;          // 页面默认左右留白
+$page-gutter-sm: 32rpx;       // 地图/紧凑工具页左右留白
+$page-header-top: 56rpx;      // 普通页面标题顶部留白
+$page-header-bottom: 32rpx;   // 普通页面标题底部留白
+$control-height: 88rpx;       // 主输入/主按钮高度
+$control-height-sm: 72rpx;    // 次级按钮/小控件高度
+$tap-min-height: 80rpx;       // 小程序最小舒适点击高度
+$card-radius: $radius-lg;     // 卡片最大常规圆角
+$modal-radius: 32rpx;         // 底部弹层顶部圆角
+$ui-letter-spacing: 0;        // 平台规范：不拉伸字距，避免小屏中文被撑开
+$ui-letter-spacing-tight: 0;
+$safe-bottom-gap: 40rpx;
+
 /* ========== 字体系统：更大字号阶梯 ========== */
 $font-display: 72rpx;   // 展示级：新人名字
 $font-h1: 48rpx;        // 大标题

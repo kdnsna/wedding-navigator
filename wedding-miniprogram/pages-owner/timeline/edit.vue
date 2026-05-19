@@ -300,18 +300,18 @@ onShow(refreshTimeline)
 .page {
   background-color: $bg-color;
   min-height: 100vh;
-  padding-bottom: 160rpx;
+  padding-bottom: calc(160rpx + env(safe-area-inset-bottom));
 }
 
 /* 顶部标题 */
 .page-header {
-  padding: 60rpx 48rpx 36rpx;
+  padding: $page-header-top $page-gutter $page-header-bottom;
 }
 .page-tag {
   display: block;
   font-size: 22rpx;
   color: $text-muted;
-  letter-spacing: 6rpx;
+  letter-spacing: 0;
   margin-bottom: 12rpx;
 }
 .page-title {
@@ -323,7 +323,7 @@ onShow(refreshTimeline)
 
 /* 时间轴 */
 .timeline {
-  padding: 0 48rpx;
+  padding: 0 $page-gutter;
 }
 .timeline-item {
   display: flex;
@@ -379,6 +379,10 @@ onShow(refreshTimeline)
   font-size: 30rpx;
   font-weight: 600;
   color: $text-primary;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .event-badges {
   display: flex;
@@ -405,6 +409,7 @@ onShow(refreshTimeline)
   font-size: 24rpx;
   color: $text-secondary;
   margin-top: 6rpx;
+  word-break: break-word;
 }
 .event-actions {
   display: flex;
@@ -441,10 +446,10 @@ onShow(refreshTimeline)
   position: fixed;
   bottom: calc(40rpx + constant(safe-area-inset-bottom));
   bottom: calc(40rpx + env(safe-area-inset-bottom));
-  left: 48rpx;
-  right: 48rpx;
-  height: 96rpx;
-  line-height: 96rpx;
+  left: $page-gutter;
+  right: $page-gutter;
+  height: $control-height;
+  line-height: $control-height;
   text-align: center;
   border-radius: $radius-full;
   background: $text-primary;
@@ -468,8 +473,8 @@ onShow(refreshTimeline)
 .modal-content {
   width: 100%;
   background: $bg-surface;
-  border-radius: 32rpx 32rpx 0 0;
-  padding: 40rpx 48rpx calc(40rpx + constant(safe-area-inset-bottom));
+  border-radius: $modal-radius $modal-radius 0 0;
+  padding: 40rpx $page-gutter calc(40rpx + constant(safe-area-inset-bottom));
   padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
 }
 .modal-header {
@@ -500,7 +505,7 @@ onShow(refreshTimeline)
 }
 .form-input {
   width: 100%;
-  height: 80rpx;
+  height: $control-height;
   padding: 0 4rpx;
   border-bottom: 2rpx solid $border-color;
   font-size: 30rpx;
@@ -509,8 +514,8 @@ onShow(refreshTimeline)
 }
 .picker-value {
   width: 100%;
-  height: 80rpx;
-  line-height: 80rpx;
+  height: $control-height;
+  line-height: $control-height;
   font-size: 30rpx;
   color: $text-primary;
   border-bottom: 2rpx solid $border-color;
@@ -546,8 +551,8 @@ onShow(refreshTimeline)
 }
 .modal-btn {
   flex: 1;
-  height: 88rpx;
-  line-height: 88rpx;
+  height: $control-height;
+  line-height: $control-height;
   text-align: center;
   border-radius: $radius-full;
   font-size: 28rpx;

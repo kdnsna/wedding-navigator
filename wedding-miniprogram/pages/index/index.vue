@@ -544,14 +544,14 @@ onUnmounted(() => {
 .page {
   background-color: $bg-color;
   min-height: 100vh;
-  padding-bottom: 160rpx;
+  padding-bottom: calc(260rpx + env(safe-area-inset-bottom));
 }
 
 /* ========== 封面大图 ========== */
 .hero {
   position: relative;
-  height: 88vh;
-  min-height: 1100rpx;
+  height: 86vh;
+  min-height: 1040rpx;
   overflow: hidden;
 }
 .hero-image {
@@ -599,14 +599,14 @@ onUnmounted(() => {
   align-items: center;
   justify-content: flex-end;
   height: 100%;
-  padding: 60rpx 48rpx 100rpx;
+  padding: 60rpx $page-gutter 96rpx;
   text-align: center;
 }
 
 .hero-tag {
   font-size: 22rpx;
   color: rgba(255,255,255,0.65);
-  letter-spacing: 8rpx;
+  letter-spacing: 0;
   font-weight: 300;
   margin-bottom: 20rpx;
 }
@@ -618,18 +618,23 @@ onUnmounted(() => {
 }
 
 .hero-names {
-  font-size: 72rpx;
+  display: block;
+  width: 100%;
+  max-width: 560rpx;
+  font-size: 56rpx;
   font-weight: 700;
   color: #fff;
-  letter-spacing: 6rpx;
+  letter-spacing: 0;
   margin-bottom: 12rpx;
   text-shadow: 0 4rpx 24rpx rgba(0,0,0,0.3);
   line-height: 1.2;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .hero-sub {
   font-size: 24rpx;
   color: rgba(255,255,255,0.7);
-  letter-spacing: 4rpx;
+  letter-spacing: 0;
   font-weight: 300;
   margin-bottom: 20rpx;
   font-style: italic;
@@ -637,7 +642,7 @@ onUnmounted(() => {
 .hero-date {
   font-size: 28rpx;
   color: rgba(255,255,255,0.95);
-  letter-spacing: 6rpx;
+  letter-spacing: 0;
   margin-bottom: 18rpx;
   text-shadow: 0 2rpx 12rpx rgba(0,0,0,0.25);
 }
@@ -653,9 +658,16 @@ onUnmounted(() => {
   border: 1rpx solid rgba(255,255,255,0.26);
   color: rgba(255,255,255,0.86);
   font-size: 22rpx;
-  letter-spacing: 2rpx;
+  letter-spacing: 0;
   background: rgba(20,20,20,0.18);
   backdrop-filter: blur(12rpx);
+  max-width: 100%;
+}
+.hero-meta-line text {
+  max-width: 280rpx;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .hero-meta-dot {
   width: 6rpx;
@@ -668,11 +680,14 @@ onUnmounted(() => {
 .hero-countdown {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 24rpx;
   margin-bottom: 80rpx;
+  width: 100%;
+  max-width: 560rpx;
 }
 .countdown-num {
-  font-size: 120rpx;
+  font-size: 112rpx;
   font-weight: 400;
   color: #fff;
   font-variant-numeric: tabular-nums;
@@ -689,17 +704,23 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: flex-start;
   gap: 8rpx;
+  min-width: 0;
+  max-width: 220rpx;
 }
 .countdown-label {
-  font-size: 28rpx;
+  font-size: 26rpx;
   color: rgba(255,255,255,0.75);
-  letter-spacing: 6rpx;
+  letter-spacing: 0;
   font-weight: 400;
 }
 .countdown-desc {
-  font-size: 26rpx;
+  font-size: 24rpx;
   color: rgba(255,255,255,0.92);
-  letter-spacing: 2rpx;
+  letter-spacing: 0;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 /* 婚礼当天 */
@@ -714,14 +735,14 @@ onUnmounted(() => {
   font-size: 72rpx;
   font-weight: 400;
   color: #fff;
-  letter-spacing: 12rpx;
+  letter-spacing: 0;
   text-shadow: 0 4rpx 24rpx rgba(0,0,0,0.35), 0 1rpx 2rpx rgba(0,0,0,0.2);
   line-height: 1;
 }
 .today-desc {
   font-size: 32rpx;
   color: rgba(255,255,255,0.95);
-  letter-spacing: 16rpx;
+  letter-spacing: 0;
   text-shadow: 0 2rpx 12rpx rgba(0,0,0,0.25);
 }
 
@@ -741,18 +762,18 @@ onUnmounted(() => {
 .scroll-text {
   font-size: 20rpx;
   color: rgba(255,255,255,0.4);
-  letter-spacing: 4rpx;
+  letter-spacing: 0;
 }
 
 /* ========== 通用 section ========== */
 .section {
-  padding: 80rpx 48rpx;
+  padding: 80rpx $page-gutter;
 }
 
 /* ========== 宾客行动台 ========== */
 .daypack-section {
   padding-top: 52rpx;
-  padding-bottom: 60rpx;
+  padding-bottom: calc(80rpx + env(safe-area-inset-bottom));
 }
 .daypack-head {
   display: flex;
@@ -765,7 +786,7 @@ onUnmounted(() => {
   display: block;
   font-size: 20rpx;
   color: $color-primary;
-  letter-spacing: 5rpx;
+  letter-spacing: 0;
   margin-bottom: 8rpx;
   font-weight: 600;
 }
@@ -780,7 +801,7 @@ onUnmounted(() => {
   margin-top: 8rpx;
   font-size: 22rpx;
   color: $text-muted;
-  letter-spacing: 2rpx;
+  letter-spacing: 0;
 }
 .daypack-status {
   padding: 10rpx 20rpx;
@@ -799,7 +820,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 24rpx;
   padding: 32rpx;
-  border-radius: $radius-lg;
+  border-radius: $card-radius;
   border: 1rpx solid $border-color;
   margin-bottom: 16rpx;
 }
@@ -831,11 +852,15 @@ onUnmounted(() => {
   font-size: 24rpx;
   color: rgba(255,255,255,0.7);
   line-height: 1.5;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 .daypack-action {
   width: 116rpx;
-  height: 64rpx;
-  line-height: 64rpx;
+  height: $control-height-sm;
+  line-height: $control-height-sm;
   border-radius: $radius-full;
   background: #fff;
   color: $text-primary;
@@ -853,7 +878,8 @@ onUnmounted(() => {
 .daypack-mini {
   padding: 28rpx;
   background: $bg-muted;
-  border-radius: $radius-lg;
+  border-radius: $card-radius;
+  min-height: 132rpx;
 }
 .mini-label {
   display: block;
@@ -867,6 +893,10 @@ onUnmounted(() => {
   color: $text-primary;
   font-weight: 600;
   line-height: 1.35;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 .daypack-actions {
   display: flex;
@@ -894,7 +924,7 @@ onUnmounted(() => {
 }
 .preview-block {
   background: $bg-surface;
-  border-radius: $radius-lg;
+  border-radius: $card-radius;
   padding: 28rpx;
   margin-bottom: 20rpx;
   border: 1rpx solid $border-color;
@@ -921,6 +951,10 @@ onUnmounted(() => {
   font-size: 22rpx;
   line-height: 1.45;
   color: $text-muted;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 .preview-more {
   font-size: 24rpx;
@@ -959,6 +993,10 @@ onUnmounted(() => {
   font-size: 28rpx;
   color: $text-primary;
   line-height: 1.6;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 /* ========== 婚书正文 ========== */
@@ -989,7 +1027,7 @@ onUnmounted(() => {
   font-size: 32rpx;
   line-height: 2.2;
   color: $text-primary;
-  letter-spacing: 4rpx;
+  letter-spacing: 0;
   font-weight: 400;
 }
 .invitation-couple {
@@ -1008,12 +1046,12 @@ onUnmounted(() => {
 .couple-label {
   font-size: 18rpx;
   color: $text-muted;
-  letter-spacing: 4rpx;
+  letter-spacing: 0;
 }
 .couple-name {
   font-size: 36rpx;
   font-weight: 600;
-  letter-spacing: 8rpx;
+  letter-spacing: 0;
   color: $text-primary;
 }
 .couple-divider {
@@ -1050,7 +1088,7 @@ onUnmounted(() => {
 .info-section {
   background: $bg-muted;
   padding-top: 80rpx;
-  padding-bottom: 80rpx;
+  padding-bottom: calc(80rpx + env(safe-area-inset-bottom));
 }
 .section-header {
   display: flex;
@@ -1075,17 +1113,17 @@ onUnmounted(() => {
   font-size: 36rpx;
   font-weight: 600;
   color: $text-primary;
-  letter-spacing: 4rpx;
+  letter-spacing: 0;
 }
 .info-sub {
   font-size: 20rpx;
   color: $text-muted;
-  letter-spacing: 6rpx;
+  letter-spacing: 0;
 }
 
 .info-list {
   background: $bg-surface;
-  border-radius: $radius-lg;
+  border-radius: $card-radius;
   overflow: hidden;
 }
 .info-row {
@@ -1099,7 +1137,7 @@ onUnmounted(() => {
 }
 .info-icon-wrap {
   width: 72rpx;
-  height: 72rpx;
+  height: $control-height-sm;
   border-radius: 50%;
   background: $bg-muted;
   display: flex;
@@ -1113,25 +1151,33 @@ onUnmounted(() => {
 }
 .info-meta {
   flex: 1;
+  min-width: 0;
 }
 .info-label {
   display: block;
   font-size: 20rpx;
   color: $text-muted;
   margin-bottom: 6rpx;
-  letter-spacing: 3rpx;
+  letter-spacing: 0;
 }
 .info-value {
   display: block;
   font-size: 30rpx;
   color: $text-primary;
   font-weight: 500;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .info-address {
   display: block;
   font-size: 24rpx;
   color: $text-secondary;
   margin-top: 4rpx;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 .info-action {
   font-size: 32rpx;
@@ -1152,12 +1198,12 @@ onUnmounted(() => {
   font-size: 36rpx;
   font-weight: 600;
   color: $text-primary;
-  letter-spacing: 4rpx;
+  letter-spacing: 0;
 }
 .quick-sub {
   font-size: 20rpx;
   color: $text-muted;
-  letter-spacing: 6rpx;
+  letter-spacing: 0;
 }
 .quick-grid {
   display: grid;
@@ -1171,7 +1217,7 @@ onUnmounted(() => {
   gap: 20rpx;
   padding: 32rpx 24rpx;
   background: $bg-surface;
-  border-radius: $radius-lg;
+  border-radius: $card-radius;
   border: 1rpx solid $border-color;
   transition: all 0.25s ease;
 }
@@ -1191,15 +1237,18 @@ onUnmounted(() => {
   gap: 4rpx;
 }
 .quick-label {
+  display: block;
   font-size: 28rpx;
   color: $text-primary;
   font-weight: 500;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .quick-en {
   font-size: 18rpx;
   color: $text-muted;
-  letter-spacing: 2rpx;
+  letter-spacing: 0;
 }
 .quick-arrow {
   font-size: 28rpx;
@@ -1222,7 +1271,7 @@ onUnmounted(() => {
   display: block;
   font-size: 28rpx;
   color: $text-primary;
-  letter-spacing: 8rpx;
+  letter-spacing: 0;
   margin-bottom: 12rpx;
   font-weight: 500;
 }
@@ -1230,24 +1279,24 @@ onUnmounted(() => {
   display: block;
   font-size: 22rpx;
   color: $text-muted;
-  letter-spacing: 3rpx;
+  letter-spacing: 0;
   font-weight: 300;
 }
 
 /* ========== 悬浮操作 ========== */
 .float-actions {
   position: fixed;
-  bottom: calc(40rpx + constant(safe-area-inset-bottom));
-  bottom: calc(40rpx + env(safe-area-inset-bottom));
-  left: 48rpx;
-  right: 48rpx;
+  bottom: calc(128rpx + constant(safe-area-inset-bottom));
+  bottom: calc(128rpx + env(safe-area-inset-bottom));
+  left: $page-gutter;
+  right: $page-gutter;
   display: flex;
   gap: 16rpx;
   z-index: 100;
 }
 .float-btn {
-  height: 88rpx;
-  line-height: 88rpx;
+  height: $control-height;
+  line-height: $control-height;
   text-align: center;
   border-radius: $radius-full;
   font-size: 30rpx;
@@ -1261,7 +1310,7 @@ onUnmounted(() => {
   min-width: 0;
   background: $text-primary;
   color: #fff;
-  box-shadow: 0 8rpx 24rpx rgba(0,0,0,0.15);
+  box-shadow: $shadow-sm;
 }
 .float-btn.share {
   width: 88rpx;
@@ -1282,8 +1331,8 @@ onUnmounted(() => {
   position: fixed;
   top: calc(80rpx + env(safe-area-inset-top));
   right: 32rpx;
-  width: 72rpx;
-  height: 72rpx;
+  width: $tap-min-height;
+  height: $tap-min-height;
   border-radius: 50%;
   background: rgba(255,255,255,0.9);
   border: 1rpx solid $border-color;
@@ -1291,7 +1340,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   z-index: 200;
-  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.08);
+  box-shadow: $shadow-xs;
   transition: all 0.2s ease;
 }
 .music-control:active { transform: scale(0.92); }
