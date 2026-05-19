@@ -169,6 +169,7 @@ function checkTemplateSystem() {
   assertIncludes('pages/rsvp/index.vue', 'rsvp-brief', 'RSVP page must show a template-aware wedding brief')
   assertIncludes('pages/album/index.vue', 'activeTemplate.albumMood', 'album page must adapt copy to the active template')
   assertIncludes('pages-owner/album/manage.vue', 'chooseAlbumImages', 'album manager must handle modern WeChat image selection')
+  assert(!read('pages-owner/album/manage.vue').includes('chooseMedia'), 'album manager must avoid flaky wx.chooseMedia and use uni.chooseImage')
   assertIncludes('pages-owner/album/manage.vue', 'buildAlbumCloudPath', 'album manager must upload into wedding-scoped cloud paths')
   assertIncludes('pages-owner/album/manage.vue', 'fetchWedding(userStore.weddingId, true)', 'album manager must force-refresh cloud data on entry')
   assertIncludes('pages-owner/album/manage.vue', 'previousAlbum', 'album manager must rollback local album state when cloud save fails')

@@ -115,43 +115,33 @@ async function chooseImage() {
 
 function chooseAlbumImages() {
   return new Promise((resolve, reject) => {
-    const handleSuccess = (res) => {
-      const paths = (res.tempFilePaths || [])
-        .concat((res.tempFiles || []).map(item => item.tempFilePath || item.path))
-        .filter(Boolean)
-      resolve([...new Set(paths)])
-    }
-
     uni.chooseImage({
       count: 9,
       sizeType: ['compressed'],
       sourceType: ['album', 'camera'],
-      success: handleSuccess,
+      success: (res) => {
+        const paths = (res.tempFilePaths || [])
+          .concat((res.tempFiles || []).map(item => item.tempFilePath || item.path))
+          .filter(Boolean)
+        resolve([...new Set(paths)])
+      },
       fail: (err) => {
         const msg = err?.errMsg || ''
         if (msg.includes('cancel')) { resolve([]); return }
-        chooseMediaFallback(handleSuccess, reject)
+        reject(new Error(normalizeChooseImageError(msg)))
       }
     })
   })
 }
 
-function chooseMediaFallback(resolve, reject) {
-  if (typeof wx === 'undefined' || !wx.chooseMedia) {
-    reject(new Error('选择照片失败，请检查相册权限'))
-    return
+function normalizeChooseImageError(message = '') {
+  if (message.includes('auth') || message.includes('permission') || message.includes('denied')) {
+    return '选择照片失败，请检查微信相册权限'
   }
-  wx.chooseMedia({
-    count: 9,
-    mediaType: ['image'],
-    sourceType: ['album', 'camera'],
-    success: (res) => resolve(res),
-    fail: (err) => {
-      const msg = err?.errMsg || ''
-      if (msg.includes('cancel')) { resolve({ tempFiles: [] }); return }
-      reject(new Error(msg || '选择照片失败'))
-    }
-  })
+  if (message.includes('chooseImage:fail')) {
+    return '选择照片失败，请稍后重试'
+  }
+  return message || '选择照片失败，请重试'
 }
 
 function buildAlbumCloudPath(localPath, id) {
