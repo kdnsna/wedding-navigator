@@ -10,7 +10,7 @@ exports.main = async (event, context) => {
   }
 
   if (scene && scene.length > 32) {
-    return { success: false, message: 'scene 参数不能超过32个字符' }
+    return { success: false, code: 'SCENE_TOO_LONG', message: 'scene 参数不能超过32个字符' }
   }
 
   try {
@@ -34,12 +34,14 @@ exports.main = async (event, context) => {
     if (err.errCode === 41030) {
       return {
         success: false,
+        code: 'WXACODE_VERSION_NOT_READY',
         message: '请先在微信公众平台配置体验版或发布正式版',
         isConfigError: true
       }
     }
     return {
       success: false,
+      code: err.errCode || 'WXACODE_ERROR',
       message: err.message || '生成二维码失败'
     }
   }

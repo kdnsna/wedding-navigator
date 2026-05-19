@@ -133,6 +133,23 @@
               <button class="geo-btn primary" :disabled="geocoding" @click="chooseVenueLocation">地图选点</button>
             </view>
           </view>
+          <view class="manual-coordinate">
+            <view class="manual-coordinate-head" @click="showManualCoordinate = !showManualCoordinate">
+              <text class="manual-coordinate-title">手动填写坐标</text>
+              <text class="manual-coordinate-toggle">{{ showManualCoordinate ? '收起' : '展开' }}</text>
+            </view>
+            <view class="coordinate-grid" v-if="showManualCoordinate">
+              <view class="coordinate-field">
+                <text class="form-label">纬度</text>
+                <input class="form-input" v-model="manualCoordinate.latitude" placeholder="例如 36.65120" type="digit" />
+              </view>
+              <view class="coordinate-field">
+                <text class="form-label">经度</text>
+                <input class="form-input" v-model="manualCoordinate.longitude" placeholder="例如 117.12010" type="digit" />
+              </view>
+              <button class="coordinate-apply" @click="applyManualCoordinate">应用坐标</button>
+            </view>
+          </view>
           <view class="form-group">
             <text class="form-label">到达时间</text>
             <picker mode="time" :value="modalForm.arrivalTime" @change="onArrivalTimeChange">
@@ -238,6 +255,8 @@ const typeReverseMap = { 'home': 0, 'hotel': 1, 'venue': 2, 'hotel_guest': 3, 'p
 const modalForm = ref({ name: '', typeIndex: 2, address: '', arrivalTime: '', phone: '', coordinate: null })
 const geocoding = ref(false)
 const lastGeocodeError = ref('')
+const showManualCoordinate = ref(false)
+const manualCoordinate = ref({ latitude: '', longitude: '' })
 
 const venues = computed(() => store.venues?.venues || [])
 const geoStatusText = computed(() => {
@@ -260,6 +279,8 @@ function hasCoordinate(venue) {
 function showAddModal() {
   editingVenue.value = null
   modalForm.value = { name: '', typeIndex: 2, address: '', arrivalTime: '', phone: '', coordinate: null }
+  manualCoordinate.value = { latitude: '', longitude: '' }
+  showManualCoordinate.value = false
   showModal.value = true
 }
 
@@ -273,6 +294,11 @@ function editVenue(venue) {
     phone: venue.contact_phone || '',
     coordinate: venue.coordinate || null
   }
+  manualCoordinate.value = {
+    latitude: venue.coordinate?.latitude ? String(venue.coordinate.latitude) : '',
+    longitude: venue.coordinate?.longitude ? String(venue.coordinate.longitude) : ''
+  }
+  showManualCoordinate.value = !hasCoordinate(venue)
   showModal.value = true
 }
 
@@ -294,6 +320,7 @@ async function autoMatchLocation(options = {}) {
     })
     if (res?.data?.latitude && res?.data?.longitude) {
       modalForm.value.coordinate = normalizeCoordinate(res.data)
+      syncManualCoordinate()
       if (res.data.address && !modalForm.value.address.trim()) {
         modalForm.value.address = res.data.address
       }
@@ -328,6 +355,7 @@ function chooseVenueLocation() {
           source: 'manual-choose-location',
           matched_at: Date.now()
         })
+        syncManualCoordinate()
         lastGeocodeError.value = ''
         showSuccess('已选择地图位置')
         resolve(true)
@@ -404,6 +432,36 @@ function normalizeCoordinate(coord) {
     address: coord.address || modalForm.value.address,
     source: coord.source || 'unknown',
     matched_at: coord.matched_at || Date.now()
+  }
+}
+
+function applyManualCoordinate() {
+  const coordinate = normalizeCoordinate({
+    latitude: manualCoordinate.value.latitude,
+    longitude: manualCoordinate.value.longitude,
+    title: modalForm.value.name,
+    address: modalForm.value.address,
+    source: 'manual-input',
+    matched_at: Date.now()
+  })
+  if (!coordinate) {
+    showError('请输入有效的经纬度')
+    return
+  }
+  if (Math.abs(coordinate.latitude) > 90 || Math.abs(coordinate.longitude) > 180) {
+    showError('经纬度范围不正确')
+    return
+  }
+  modalForm.value.coordinate = coordinate
+  syncManualCoordinate()
+  lastGeocodeError.value = ''
+  showSuccess('已应用手动坐标')
+}
+
+function syncManualCoordinate() {
+  manualCoordinate.value = {
+    latitude: modalForm.value.coordinate?.latitude ? String(modalForm.value.coordinate.latitude) : '',
+    longitude: modalForm.value.coordinate?.longitude ? String(modalForm.value.coordinate.longitude) : ''
   }
 }
 
@@ -917,6 +975,48 @@ onShow(() => { useOwnerGuard() })
 .geo-btn::after { border: none; }
 .geo-btn[disabled] {
   opacity: 0.62;
+}
+.manual-coordinate {
+  margin: -12rpx 0 28rpx;
+  padding: 22rpx 24rpx;
+  border-radius: $card-radius;
+  background: $bg-surface;
+  border: 1rpx solid $border-color;
+}
+.manual-coordinate-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.manual-coordinate-title {
+  font-size: 26rpx;
+  color: $text-primary;
+  font-weight: 500;
+}
+.manual-coordinate-toggle {
+  font-size: 24rpx;
+  color: $color-primary;
+}
+.coordinate-grid {
+  margin-top: 20rpx;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18rpx;
+}
+.coordinate-field {
+  min-width: 0;
+}
+.coordinate-apply {
+  grid-column: 1 / -1;
+  height: $control-height-sm;
+  line-height: $control-height-sm;
+  border-radius: $radius-full;
+  background: $text-primary;
+  color: #fff;
+  font-size: 26rpx;
+}
+.coordinate-apply::after {
+  border: none;
 }
 
 /* 表单 */

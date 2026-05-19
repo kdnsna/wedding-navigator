@@ -454,6 +454,17 @@ function getSharePath() {
     : '/pages/index/index'
 }
 
+function parseWeddingIdFromOptions(options = {}) {
+  if (options.id) return options.id
+  if (options.weddingId) return options.weddingId
+  const rawScene = options.scene ? decodeURIComponent(options.scene) : ''
+  if (!rawScene) return ''
+  if (!rawScene.includes('=')) return rawScene
+  const pairs = rawScene.split('&').map(item => item.split('='))
+  const idPair = pairs.find(([key]) => key === 'id' || key === 'weddingId')
+  return idPair?.[1] || ''
+}
+
 function trackShare() {
   if (userStore.weddingId) {
     recordShare(userStore.weddingId).catch(() => {})
@@ -481,7 +492,7 @@ onShareTimeline(() => {
 })
 
 onLoad(async (options) => {
-  const weddingId = options?.id || userStore.weddingId
+  const weddingId = parseWeddingIdFromOptions(options) || userStore.weddingId
   if (weddingId) {
     userStore.setWeddingId(weddingId)
     try {

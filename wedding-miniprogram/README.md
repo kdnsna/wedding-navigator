@@ -31,6 +31,15 @@ P2 大众化/商业化基础已完成第一版：
 
 相册上传稳定性修复：主人端相册页已移除不稳定的 `wx.chooseMedia` 兜底，统一使用 `uni.chooseImage` 选择图片，避免部分机型或开发者工具反复出现 `chooseMedia:fail`。
 
+地图、天气、地理编码和海报链路继续补强：
+
+- 首页支持从小程序码 `scene` 参数进入婚礼详情，扫码不再依赖普通分享链接参数
+- 海报绘制支持 `cloud://` 相册封面和 base64 小程序码转本地临时文件，减少封面/小程序码不显示
+- 分享设置页会尝试生成并展示真实小程序码，失败时显示具体配置原因
+- 路书天气页会显示缺 Key、缺坐标或服务超时等具体失败原因，并支持重试
+- 主人端路书增加手动经纬度兜底，自动匹配和地图选点失败时也能补坐标
+- `cloudbaserc.json` 已加入 `generatePoster`，方便和地图/天气函数一起部署
+
 ## 功能特性
 
 ### 宾客端（客人展示）
@@ -114,6 +123,7 @@ wedding-miniprogram/
 │   ├── index.js             # 通用工具
 │   ├── templates.js         # 内置婚礼模板配置
 │   ├── commercial.js        # 套餐与权益配置
+│   ├── imagePaths.js        # cloud/base64/http 图片转本地可绘制路径
 │   └── releaseDiagnostics.js # 发布诊断规则
 ├── static/                  # 静态资源
 ├── App.vue                  # 应用根组件
@@ -201,7 +211,7 @@ npm install
 1. 在 `manifest.json` 中配置你的微信小程序 AppID
 2. 在 `config/cloud.js` 中配置云开发环境 ID：`CLOUD_ENV`
 3. 如需路书自动匹配地图坐标，在 `geocodeVenue` 和 `getWeather` 云函数环境变量中配置 `TENCENT_MAP_KEY`
-4. 如需真实天气，在 `getWeather` 云函数环境变量中配置 `HEFENG_KEY`
+4. 如需真实天气，在 `getWeather` 云函数环境变量中配置 `HEFENG_KEY`，也兼容 `QWEATHER_KEY` / `WEATHER_KEY`
 5. 如需内容安全接口失败时阻断提交，在 `submitRSVP`、`submitBlessing` 云函数环境变量中配置 `CONTENT_SAFETY_MODE=strict`
 6. 如需生成体验版/开发版小程序码，在 `generatePoster` 云函数环境变量中配置 `WXACODE_ENV_VERSION=trial` 或 `develop`
 7. 在 `cloudfunctions/*/config.json` 中按需配置权限
@@ -245,10 +255,14 @@ npm run build:mp-weixin
 云开发 -> 云函数 -> 右键每个云函数目录 -> 创建并部署：云端安装依赖
 ```
 
-天气云函数如需真实天气，请在云函数环境变量中设置：
+天气云函数如需真实天气，请在云函数环境变量中设置以下任一变量：
 
 ```
 HEFENG_KEY=你的和风天气Key
+# 或
+QWEATHER_KEY=你的和风天气Key
+# 或
+WEATHER_KEY=你的和风天气Key
 ```
 
 未配置时会返回模拟天气，不会阻断路书页。
@@ -259,7 +273,7 @@ HEFENG_KEY=你的和风天气Key
 TENCENT_MAP_KEY=你的腾讯位置服务Key
 ```
 
-主人端保存场地时会按「详细地址 + 场地名称」自动匹配坐标，也可手动地图选点。宾客端只会展示已匹配坐标的地图标记，避免无坐标场地被错误打到默认城市。
+主人端保存场地时会按「详细地址 + 场地名称」自动匹配坐标，也可手动地图选点；如果自动匹配和地图选点都失败，可展开“手动填写坐标”录入经纬度。宾客端只会展示已匹配坐标的地图标记，避免无坐标场地被错误打到默认城市。
 
 祝福和 RSVP 留言会调用微信内容安全接口。默认策略为“接口不可用时降级放行，接口明确判定违规时阻断”；如果希望接口不可用也阻断提交，请为 `submitRSVP`、`submitBlessing` 配置：
 
@@ -272,6 +286,8 @@ CONTENT_SAFETY_MODE=strict
 ```
 WXACODE_ENV_VERSION=trial
 ```
+
+`generatePoster` 已加入 `cloudbaserc.json`。如果分享设置页提示小程序码生成失败，请优先确认该云函数已部署，并已在云函数权限中开启 `wxacode.getUnlimited`。
 
 ### 3. 创建数据库索引
 
@@ -316,6 +332,8 @@ MINIPROGRAM_PRIVATE_KEY_PATH=/path/to/private.key npm run upload:mp-weixin
 - 已部署 `syncOwnerProfile`，并验证主人端“账号与权益”能同步 openid、套餐、权益和工作区
 - 已部署 `deleteWedding`，并在主人端管理后台验证删除后旧邀请链接失效、新建向导可重新打开
 - 已部署 `geocodeVenue`，并为 `geocodeVenue`、`getWeather` 配置 `TENCENT_MAP_KEY` 后验证场地能自动匹配地图和天气
+- 已部署 `generatePoster`，并在主人端“分享设置”验证小程序码能展示，扫码能进入对应婚礼
+- 如自动地理编码不可用，已在主人端路书手动填写经纬度并验证宾客端导航可打开
 - 数据库集合已创建：`owners`、`weddings`、`invitations`、`albums`、`venues`、`timelines`、`guests`、`blessings`、`share_stats`、`viewers`
 - 数据库索引已创建：`viewers.wedding_id + viewers.openid`、`guests.guests.phone`、`blessings.blessings.id`
 - 已运行 `npm run check:release` 并通过

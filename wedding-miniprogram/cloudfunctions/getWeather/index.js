@@ -23,7 +23,7 @@ function requestJson(baseUrl, params) {
       })
     })
 
-    req.setTimeout(1200, () => {
+    req.setTimeout(5000, () => {
       req.destroy(new Error('地图服务请求超时'))
     })
 
@@ -47,7 +47,7 @@ function requestWeather(key, lon, lat) {
       })
     })
 
-    req.setTimeout(1800, () => {
+    req.setTimeout(5000, () => {
       req.destroy(new Error('天气服务请求超时'))
     })
 
@@ -55,12 +55,14 @@ function requestWeather(key, lon, lat) {
   })
 }
 
-function buildMockWeather(weddingDate, tips = '天气服务暂时不可用，先为您展示模拟天气') {
+function buildMockWeather(weddingDate, tips = '天气服务暂时不可用，先为您展示模拟天气', reason = 'WEATHER_FALLBACK') {
   return {
     success: true,
     isMock: true,
+    reason,
     data: {
       isMock: true,
+      reason,
       text: '晴',
       temp_max: '28',
       temp_min: '18',
@@ -121,24 +123,25 @@ exports.main = async (event, context) => {
     if (!coordinate?.latitude || !coordinate?.longitude) {
       return buildMockWeather(
         wedding.data?.basic_info?.date || '',
-        '请在主人端为主场地匹配地图坐标，或为 geocodeVenue 配置腾讯地图 Key'
+        '请在主人端为主场地匹配地图坐标，或为 geocodeVenue 配置腾讯地图 Key',
+        'MISSING_COORDINATE'
       )
     }
 
     // 生产环境请在云函数环境变量中配置 HEFENG_KEY。
-    const WEATHER_KEY = process.env.HEFENG_KEY || ''
+    const WEATHER_KEY = process.env.HEFENG_KEY || process.env.QWEATHER_KEY || process.env.WEATHER_KEY || ''
     const lat = coordinate.latitude
     const lon = coordinate.longitude
     const weddingDate = wedding.data?.basic_info?.date || ''
 
     if (!WEATHER_KEY) {
-      return buildMockWeather(weddingDate, '请配置天气 API Key 以获取真实天气')
+      return buildMockWeather(weddingDate, '请配置 HEFENG_KEY / QWEATHER_KEY / WEATHER_KEY 以获取真实天气', 'MISSING_WEATHER_KEY')
     }
 
     const res = await requestWeather(WEATHER_KEY, lon, lat)
     const daily = res.daily?.[0]
     if (!daily) {
-      return buildMockWeather(weddingDate)
+      return buildMockWeather(weddingDate, res.code ? `天气接口返回 ${res.code}，请检查 Key、权限或城市坐标` : '天气服务暂时不可用，先为您展示模拟天气', 'WEATHER_API_EMPTY')
     }
 
     const weatherMap = {
@@ -234,6 +237,6 @@ exports.main = async (event, context) => {
     }
   } catch (err) {
     console.error('getWeather error:', err)
-    return buildMockWeather('', '天气服务暂时不可用，先为您展示模拟天气')
+    return buildMockWeather('', err.message || '天气服务暂时不可用，先为您展示模拟天气', 'WEATHER_ERROR')
   }
 }

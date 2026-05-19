@@ -65,7 +65,7 @@ export function buildReleaseDiagnostics(store) {
     statusItem({
       key: 'map',
       title: '地图能力',
-      desc: MARKER_ICON ? '已配置地图标记图标，真机仍建议预览地图点位' : '未设置地图标记图标，将使用系统默认点位',
+      desc: MARKER_ICON ? '已配置自定义地图标记，真机仍建议预览点位' : '使用系统默认地图标记，兼容性更稳',
       status: venueHasCoordinate ? 'done' : 'warning',
       route: '/pages-owner/guide/edit',
       actionText: '检查路书'
@@ -74,8 +74,8 @@ export function buildReleaseDiagnostics(store) {
       key: 'weather',
       title: '天气与地理编码',
       desc: AMAP_KEY
-        ? '前端地图 Key 已配置；云函数仍需检查 TENCENT_MAP_KEY/WEATHER_KEY'
-        : '云函数需配置 TENCENT_MAP_KEY 与 WEATHER_KEY 后，天气和坐标兜底才完整',
+        ? '前端地图 Key 已配置；云函数仍需检查 TENCENT_MAP_KEY 与 HEFENG_KEY/QWEATHER_KEY'
+        : '云函数需配置 TENCENT_MAP_KEY 与 HEFENG_KEY/QWEATHER_KEY 后，天气和坐标兜底才完整',
       status: 'manual',
       route: '/pages-owner/guide/edit',
       actionText: '人工确认'
@@ -113,7 +113,7 @@ export function buildReleaseDiagnostics(store) {
       title: '小程序码与海报',
       desc: hasPosterPath ? '已有可生成海报的素材，发布前请真机生成一次' : '缺少海报素材，建议上传封面后生成海报',
       status: hasPosterPath ? 'manual' : 'warning',
-      route: '/pages/poster/index',
+      route: '/pages-owner/share/index',
       actionText: '去生成'
     }),
     statusItem({

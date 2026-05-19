@@ -18,6 +18,13 @@
       "description": "获取婚礼当天天气预报"
     },
     {
+      "name": "generatePoster",
+      "timeout": 20,
+      "runtime": "Nodejs16.13",
+      "handler": "index.main",
+      "description": "生成小程序码海报"
+    },
+    {
       "name": "updateWedding",
       "timeout": 20,
       "runtime": "Nodejs16.13",

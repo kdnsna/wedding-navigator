@@ -76,7 +76,7 @@ function requestJson(baseUrl, params) {
       })
     })
 
-    req.setTimeout(1800, () => {
+    req.setTimeout(5000, () => {
       req.destroy(new Error('地图服务请求超时'))
     })
     req.on('error', reject)

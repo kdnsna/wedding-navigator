@@ -1,3 +1,5 @@
+import { resolveImagePath } from '@/utils/imagePaths.js'
+
 // 画布尺寸：设计稿 750x1334，页面上按 375x667 逻辑像素渲染。
 export const POSTER_CANVAS_WIDTH = 375
 export const POSTER_CANVAS_HEIGHT = 667
@@ -10,18 +12,6 @@ export const POSTER_CANVAS_STYLE = {
 
 const WHITE = '#FFFFFF'
 const GOLD = '#C4A882'
-
-function downloadImage(url) {
-  if (!url) return Promise.resolve('')
-  return new Promise((resolve) => {
-    if (!url.startsWith('http')) return resolve(url)
-    uni.downloadFile({
-      url,
-      success: (res) => resolve(res.tempFilePath),
-      fail: () => resolve('')
-    })
-  })
-}
 
 function formatDateCN(dateStr) {
   if (!dateStr) return '待定'
@@ -56,7 +46,7 @@ export async function drawWeddingPoster({ instance, store, qrCodePath = '' }) {
   const W = POSTER_CANVAS_WIDTH
   const H = POSTER_CANVAS_HEIGHT
 
-  const bgPath = await downloadImage(store.album?.photos?.[0]?.url || '')
+  const bgPath = await resolveImagePath(store.album?.photos?.[0]?.url || '', 'poster_bg')
 
   if (bgPath) {
     ctx.drawImage(bgPath, 0, 0, W, H)
@@ -155,7 +145,7 @@ export async function drawWeddingPoster({ instance, store, qrCodePath = '' }) {
     ctx.fillText(venueAddress, W / 2, 400)
   }
 
-  const qrPath = await downloadImage(qrCodePath)
+  const qrPath = await resolveImagePath(qrCodePath, 'poster_qr')
   if (qrPath) {
     const qrSize = 60
     const qrX = (W - qrSize) / 2

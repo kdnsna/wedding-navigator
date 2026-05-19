@@ -9,10 +9,14 @@
     <!-- 小程序码 -->
     <view class="qrcode-section">
       <view class="qrcode-box">
-        <text class="qrcode-placeholder">小程序码</text>
-        <text class="qrcode-hint">部署后自动生成</text>
+        <image class="qrcode-image" v-if="qrCodePath" :src="qrCodePath" mode="aspectFit" />
+        <view class="qrcode-state" v-else>
+          <text class="qrcode-placeholder">{{ qrLoading ? '生成中' : '小程序码' }}</text>
+          <text class="qrcode-hint">{{ qrError || '部署后自动生成' }}</text>
+        </view>
       </view>
       <text class="qrcode-tip">微信扫一扫，查看婚礼邀请</text>
+      <button class="qrcode-refresh" :loading="qrLoading" :disabled="qrLoading" @click="refreshQrCode">重新生成小程序码</button>
     </view>
 
     <!-- 分享卡片设置 -->
@@ -45,13 +49,17 @@ import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { showError, showSuccess } from '@/utils/index.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
-import { recordShare, updateWedding } from '@/composables/useCloud.js'
+import { generatePoster, recordShare, updateWedding } from '@/composables/useCloud.js'
+import { resolveImagePath } from '@/utils/imagePaths.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
 
 const shareForm = ref({ title: '', description: '' })
 const saving = ref(false)
+const qrCodePath = ref('')
+const qrLoading = ref(false)
+const qrError = ref('')
 
 const weddingId = computed(() => userStore.weddingId)
 
@@ -76,6 +84,34 @@ function goToPoster() {
     return
   }
   uni.navigateTo({ url: '/pages/poster/index' })
+}
+
+async function refreshQrCode() {
+  if (qrLoading.value) return
+  if (!weddingId.value) {
+    showError('请先创建婚礼')
+    return
+  }
+  qrLoading.value = true
+  qrError.value = ''
+  try {
+    const res = await generatePoster('pages/index/index', weddingId.value, 430)
+    if (res?.success && res.data) {
+      qrCodePath.value = await resolveImagePath(res.data, 'share_qr')
+      if (!qrCodePath.value) {
+        qrError.value = '小程序码已生成，但本地预览失败'
+      }
+    } else {
+      qrCodePath.value = ''
+      qrError.value = res?.message || '小程序码生成失败'
+    }
+  } catch (err) {
+    console.error('小程序码生成失败:', err)
+    qrCodePath.value = ''
+    qrError.value = err?.result?.message || err?.message || '小程序码生成失败，请检查 generatePoster 云函数'
+  } finally {
+    qrLoading.value = false
+  }
 }
 
 async function saveShareSettings() {
@@ -119,7 +155,11 @@ onShareAppMessage(() => {
   }
 })
 
-onShow(() => { useOwnerGuard(); loadFromStore() })
+onShow(() => {
+  useOwnerGuard()
+  loadFromStore()
+  if (!qrCodePath.value && weddingId.value) refreshQrCode()
+})
 </script>
 
 <style lang="scss" scoped>
@@ -162,6 +202,18 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+}
+.qrcode-image {
+  width: 240rpx;
+  height: 240rpx;
+}
+.qrcode-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24rpx;
 }
 .qrcode-placeholder {
   font-size: 28rpx;
@@ -171,11 +223,25 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
 .qrcode-hint {
   font-size: 22rpx;
   color: $text-muted;
+  line-height: 1.4;
+  text-align: center;
 }
 .qrcode-tip {
   font-size: 26rpx;
   color: $text-secondary;
 }
+.qrcode-refresh {
+  width: 260rpx;
+  height: $control-height-sm;
+  line-height: $control-height-sm;
+  margin: 24rpx auto 0;
+  border-radius: $radius-full;
+  background: $bg-muted;
+  color: $text-primary;
+  font-size: 24rpx;
+}
+.qrcode-refresh::after { border: none; }
+.qrcode-refresh[disabled] { opacity: 0.62; }
 
 /* 表单 */
 .section {

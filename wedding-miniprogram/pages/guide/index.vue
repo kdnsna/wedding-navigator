@@ -135,7 +135,8 @@
       <view class="empty-state" v-if="!weatherLoading && !weatherData">
         <image class="empty-visual" src="/static/visuals/empty-weather.svg" mode="aspectFit" />
         <text class="empty-text">暂无天气数据</text>
-        <text class="empty-sub">请在主人端填写场地地址或地图选点后自动获取</text>
+        <text class="empty-sub">{{ weatherError || '请在主人端填写场地地址或地图选点后自动获取' }}</text>
+        <button class="retry-btn" v-if="weatherError" @click="loadWeather">重新获取</button>
       </view>
 
       <!-- 天气详情 -->
@@ -279,6 +280,7 @@ const selectedVenue = ref(null)
 // 天气
 const weatherData = ref(null)
 const weatherLoading = ref(false)
+const weatherError = ref('')
 const weatherIcon = computed(() => {
   const iconMap = {
     sunny: '/static/visuals/icon-weather-sunny.svg',
@@ -303,25 +305,29 @@ const routeTips = computed(() => transportInfo.value.route_tips || [])
 const mapReady = computed(() => geocodedVenues.value.length > 0)
 const weatherHint = computed(() => {
   if (weatherLoading.value) return '加载中'
+  if (weatherError.value) return '待配置'
   if (!weatherData.value) return '点此查看'
   if (weatherData.value.precip > 30) return `可能降雨 ${weatherData.value.precip}%`
   return `${weatherData.value.text || '适合出行'} ${weatherData.value.temp_min || ''}-${weatherData.value.temp_max || ''}°`
 })
 
 const markers = computed(() => {
-  return geocodedVenues.value.map((v, i) => ({
-    id: i,
-    latitude: Number(v.coordinate.latitude),
-    longitude: Number(v.coordinate.longitude),
-    title: v.name,
-    iconPath: MARKER_ICON || '',
-    width: 30,
-    height: 30,
-    callout: {
-      content: v.name, color: '#333', fontSize: 14,
-      borderRadius: 8, bgColor: '#fff', padding: 10, display: 'BYCLICK'
+  return geocodedVenues.value.map((v, i) => {
+    const marker = {
+      id: i,
+      latitude: Number(v.coordinate.latitude),
+      longitude: Number(v.coordinate.longitude),
+      title: v.name,
+      width: 30,
+      height: 30,
+      callout: {
+        content: v.name, color: '#333', fontSize: 14,
+        borderRadius: 8, bgColor: '#fff', padding: 10, display: 'BYCLICK'
+      }
     }
-  }))
+    if (MARKER_ICON) marker.iconPath = MARKER_ICON
+    return marker
+  })
 })
 
 const polyline = computed(() => {
@@ -406,16 +412,20 @@ function formatWeatherDate(dateStr) {
 async function loadWeather() {
   if (!userStore.weddingId) return
   weatherLoading.value = true
+  weatherError.value = ''
   try {
     const res = await getWeather(userStore.weddingId)
     if (res?.success) {
       weatherData.value = res.data
+      weatherError.value = ''
     } else {
       weatherData.value = null
+      weatherError.value = res?.message || '天气数据暂不可用'
     }
   } catch (err) {
     console.error('loadWeather error:', err)
     weatherData.value = null
+    weatherError.value = err?.message || '天气服务暂不可用'
   } finally {
     weatherLoading.value = false
   }
@@ -1052,6 +1062,21 @@ onShow(async () => {
   display: block;
   font-size: 24rpx;
   color: $text-muted;
+  line-height: 1.5;
+  padding: 0 48rpx;
+}
+.retry-btn {
+  margin-top: 24rpx;
+  width: 220rpx;
+  height: $control-height-sm;
+  line-height: $control-height-sm;
+  border-radius: $radius-full;
+  background: $text-primary;
+  color: #fff;
+  font-size: 26rpx;
+}
+.retry-btn::after {
+  border: none;
 }
 
 .tpl-champagne {

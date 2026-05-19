@@ -118,11 +118,13 @@ function checkCloudSafety() {
   assertIncludes('pages/index/index.vue', 'recordShare', 'index share handlers must track shares')
   assertIncludes('cloudfunctions/geocodeVenue/index.js', 'TENCENT_MAP_KEY', 'geocodeVenue must use configurable Tencent Map key')
   assertIncludes('cloudfunctions/geocodeVenue/index.js', 'MISSING_MAP_KEY', 'geocodeVenue must expose a typed missing-key error')
+  assertIncludes('cloudfunctions/geocodeVenue/index.js', '5000', 'geocodeVenue must allow enough time for external map requests')
   assertIncludes('composables/useCloud.js', 'geocodeVenue', 'useCloud must expose venue geocoding')
   assert(readJson('cloudfunctions/geocodeVenue/config.json').timeout >= 20, 'geocodeVenue timeout must cover external map requests')
   assert(readJson('cloudfunctions/getWeather/config.json').timeout >= 20, 'getWeather timeout must cover weather and geocoding requests')
   assert(readJson('cloudfunctions/updateWedding/config.json').timeout >= 20, 'updateWedding timeout must cover larger owner-side saves')
   assertIncludes('cloudbaserc.json', '"geocodeVenue"', 'cloudbaserc must include geocodeVenue deploy config')
+  assertIncludes('cloudbaserc.json', '"generatePoster"', 'cloudbaserc must include generatePoster deploy config')
   assertIncludes('cloudbaserc.json', '"timeout": 20', 'cloudbaserc must keep cloud function timeout deploy config')
 }
 
@@ -144,6 +146,7 @@ function checkDataContracts() {
   assertIncludes('cloudfunctions/getStats/index.js', 'normalizeListDocument', 'getStats must normalize legacy nested list documents')
   assertIncludes('cloudfunctions/getRSVPStats/index.js', 'normalizeListDocument', 'getRSVPStats must normalize legacy nested guest documents')
   assertIncludes('cloudfunctions/generatePoster/index.js', 'WXACODE_ENV_VERSION', 'generatePoster must support configurable wxacode env version')
+  assertIncludes('pages/index/index.vue', 'parseWeddingIdFromOptions', 'home page must read ids opened from wxacode scene')
   assert(fs.existsSync(path.join(root, 'cloudfunctions/deleteWedding/index.js')), 'deleteWedding cloud function must exist')
   assertIncludes('cloudfunctions/deleteWedding/index.js', 'owner_openid', 'deleteWedding must verify owner before deleting data')
   assertIncludes('cloudfunctions/deleteWedding/index.js', 'removeByWeddingId', 'deleteWedding must remove wedding-scoped viewer records')
@@ -180,8 +183,10 @@ function checkTemplateSystem() {
   assertIncludes('pages/guide/index.vue', 'snow', 'guide weather icons must handle weather types returned by getWeather')
   assertIncludes('pages/guide/index.vue', 'geocodedVenues', 'guide map must only render venues with real coordinates')
   assertIncludes('pages/guide/index.vue', 'mapReady', 'guide map must expose an empty state when venues are not geocoded')
+  assertIncludes('pages/guide/index.vue', 'weatherError', 'guide page must show weather failure reasons')
   assertIncludes('pages-owner/guide/edit.vue', 'autoMatchLocation', 'owner guide editor must auto-match venue coordinates')
   assertIncludes('pages-owner/guide/edit.vue', 'chooseVenueLocation', 'owner guide editor must allow manual map point selection')
+  assertIncludes('pages-owner/guide/edit.vue', 'applyManualCoordinate', 'owner guide editor must allow manual coordinate fallback')
   assertIncludes('pages-owner/guide/edit.vue', 'confirmMapFallback', 'owner guide editor must surface geocoding failures instead of silently saving')
   assertIncludes('pages-owner/guide/edit.vue', 'cloneVenues', 'owner guide editor must rollback venue state when cloud save fails')
   for (const file of ['pages-owner/guests/manage.vue', 'pages-owner/blessing/manage.vue', 'pages-owner/timeline/edit.vue']) {
@@ -191,6 +196,11 @@ function checkTemplateSystem() {
   }
   assert(countOccurrences(read('pages/index/index.vue'), '<view class="preview-header">') === 2, 'home page must not contain duplicated preview headers')
   assertIncludes('cloudfunctions/getWeather/index.js', 'geocodeVenue', 'getWeather must geocode venue fallback when coordinates are missing')
+  assertIncludes('cloudfunctions/getWeather/index.js', 'QWEATHER_KEY', 'getWeather must support common weather key env aliases')
+  assertIncludes('utils/posterCanvas.js', 'resolveImagePath', 'poster canvas must resolve cloud and base64 images before drawing')
+  assertIncludes('utils/imagePaths.js', 'data:image/', 'image path helper must support base64 wxacode images')
+  assertIncludes('utils/imagePaths.js', 'cloud://', 'image path helper must support cloud storage images')
+  assertIncludes('pages-owner/share/index.vue', 'refreshQrCode', 'share page must render real wxacode generation status')
 }
 
 function checkCommercializationFoundations() {
