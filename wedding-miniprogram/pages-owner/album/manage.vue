@@ -138,7 +138,7 @@ function getChooseImageApi() {
       options: {
         count: MAX_UPLOAD_COUNT,
         sizeType: ['compressed', 'original'],
-        sourceType: ['album', 'camera']
+        sourceType: ['album']
       }
     })
   }
@@ -149,7 +149,7 @@ function getChooseImageApi() {
       options: {
         count: MAX_UPLOAD_COUNT,
         sizeType: ['compressed', 'original'],
-        sourceType: ['album', 'camera']
+        sourceType: ['album']
       }
     })
   }
@@ -160,9 +160,8 @@ function getChooseImageApi() {
       options: {
         count: MAX_UPLOAD_COUNT,
         mediaType: ['image'],
-        sourceType: ['album', 'camera'],
-        sizeType: ['compressed'],
-        camera: 'back'
+        sourceType: ['album'],
+        sizeType: ['compressed']
       }
     })
   }
@@ -249,13 +248,13 @@ function extractChosenImagePaths(res = {}) {
 function normalizeChooseImageError(message = '') {
   const raw = String(message || '')
   if (raw.includes('api scope is not declared') || raw.includes('privacy agreement')) {
-    return '上传照片前，请先在微信公众平台隐私保护指引中声明“照片或视频信息”和“摄像头”用途'
+    return '上传照片前，请先在微信公众平台隐私保护指引中声明“照片或视频信息”用途'
   }
   if (/privacy|隐私/i.test(raw)) {
     return '请先同意小程序隐私保护指引后再上传照片'
   }
   if (/auth|permission|denied|authorize|scope/i.test(raw)) {
-    return '选择照片失败，请在微信设置中允许访问相册或相机'
+    return '选择照片失败，请在微信设置中允许访问相册'
   }
   if (raw.includes('chooseImage:fail') || raw.includes('chooseMedia:fail')) {
     return '选择照片失败，请稍后重试；也可以尝试重新进入小程序后上传'

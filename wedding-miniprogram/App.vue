@@ -68,7 +68,7 @@ function setupPrivacyAuthorization() {
   wx.onNeedPrivacyAuthorization((resolve) => {
     uni.showModal({
       title: '隐私保护指引',
-      content: '上传照片、地图导航和婚礼邀请功能需要使用相册、相机和位置信息。请同意《隐私保护指引》后继续。',
+      content: '上传照片、地图导航和婚礼邀请功能需要使用相册照片和位置信息。请同意《隐私保护指引》后继续。',
       confirmText: '同意并继续',
       cancelText: '暂不同意',
       success: (modalRes) => {
