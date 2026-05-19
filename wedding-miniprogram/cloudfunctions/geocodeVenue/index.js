@@ -1,5 +1,6 @@
 const cloud = require('wx-server-sdk')
 const https = require('https')
+const zlib = require('zlib')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
 exports.main = async (event, context) => {
@@ -64,21 +65,44 @@ function requestJson(baseUrl, params) {
   const url = `${baseUrl}?${query}`
 
   return new Promise((resolve, reject) => {
-    const req = https.get(url, (res) => {
-      let body = ''
-      res.on('data', chunk => { body += chunk })
-      res.on('end', () => {
-        try {
-          resolve(JSON.parse(body))
-        } catch (err) {
-          reject(err)
-        }
-      })
+    const req = https.get(url, { headers: { 'Accept-Encoding': 'gzip,deflate,br' } }, (res) => {
+      readJsonResponse(res, resolve, reject)
     })
 
     req.setTimeout(5000, () => {
       req.destroy(new Error('地图服务请求超时'))
     })
     req.on('error', reject)
+  })
+}
+
+function readJsonResponse(res, resolve, reject) {
+  const chunks = []
+  res.on('data', chunk => { chunks.push(Buffer.from(chunk)) })
+  res.on('end', () => {
+    const buffer = Buffer.concat(chunks)
+    const encoding = String(res.headers['content-encoding'] || '').toLowerCase()
+
+    const parse = (err, decoded) => {
+      if (err) {
+        reject(err)
+        return
+      }
+      try {
+        resolve(JSON.parse(decoded.toString('utf8')))
+      } catch (parseErr) {
+        reject(parseErr)
+      }
+    }
+
+    if (encoding.includes('gzip')) {
+      zlib.gunzip(buffer, parse)
+    } else if (encoding.includes('br')) {
+      zlib.brotliDecompress(buffer, parse)
+    } else if (encoding.includes('deflate')) {
+      zlib.inflate(buffer, parse)
+    } else {
+      parse(null, buffer)
+    }
   })
 }

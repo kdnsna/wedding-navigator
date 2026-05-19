@@ -1,5 +1,6 @@
 const cloud = require('wx-server-sdk')
 const https = require('https')
+const zlib = require('zlib')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
 const db = cloud.database()
@@ -11,16 +12,8 @@ function requestJson(baseUrl, params) {
   const url = `${baseUrl}?${query}`
 
   return new Promise((resolve, reject) => {
-    const req = https.get(url, (res) => {
-      let body = ''
-      res.on('data', chunk => { body += chunk })
-      res.on('end', () => {
-        try {
-          resolve(JSON.parse(body))
-        } catch (err) {
-          reject(err)
-        }
-      })
+    const req = https.get(url, { headers: { 'Accept-Encoding': 'gzip,deflate,br' } }, (res) => {
+      readJsonResponse(res, resolve, reject)
     })
 
     req.setTimeout(5000, () => {
@@ -32,19 +25,12 @@ function requestJson(baseUrl, params) {
 }
 
 function requestWeather(key, lon, lat) {
-  const url = `https://devapi.qweather.com/v7/weather/3d?key=${encodeURIComponent(key)}&location=${encodeURIComponent(`${lon},${lat}`)}`
+  const host = normalizeWeatherHost(process.env.QWEATHER_API_HOST || process.env.HEFENG_API_HOST || process.env.WEATHER_API_HOST || 'devapi.qweather.com')
+  const url = `https://${host}/v7/weather/3d?key=${encodeURIComponent(key)}&location=${encodeURIComponent(`${lon},${lat}`)}`
 
   return new Promise((resolve, reject) => {
-    const req = https.get(url, (res) => {
-      let body = ''
-      res.on('data', chunk => { body += chunk })
-      res.on('end', () => {
-        try {
-          resolve(JSON.parse(body))
-        } catch (err) {
-          reject(err)
-        }
-      })
+    const req = https.get(url, { headers: { 'Accept-Encoding': 'gzip,deflate,br' } }, (res) => {
+      readJsonResponse(res, resolve, reject)
     })
 
     req.setTimeout(5000, () => {
@@ -52,6 +38,69 @@ function requestWeather(key, lon, lat) {
     })
 
     req.on('error', reject)
+  })
+}
+
+function normalizeWeatherHost(host) {
+  return String(host || 'devapi.qweather.com')
+    .trim()
+    .replace(/^https?:\/\//, '')
+    .replace(/\/.*$/, '')
+}
+
+function getWeatherApiError(res) {
+  if (res?.error?.title === 'Invalid Host' || res?.error?.type?.includes('invalid-host')) {
+    return {
+      reason: 'INVALID_WEATHER_HOST',
+      message: '请在 getWeather 云函数环境变量中配置和风天气专属 API Host：QWEATHER_API_HOST'
+    }
+  }
+  if (res?.error?.detail) {
+    return {
+      reason: 'WEATHER_API_ERROR',
+      message: res.error.detail
+    }
+  }
+  if (res?.code) {
+    return {
+      reason: 'WEATHER_API_EMPTY',
+      message: `天气接口返回 ${res.code}，请检查 Key、权限或城市坐标`
+    }
+  }
+  return {
+    reason: 'WEATHER_API_EMPTY',
+    message: '天气服务暂时不可用，先为您展示模拟天气'
+  }
+}
+
+function readJsonResponse(res, resolve, reject) {
+  const chunks = []
+  res.on('data', chunk => { chunks.push(Buffer.from(chunk)) })
+  res.on('end', () => {
+    const buffer = Buffer.concat(chunks)
+    const encoding = String(res.headers['content-encoding'] || '').toLowerCase()
+
+    const parse = (err, decoded) => {
+      if (err) {
+        reject(err)
+        return
+      }
+      try {
+        resolve(JSON.parse(decoded.toString('utf8')))
+      } catch (parseErr) {
+        reject(parseErr)
+      }
+    }
+
+    if (encoding.includes('gzip')) {
+      zlib.gunzip(buffer, parse)
+    } else if (encoding.includes('br')) {
+      zlib.brotliDecompress(buffer, parse)
+    } else if (encoding.includes('deflate')) {
+      zlib.inflate(buffer, parse)
+    } else {
+      parse(null, buffer)
+    }
   })
 }
 
@@ -141,7 +190,8 @@ exports.main = async (event, context) => {
     const res = await requestWeather(WEATHER_KEY, lon, lat)
     const daily = res.daily?.[0]
     if (!daily) {
-      return buildMockWeather(weddingDate, res.code ? `天气接口返回 ${res.code}，请检查 Key、权限或城市坐标` : '天气服务暂时不可用，先为您展示模拟天气', 'WEATHER_API_EMPTY')
+      const error = getWeatherApiError(res)
+      return buildMockWeather(weddingDate, error.message, error.reason)
     }
 
     const weatherMap = {
