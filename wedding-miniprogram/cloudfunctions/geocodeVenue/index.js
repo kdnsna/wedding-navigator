@@ -16,7 +16,7 @@ exports.main = async (event, context) => {
       success: false,
       code: 'MISSING_MAP_KEY',
       needConfig: true,
-      message: '请在 geocodeVenue 云函数环境变量中配置 TENCENT_MAP_KEY'
+      message: '自动匹配服务尚未配置腾讯地图 Key，请先使用地图选点，或补齐云函数环境变量 TENCENT_MAP_KEY'
     }
   }
 

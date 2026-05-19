@@ -262,6 +262,7 @@ function checkTemplateSystem() {
   assertIncludes('pages-owner/guide/edit.vue', 'chooseVenueLocation', 'owner guide editor must allow manual map point selection')
   assertIncludes('pages-owner/guide/edit.vue', 'applyManualCoordinate', 'owner guide editor must allow manual coordinate fallback')
   assertIncludes('pages-owner/guide/edit.vue', 'confirmMapFallback', 'owner guide editor must surface geocoding failures instead of silently saving')
+  assertIncludes('pages-owner/guide/edit.vue', 'formatGeocodeError', 'owner guide editor must avoid exposing raw cloud env errors')
   assertIncludes('pages-owner/guide/edit.vue', 'cloneVenues', 'owner guide editor must rollback venue state when cloud save fails')
   for (const file of ['pages-owner/guests/manage.vue', 'pages-owner/blessing/manage.vue', 'pages-owner/timeline/edit.vue']) {
     assertIncludes(file, 'fetchWedding(userStore.weddingId, true)', `${file} must force-refresh cloud data on entry`)

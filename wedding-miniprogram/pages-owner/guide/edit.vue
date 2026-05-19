@@ -327,10 +327,10 @@ async function autoMatchLocation(options = {}) {
       if (!silent) showSuccess('已匹配地图坐标')
       return modalForm.value.coordinate
     }
-    lastGeocodeError.value = res?.message || '未匹配到地图坐标'
+    lastGeocodeError.value = formatGeocodeError(res)
     if (!silent) showError(lastGeocodeError.value)
   } catch (err) {
-    lastGeocodeError.value = err?.message || '地图匹配失败'
+    lastGeocodeError.value = formatGeocodeError(err)
     if (!silent) showError(lastGeocodeError.value)
   } finally {
     geocoding.value = false
@@ -650,6 +650,17 @@ function confirmMapFallback(message) {
       fail: () => resolve(false)
     })
   })
+}
+
+function formatGeocodeError(err) {
+  const message = err?.message || err?.result?.message || ''
+  const code = err?.code || err?.result?.code || ''
+  if (err?.needConfig || code === 'MISSING_MAP_KEY' || message.includes('TENCENT_MAP_KEY') || message.includes('腾讯地图 Key')) {
+    return '自动匹配服务还没完成腾讯地图 Key 配置，建议先用地图选点；配置后可一键自动匹配'
+  }
+  if (code === 'NO_MATCH') return '没有匹配到准确坐标，请补全详细地址或使用地图选点'
+  if (code === 'MAP_TIMEOUT') return '地图服务响应超时，请稍后重试或使用地图选点'
+  return message || '地图匹配失败'
 }
 
 onShow(() => { useOwnerGuard() })

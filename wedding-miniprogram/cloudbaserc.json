@@ -8,6 +8,7 @@
       "timeout": 10,
       "runtime": "Nodejs16.13",
       "handler": "index.main",
+      "installDependency": true,
       "description": "校验当前用户是否为婚礼主人"
     },
     {
@@ -15,6 +16,7 @@
       "timeout": 20,
       "runtime": "Nodejs16.13",
       "handler": "index.main",
+      "installDependency": true,
       "description": "创建婚礼及关联业务文档"
     },
     {
@@ -22,6 +24,7 @@
       "timeout": 20,
       "runtime": "Nodejs16.13",
       "handler": "index.main",
+      "installDependency": true,
       "description": "删除婚礼及关联数据"
     },
     {
@@ -29,6 +32,7 @@
       "timeout": 20,
       "runtime": "Nodejs16.13",
       "handler": "index.main",
+      "installDependency": true,
       "description": "生成小程序码海报"
     },
     {
@@ -36,6 +40,7 @@
       "timeout": 20,
       "runtime": "Nodejs16.13",
       "handler": "index.main",
+      "installDependency": true,
       "description": "根据场地名称和地址匹配地图坐标"
     },
     {
@@ -43,6 +48,7 @@
       "timeout": 10,
       "runtime": "Nodejs16.13",
       "handler": "index.main",
+      "installDependency": true,
       "description": "获取 RSVP 统计"
     },
     {
@@ -50,6 +56,7 @@
       "timeout": 10,
       "runtime": "Nodejs16.13",
       "handler": "index.main",
+      "installDependency": true,
       "description": "获取主人端统计数据"
     },
     {
@@ -57,6 +64,7 @@
       "timeout": 20,
       "runtime": "Nodejs16.13",
       "handler": "index.main",
+      "installDependency": true,
       "description": "获取婚礼当天天气预报"
     },
     {
@@ -64,6 +72,7 @@
       "timeout": 15,
       "runtime": "Nodejs16.13",
       "handler": "index.main",
+      "installDependency": true,
       "description": "获取婚礼完整展示数据"
     },
     {
@@ -71,6 +80,7 @@
       "timeout": 10,
       "runtime": "Nodejs16.13",
       "handler": "index.main",
+      "installDependency": true,
       "description": "置顶或取消置顶祝福"
     },
     {
@@ -78,6 +88,7 @@
       "timeout": 10,
       "runtime": "Nodejs16.13",
       "handler": "index.main",
+      "installDependency": true,
       "description": "记录浏览与分享统计"
     },
     {
@@ -85,6 +96,7 @@
       "timeout": 15,
       "runtime": "Nodejs16.13",
       "handler": "index.main",
+      "installDependency": true,
       "description": "提交祝福留言"
     },
     {
@@ -92,6 +104,7 @@
       "timeout": 15,
       "runtime": "Nodejs16.13",
       "handler": "index.main",
+      "installDependency": true,
       "description": "提交宾客出席回执"
     },
     {
@@ -99,6 +112,7 @@
       "timeout": 20,
       "runtime": "Nodejs16.13",
       "handler": "index.main",
+      "installDependency": true,
       "description": "同步主人账号、权益和婚礼工作区"
     },
     {
@@ -106,6 +120,7 @@
       "timeout": 20,
       "runtime": "Nodejs16.13",
       "handler": "index.main",
+      "installDependency": true,
       "description": "更新婚礼业务数据"
     }
   ]
