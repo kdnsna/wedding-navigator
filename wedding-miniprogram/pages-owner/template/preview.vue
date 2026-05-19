@@ -350,13 +350,13 @@ onLoad((options = {}) => {
   box-shadow: $shadow-md;
 }
 .phone-screen {
-  min-height: 880rpx;
+  min-height: 1020rpx;
   border-radius: 24rpx;
   overflow: hidden;
   background: var(--theme-page, $bg-color);
 }
 .mock-page {
-  min-height: 880rpx;
+  min-height: 1020rpx;
   padding: 28rpx;
   box-sizing: border-box;
 }
@@ -366,7 +366,7 @@ onLoad((options = {}) => {
 
 .mock-hero {
   position: relative;
-  height: 470rpx;
+  height: 660rpx;
   overflow: hidden;
   background: var(--theme-hero-bg, #fcf6f0);
 }
@@ -388,6 +388,8 @@ onLoad((options = {}) => {
 }
 .mock-cover {
   z-index: 1;
+  transform: translateY(24rpx) scale(1.03);
+  transform-origin: center center;
 }
 .mock-hero-overlay {
   z-index: 2;
@@ -398,7 +400,7 @@ onLoad((options = {}) => {
   z-index: 3;
   left: 28rpx;
   right: 28rpx;
-  bottom: 42rpx;
+  bottom: 46rpx;
   text-align: center;
 }
 .mock-kicker {

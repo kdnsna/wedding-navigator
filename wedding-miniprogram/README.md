@@ -364,7 +364,7 @@ MINIPROGRAM_PRIVATE_KEY_PATH=/path/to/private.key npm run upload:mp-weixin
 
 模板配置集中在 `utils/templates.js`，创建向导会先展示模板并套用对应预设文案、流程角色、路书提示和默认场地信息，婚书编辑、首页、RSVP、相册、路书、流程和更多页都会读取同一份模板配置。
 
-写实模板主图集中在 `static/visuals/hero/`，并通过 `TEMPLATE_HERO_IMAGES` / `defaultHero` 绑定到每套模板。首页封面、完整模板预览和 Canvas 分享海报会优先使用用户上传的相册封面；没有上传时才使用当前模板的竖版婚纱照兜底，旧的 `default-cover.png` 仅保留为极端兜底。
+写实模板主图集中在 `static/visuals/hero/`，并通过 `TEMPLATE_HERO_IMAGES` / `defaultHero` 绑定到每套模板。首页封面、完整模板预览和 Canvas 分享海报会优先使用用户上传的相册封面；没有上传时才使用当前模板的竖版婚纱照兜底。完整模板预览的首页封面高度已按竖屏主图重新拉高，并轻微下移主体，避免人物在预览壳里靠上或被文案遮挡。旧的 `default-cover.png` 仅保留为极端兜底。
 
 模板商业化配置集中在 `utils/commercial.js` 与 `utils/templates.js`：
 
