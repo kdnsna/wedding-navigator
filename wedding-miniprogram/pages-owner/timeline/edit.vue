@@ -19,6 +19,7 @@
             <text class="event-title">{{ event.title }}</text>
             <view class="event-badges">
               <text class="event-badge" v-if="event.is_important">重点</text>
+              <text class="event-badge muted" v-for="role in getEventRoles(event.assignee_ids)" :key="role.id">{{ role.name }}</text>
             </view>
           </view>
           <text class="event-venue" v-if="getVenueName(event.venue_id)">
@@ -73,6 +74,20 @@
             <input class="form-input" v-model="modalForm.notes" placeholder="选填" />
           </view>
           <view class="form-group">
+            <text class="form-label">适用角色</text>
+            <view class="role-tags">
+              <view
+                class="role-tag"
+                v-for="role in timelineRoles"
+                :key="role.id"
+                :class="{ active: modalForm.roleIds.includes(role.id) }"
+                @click="toggleRole(role.id)"
+              >
+                <text>{{ role.name }}</text>
+              </view>
+            </view>
+          </view>
+          <view class="form-group">
             <label class="checkbox-label">
               <checkbox :checked="modalForm.isImportant" @click="modalForm.isImportant = !modalForm.isImportant" color="#1A1A1A" />
               <text>重要节点</text>
@@ -96,6 +111,7 @@ import { useUserStore } from '@/stores/user.js'
 import { generateId, showSuccess, showError } from '@/utils/index.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
 import { fetchWedding, updateWedding } from '@/composables/useCloud.js'
+import { DEFAULT_TIMELINE_ROLES } from '@/utils/templates.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
@@ -105,11 +121,12 @@ const editingEvent = ref(null)
 const saving = ref(false)
 const refreshing = ref(false)
 
-const modalForm = ref({ time: '', title: '', venueIndex: 0, notes: '', isImportant: false })
+const modalForm = ref({ time: '', title: '', venueIndex: 0, notes: '', roleIds: ['guest'], isImportant: false })
 
 const events = computed(() => store.timeline?.events || [])
 const venues = computed(() => store.venues?.venues || [])
 const venueNames = computed(() => ['无', ...venues.value.map(v => v.name)])
+const timelineRoles = computed(() => store.timeline?.roles?.length ? store.timeline.roles : DEFAULT_TIMELINE_ROLES)
 
 function getVenueName(venueId) {
   if (!venueId) return ''
@@ -117,9 +134,16 @@ function getVenueName(venueId) {
   return v?.name || ''
 }
 
+function getEventRoles(roleIds = []) {
+  if (!roleIds.length) return []
+  return roleIds
+    .map(id => timelineRoles.value.find(role => role.id === id))
+    .filter(Boolean)
+}
+
 function showAddModal() {
   editingEvent.value = null
-  modalForm.value = { time: '', title: '', venueIndex: 0, notes: '', isImportant: false }
+  modalForm.value = { time: '', title: '', venueIndex: 0, notes: '', roleIds: ['guest'], isImportant: false }
   showModal.value = true
 }
 
@@ -131,6 +155,7 @@ function editEvent(event) {
     title: event.title,
     venueIndex: venueIdx >= 0 ? venueIdx + 1 : 0,
     notes: event.notes || '',
+    roleIds: event.assignee_ids?.length ? [...event.assignee_ids] : ['guest'],
     isImportant: event.is_important || false
   }
   showModal.value = true
@@ -138,6 +163,15 @@ function editEvent(event) {
 
 function onTimeChange(e) { modalForm.value.time = e.detail.value }
 function onVenueChange(e) { modalForm.value.venueIndex = e.detail.value }
+function toggleRole(roleId) {
+  const ids = modalForm.value.roleIds
+  const idx = ids.indexOf(roleId)
+  if (idx >= 0) {
+    if (ids.length > 1) ids.splice(idx, 1)
+  } else {
+    ids.push(roleId)
+  }
+}
 
 async function saveEvent() {
   if (saving.value) return
@@ -158,12 +192,14 @@ async function saveEvent() {
     title: modalForm.value.title.trim(),
     venue_id: venueId,
     notes: modalForm.value.notes.trim(),
+    assignee_ids: modalForm.value.roleIds.length ? [...modalForm.value.roleIds] : ['guest'],
     is_important: modalForm.value.isImportant,
     sort_order: 0
   }
   try {
-    if (!store.timeline) store.timeline = { events: [] }
+    if (!store.timeline) store.timeline = { events: [], roles: DEFAULT_TIMELINE_ROLES }
     if (!store.timeline.events) store.timeline.events = []
+    if (!store.timeline.roles?.length) store.timeline.roles = DEFAULT_TIMELINE_ROLES
     if (editingEvent.value) {
       const idx = store.timeline.events.findIndex(e => e.id === editingEvent.value.id)
       if (idx >= 0) store.timeline.events[idx] = event
@@ -210,8 +246,9 @@ async function saveToStorage() {
   if (!userStore.weddingId) {
     throw new Error('未找到婚礼信息，请重新进入')
   }
-  if (!store.timeline) store.timeline = { events: [] }
+  if (!store.timeline) store.timeline = { events: [], roles: DEFAULT_TIMELINE_ROLES }
   if (!store.timeline.events) store.timeline.events = []
+  if (!store.timeline.roles?.length) store.timeline.roles = DEFAULT_TIMELINE_ROLES
   try {
     // 先同步云端
     await updateWedding(userStore.weddingId, 'timelines', store.timeline)
@@ -228,10 +265,11 @@ async function saveToStorage() {
 }
 
 function cloneTimeline() {
-  const timelineData = store.timeline || { events: [] }
+  const timelineData = store.timeline || { events: [], roles: DEFAULT_TIMELINE_ROLES }
   return JSON.parse(JSON.stringify({
     ...timelineData,
-    events: timelineData.events || []
+    events: timelineData.events || [],
+    roles: timelineData.roles || DEFAULT_TIMELINE_ROLES
   }))
 }
 
@@ -331,14 +369,23 @@ onShow(refreshTimeline)
 }
 .event-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12rpx;
   margin-bottom: 8rpx;
 }
 .event-title {
+  flex: 1;
+  min-width: 0;
   font-size: 30rpx;
   font-weight: 600;
   color: $text-primary;
+}
+.event-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8rpx;
+  max-width: 260rpx;
 }
 .event-badge {
   padding: 4rpx 10rpx;
@@ -347,6 +394,10 @@ onShow(refreshTimeline)
   font-size: 18rpx;
   border-radius: 4rpx;
   font-weight: 500;
+}
+.event-badge.muted {
+  background: #fff8f1;
+  color: $color-primary;
 }
 .event-venue,
 .event-notes {
@@ -463,6 +514,22 @@ onShow(refreshTimeline)
   font-size: 30rpx;
   color: $text-primary;
   border-bottom: 2rpx solid $border-color;
+}
+.role-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14rpx;
+}
+.role-tag {
+  padding: 14rpx 22rpx;
+  border-radius: $radius-full;
+  background: $bg-muted;
+  color: $text-secondary;
+  font-size: 24rpx;
+}
+.role-tag.active {
+  background: $text-primary;
+  color: #fff;
 }
 .checkbox-label {
   display: flex;

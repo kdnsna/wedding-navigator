@@ -1,14 +1,14 @@
 <template>
   <view class="page" :class="templateClass">
     <!-- 顶部标题 -->
-    <view class="page-header" v-if="!submitted">
+    <view class="page-header" v-if="!submitted && isRsvpEnabled">
       <text class="page-tag">RSVP</text>
       <text class="page-title">确认出席</text>
       <view class="page-divider" />
       <text class="page-desc">请告诉我们是否能见证这美好时刻</text>
     </view>
 
-    <view class="rsvp-brief" v-if="!submitted">
+    <view class="rsvp-brief" v-if="!submitted && isRsvpEnabled">
       <view>
         <text class="brief-kicker">{{ activeTemplate.shortName }} RSVP CARD</text>
         <text class="brief-title">{{ store.coupleName || '新人婚礼' }}</text>
@@ -30,7 +30,14 @@
     </view>
 
     <!-- 表单 -->
-    <view class="form" v-if="!submitted">
+    <view class="feature-closed" v-if="!submitted && !isRsvpEnabled">
+      <image class="empty-visual" src="/static/visuals/icon-rsvp.svg" mode="aspectFit" />
+      <text class="feature-title">新人暂未开放在线回执</text>
+      <text class="feature-desc">您仍可查看婚礼时间、地点和到场路线。</text>
+      <button class="feature-action" @click="goToGuide">查看路线</button>
+    </view>
+
+    <view class="form" v-if="!submitted && isRsvpEnabled">
       <!-- 姓名 -->
       <view class="form-group">
         <view class="form-label">
@@ -119,13 +126,14 @@
       <view class="form-group" v-if="form.status !== 'declined'">
         <view class="form-label">
           <text class="label-text">联系电话</text>
+          <text class="required-tip" v-if="!phoneRequired">选填</text>
           <text class="label-en">PHONE</text>
         </view>
         <input
           class="form-input"
           v-model="form.phone"
           type="number"
-          placeholder="用于接收通知"
+          :placeholder="phoneRequired ? '用于接收通知' : '选填，方便新人联系'"
           placeholder-class="placeholder"
         />
       </view>
@@ -278,6 +286,9 @@ const submitted = ref(false)
 const submitting = ref(false)
 const activeTemplate = computed(() => store.activeTemplate)
 const templateClass = computed(() => store.templateClass)
+const isRsvpEnabled = computed(() => store.isRsvpEnabled)
+const phoneRequired = computed(() => store.rsvpPhoneRequired)
+const allowRsvpUpdate = computed(() => store.allowRsvpUpdate)
 
 const form = reactive({
   name: '',
@@ -330,9 +341,19 @@ async function handleSubmit() {
     uni.showToast({ title: '请输入姓名', icon: 'none' })
     return
   }
-  if (form.status !== 'declined' && !form.phone.trim()) {
+  if (form.status !== 'declined' && phoneRequired.value && !form.phone.trim()) {
     uni.showToast({ title: '请输入联系电话', icon: 'none' })
     return
+  }
+  if (!allowRsvpUpdate.value) {
+    const existing = (store.guests?.guests || []).find(item => {
+      if (form.phone && item.phone === form.phone) return true
+      return userStore.openid && item.openid === userStore.openid
+    })
+    if (existing) {
+      uni.showToast({ title: '回执已提交，如需修改请联系新人', icon: 'none' })
+      return
+    }
   }
 
   submitting.value = true
@@ -557,6 +578,13 @@ onLoad(async (options) => {
   font-weight: 500;
   color: $text-primary;
 }
+.required-tip {
+  padding: 4rpx 10rpx;
+  border-radius: 6rpx;
+  background: $bg-muted;
+  color: $text-muted;
+  font-size: 20rpx;
+}
 .label-en {
   font-size: 20rpx;
   color: $text-muted;
@@ -585,6 +613,35 @@ onLoad(async (options) => {
   color: $text-placeholder;
   font-size: 30rpx;
 }
+
+.feature-closed {
+  text-align: center;
+  padding: 180rpx 64rpx;
+}
+.feature-title {
+  display: block;
+  font-size: 34rpx;
+  color: $text-primary;
+  font-weight: 600;
+  margin-bottom: 14rpx;
+}
+.feature-desc {
+  display: block;
+  font-size: 26rpx;
+  color: $text-secondary;
+  line-height: 1.6;
+  margin-bottom: 36rpx;
+}
+.feature-action {
+  width: 260rpx;
+  height: 76rpx;
+  line-height: 76rpx;
+  border-radius: $radius-full;
+  background: $text-primary;
+  color: #fff;
+  font-size: 26rpx;
+}
+.feature-action::after { border: none; }
 
 /* 单选 */
 .radio-group {
@@ -758,6 +815,7 @@ onLoad(async (options) => {
   .brief-item {
     border-top-color: rgba(164,120,59,0.16);
   }
+  .feature-action,
   .submit-btn,
   .radio-item.active,
   .tag-item.active {
@@ -768,6 +826,7 @@ onLoad(async (options) => {
 .tpl-noir {
   background: #111;
   .page-title,
+  .feature-title,
   .label-text,
   .radio-label,
   .step-icon,
@@ -775,6 +834,7 @@ onLoad(async (options) => {
     color: #fff;
   }
   .page-desc,
+  .feature-desc,
   .label-en,
   .tag-item,
   .form-input,
@@ -789,6 +849,7 @@ onLoad(async (options) => {
     border-color: rgba(201,169,110,0.18);
   }
   .rsvp-brief::before,
+  .feature-action,
   .submit-btn,
   .radio-item.active,
   .tag-item.active {
@@ -803,6 +864,7 @@ onLoad(async (options) => {
     background: #506247;
   }
   .rsvp-brief::before,
+  .feature-action,
   .submit-btn,
   .radio-item.active,
   .tag-item.active {

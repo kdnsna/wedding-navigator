@@ -99,9 +99,25 @@
           <text class="switch-label">显示RSVP</text>
           <switch :checked="form.showRsvp" @change="form.showRsvp = $event.detail.value" color="#1A1A1A" />
         </view>
+        <view class="switch-item sub" v-if="form.showRsvp">
+          <text class="switch-label">RSVP联系电话必填</text>
+          <switch :checked="form.rsvpPhoneRequired" @change="form.rsvpPhoneRequired = $event.detail.value" color="#1A1A1A" />
+        </view>
+        <view class="switch-item sub" v-if="form.showRsvp">
+          <text class="switch-label">允许宾客修改回执</text>
+          <switch :checked="form.allowRsvpUpdate" @change="form.allowRsvpUpdate = $event.detail.value" color="#1A1A1A" />
+        </view>
         <view class="switch-item">
           <text class="switch-label">显示祝福墙</text>
           <switch :checked="form.showBlessing" @change="form.showBlessing = $event.detail.value" color="#1A1A1A" />
+        </view>
+        <view class="switch-item sub" v-if="form.showBlessing">
+          <text class="switch-label">祝福公开展示</text>
+          <switch :checked="form.blessingPublic" @change="form.blessingPublic = $event.detail.value" color="#1A1A1A" />
+        </view>
+        <view class="switch-item sub" v-if="form.showBlessing">
+          <text class="switch-label">允许匿名祝福</text>
+          <switch :checked="form.allowAnonymousBlessing" @change="form.allowAnonymousBlessing = $event.detail.value" color="#1A1A1A" />
         </view>
         <view class="switch-item">
           <text class="switch-label">显示流程</text>
@@ -178,7 +194,11 @@ const form = ref({
   venueName: '',
   showCountdown: true,
   showRsvp: true,
+  rsvpPhoneRequired: false,
+  allowRsvpUpdate: true,
   showBlessing: true,
+  blessingPublic: true,
+  allowAnonymousBlessing: true,
   showTimeline: true,
   bgMusicEnabled: false,
   bgMusicId: '',
@@ -198,7 +218,11 @@ function loadFromStore() {
     venueName: inv.wedding?.venue_name || '',
     showCountdown: inv.features?.show_countdown !== false,
     showRsvp: inv.features?.show_rsvp !== false,
+    rsvpPhoneRequired: inv.features?.rsvp_phone_required === true,
+    allowRsvpUpdate: inv.features?.allow_rsvp_update !== false,
     showBlessing: inv.features?.show_blessing !== false,
+    blessingPublic: inv.features?.blessing_public !== false,
+    allowAnonymousBlessing: inv.features?.allow_anonymous_blessing !== false,
     showTimeline: inv.features?.show_timeline !== false,
     bgMusicEnabled: inv.features?.bg_music_enabled || false,
     bgMusicId: inv.features?.bg_music_id || '',
@@ -240,7 +264,11 @@ function buildInvitationData() {
     features: {
       show_countdown: form.value.showCountdown,
       show_rsvp: form.value.showRsvp,
+      rsvp_phone_required: form.value.rsvpPhoneRequired,
+      allow_rsvp_update: form.value.allowRsvpUpdate,
       show_blessing: form.value.showBlessing,
+      blessing_public: form.value.blessingPublic,
+      allow_anonymous_blessing: form.value.allowAnonymousBlessing,
       show_timeline: form.value.showTimeline,
       bg_music_enabled: form.value.bgMusicEnabled,
       bg_music_id: form.value.bgMusicId,
@@ -311,9 +339,9 @@ async function saveInvitation() {
       weddings[userStore.weddingId] = { ...weddings[userStore.weddingId], ...weddingData }
       uni.setStorageSync('weddings', weddings)
     }
-    showSuccess(invitationOk && weddingOk ? '保存成功'
-      : invitationOk ? '请柬已保存，日期信息保存失败请重试'
-      : '日期已保存，请柬样式保存失败请重试')
+    showSuccess(invitationOk && weddingOk ? '已同步云端'
+      : invitationOk ? '请柬已同步，日期信息保存失败请重试'
+      : '日期已同步，请柬样式保存失败请重试')
   } catch (err) {
     console.error('保存请柬失败:', err)
     showError(err.message || '保存失败')
@@ -551,8 +579,16 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
   justify-content: space-between;
   padding: 28rpx;
 }
+.switch-item.sub {
+  padding-left: 56rpx;
+  background: $bg-muted;
+}
 .switch-item + .switch-item {
   border-top: 1rpx solid $border-color;
+}
+.switch-item.sub .switch-label {
+  color: $text-secondary;
+  font-size: 26rpx;
 }
 .switch-label {
   font-size: 28rpx;

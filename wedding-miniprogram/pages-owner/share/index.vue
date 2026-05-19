@@ -30,7 +30,9 @@
 
     <!-- 分享按钮 -->
     <view class="share-actions">
+      <button class="share-btn primary" :loading="saving" :disabled="saving" @click="saveShareSettings">保存分享设置</button>
       <button class="share-btn primary" open-type="share">分享给微信好友</button>
+      <button class="share-btn" @click="goToPoster">生成分享海报</button>
       <button class="share-btn" @click="copyPath">复制小程序路径</button>
     </view>
   </view>
@@ -41,13 +43,15 @@ import { ref, computed } from 'vue'
 import { onShow, onShareAppMessage } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
-import { showSuccess } from '@/utils/index.js'
+import { showError, showSuccess } from '@/utils/index.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
+import { recordShare, updateWedding } from '@/composables/useCloud.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
 
 const shareForm = ref({ title: '', description: '' })
+const saving = ref(false)
 
 const weddingId = computed(() => userStore.weddingId)
 
@@ -66,10 +70,48 @@ function copyPath() {
   uni.setClipboardData({ data: path, success: () => showSuccess('已复制') })
 }
 
+function goToPoster() {
+  if (!weddingId.value) {
+    showError('请先创建婚礼')
+    return
+  }
+  uni.navigateTo({ url: '/pages/poster/index' })
+}
+
+async function saveShareSettings() {
+  if (saving.value) return
+  if (!weddingId.value) {
+    showError('请先创建婚礼')
+    return
+  }
+  const shareConfig = {
+    ...(store.wedding?.share_config || {}),
+    title: shareForm.value.title.trim() || `${store.coupleName}的婚礼邀请`,
+    description: shareForm.value.description.trim() || `${store.weddingDate}，我们结婚啦！诚邀您的见证~`
+  }
+  saving.value = true
+  try {
+    await updateWedding(weddingId.value, 'weddings', { share_config: shareConfig })
+    store.updateWeddingField('share_config', shareConfig)
+    const weddings = uni.getStorageSync('weddings') || {}
+    if (weddings[weddingId.value]) {
+      weddings[weddingId.value].share_config = shareConfig
+      uni.setStorageSync('weddings', weddings)
+    }
+    showSuccess('已同步云端')
+  } catch (err) {
+    console.error('分享设置保存失败:', err)
+    showError(err?.message || '保存失败，请重试')
+  } finally {
+    saving.value = false
+  }
+}
+
 onShareAppMessage(() => {
   if (!weddingId.value) {
     return { title: '甜囍手册', path: '/pages-owner/wizard/index' }
   }
+  recordShare(weddingId.value).catch(() => {})
   return {
     title: shareForm.value.title,
     path: `/pages/index/index?id=${weddingId.value}`,
@@ -189,5 +231,8 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
 .share-btn.primary {
   background: $text-primary;
   color: #fff;
+}
+.share-btn.primary + .share-btn.primary {
+  background: $color-primary;
 }
 </style>

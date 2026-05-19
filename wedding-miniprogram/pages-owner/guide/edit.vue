@@ -167,6 +167,10 @@
             <text class="form-label">停车信息</text>
             <textarea class="form-textarea" v-model="transportForm.parking" placeholder="如：酒店地下停车场，宾客免费停车" />
           </view>
+          <view class="form-group">
+            <text class="form-label">角色路线提示</text>
+            <textarea class="form-textarea" v-model="transportForm.routeTipsText" placeholder="每行一条，如：普通宾客：直接导航至主场地" />
+          </view>
         </view>
         <view class="modal-footer">
           <button class="modal-btn secondary" @click="showTransportModal = false">取消</button>
@@ -427,14 +431,15 @@ function deleteVenue(id) {
 
 // ========== 交通指引 ==========
 const showTransportModal = ref(false)
-const transportForm = ref({ transport: '', parking: '' })
+const transportForm = ref({ transport: '', parking: '', routeTipsText: '' })
 
 const transportation = computed(() => store.venues?.transportation || {})
 
 function editTransportation() {
   transportForm.value = {
     transport: transportation.value.transport || '',
-    parking: transportation.value.parking || ''
+    parking: transportation.value.parking || '',
+    routeTipsText: (transportation.value.route_tips || []).join('\n')
   }
   showTransportModal.value = true
 }
@@ -443,7 +448,14 @@ async function saveTransportation() {
   const previousVenues = cloneVenues()
   try {
     if (!store.venues) store.venues = { venues: [], transportation: {}, accommodations: [] }
-    store.venues.transportation = { ...transportForm.value }
+    store.venues.transportation = {
+      transport: transportForm.value.transport,
+      parking: transportForm.value.parking,
+      route_tips: transportForm.value.routeTipsText
+        .split('\n')
+        .map(item => item.trim())
+        .filter(Boolean)
+    }
     await saveToStorage()
     showTransportModal.value = false
     showSuccess('保存成功')

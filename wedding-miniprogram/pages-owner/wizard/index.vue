@@ -125,7 +125,7 @@ import { useUserStore } from '@/stores/user.js'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { createWedding } from '@/composables/useCloud.js'
 import { showSuccess, showError, getWeekDay } from '@/utils/index.js'
-import { WEDDING_TEMPLATES, getWeddingTemplate } from '@/utils/templates.js'
+import { WEDDING_TEMPLATES, buildTemplateGuide, buildTemplateTimeline, getWeddingTemplate } from '@/utils/templates.js'
 
 const userStore = useUserStore()
 const weddingStore = useWeddingStore()
@@ -218,13 +218,32 @@ async function createWeddingAction() {
         venue_name: form.value.venueName || tpl?.preset?.venueName || '',
         venue_address: form.value.venueAddress
       },
-      features: { show_countdown: true, show_rsvp: true, show_blessing: true, show_timeline: true }
+      features: {
+        show_countdown: true,
+        show_rsvp: true,
+        show_blessing: true,
+        show_timeline: true,
+        rsvp_phone_required: false,
+        allow_rsvp_update: true,
+        blessing_public: true,
+        allow_anonymous_blessing: true
+      }
     }
+    const mainVenueId = 'main-venue'
+    const venuesPayload = buildTemplateGuide(form.value.template, {
+      mainVenueId,
+      venueName: form.value.venueName || tpl?.preset?.venueName || '',
+      venueAddress: form.value.venueAddress,
+      time: form.value.time
+    })
+    const timelinePayload = buildTemplateTimeline(form.value.template, mainVenueId)
 
     // 先写云端
     const res = await createWedding({
       wedding: weddingPayload,
-      invitation: invitationPayload
+      invitation: invitationPayload,
+      venues: venuesPayload,
+      timeline: timelinePayload
     })
 
     if (!res?.success) {
@@ -243,8 +262,8 @@ async function createWeddingAction() {
       wedding: { wedding_id: weddingId, ...weddingPayload },
       invitation: { wedding_id: weddingId, ...invitationPayload },
       album: { photos: [] },
-      venues: { venues: [] },
-      timeline: { events: [] },
+      venues: venuesPayload,
+      timeline: timelinePayload,
       guests: { guests: [] },
       blessings: { blessings: [] }
     })

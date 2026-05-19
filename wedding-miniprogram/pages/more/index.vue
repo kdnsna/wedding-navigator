@@ -14,30 +14,30 @@
 
     <!-- 功能列表 -->
     <view class="menu-group">
-      <view class="menu-item" @click="goToRSVP">
+      <view class="menu-item" v-if="isRsvpEnabled" @click="goToRSVP">
         <image class="visual-icon menu-icon" src="/static/visuals/icon-rsvp.svg" mode="aspectFit" />
         <text class="menu-title">出席回执</text>
         <text class="menu-arrow">›</text>
       </view>
-      <view class="divider" />
-      <view class="menu-item" @click="goToBlessing">
+      <view class="divider" v-if="isRsvpEnabled && isBlessingEnabled" />
+      <view class="menu-item" v-if="isBlessingEnabled" @click="goToBlessing">
         <image class="visual-icon menu-icon" src="/static/visuals/icon-blessing.svg" mode="aspectFit" />
         <text class="menu-title">祝福墙</text>
         <text class="menu-arrow">›</text>
       </view>
-      <view class="divider" />
+      <view class="divider" v-if="isBlessingEnabled" />
       <view class="menu-item" @click="goToGuide">
         <image class="visual-icon menu-icon" src="/static/visuals/icon-guide.svg" mode="aspectFit" />
         <text class="menu-title">婚礼路书</text>
         <text class="menu-arrow">›</text>
       </view>
-      <view class="divider" />
-      <view class="menu-item" @click="goToTimeline">
+      <view class="divider" v-if="isTimelineEnabled" />
+      <view class="menu-item" v-if="isTimelineEnabled" @click="goToTimeline">
         <image class="visual-icon menu-icon" src="/static/visuals/icon-timeline.svg" mode="aspectFit" />
         <text class="menu-title">婚礼流程</text>
         <text class="menu-arrow">›</text>
       </view>
-      <view class="divider" />
+      <view class="divider" v-if="isTimelineEnabled" />
       <view class="menu-item" @click="goToAlbum">
         <image class="visual-icon menu-icon" src="/static/visuals/icon-album.svg" mode="aspectFit" />
         <text class="menu-title">婚纱相册</text>
@@ -46,12 +46,12 @@
     </view>
 
     <view class="menu-group">
-      <view class="menu-item" @click="goToManage">
+      <view class="menu-item" v-if="userStore.canEdit" @click="goToManage">
         <image class="visual-icon menu-icon" src="/static/visuals/icon-manage.svg" mode="aspectFit" />
         <text class="menu-title">管理后台</text>
         <text class="menu-arrow">›</text>
       </view>
-      <view class="divider" />
+      <view class="divider" v-if="userStore.canEdit" />
       <button class="menu-item contact-btn" open-type="contact">
         <image class="visual-icon menu-icon" src="/static/visuals/icon-phone.svg" mode="aspectFit" />
         <text class="menu-title">联系客服</text>
@@ -66,7 +66,7 @@
 
     <!-- 引流 -->
     <navigator class="promo-link" url="/pages-owner/wizard/index" open-type="navigate">
-      <text>我也要制作婚礼邀请</text>
+      <text>由甜囍手册生成 · 我也要制作</text>
     </navigator>
   </view>
 </template>
@@ -85,11 +85,32 @@ const userStore = useUserStore()
 const coupleName = computed(() => store.coupleName)
 const weddingDate = computed(() => store.weddingDate)
 const templateClass = computed(() => store.templateClass)
+const isRsvpEnabled = computed(() => store.isRsvpEnabled)
+const isBlessingEnabled = computed(() => store.isBlessingEnabled)
+const isTimelineEnabled = computed(() => store.isTimelineEnabled)
 
-function goToRSVP() { uni.navigateTo({ url: '/pages/rsvp/index' }) }
-function goToBlessing() { uni.navigateTo({ url: '/pages/blessing/index' }) }
+function goToRSVP() {
+  if (!isRsvpEnabled.value) {
+    uni.showToast({ title: '新人暂未开放在线回执', icon: 'none' })
+    return
+  }
+  uni.navigateTo({ url: '/pages/rsvp/index' })
+}
+function goToBlessing() {
+  if (!isBlessingEnabled.value) {
+    uni.showToast({ title: '新人暂未开放祝福墙', icon: 'none' })
+    return
+  }
+  uni.navigateTo({ url: '/pages/blessing/index' })
+}
 function goToGuide() { uni.switchTab({ url: '/pages/guide/index' }) }
-function goToTimeline() { uni.switchTab({ url: '/pages/timeline/index' }) }
+function goToTimeline() {
+  if (!isTimelineEnabled.value) {
+    uni.showToast({ title: '新人暂未开放婚礼流程', icon: 'none' })
+    return
+  }
+  uni.switchTab({ url: '/pages/timeline/index' })
+}
 function goToAlbum() { uni.switchTab({ url: '/pages/album/index' }) }
 function goToManage() { uni.navigateTo({ url: '/pages-owner/manage/index' }) }
 

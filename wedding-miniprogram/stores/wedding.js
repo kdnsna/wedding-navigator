@@ -2,6 +2,17 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { getWeddingTemplate, getTemplateClass, normalizeTemplateId } from '@/utils/templates.js'
 
+const DEFAULT_FEATURES = {
+  show_countdown: true,
+  show_rsvp: true,
+  show_blessing: true,
+  show_timeline: true,
+  rsvp_phone_required: false,
+  allow_rsvp_update: true,
+  blessing_public: true,
+  allow_anonymous_blessing: true
+}
+
 export const useWeddingStore = defineStore('wedding', () => {
   const fallbackWedding = {
     basic_info: {
@@ -141,6 +152,20 @@ export const useWeddingStore = defineStore('wedding', () => {
 
   const templateClass = computed(() => getTemplateClass(invitation.value?.template))
 
+  const features = computed(() => ({
+    ...DEFAULT_FEATURES,
+    ...(invitation.value?.features || {})
+  }))
+
+  const showCountdown = computed(() => features.value.show_countdown !== false)
+  const isRsvpEnabled = computed(() => features.value.show_rsvp !== false)
+  const isBlessingEnabled = computed(() => features.value.show_blessing !== false)
+  const isTimelineEnabled = computed(() => features.value.show_timeline !== false)
+  const rsvpPhoneRequired = computed(() => features.value.rsvp_phone_required === true)
+  const allowRsvpUpdate = computed(() => features.value.allow_rsvp_update !== false)
+  const blessingPublic = computed(() => features.value.blessing_public !== false)
+  const allowAnonymousBlessing = computed(() => features.value.allow_anonymous_blessing !== false)
+
   const publishChecklist = computed(() => {
     const coverReady = Boolean(album.value?.photos?.some(p => p.type === 'cover') || album.value?.photos?.[0]?.url)
     const primary = primaryVenue.value
@@ -169,8 +194,10 @@ export const useWeddingStore = defineStore('wedding', () => {
       {
         key: 'timeline',
         title: '婚礼流程',
-        desc: (timeline.value?.events || []).length ? '宾客可查看当天安排' : '添加至少 1 个流程节点',
-        done: Boolean((timeline.value?.events || []).length),
+        desc: !isTimelineEnabled.value
+          ? '已关闭宾客端流程展示'
+          : (timeline.value?.events || []).length ? '宾客可查看当天安排' : '添加至少 1 个流程节点',
+        done: !isTimelineEnabled.value || Boolean((timeline.value?.events || []).length),
         route: '/pages-owner/timeline/edit'
       },
       {
@@ -366,6 +393,15 @@ export const useWeddingStore = defineStore('wedding', () => {
     featuredPhotos,
     activeTemplate,
     templateClass,
+    features,
+    showCountdown,
+    isRsvpEnabled,
+    isBlessingEnabled,
+    isTimelineEnabled,
+    rsvpPhoneRequired,
+    allowRsvpUpdate,
+    blessingPublic,
+    allowAnonymousBlessing,
     publishChecklist,
     countdown,
     getLiveCountdown,

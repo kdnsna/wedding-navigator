@@ -54,12 +54,16 @@ exports.main = async (event, context) => {
       if (guestsData && guestsData.guests) {
         const total = guestsData.guests.length
         const sliced = guestsData.guests.slice(0, guestLimitNum)
-        if (!isOwner && sliced.length > 0) {
+        if (!isOwner) {
+          const ownGuests = OPENID ? guestsData.guests.filter(g => g.openid === OPENID) : []
           guestsData = {
             ...guestsData,
-            guests: sliced.map(g => { const { phone, dietary, ...safe } = g; return safe }),
+            guests: ownGuests.map(g => {
+              const { phone, dietary, openid, ...safe } = g
+              return safe
+            }),
             _totalGuests: total,
-            _truncated: sliced.length < total
+            _truncated: false
           }
         } else if (isOwner) {
           guestsData = {
@@ -80,7 +84,14 @@ exports.main = async (event, context) => {
       if (blessingsData && blessingsData.blessings) {
         const total = blessingsData.blessings.length
         const sliced = blessingsData.blessings.slice(0, blessingLimitNum)
-        if (!isOwner && sliced.length > 0) {
+        if (!isOwner && invitationRes.data?.features?.blessing_public === false) {
+          blessingsData = {
+            ...blessingsData,
+            blessings: [],
+            _totalBlessings: total,
+            _truncated: false
+          }
+        } else if (!isOwner && sliced.length > 0) {
           blessingsData = {
             ...blessingsData,
             blessings: sliced.map(b => { const { openid, ...safe } = b; return safe }),

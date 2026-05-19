@@ -17,11 +17,13 @@ async function ensureCollection(collectionName) {
 }
 
 exports.main = async (event, context) => {
-  const { weddingData, wedding, invitation } = event
+  const { weddingData, wedding, invitation, venues, timeline } = event
   const { OPENID } = cloud.getWXContext()
 
   const weddingPayload = weddingData?.wedding || wedding
   const invitationPayload = weddingData?.invitation || invitation
+  const venuesPayload = weddingData?.venues || venues || { venues: [] }
+  const timelinePayload = weddingData?.timeline || timeline || { events: [] }
 
   if (!weddingPayload) {
     return { success: false, message: '缺少婚礼数据' }
@@ -61,10 +63,10 @@ exports.main = async (event, context) => {
         data: { _id: weddingId, photos: [], created_at: now, updated_at: now }
       }),
       db.collection('venues').add({
-        data: { _id: weddingId, venues: [], created_at: now, updated_at: now }
+        data: { _id: weddingId, ...venuesPayload, created_at: now, updated_at: now }
       }),
       db.collection('timelines').add({
-        data: { _id: weddingId, events: [], created_at: now, updated_at: now }
+        data: { _id: weddingId, ...timelinePayload, created_at: now, updated_at: now }
       }),
       db.collection('guests').add({
         data: { _id: weddingId, guests: [], created_at: now, updated_at: now }

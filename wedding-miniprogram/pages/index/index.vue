@@ -21,7 +21,7 @@
           <view class="hero-meta-dot" />
           <text>{{ venueName || '婚礼场地' }}</text>
         </view>
-        <view class="hero-countdown animate-fade-up delay-8" v-if="countdown && !countdown.isToday">
+        <view class="hero-countdown animate-fade-up delay-8" v-if="showCountdown && countdown && !countdown.isToday">
           <text class="countdown-num">{{ countdown.days }}</text>
           <view class="countdown-divider" />
           <view class="countdown-info">
@@ -29,7 +29,7 @@
             <text class="countdown-desc">距离我们结婚</text>
           </view>
         </view>
-        <view class="hero-today animate-fade-up delay-8" v-if="countdown?.isToday">
+        <view class="hero-today animate-fade-up delay-8" v-if="showCountdown && countdown?.isToday">
           <text class="today-label">TODAY</text>
           <text class="today-desc">就是今天</text>
         </view>
@@ -48,7 +48,7 @@
           <text class="daypack-title">{{ countdown?.isToday ? '婚礼当天助手' : '宾客行动台' }}</text>
           <text class="daypack-template">{{ activeTemplate.shortName }} · {{ activeTemplate.albumMood }}</text>
         </view>
-        <view class="daypack-status" :class="{ done: hasSubmittedRsvp }" @click="goToRSVP">
+        <view class="daypack-status" v-if="isRsvpEnabled" :class="{ done: hasSubmittedRsvp }" @click="goToRSVP">
           <text>{{ hasSubmittedRsvp ? '已回执' : '待回执' }}</text>
         </view>
       </view>
@@ -61,7 +61,7 @@
         <button class="daypack-action" @click.stop="openNavigation">导航</button>
       </view>
       <view class="daypack-grid">
-        <view class="daypack-mini" @click="goToTimeline">
+        <view class="daypack-mini" v-if="isTimelineEnabled" @click="goToTimeline">
           <text class="mini-label">最近流程</text>
           <text class="mini-value">{{ nextEventText }}</text>
         </view>
@@ -71,8 +71,9 @@
         </view>
       </view>
       <view class="daypack-actions">
-        <button class="daypack-pill primary" @click="goToRSVP">{{ hasSubmittedRsvp ? '修改回执' : '确认出席' }}</button>
-        <button class="daypack-pill" @click="goToBlessing">写祝福</button>
+        <button class="daypack-pill primary" v-if="isRsvpEnabled" @click="goToRSVP">{{ hasSubmittedRsvp ? '修改回执' : '确认出席' }}</button>
+        <button class="daypack-pill" v-if="isBlessingEnabled" @click="goToBlessing">写祝福</button>
+        <button class="daypack-pill primary" v-if="!isRsvpEnabled && !isBlessingEnabled" @click="goToGuide">查看路线</button>
       </view>
     </view>
 
@@ -177,7 +178,7 @@
           </view>
           <text class="quick-arrow">›</text>
         </view>
-        <view class="quick-item stagger-3" @click="goToTimeline">
+        <view class="quick-item stagger-3" v-if="isTimelineEnabled" @click="goToTimeline">
           <image class="visual-icon quick-icon" src="/static/visuals/icon-timeline.svg" mode="aspectFit" />
           <view class="quick-meta">
             <text class="quick-label">婚礼流程</text>
@@ -185,7 +186,7 @@
           </view>
           <text class="quick-arrow">›</text>
         </view>
-        <view class="quick-item stagger-4" @click="goToBlessing">
+        <view class="quick-item stagger-4" v-if="isBlessingEnabled" @click="goToBlessing">
           <image class="visual-icon quick-icon" src="/static/visuals/icon-blessing.svg" mode="aspectFit" />
           <view class="quick-meta">
             <text class="quick-label">祝福留言</text>
@@ -216,7 +217,7 @@
           />
         </view>
       </view>
-      <view class="preview-block" v-if="latestBlessings.length > 0" @click="goToBlessing">
+      <view class="preview-block" v-if="isBlessingEnabled && latestBlessings.length > 0" @click="goToBlessing">
         <view class="preview-header">
           <text class="preview-title">最近祝福</text>
           <text class="preview-more">去祝福墙</text>
@@ -237,7 +238,7 @@
 
     <!-- 悬浮操作 -->
     <view class="float-actions">
-      <button class="float-btn rsvp" @click="goToRSVP">确认出席</button>
+      <button class="float-btn rsvp" v-if="isRsvpEnabled" @click="goToRSVP">确认出席</button>
       <button class="float-btn share" open-type="share">
         <text class="share-icon">↗</text>
       </button>
@@ -329,10 +330,15 @@ const venueName = computed(() => store.venueName)
 const venueAddress = computed(() => store.invitation?.wedding?.venue_address || '')
 const activeTemplate = computed(() => store.activeTemplate)
 const templateClass = computed(() => store.templateClass)
+const showCountdown = computed(() => store.showCountdown)
+const isRsvpEnabled = computed(() => store.isRsvpEnabled)
+const isBlessingEnabled = computed(() => store.isBlessingEnabled)
+const isTimelineEnabled = computed(() => store.isTimelineEnabled)
 const primaryVenue = computed(() => store.primaryVenue || { name: venueName.value || '婚礼场地', address: venueAddress.value })
 const latestBlessings = computed(() => store.latestBlessings || [])
 const featuredPhotos = computed(() => store.featuredPhotos || [])
 const hasSubmittedRsvp = computed(() => {
+  if (!isRsvpEnabled.value) return false
   const list = store.guests?.guests || []
   return list.some(item => {
     if (userStore.openid && item.openid === userStore.openid) return true
@@ -362,9 +368,27 @@ function updateCountdown() {
 
 function goToAlbum() { uni.switchTab({ url: '/pages/album/index' }) }
 function goToGuide() { uni.switchTab({ url: '/pages/guide/index' }) }
-function goToTimeline() { uni.switchTab({ url: '/pages/timeline/index' }) }
-function goToRSVP() { uni.navigateTo({ url: '/pages/rsvp/index' }) }
-function goToBlessing() { uni.navigateTo({ url: '/pages/blessing/index' }) }
+function goToTimeline() {
+  if (!isTimelineEnabled.value) {
+    uni.showToast({ title: '新人暂未开放婚礼流程', icon: 'none' })
+    return
+  }
+  uni.switchTab({ url: '/pages/timeline/index' })
+}
+function goToRSVP() {
+  if (!isRsvpEnabled.value) {
+    uni.showToast({ title: '新人暂未开放在线回执', icon: 'none' })
+    return
+  }
+  uni.navigateTo({ url: '/pages/rsvp/index' })
+}
+function goToBlessing() {
+  if (!isBlessingEnabled.value) {
+    uni.showToast({ title: '新人暂未开放祝福墙', icon: 'none' })
+    return
+  }
+  uni.navigateTo({ url: '/pages/blessing/index' })
+}
 
 function openNavigation() {
   const venueList = store.venues?.venues || []

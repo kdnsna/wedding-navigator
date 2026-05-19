@@ -12,6 +12,15 @@ exports.main = async (event, context) => {
   }
 
   try {
+    const invitationRes = await db.collection('invitations').doc(weddingId).get().catch(() => ({ data: null }))
+    const features = invitationRes.data?.features || {}
+    if (features.show_blessing === false) {
+      return { success: false, message: '新人暂未开放祝福墙' }
+    }
+    if (features.allow_anonymous_blessing === false && !String(blessing.sender?.name || '').trim()) {
+      return { success: false, message: '请填写您的称呼' }
+    }
+
     // 内容安全检测
     if (blessing.content) {
       const secRes = await checkContentSafety(blessing.content)

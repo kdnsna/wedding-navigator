@@ -19,7 +19,16 @@ exports.main = async (event, context) => {
   }
 
   try {
+    const invitationRes = await db.collection('invitations').doc(weddingId).get().catch(() => ({ data: null }))
+    const features = invitationRes.data?.features || {}
+    if (features.show_rsvp === false) {
+      return { success: false, message: '新人暂未开放在线回执' }
+    }
+
     const normalized = normalizeRSVP(rsvpData, OPENID)
+    if (features.rsvp_phone_required === true && normalized.rsvp_status !== 'declined' && !normalized.phone) {
+      return { success: false, message: '请填写联系电话' }
+    }
 
     if (normalized.message) {
       const secRes = await checkContentSafety(normalized.message)
@@ -54,6 +63,10 @@ exports.main = async (event, context) => {
       if (normalized.openid && g.openid === normalized.openid) return true
       return false
     })
+
+    if (idx >= 0 && features.allow_rsvp_update === false) {
+      return { success: false, message: '回执已提交，如需修改请联系新人' }
+    }
 
     const newGuest = {
       id: idx >= 0 ? guests[idx].id : Date.now().toString(),

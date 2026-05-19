@@ -34,6 +34,9 @@
         <image class="visual-icon-xs parking-icon" src="/static/visuals/icon-parking.svg" mode="aspectFit" />
         <text>{{ transportInfo.parking }}</text>
       </view>
+      <view class="route-tip-list" v-if="routeTips.length">
+        <text class="route-tip" v-for="tip in routeTips" :key="tip">{{ tip }}</text>
+      </view>
     </view>
 
     <!-- 顶部 Tab 栏 -->
@@ -194,6 +197,18 @@
         </view>
       </view>
 
+      <view class="info-card" v-if="routeTips.length">
+        <view class="info-row compact" v-for="tip in routeTips" :key="tip">
+          <view class="info-icon-wrap">
+            <image class="visual-icon info-row-icon" src="/static/visuals/icon-guide.svg" mode="aspectFit" />
+          </view>
+          <view class="info-content">
+            <text class="info-label">角色路线</text>
+            <text class="info-value">{{ tip }}</text>
+          </view>
+        </view>
+      </view>
+
       <view class="empty-state" v-if="!transportInfo.transport && !transportInfo.parking">
         <image class="empty-visual" src="/static/visuals/empty-transport.svg" mode="aspectFit" />
         <text class="empty-text">暂无交通指引</text>
@@ -284,6 +299,7 @@ const geocodedVenues = computed(() => venues.value.filter(hasCoordinate))
 const primaryVenue = computed(() => store.primaryVenue || venues.value[0] || {})
 const transportInfo = computed(() => store.venues?.transportation || {})
 const accommodations = computed(() => store.venues?.accommodations || [])
+const routeTips = computed(() => transportInfo.value.route_tips || [])
 const mapReady = computed(() => geocodedVenues.value.length > 0)
 const weatherHint = computed(() => {
   if (weatherLoading.value) return '加载中'
@@ -557,6 +573,21 @@ onShow(async () => {
 .parking-icon {
   margin-top: 4rpx;
   flex-shrink: 0;
+}
+.route-tip-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+  margin-top: 16rpx;
+}
+.route-tip {
+  display: block;
+  padding: 14rpx 18rpx;
+  border-radius: $radius-md;
+  background: $bg-muted;
+  color: $text-secondary;
+  font-size: 23rpx;
+  line-height: 1.45;
 }
 
 /* Tab 栏 */
@@ -880,6 +911,12 @@ onShow(async () => {
   align-items: flex-start;
   padding: 32rpx;
   gap: 20rpx;
+}
+.info-row.compact {
+  padding: 24rpx 32rpx;
+}
+.info-row.compact + .info-row.compact {
+  border-top: 1rpx solid $border-color;
 }
 .info-icon-wrap {
   width: 52rpx;

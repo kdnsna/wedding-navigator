@@ -1,7 +1,7 @@
 <template>
   <view class="page" :class="templateClass">
     <!-- 顶部标题 -->
-    <view class="page-header">
+    <view class="page-header" v-if="isBlessingEnabled">
       <text class="page-tag">BLESSINGS</text>
       <text class="page-title">祝福墙</text>
       <text class="page-count" v-if="blessings.length > 0">{{ blessings.length }} 条祝福</text>
@@ -9,12 +9,19 @@
     </view>
 
     <!-- 发送区域 -->
-    <view class="send-area">
+    <view class="feature-closed" v-if="!isBlessingEnabled">
+      <image class="empty-visual" src="/static/visuals/icon-blessing.svg" mode="aspectFit" />
+      <text class="feature-title">新人暂未开放祝福墙</text>
+      <text class="feature-desc">您仍可查看婚礼时间、地点和到场路线。</text>
+      <button class="feature-action" @click="goToGuide">查看路线</button>
+    </view>
+
+    <view class="send-area" v-if="isBlessingEnabled">
       <view class="sender-row">
         <input
           class="sender-input"
           v-model="senderName"
-          placeholder="您的称呼"
+          :placeholder="allowAnonymousBlessing ? '您的称呼' : '请输入您的称呼'"
           placeholder-class="input-placeholder"
         />
       </view>
@@ -32,7 +39,7 @@
     </view>
 
     <!-- 祝福列表 -->
-    <view class="blessing-list" v-if="blessings.length > 0">
+    <view class="blessing-list" v-if="isBlessingEnabled && blessingPublic && blessings.length > 0">
       <view
         class="blessing-item"
         v-for="item in blessings"
@@ -49,11 +56,13 @@
     </view>
 
     <!-- 空状态 -->
-    <view class="empty-state" v-if="blessings.length === 0">
+    <view class="empty-state" v-if="isBlessingEnabled && (blessings.length === 0 || !blessingPublic)">
       <image class="empty-visual" src="/static/visuals/empty-blessing.svg" mode="aspectFit" />
       <text class="empty-text">{{ emptyText }}</text>
       <text class="empty-sub" v-if="emptySub">{{ emptySub }}</text>
-      <button class="empty-action" @click="focusBlessing" v-if="userStore.weddingId && !loadError">写第一条祝福</button>
+      <button class="empty-action" @click="focusBlessing" v-if="userStore.weddingId && !loadError">
+        {{ blessingPublic ? '写第一条祝福' : '继续写祝福' }}
+      </button>
     </view>
   </view>
 </template>
@@ -74,6 +83,9 @@ const sending = ref(false)
 const loadError = ref('')
 const activeTemplate = computed(() => store.activeTemplate)
 const templateClass = computed(() => store.templateClass)
+const isBlessingEnabled = computed(() => store.isBlessingEnabled)
+const blessingPublic = computed(() => store.blessingPublic)
+const allowAnonymousBlessing = computed(() => store.allowAnonymousBlessing)
 
 const blessings = computed(() => {
   const list = store.blessings?.blessings || []
@@ -86,6 +98,7 @@ const blessings = computed(() => {
 const emptyText = computed(() => {
   if (!userStore.weddingId) return '请从有效婚礼邀请进入'
   if (loadError.value) return '祝福加载失败'
+  if (!blessingPublic.value) return '祝福已提交给新人查看'
   return '暂无祝福，来做第一个祝福的人吧'
 })
 const emptySub = computed(() => {
@@ -106,6 +119,10 @@ async function sendTextBlessing() {
   const content = newBlessing.value.trim()
   if (!content) { showError('请输入祝福内容'); return }
   if (!userStore.weddingId) { showError('未找到婚礼信息'); return }
+  if (!allowAnonymousBlessing.value && !senderName.value.trim()) {
+    showError('请输入您的称呼')
+    return
+  }
   if (sending.value) return
   sending.value = true
   try {
@@ -131,6 +148,10 @@ async function sendTextBlessing() {
     sending.value = false
     uni.hideLoading()
   }
+}
+
+function goToGuide() {
+  uni.switchTab({ url: '/pages/guide/index' })
 }
 
 onShow(async () => {
@@ -225,6 +246,35 @@ onShow(async () => {
 .send-btn:active { opacity: 0.8; }
 .send-btn[disabled] { opacity: 0.55; }
 
+.feature-closed {
+  text-align: center;
+  padding: 180rpx 64rpx;
+}
+.feature-title {
+  display: block;
+  font-size: 34rpx;
+  color: $text-primary;
+  font-weight: 600;
+  margin-bottom: 14rpx;
+}
+.feature-desc {
+  display: block;
+  font-size: 26rpx;
+  color: $text-secondary;
+  line-height: 1.6;
+  margin-bottom: 36rpx;
+}
+.feature-action {
+  width: 260rpx;
+  height: 76rpx;
+  line-height: 76rpx;
+  border-radius: $radius-full;
+  background: $text-primary;
+  color: #fff;
+  font-size: 26rpx;
+}
+.feature-action::after { border: none; }
+
 /* 祝福列表 */
 .blessing-list {
   padding: 0 48rpx;
@@ -307,6 +357,7 @@ onShow(async () => {
 .tpl-champagne {
   background: #fbf7f1;
   .send-btn,
+  .feature-action,
   .pinned-tag,
   .empty-action {
     background: #A4783B;
@@ -318,6 +369,7 @@ onShow(async () => {
 .tpl-noir {
   background: #111;
   .page-title,
+  .feature-title,
   .item-name,
   .item-content,
   .sender-input,
@@ -325,10 +377,12 @@ onShow(async () => {
     color: #fff;
   }
   .page-count,
+  .feature-desc,
   .page-template {
     color: rgba(255,255,255,0.62);
   }
   .send-btn,
+  .feature-action,
   .pinned-tag,
   .empty-action {
     background: $color-gold;
@@ -344,6 +398,7 @@ onShow(async () => {
 .tpl-garden {
   background: #f5f6ef;
   .send-btn,
+  .feature-action,
   .pinned-tag,
   .empty-action {
     background: #506247;
