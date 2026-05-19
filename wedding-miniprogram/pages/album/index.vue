@@ -86,7 +86,8 @@ onShow(async () => {
 
 <style lang="scss" scoped>
 .page {
-  background-color: $bg-color;
+  background-color: var(--theme-page, $bg-color);
+  color: var(--theme-ink, $text-primary);
   min-height: 100vh;
   padding: 0 $page-gutter calc(60rpx + env(safe-area-inset-bottom));
 }
@@ -202,6 +203,40 @@ onShow(async () => {
   .photo-item {
     border-radius: 8rpx;
     box-shadow: $shadow-sm;
+  }
+}
+
+.theme-rose,
+.theme-champagne,
+.theme-noir,
+.theme-garden,
+.theme-heritage,
+.theme-shandong,
+.theme-travel {
+  background: var(--theme-page, $bg-color);
+  color: var(--theme-ink, $text-primary);
+
+  .page-title {
+    color: var(--theme-ink, $text-primary);
+  }
+
+  .page-tag,
+  .page-desc,
+  .empty-text,
+  .empty-sub,
+  .loading-state {
+    color: var(--theme-muted, $text-muted);
+  }
+
+  .photo-item {
+    background: var(--theme-surface, $bg-surface);
+    border: 1rpx solid var(--theme-border, transparent);
+    box-shadow: $shadow-sm;
+  }
+
+  .empty-action {
+    background: var(--theme-accent, $text-primary);
+    color: var(--theme-on-accent, #fff);
   }
 }
 </style>

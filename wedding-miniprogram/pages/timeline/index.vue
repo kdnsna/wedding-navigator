@@ -200,7 +200,8 @@ onShow(async () => {
 
 <style lang="scss" scoped>
 .page {
-  background-color: $bg-color;
+  background-color: var(--theme-page, $bg-color);
+  color: var(--theme-ink, $text-primary);
   min-height: 100vh;
   padding-bottom: calc(80rpx + env(safe-area-inset-bottom));
 }
@@ -575,6 +576,100 @@ onShow(async () => {
   }
   .timeline-item.current .timeline-time {
     color: #506247;
+  }
+}
+
+.theme-rose,
+.theme-champagne,
+.theme-noir,
+.theme-garden,
+.theme-heritage,
+.theme-shandong,
+.theme-travel {
+  background: var(--theme-page, $bg-color);
+  color: var(--theme-ink, $text-primary);
+
+  .page-title,
+  .feature-title,
+  .date-num,
+  .date-month,
+  .content-title,
+  .empty-text {
+    color: var(--theme-ink, $text-primary);
+  }
+
+  .page-tag,
+  .page-desc,
+  .feature-desc,
+  .date-week,
+  .timeline-time,
+  .meta-text,
+  .content-notes,
+  .footer-text,
+  .empty-sub {
+    color: var(--theme-muted, $text-muted);
+  }
+
+  .page-desc.today,
+  .timeline-item.current .timeline-time {
+    color: var(--theme-accent, $color-primary);
+  }
+
+  .page-divider,
+  .timeline-item.current .timeline-dot,
+  .feature-action,
+  .role-pill.active {
+    background: var(--theme-accent, $color-primary);
+    color: var(--theme-on-accent, #fff);
+  }
+
+  .date-banner,
+  .timeline-content {
+    background: var(--theme-surface, $bg-surface);
+    border: 1rpx solid var(--theme-border, $border-color);
+    border-radius: $card-radius;
+  }
+
+  .timeline-content {
+    padding: 28rpx;
+    margin-top: 10rpx;
+  }
+
+  .role-pill,
+  .status-badge.upcoming {
+    background: var(--theme-elevated, $bg-muted);
+    color: var(--theme-muted, $text-secondary);
+  }
+
+  .status-badge.current {
+    background: var(--theme-accent-soft, rgba(176,58,91,0.10));
+    color: var(--theme-accent, $color-primary);
+  }
+
+  .timeline-dot {
+    background: var(--theme-border, $border-color);
+  }
+
+  .timeline-dot-ring {
+    border-color: var(--theme-accent, $color-primary);
+  }
+
+  .timeline-line {
+    background: var(--theme-border, $border-color);
+  }
+
+  .timeline-line.dashed {
+    background: repeating-linear-gradient(
+      to bottom,
+      var(--theme-border, #F0F0F0) 0rpx,
+      var(--theme-border, #F0F0F0) 8rpx,
+      transparent 8rpx,
+      transparent 16rpx
+    );
+  }
+
+  .footer-line {
+    background: var(--theme-border, $border-color);
   }
 }
 </style>

@@ -164,7 +164,8 @@ onShow(async () => {
 
 <style lang="scss" scoped>
 .page {
-  background-color: $bg-color;
+  background-color: var(--theme-page, $bg-color);
+  color: var(--theme-ink, $text-primary);
   min-height: 100vh;
   padding-bottom: calc(80rpx + env(safe-area-inset-bottom));
 }
@@ -416,6 +417,58 @@ onShow(async () => {
   }
   .blessing-item.pinned {
     background: #eef2e7;
+  }
+}
+
+.theme-rose,
+.theme-champagne,
+.theme-noir,
+.theme-garden,
+.theme-heritage,
+.theme-shandong,
+.theme-travel {
+  background: var(--theme-page, $bg-color);
+  color: var(--theme-ink, $text-primary);
+
+  .page-title,
+  .feature-title,
+  .item-name,
+  .item-content,
+  .sender-input,
+  .send-input {
+    color: var(--theme-ink, $text-primary);
+  }
+
+  .page-tag,
+  .page-count,
+  .page-template,
+  .feature-desc,
+  .char-count,
+  .item-time,
+  .empty-text,
+  .empty-sub {
+    color: var(--theme-muted, $text-muted);
+  }
+
+  .sender-input,
+  .send-input {
+    border-bottom-color: var(--theme-border, $border-color);
+  }
+
+  .send-btn,
+  .feature-action,
+  .pinned-tag,
+  .empty-action {
+    background: var(--theme-accent, $text-primary);
+    color: var(--theme-on-accent, #fff);
+  }
+
+  .blessing-item {
+    border-bottom-color: var(--theme-border, $border-color);
+  }
+
+  .blessing-item.pinned {
+    background: var(--theme-elevated, $bg-muted);
   }
 }
 </style>

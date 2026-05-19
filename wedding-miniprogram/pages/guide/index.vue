@@ -454,14 +454,15 @@ onShow(async () => {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: $bg-color;
+  background: var(--theme-page, $bg-color);
+  color: var(--theme-ink, $text-primary);
 }
 
 /* 到场助手 */
 .arrival-pack {
   padding: 36rpx $page-gutter-sm 24rpx;
-  border-bottom: 1rpx solid $border-color;
-  background: $bg-color;
+  border-bottom: 1rpx solid var(--theme-border, $border-color);
+  background: var(--theme-page, $bg-color);
   flex-shrink: 0;
 }
 .arrival-head {
@@ -474,7 +475,7 @@ onShow(async () => {
 .arrival-kicker {
   display: block;
   font-size: 18rpx;
-  color: $color-primary;
+  color: var(--theme-accent, $color-primary);
   letter-spacing: 0;
   margin-bottom: 8rpx;
   font-weight: 600;
@@ -482,12 +483,12 @@ onShow(async () => {
 .arrival-title {
   display: block;
   font-size: 38rpx;
-  color: $text-primary;
+  color: var(--theme-ink, $text-primary);
   font-weight: 600;
 }
 .arrival-date {
   font-size: 24rpx;
-  color: $text-muted;
+  color: var(--theme-muted, $text-muted);
   padding-top: 8rpx;
 }
 .arrival-card {
@@ -496,7 +497,8 @@ onShow(async () => {
   gap: 24rpx;
   align-items: stretch;
   padding: 28rpx;
-  background: $text-primary;
+  background: var(--theme-strong-bg, $text-primary);
+  border: 1rpx solid var(--theme-strong-border, transparent);
   border-radius: $card-radius;
   margin-bottom: 16rpx;
   width: calc(100vw - 64rpx);
@@ -511,13 +513,13 @@ onShow(async () => {
 .arrival-label {
   display: block;
   font-size: 22rpx;
-  color: rgba(255,255,255,0.55);
+  color: var(--theme-strong-muted, rgba(255,255,255,0.55));
   margin-bottom: 8rpx;
 }
 .arrival-name {
   display: block;
   font-size: 32rpx;
-  color: #fff;
+  color: var(--theme-strong-ink, #fff);
   font-weight: 600;
   margin-bottom: 8rpx;
   overflow: hidden;
@@ -527,7 +529,7 @@ onShow(async () => {
 .arrival-address {
   display: block;
   font-size: 24rpx;
-  color: rgba(255,255,255,0.72);
+  color: var(--theme-strong-muted, rgba(255,255,255,0.72));
   line-height: 1.5;
   overflow: hidden;
   display: -webkit-box;
@@ -548,14 +550,14 @@ onShow(async () => {
   height: $control-height-sm;
   line-height: $control-height-sm;
   border-radius: $radius-full;
-  background: rgba(255,255,255,0.12);
-  color: #fff;
+  background: var(--theme-strong-soft, rgba(255,255,255,0.12));
+  color: var(--theme-strong-ink, #fff);
   font-size: 24rpx;
   padding: 0;
 }
 .arrival-btn.primary {
-  background: #fff;
-  color: $text-primary;
+  background: var(--theme-accent, #fff);
+  color: var(--theme-on-accent, $text-primary);
 }
 .arrival-btn::after { border: none; }
 .arrival-summary {
@@ -568,20 +570,20 @@ onShow(async () => {
 }
 .arrival-summary-item {
   padding: 20rpx 22rpx;
-  background: $bg-muted;
+  background: var(--theme-elevated, $bg-muted);
   border-radius: $card-radius;
   min-width: 0;
 }
 .summary-label {
   display: block;
   font-size: 22rpx;
-  color: $text-muted;
+  color: var(--theme-muted, $text-muted);
   margin-bottom: 8rpx;
 }
 .summary-value {
   display: block;
   font-size: 26rpx;
-  color: $text-primary;
+  color: var(--theme-ink, $text-primary);
   font-weight: 600;
   overflow: hidden;
   white-space: nowrap;
@@ -594,8 +596,8 @@ onShow(async () => {
   margin-top: 16rpx;
   padding: 18rpx 20rpx;
   border-radius: $radius-md;
-  background: rgba(176,58,91,0.06);
-  color: $color-primary;
+  background: var(--theme-accent-soft, rgba(176,58,91,0.06));
+  color: var(--theme-accent, $color-primary);
   font-size: 24rpx;
   line-height: 1.5;
 }
@@ -613,8 +615,8 @@ onShow(async () => {
   display: block;
   padding: 14rpx 18rpx;
   border-radius: $radius-md;
-  background: $bg-muted;
-  color: $text-secondary;
+  background: var(--theme-elevated, $bg-muted);
+  color: var(--theme-muted, $text-secondary);
   font-size: 23rpx;
   line-height: 1.45;
 }
@@ -622,8 +624,8 @@ onShow(async () => {
 /* Tab 栏 */
 .tab-bar {
   display: flex;
-  background: $bg-surface;
-  border-bottom: 1rpx solid $border-color;
+  background: var(--theme-surface, $bg-surface);
+  border-bottom: 1rpx solid var(--theme-border, $border-color);
   flex-shrink: 0;
   padding: 0 16rpx;
 }
@@ -638,19 +640,19 @@ onShow(async () => {
 }
 .tab-label {
   font-size: 26rpx;
-  color: $text-muted;
+  color: var(--theme-muted, $text-muted);
   font-weight: 500;
   transition: color 0.2s ease;
 }
 .tab-item.active .tab-label {
-  color: $text-primary;
+  color: var(--theme-accent, $text-primary);
   font-weight: 600;
 }
 .tab-dot {
   width: 8rpx;
   height: 8rpx;
   border-radius: 50%;
-  background: $color-primary;
+  background: var(--theme-accent, $color-primary);
   position: absolute;
   top: 16rpx;
   right: calc(50% - 24rpx);
@@ -665,7 +667,7 @@ onShow(async () => {
 .map-container {
   flex: 1;
   min-height: 300rpx;
-  background: $bg-muted;
+  background: var(--theme-page-soft, $bg-muted);
 }
 .map {
   width: 100%;
@@ -689,34 +691,34 @@ onShow(async () => {
 .map-empty-title {
   display: block;
   font-size: 28rpx;
-  color: $text-primary;
+  color: var(--theme-ink, $text-primary);
   font-weight: 500;
   margin-bottom: 8rpx;
 }
 .map-empty-sub {
   display: block;
   font-size: 23rpx;
-  color: $text-muted;
+  color: var(--theme-muted, $text-muted);
   line-height: 1.55;
 }
 
 .venue-list {
   max-height: 45vh;
   padding: 24rpx;
-  background: $bg-color;
+  background: var(--theme-page, $bg-color);
 }
 
 .venue-card {
-  background: $bg-surface;
+  background: var(--theme-surface, $bg-surface);
   border-radius: $card-radius;
   padding: 32rpx;
   margin-bottom: 16rpx;
   transition: all 0.2s ease;
-  border: 1rpx solid transparent;
+  border: 1rpx solid var(--theme-border, transparent);
 }
 .venue-card.active {
-  background: $text-primary;
-  border-color: $text-primary;
+  background: var(--theme-strong-bg, $text-primary);
+  border-color: var(--theme-strong-border, $text-primary);
 }
 .venue-card.active .venue-name,
 .venue-card.active .venue-address,
@@ -733,18 +735,18 @@ onShow(async () => {
 }
 .venue-type {
   padding: 4rpx 12rpx;
-  background: $bg-muted;
-  color: $text-secondary;
+  background: var(--theme-elevated, $bg-muted);
+  color: var(--theme-muted, $text-secondary);
   font-size: 20rpx;
   border-radius: 6rpx;
   font-weight: 500;
 }
-.venue-time { font-size: 22rpx; color: $text-muted; }
+.venue-time { font-size: 22rpx; color: var(--theme-muted, $text-muted); }
 .venue-name {
   display: block;
   font-size: 30rpx;
   font-weight: 500;
-  color: $text-primary;
+  color: var(--theme-ink, $text-primary);
   margin-bottom: 4rpx;
   overflow: hidden;
   white-space: nowrap;
@@ -753,7 +755,7 @@ onShow(async () => {
 .venue-address {
   display: block;
   font-size: 24rpx;
-  color: $text-secondary;
+  color: var(--theme-muted, $text-secondary);
   margin-bottom: 8rpx;
   overflow: hidden;
   display: -webkit-box;
@@ -784,14 +786,14 @@ onShow(async () => {
   padding: 0 24rpx;
   font-size: 24rpx;
   border-radius: $radius-full;
-  background: $bg-muted;
-  color: $text-primary;
+  background: var(--theme-elevated, $bg-muted);
+  color: var(--theme-ink, $text-primary);
   border: none;
   line-height: 1.5;
 }
 .action-btn.primary {
-  background: $color-primary;
-  color: #fff;
+  background: var(--theme-accent, $color-primary);
+  color: var(--theme-on-accent, #fff);
 }
 .action-btn.disabled {
   background: $bg-muted;
@@ -802,7 +804,7 @@ onShow(async () => {
 /* 天气 */
 .weather-banner {
   padding: $page-gutter;
-  background: linear-gradient(135deg, #fef9f3 0%, #fdf2eb 100%);
+  background: var(--theme-panel-gradient, linear-gradient(135deg, #fef9f3 0%, #fdf2eb 100%));
   margin: 24rpx;
   border-radius: $card-radius;
 }
@@ -825,17 +827,17 @@ onShow(async () => {
 .temp-max {
   font-size: 64rpx;
   font-weight: 300;
-  color: $text-primary;
+  color: var(--theme-ink, $text-primary);
   font-variant-numeric: tabular-nums;
 }
 .temp-sep {
   font-size: 32rpx;
-  color: $text-muted;
+  color: var(--theme-muted, $text-muted);
   font-weight: 300;
 }
 .temp-min {
   font-size: 32rpx;
-  color: $text-muted;
+  color: var(--theme-muted, $text-muted);
   font-variant-numeric: tabular-nums;
 }
 .weather-desc {
@@ -845,12 +847,12 @@ onShow(async () => {
 }
 .weather-text {
   font-size: 32rpx;
-  color: $text-primary;
+  color: var(--theme-ink, $text-primary);
   font-weight: 500;
 }
 .weather-date {
   font-size: 24rpx;
-  color: $text-muted;
+  color: var(--theme-muted, $text-muted);
 }
 .weather-tags {
   margin-top: 16rpx;
@@ -860,7 +862,7 @@ onShow(async () => {
   align-items: center;
   gap: 8rpx;
   font-size: 22rpx;
-  color: $text-secondary;
+  color: var(--theme-muted, $text-secondary);
   background: rgba(255,255,255,0.7);
   padding: 8rpx 16rpx;
   border-radius: $radius-full;
@@ -870,9 +872,9 @@ onShow(async () => {
 
 .weather-details {
   margin: 24rpx;
-  background: $bg-surface;
+  background: var(--theme-surface, $bg-surface);
   border-radius: $card-radius;
-  border: 1rpx solid $border-color;
+  border: 1rpx solid var(--theme-border, $border-color);
   overflow: hidden;
 }
 .detail-row {
@@ -885,8 +887,8 @@ onShow(async () => {
   height: 40rpx;
   margin-right: 16rpx;
 }
-.detail-text { font-size: 26rpx; color: $text-primary; }
-.detail-divider { height: 1rpx; background: $border-color; margin: 0 32rpx; }
+.detail-text { font-size: 26rpx; color: var(--theme-ink, $text-primary); }
+.detail-divider { height: 1rpx; background: var(--theme-border, $border-color); margin: 0 32rpx; }
 
 .weather-loading {
   display: flex;
@@ -897,13 +899,13 @@ onShow(async () => {
 }
 .loading-spinner {
   width: 56rpx; height: 56rpx;
-  border: 3rpx solid $border-color;
-  border-top-color: $text-primary;
+  border: 3rpx solid var(--theme-border, $border-color);
+  border-top-color: var(--theme-ink, $text-primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
-.loading-text { font-size: 26rpx; color: $text-muted; }
+.loading-text { font-size: 26rpx; color: var(--theme-muted, $text-muted); }
 
 .api-note {
   display: flex;
@@ -931,17 +933,17 @@ onShow(async () => {
 .section-title {
   font-size: 30rpx;
   font-weight: 600;
-  color: $text-primary;
+  color: var(--theme-ink, $text-primary);
 }
 .section-date {
   font-size: 22rpx;
-  color: $text-muted;
+  color: var(--theme-muted, $text-muted);
 }
 
 .info-card {
-  background: $bg-surface;
+  background: var(--theme-surface, $bg-surface);
   border-radius: $card-radius;
-  border: 1rpx solid $border-color;
+  border: 1rpx solid var(--theme-border, $border-color);
   overflow: hidden;
   margin-bottom: 24rpx;
 }
@@ -955,7 +957,7 @@ onShow(async () => {
   padding: 24rpx 32rpx;
 }
 .info-row.compact + .info-row.compact {
-  border-top: 1rpx solid $border-color;
+  border-top: 1rpx solid var(--theme-border, $border-color);
 }
 .info-icon-wrap {
   width: 52rpx;
@@ -973,32 +975,32 @@ onShow(async () => {
 .info-label {
   display: block;
   font-size: 22rpx;
-  color: $text-muted;
+  color: var(--theme-muted, $text-muted);
   margin-bottom: 6rpx;
   letter-spacing: 0;
 }
 .info-value {
   display: block;
   font-size: 28rpx;
-  color: $text-primary;
+  color: var(--theme-ink, $text-primary);
   line-height: 1.5;
   word-break: break-word;
 }
-.info-divider { height: 1rpx; background: $border-color; margin: 0 32rpx; }
+.info-divider { height: 1rpx; background: var(--theme-border, $border-color); margin: 0 32rpx; }
 
 /* 住宿列表 */
 .hotel-list { display: flex; flex-direction: column; gap: 16rpx; }
 .hotel-card {
-  background: $bg-surface;
+  background: var(--theme-surface, $bg-surface);
   border-radius: $card-radius;
-  border: 1rpx solid $border-color;
+  border: 1rpx solid var(--theme-border, $border-color);
   padding: 32rpx;
 }
 .hotel-name {
   display: block;
   font-size: 30rpx;
   font-weight: 500;
-  color: $text-primary;
+  color: var(--theme-ink, $text-primary);
   margin-bottom: 8rpx;
   overflow: hidden;
   white-space: nowrap;
@@ -1007,15 +1009,15 @@ onShow(async () => {
 .hotel-tags { display: flex; gap: 12rpx; margin: 8rpx 0; }
 .hotel-tag {
   font-size: 20rpx;
-  color: $text-secondary;
-  background: $bg-muted;
+  color: var(--theme-muted, $text-secondary);
+  background: var(--theme-elevated, $bg-muted);
   padding: 4rpx 12rpx;
   border-radius: 4rpx;
 }
 .hotel-notes {
   display: block;
   font-size: 24rpx;
-  color: $text-muted;
+  color: var(--theme-muted, $text-muted);
   margin-top: 8rpx;
   line-height: 1.5;
   word-break: break-word;
@@ -1027,8 +1029,8 @@ onShow(async () => {
   gap: 10rpx;
   height: $control-height-sm;
   padding: 0 32rpx;
-  background: $text-primary;
-  color: #fff;
+  background: var(--theme-accent, $text-primary);
+  color: var(--theme-on-accent, #fff);
   border-radius: $radius-full;
   font-size: 24rpx;
   border: none;
@@ -1054,14 +1056,14 @@ onShow(async () => {
 .empty-text {
   display: block;
   font-size: 28rpx;
-  color: $text-primary;
+  color: var(--theme-ink, $text-primary);
   font-weight: 500;
   margin-bottom: 8rpx;
 }
 .empty-sub {
   display: block;
   font-size: 24rpx;
-  color: $text-muted;
+  color: var(--theme-muted, $text-muted);
   line-height: 1.5;
   padding: 0 48rpx;
 }
@@ -1071,8 +1073,8 @@ onShow(async () => {
   height: $control-height-sm;
   line-height: $control-height-sm;
   border-radius: $radius-full;
-  background: $text-primary;
-  color: #fff;
+  background: var(--theme-accent, $text-primary);
+  color: var(--theme-on-accent, #fff);
   font-size: 26rpx;
 }
 .retry-btn::after {
@@ -1138,6 +1140,123 @@ onShow(async () => {
   .action-btn.primary,
   .hotel-btn {
     background: #506247;
+  }
+}
+
+.theme-rose,
+.theme-champagne,
+.theme-noir,
+.theme-garden,
+.theme-heritage,
+.theme-shandong,
+.theme-travel {
+  background: var(--theme-page, $bg-color);
+  color: var(--theme-ink, $text-primary);
+
+  .arrival-pack,
+  .tab-bar,
+  .venue-list {
+    background: var(--theme-page, $bg-color);
+    border-color: var(--theme-border, $border-color);
+  }
+
+  .arrival-card,
+  .venue-card.active {
+    background: var(--theme-strong-bg, $text-primary);
+    border-color: var(--theme-strong-border, transparent);
+  }
+
+  .arrival-name,
+  .venue-card.active .venue-name {
+    color: var(--theme-strong-ink, #fff);
+  }
+
+  .arrival-label,
+  .arrival-address,
+  .venue-card.active .venue-address,
+  .venue-card.active .venue-type,
+  .venue-card.active .venue-time,
+  .venue-card.active .venue-geo {
+    color: var(--theme-strong-muted, rgba(255,255,255,0.68));
+  }
+
+  .arrival-title,
+  .summary-value,
+  .venue-name,
+  .section-title,
+  .info-value,
+  .hotel-name,
+  .weather-text,
+  .temp-max,
+  .detail-text,
+  .empty-text,
+  .map-empty-title {
+    color: var(--theme-ink, $text-primary);
+  }
+
+  .arrival-date,
+  .summary-label,
+  .venue-address,
+  .section-date,
+  .info-label,
+  .hotel-notes,
+  .weather-date,
+  .temp-min,
+  .temp-sep,
+  .loading-text,
+  .empty-sub,
+  .map-empty-sub {
+    color: var(--theme-muted, $text-muted);
+  }
+
+  .arrival-kicker,
+  .tab-item.active .tab-label {
+    color: var(--theme-accent, $color-primary);
+  }
+
+  .tab-dot,
+  .arrival-btn.primary,
+  .action-btn.primary,
+  .hotel-btn,
+  .retry-btn {
+    background: var(--theme-accent, $color-primary);
+    color: var(--theme-on-accent, #fff);
+  }
+
+  .arrival-btn {
+    background: var(--theme-strong-soft, rgba(255,255,255,0.12));
+    color: var(--theme-strong-ink, #fff);
+  }
+
+  .arrival-summary-item,
+  .route-tip,
+  .action-btn,
+  .hotel-tag,
+  .map-container {
+    background: var(--theme-elevated, $bg-muted);
+    color: var(--theme-muted, $text-secondary);
+  }
+
+  .parking-note {
+    background: var(--theme-accent-soft, rgba(176,58,91,0.06));
+    color: var(--theme-accent, $color-primary);
+  }
+
+  .venue-card,
+  .info-card,
+  .hotel-card,
+  .weather-details {
+    background: var(--theme-surface, $bg-surface);
+    border-color: var(--theme-border, $border-color);
+  }
+
+  .weather-banner {
+    background: var(--theme-panel-gradient);
+  }
+
+  .info-divider,
+  .detail-divider {
+    background: var(--theme-border, $border-color);
   }
 }
 </style>

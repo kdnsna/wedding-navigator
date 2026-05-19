@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page" :class="templateClass">
     <!-- 顶部标题 -->
     <view class="page-header">
       <view class="header-top">
@@ -51,7 +51,7 @@
 </template>
 
 <script setup>
-import { ref, nextTick, getCurrentInstance } from 'vue'
+import { computed, ref, nextTick, getCurrentInstance } from 'vue'
 import { onLoad, onShareAppMessage } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
@@ -68,6 +68,7 @@ const loading = ref(false)
 const loadingText = ref('生成海报中...')
 const posterNotice = ref('')
 const canvasStyle = POSTER_CANVAS_STYLE
+const templateClass = computed(() => store.templateClass)
 
 async function generateQRCode() {
   loading.value = true
@@ -234,7 +235,8 @@ onLoad(async (options) => {
 
 <style lang="scss" scoped>
 .page {
-  background-color: $bg-color;
+  background-color: var(--theme-page, $bg-color);
+  color: var(--theme-ink, $text-primary);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -392,5 +394,54 @@ onLoad(async (options) => {
 .loading-text {
   font-size: 26rpx;
   color: $text-primary;
+}
+
+.theme-rose,
+.theme-champagne,
+.theme-noir,
+.theme-garden,
+.theme-heritage,
+.theme-shandong,
+.theme-travel {
+  background: var(--theme-page, $bg-color);
+  color: var(--theme-ink, $text-primary);
+
+  .back-btn,
+  .page-title,
+  .action-btn,
+  .loading-text {
+    color: var(--theme-ink, $text-primary);
+  }
+
+  .page-desc {
+    color: var(--theme-muted, $text-muted);
+  }
+
+  .share-btn {
+    color: var(--theme-accent, $color-primary);
+  }
+
+  .poster-container,
+  .poster-canvas {
+    border-radius: $card-radius;
+    box-shadow: $shadow-sm;
+  }
+
+  .action-btn,
+  .loading-content {
+    background: var(--theme-surface, $bg-surface);
+    border-color: var(--theme-border, $border-color);
+  }
+
+  .action-btn.primary {
+    background: var(--theme-accent, $text-primary);
+    border-color: var(--theme-accent, $text-primary);
+    color: var(--theme-on-accent, #fff);
+  }
+
+  .loading-spinner {
+    border-color: var(--theme-border, $border-color);
+    border-top-color: var(--theme-accent, $text-primary);
+  }
 }
 </style>

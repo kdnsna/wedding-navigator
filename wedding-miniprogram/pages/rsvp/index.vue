@@ -466,7 +466,8 @@ onLoad(async (options) => {
 
 <style lang="scss" scoped>
 .page {
-  background-color: $bg-color;
+  background-color: var(--theme-page, $bg-color);
+  color: var(--theme-ink, $text-primary);
   min-height: 100vh;
   padding-bottom: calc(80rpx + env(safe-area-inset-bottom));
 }
@@ -1024,5 +1025,105 @@ onLoad(async (options) => {
 .success-action:active {
   background: $text-primary;
   color: #fff;
+}
+
+.theme-rose,
+.theme-champagne,
+.theme-noir,
+.theme-garden,
+.theme-heritage,
+.theme-shandong,
+.theme-travel {
+  background: var(--theme-page, $bg-color);
+  color: var(--theme-ink, $text-primary);
+
+  .page-title,
+  .feature-title,
+  .label-text,
+  .radio-label,
+  .tag-item,
+  .step-icon,
+  .step-value,
+  .form-input,
+  .picker-value,
+  .form-textarea,
+  .success-title,
+  .info-value,
+  .back-btn,
+  .success-action {
+    color: var(--theme-ink, $text-primary);
+  }
+
+  .page-tag,
+  .page-desc,
+  .feature-desc,
+  .label-en,
+  .char-count,
+  .info-label,
+  .success-desc {
+    color: var(--theme-muted, $text-muted);
+  }
+
+  .page-divider {
+    background: var(--theme-accent, $color-primary);
+  }
+
+  .rsvp-brief {
+    background: var(--theme-strong-bg, $text-primary);
+    border: 1rpx solid var(--theme-strong-border, transparent);
+    color: var(--theme-strong-ink, #fff);
+  }
+
+  .rsvp-brief::before {
+    background: var(--theme-accent, $color-primary);
+  }
+
+  .brief-title,
+  .brief-value {
+    color: var(--theme-strong-ink, #fff);
+  }
+
+  .brief-kicker,
+  .brief-label {
+    color: var(--theme-strong-muted, rgba(255,255,255,0.56));
+  }
+
+  .brief-item {
+    border-top-color: var(--theme-strong-border, rgba(255,255,255,0.12));
+  }
+
+  .radio-item,
+  .tag-item,
+  .success-card,
+  .back-btn {
+    background: var(--theme-surface, $bg-surface);
+    border-color: var(--theme-border, $border-color);
+  }
+
+  .radio-item.active,
+  .tag-item.active,
+  .feature-action,
+  .submit-btn {
+    background: var(--theme-accent, $text-primary);
+    border-color: var(--theme-accent, $text-primary);
+    color: var(--theme-on-accent, #fff);
+  }
+
+  .form-input,
+  .picker-value,
+  .form-textarea,
+  .success-divider {
+    border-color: var(--theme-border, $border-color);
+  }
+
+  .success-divider {
+    background: var(--theme-border, $border-color);
+  }
+
+  .required-tip,
+  .success-action {
+    background: var(--theme-elevated, $bg-muted);
+    color: var(--theme-muted, $text-muted);
+  }
 }
 </style>

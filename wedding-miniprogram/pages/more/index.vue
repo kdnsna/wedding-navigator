@@ -149,7 +149,8 @@ onShow(async () => {
 
 <style lang="scss" scoped>
 .page {
-  background-color: $bg-color;
+  background-color: var(--theme-page, $bg-color);
+  color: var(--theme-ink, $text-primary);
   min-height: 100vh;
   padding-bottom: calc(80rpx + env(safe-area-inset-bottom));
 }
@@ -311,6 +312,48 @@ onShow(async () => {
   }
   .share-btn {
     background: #506247;
+  }
+}
+
+.theme-rose,
+.theme-champagne,
+.theme-noir,
+.theme-garden,
+.theme-heritage,
+.theme-shandong,
+.theme-travel {
+  background: var(--theme-page, $bg-color);
+  color: var(--theme-ink, $text-primary);
+
+  .page-title,
+  .couple-name,
+  .menu-title {
+    color: var(--theme-ink, $text-primary);
+  }
+
+  .page-tag,
+  .couple-date,
+  .menu-arrow,
+  .promo-link {
+    color: var(--theme-muted, $text-muted);
+  }
+
+  .menu-group {
+    background: var(--theme-surface, $bg-surface);
+    border: 1rpx solid var(--theme-border, $border-color);
+  }
+
+  .menu-item:active {
+    background: var(--theme-elevated, $bg-muted);
+  }
+
+  .divider {
+    background: var(--theme-border, $border-color);
+  }
+
+  .share-btn {
+    background: var(--theme-accent, $text-primary);
+    color: var(--theme-on-accent, #fff);
   }
 }
 </style>

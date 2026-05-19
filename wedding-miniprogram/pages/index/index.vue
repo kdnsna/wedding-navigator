@@ -553,7 +553,8 @@ onUnmounted(() => {
 
 <style lang="scss" scoped>
 .page {
-  background-color: $bg-color;
+  background-color: var(--theme-page, $bg-color);
+  color: var(--theme-ink, $text-primary);
   min-height: 100vh;
   padding-bottom: calc(260rpx + env(safe-area-inset-bottom));
 }
@@ -564,6 +565,7 @@ onUnmounted(() => {
   height: 86vh;
   min-height: 1040rpx;
   overflow: hidden;
+  background: var(--theme-hero-bg, #fcf6f0);
 }
 .hero-image {
   position: absolute;
@@ -571,10 +573,12 @@ onUnmounted(() => {
   left: 0;
   width: 100%;
   height: 100%;
-  background: #fcf6f0;
+  background: var(--theme-hero-bg, #fcf6f0);
+  filter: var(--theme-hero-filter, none);
 }
 .hero-image.default {
   padding: 0;
+  opacity: var(--theme-default-cover-opacity, 1);
 }
 .hero-gradient {
   position: absolute;
@@ -582,14 +586,14 @@ onUnmounted(() => {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(
+  background: var(--theme-hero-overlay, linear-gradient(
     to bottom,
     rgba(0,0,0,0.25) 0%,
     rgba(0,0,0,0.05) 25%,
     rgba(0,0,0,0.15) 60%,
     rgba(255,255,255,0.95) 90%,
     rgba(255,255,255,1) 100%
-  );
+  ));
 }
 .xi-watermark {
   position: absolute;
@@ -796,7 +800,7 @@ onUnmounted(() => {
 .daypack-kicker {
   display: block;
   font-size: 20rpx;
-  color: $color-primary;
+  color: var(--theme-accent, $color-primary);
   letter-spacing: 0;
   margin-bottom: 8rpx;
   font-weight: 600;
@@ -804,21 +808,21 @@ onUnmounted(() => {
 .daypack-title {
   display: block;
   font-size: 40rpx;
-  color: $text-primary;
+  color: var(--theme-ink, $text-primary);
   font-weight: 600;
 }
 .daypack-template {
   display: block;
   margin-top: 8rpx;
   font-size: 22rpx;
-  color: $text-muted;
+  color: var(--theme-muted, $text-muted);
   letter-spacing: 0;
 }
 .daypack-status {
   padding: 10rpx 20rpx;
   border-radius: $radius-full;
-  background: rgba(176,58,91,0.08);
-  color: $color-primary;
+  background: var(--theme-accent-soft, rgba(176,58,91,0.08));
+  color: var(--theme-accent, $color-primary);
   font-size: 24rpx;
   flex-shrink: 0;
 }
@@ -832,11 +836,12 @@ onUnmounted(() => {
   gap: 24rpx;
   padding: 32rpx;
   border-radius: $card-radius;
-  border: 1rpx solid $border-color;
+  border: 1rpx solid var(--theme-border, $border-color);
   margin-bottom: 16rpx;
 }
 .daypack-card.primary {
-  background: $text-primary;
+  background: var(--theme-strong-bg, $text-primary);
+  border-color: var(--theme-strong-border, transparent);
 }
 .daypack-card-main {
   flex: 1;
@@ -845,13 +850,13 @@ onUnmounted(() => {
 .daypack-label {
   display: block;
   font-size: 22rpx;
-  color: rgba(255,255,255,0.52);
+  color: var(--theme-strong-muted, rgba(255,255,255,0.52));
   margin-bottom: 8rpx;
 }
 .daypack-value {
   display: block;
   font-size: 34rpx;
-  color: #fff;
+  color: var(--theme-strong-ink, #fff);
   font-weight: 600;
   margin-bottom: 8rpx;
   overflow: hidden;
@@ -861,7 +866,7 @@ onUnmounted(() => {
 .daypack-sub {
   display: block;
   font-size: 24rpx;
-  color: rgba(255,255,255,0.7);
+  color: var(--theme-strong-muted, rgba(255,255,255,0.7));
   line-height: 1.5;
   overflow: hidden;
   display: -webkit-box;
@@ -873,8 +878,8 @@ onUnmounted(() => {
   height: $control-height-sm;
   line-height: $control-height-sm;
   border-radius: $radius-full;
-  background: #fff;
-  color: $text-primary;
+  background: var(--theme-strong-soft, #fff);
+  color: var(--theme-strong-ink, $text-primary);
   font-size: 26rpx;
   padding: 0;
   flex-shrink: 0;
@@ -888,20 +893,20 @@ onUnmounted(() => {
 }
 .daypack-mini {
   padding: 28rpx;
-  background: $bg-muted;
+  background: var(--theme-elevated, $bg-muted);
   border-radius: $card-radius;
   min-height: 132rpx;
 }
 .mini-label {
   display: block;
   font-size: 22rpx;
-  color: $text-muted;
+  color: var(--theme-muted, $text-muted);
   margin-bottom: 10rpx;
 }
 .mini-value {
   display: block;
   font-size: 28rpx;
-  color: $text-primary;
+  color: var(--theme-ink, $text-primary);
   font-weight: 600;
   line-height: 1.35;
   overflow: hidden;
@@ -918,27 +923,27 @@ onUnmounted(() => {
   height: 84rpx;
   line-height: 84rpx;
   border-radius: $radius-full;
-  background: $bg-muted;
-  color: $text-primary;
+  background: var(--theme-elevated, $bg-muted);
+  color: var(--theme-ink, $text-primary);
   font-size: 28rpx;
 }
 .daypack-pill.primary {
-  background: $color-primary;
-  color: #fff;
+  background: var(--theme-accent, $color-primary);
+  color: var(--theme-on-accent, #fff);
 }
 .daypack-pill::after { border: none; }
 
 .preview-section {
   padding-top: 32rpx;
   padding-bottom: 32rpx;
-  background: $bg-muted;
+  background: var(--theme-page-soft, $bg-muted);
 }
 .preview-block {
-  background: $bg-surface;
+  background: var(--theme-surface, $bg-surface);
   border-radius: $card-radius;
   padding: 28rpx;
   margin-bottom: 20rpx;
-  border: 1rpx solid $border-color;
+  border: 1rpx solid var(--theme-border, $border-color);
 }
 .preview-block:last-child {
   margin-bottom: 0;
@@ -953,7 +958,7 @@ onUnmounted(() => {
   display: block;
   font-size: 30rpx;
   font-weight: 600;
-  color: $text-primary;
+  color: var(--theme-ink, $text-primary);
 }
 .preview-sub {
   display: block;
@@ -961,7 +966,7 @@ onUnmounted(() => {
   margin-top: 6rpx;
   font-size: 22rpx;
   line-height: 1.45;
-  color: $text-muted;
+  color: var(--theme-muted, $text-muted);
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -969,7 +974,7 @@ onUnmounted(() => {
 }
 .preview-more {
   font-size: 24rpx;
-  color: $color-primary;
+  color: var(--theme-accent, $color-primary);
 }
 .photo-strip {
   display: flex;
@@ -987,7 +992,7 @@ onUnmounted(() => {
 }
 .blessing-preview {
   padding: 20rpx 0;
-  border-top: 1rpx solid $border-color;
+  border-top: 1rpx solid var(--theme-border, $border-color);
 }
 .blessing-preview:first-of-type {
   border-top: none;
@@ -996,13 +1001,13 @@ onUnmounted(() => {
 .blessing-name {
   display: block;
   font-size: 24rpx;
-  color: $text-muted;
+  color: var(--theme-muted, $text-muted);
   margin-bottom: 8rpx;
 }
 .blessing-text {
   display: block;
   font-size: 28rpx;
-  color: $text-primary;
+  color: var(--theme-ink, $text-primary);
   line-height: 1.6;
   overflow: hidden;
   display: -webkit-box;
@@ -1027,7 +1032,7 @@ onUnmounted(() => {
 .quote-mark {
   font-size: 80rpx;
   line-height: 1;
-  color: $border-color;
+  color: var(--theme-border, $border-color);
   font-family: Georgia, serif;
 }
 .invitation-body {
@@ -1037,7 +1042,7 @@ onUnmounted(() => {
 .invitation-text {
   font-size: 32rpx;
   line-height: 2.2;
-  color: $text-primary;
+  color: var(--theme-ink, $text-primary);
   letter-spacing: 0;
   font-weight: 400;
 }
@@ -1056,14 +1061,14 @@ onUnmounted(() => {
 }
 .couple-label {
   font-size: 18rpx;
-  color: $text-muted;
+  color: var(--theme-muted, $text-muted);
   letter-spacing: 0;
 }
 .couple-name {
   font-size: 36rpx;
   font-weight: 600;
   letter-spacing: 0;
-  color: $text-primary;
+  color: var(--theme-ink, $text-primary);
 }
 .couple-divider {
   display: flex;
@@ -1074,12 +1079,12 @@ onUnmounted(() => {
 .couple-line {
   width: 1rpx;
   height: 20rpx;
-  background: $border-color;
+  background: var(--theme-border, $border-color);
 }
 .couple-heart {
   width: 10rpx;
   height: 10rpx;
-  background: $color-primary;
+  background: var(--theme-accent, $color-primary);
   transform: rotate(45deg);
   position: relative;
 }
@@ -1089,7 +1094,7 @@ onUnmounted(() => {
   position: absolute;
   width: 10rpx;
   height: 10rpx;
-  background: $color-primary;
+  background: var(--theme-accent, $color-primary);
   border-radius: 50%;
 }
 .couple-heart::before { left: -5rpx; top: 0; }
@@ -1097,7 +1102,7 @@ onUnmounted(() => {
 
 /* ========== 婚礼信息 ========== */
 .info-section {
-  background: $bg-muted;
+  background: var(--theme-page-soft, $bg-muted);
   padding-top: 80rpx;
   padding-bottom: calc(80rpx + env(safe-area-inset-bottom));
 }
@@ -1112,7 +1117,7 @@ onUnmounted(() => {
   flex: 1;
   max-width: 80rpx;
   height: 1rpx;
-  background: $border-color;
+  background: var(--theme-border, $border-color);
 }
 .header-text {
   display: flex;
@@ -1123,17 +1128,17 @@ onUnmounted(() => {
 .info-title {
   font-size: 36rpx;
   font-weight: 600;
-  color: $text-primary;
+  color: var(--theme-ink, $text-primary);
   letter-spacing: 0;
 }
 .info-sub {
   font-size: 20rpx;
-  color: $text-muted;
+  color: var(--theme-muted, $text-muted);
   letter-spacing: 0;
 }
 
 .info-list {
-  background: $bg-surface;
+  background: var(--theme-surface, $bg-surface);
   border-radius: $card-radius;
   overflow: hidden;
 }
@@ -1144,13 +1149,13 @@ onUnmounted(() => {
   transition: background 0.15s ease;
 }
 .info-row:active {
-  background: $bg-muted;
+  background: var(--theme-elevated, $bg-muted);
 }
 .info-icon-wrap {
   width: 72rpx;
   height: $control-height-sm;
   border-radius: 50%;
-  background: $bg-muted;
+  background: var(--theme-elevated, $bg-muted);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1167,14 +1172,14 @@ onUnmounted(() => {
 .info-label {
   display: block;
   font-size: 20rpx;
-  color: $text-muted;
+  color: var(--theme-muted, $text-muted);
   margin-bottom: 6rpx;
   letter-spacing: 0;
 }
 .info-value {
   display: block;
   font-size: 30rpx;
-  color: $text-primary;
+  color: var(--theme-ink, $text-primary);
   font-weight: 500;
   overflow: hidden;
   white-space: nowrap;
@@ -1183,7 +1188,7 @@ onUnmounted(() => {
 .info-address {
   display: block;
   font-size: 24rpx;
-  color: $text-secondary;
+  color: var(--theme-muted, $text-secondary);
   margin-top: 4rpx;
   overflow: hidden;
   display: -webkit-box;
@@ -1192,12 +1197,12 @@ onUnmounted(() => {
 }
 .info-action {
   font-size: 32rpx;
-  color: $text-muted;
+  color: var(--theme-muted, $text-muted);
   padding: 16rpx;
 }
 .info-divider {
   height: 1rpx;
-  background: $border-color;
+  background: var(--theme-border, $border-color);
   margin: 0 32rpx;
 }
 
@@ -1208,12 +1213,12 @@ onUnmounted(() => {
 .quick-title {
   font-size: 36rpx;
   font-weight: 600;
-  color: $text-primary;
+  color: var(--theme-ink, $text-primary);
   letter-spacing: 0;
 }
 .quick-sub {
   font-size: 20rpx;
-  color: $text-muted;
+  color: var(--theme-muted, $text-muted);
   letter-spacing: 0;
 }
 .quick-grid {
@@ -1227,13 +1232,13 @@ onUnmounted(() => {
   align-items: center;
   gap: 20rpx;
   padding: 32rpx 24rpx;
-  background: $bg-surface;
+  background: var(--theme-surface, $bg-surface);
   border-radius: $card-radius;
-  border: 1rpx solid $border-color;
+  border: 1rpx solid var(--theme-border, $border-color);
   transition: all 0.25s ease;
 }
 .quick-item:active {
-  background: $bg-muted;
+  background: var(--theme-elevated, $bg-muted);
   transform: scale(0.98);
 }
 .quick-icon {
@@ -1250,7 +1255,7 @@ onUnmounted(() => {
 .quick-label {
   display: block;
   font-size: 28rpx;
-  color: $text-primary;
+  color: var(--theme-ink, $text-primary);
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
@@ -1258,12 +1263,12 @@ onUnmounted(() => {
 }
 .quick-en {
   font-size: 18rpx;
-  color: $text-muted;
+  color: var(--theme-muted, $text-muted);
   letter-spacing: 0;
 }
 .quick-arrow {
   font-size: 28rpx;
-  color: $text-muted;
+  color: var(--theme-muted, $text-muted);
 }
 
 /* ========== 底部 ========== */
@@ -1275,13 +1280,13 @@ onUnmounted(() => {
 .footer-line {
   width: 40rpx;
   height: 1rpx;
-  background: $border-color;
+  background: var(--theme-border, $border-color);
   margin: 0 auto 32rpx;
 }
 .footer-text {
   display: block;
   font-size: 28rpx;
-  color: $text-primary;
+  color: var(--theme-ink, $text-primary);
   letter-spacing: 0;
   margin-bottom: 12rpx;
   font-weight: 500;
@@ -1289,7 +1294,7 @@ onUnmounted(() => {
 .footer-sub {
   display: block;
   font-size: 22rpx;
-  color: $text-muted;
+  color: var(--theme-muted, $text-muted);
   letter-spacing: 0;
   font-weight: 300;
 }
@@ -1319,15 +1324,15 @@ onUnmounted(() => {
 .float-btn.rsvp {
   flex: 1;
   min-width: 0;
-  background: $text-primary;
-  color: #fff;
+  background: var(--theme-accent, $text-primary);
+  color: var(--theme-on-accent, #fff);
   box-shadow: $shadow-sm;
 }
 .float-btn.share {
   width: 88rpx;
-  background: $bg-surface;
-  color: $text-primary;
-  border: 1rpx solid $border-color;
+  background: var(--theme-surface, $bg-surface);
+  color: var(--theme-ink, $text-primary);
+  border: 1rpx solid var(--theme-border, $border-color);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1345,8 +1350,8 @@ onUnmounted(() => {
   width: $tap-min-height;
   height: $tap-min-height;
   border-radius: 50%;
-  background: rgba(255,255,255,0.9);
-  border: 1rpx solid $border-color;
+  background: var(--theme-surface, rgba(255,255,255,0.9));
+  border: 1rpx solid var(--theme-border, $border-color);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1497,6 +1502,131 @@ onUnmounted(() => {
   }
   .photo-thumb {
     border-radius: 8rpx;
+  }
+}
+
+.theme-rose,
+.theme-champagne,
+.theme-noir,
+.theme-garden,
+.theme-heritage,
+.theme-shandong,
+.theme-travel {
+  background: var(--theme-page, $bg-color);
+
+  .hero,
+  .hero-image.default {
+    background: var(--theme-hero-bg, #fcf6f0);
+    opacity: var(--theme-default-cover-opacity, 1);
+  }
+
+  .hero-image {
+    filter: var(--theme-hero-filter, none);
+  }
+
+  .hero-gradient {
+    background: var(--theme-hero-overlay);
+  }
+
+  .daypack-section,
+  .preview-section,
+  .info-section {
+    background: var(--theme-page-soft, $bg-muted);
+  }
+
+  .invitation-section,
+  .quick-section,
+  .footer-section {
+    background: var(--theme-page, $bg-color);
+  }
+
+  .daypack-title,
+  .mini-value,
+  .preview-title,
+  .blessing-text,
+  .invitation-text,
+  .couple-name,
+  .info-title,
+  .info-value,
+  .quick-title,
+  .quick-label,
+  .footer-text {
+    color: var(--theme-ink, $text-primary);
+  }
+
+  .daypack-template,
+  .mini-label,
+  .preview-sub,
+  .blessing-name,
+  .couple-label,
+  .info-sub,
+  .info-label,
+  .info-address,
+  .quick-sub,
+  .quick-en,
+  .footer-sub,
+  .quick-arrow {
+    color: var(--theme-muted, $text-muted);
+  }
+
+  .daypack-kicker,
+  .preview-more {
+    color: var(--theme-accent, $color-primary);
+  }
+
+  .hero-divider,
+  .daypack-pill.primary,
+  .float-btn.rsvp,
+  .couple-heart,
+  .couple-heart::before,
+  .couple-heart::after {
+    background: var(--theme-accent, $color-primary);
+    color: var(--theme-on-accent, #fff);
+  }
+
+  .daypack-card.primary {
+    background: var(--theme-strong-bg, $text-primary);
+    border-color: var(--theme-strong-border, transparent);
+  }
+
+  .daypack-label,
+  .daypack-sub {
+    color: var(--theme-strong-muted, rgba(255,255,255,0.68));
+  }
+
+  .daypack-value {
+    color: var(--theme-strong-ink, #fff);
+  }
+
+  .daypack-action {
+    background: var(--theme-strong-soft, rgba(255,255,255,0.14));
+    color: var(--theme-strong-ink, #fff);
+  }
+
+  .daypack-mini,
+  .daypack-pill,
+  .info-icon-wrap {
+    background: var(--theme-elevated, $bg-muted);
+  }
+
+  .preview-block,
+  .info-list,
+  .quick-item,
+  .float-btn.share,
+  .music-control {
+    background: var(--theme-surface, $bg-surface);
+    border-color: var(--theme-border, $border-color);
+  }
+
+  .header-line,
+  .footer-line,
+  .couple-line,
+  .info-divider {
+    background: var(--theme-border, $border-color);
+  }
+
+  .blessing-preview {
+    border-top-color: var(--theme-border, $border-color);
   }
 }
 </style>

@@ -7,6 +7,7 @@ export const WEDDING_TEMPLATES = [
     desc: '红金、近黑、大片封面，仪式感最强，默认主推',
     kicker: 'LUXURY ROSE WEDDING',
     className: 'tpl-rose',
+    themeClass: 'theme-rose',
     accent: '#B03A5B',
     surface: '#1A1A1A',
     preview: 'linear-gradient(145deg, #4B111E 0%, #B03A5B 52%, #C9A96E 100%)',
@@ -56,6 +57,7 @@ export const WEDDING_TEMPLATES = [
     desc: '浅色、拱门、杂志排版，轻盈干净',
     kicker: 'MODERN CEREMONY',
     className: 'tpl-champagne',
+    themeClass: 'theme-champagne',
     accent: '#A4783B',
     surface: '#F7EEE4',
     preview: 'linear-gradient(145deg, #F7EEE4 0%, #FFFFFF 52%, #C9A96E 100%)',
@@ -104,6 +106,7 @@ export const WEDDING_TEMPLATES = [
     desc: '强对比、夜宴灯光、黑金卡片，第一眼更戏剧',
     kicker: 'BLACK TIE BANQUET',
     className: 'tpl-noir',
+    themeClass: 'theme-noir',
     accent: '#C9A96E',
     surface: '#111111',
     preview: 'linear-gradient(145deg, #050505 0%, #2C2C2C 58%, #C9A96E 100%)',
@@ -152,6 +155,7 @@ export const WEDDING_TEMPLATES = [
     desc: '自然、胶片、生活感，照片故事性强',
     kicker: 'GARDEN FILM',
     className: 'tpl-garden',
+    themeClass: 'theme-garden',
     accent: '#6F7E5D',
     surface: '#F5F6EF',
     preview: 'linear-gradient(145deg, #EAF0E2 0%, #FFFFFF 54%, #6F7E5D 100%)',
@@ -200,6 +204,7 @@ export const WEDDING_TEMPLATES = [
     desc: '红金、留白、礼序感，适合重视敬茶改口和家庭仪式的婚礼',
     kicker: '中式礼宴',
     className: 'tpl-rose',
+    themeClass: 'theme-heritage',
     accent: '#A8323E',
     surface: '#FAF6EF',
     preview: 'linear-gradient(145deg, #8A1F2D 0%, #FAF6EF 54%, #C9A96E 100%)',
@@ -249,6 +254,7 @@ export const WEDDING_TEMPLATES = [
     desc: '体面、明白、节俭有礼，强调接亲路线、席设地点和回门安排',
     kicker: '喜宴手册',
     className: 'tpl-champagne',
+    themeClass: 'theme-shandong',
     accent: '#A4783B',
     surface: '#FBF7F1',
     preview: 'linear-gradient(145deg, #F9E4D2 0%, #FFFFFF 48%, #A4783B 100%)',
@@ -299,6 +305,7 @@ export const WEDDING_TEMPLATES = [
     desc: '把住宿、交通、停车和到达时间放在前面，适合外地亲友多的婚礼',
     kicker: '宾客路书',
     className: 'tpl-garden',
+    themeClass: 'theme-travel',
     accent: '#506247',
     surface: '#F5F6EF',
     preview: 'linear-gradient(145deg, #E7EFE0 0%, #FFFFFF 50%, #506247 100%)',
@@ -361,7 +368,86 @@ export function getWeddingTemplate(id) {
 }
 
 export function getTemplateClass(id) {
-  return getWeddingTemplate(id).className
+  const template = getWeddingTemplate(id)
+  return [template.className, template.themeClass].filter(Boolean).join(' ')
+}
+
+const POSTER_THEME_MAP = {
+  'theme-rose': {
+    background: ['#4B111E', '#1A0A10', '#0D0507'],
+    photoOverlay: 'rgba(22, 6, 10, 0.58)',
+    text: '#FFFFFF',
+    muted: 'rgba(255, 255, 255, 0.58)',
+    faint: 'rgba(255, 255, 255, 0.18)',
+    line: 'rgba(255, 255, 255, 0.14)',
+    accent: '#C9A96E',
+    qrText: 'rgba(0, 0, 0, 0.34)'
+  },
+  'theme-champagne': {
+    background: ['#FBF7F1', '#F7EEE4', '#E6D0B3'],
+    photoOverlay: 'rgba(251, 247, 241, 0.74)',
+    text: '#2A2118',
+    muted: 'rgba(42, 33, 24, 0.58)',
+    faint: 'rgba(42, 33, 24, 0.18)',
+    line: 'rgba(164, 120, 59, 0.22)',
+    accent: '#A4783B',
+    qrText: 'rgba(42, 33, 24, 0.46)'
+  },
+  'theme-noir': {
+    background: ['#050505', '#171717', '#050505'],
+    photoOverlay: 'rgba(0, 0, 0, 0.62)',
+    text: '#FFFFFF',
+    muted: 'rgba(255, 255, 255, 0.58)',
+    faint: 'rgba(255, 255, 255, 0.16)',
+    line: 'rgba(201, 169, 110, 0.22)',
+    accent: '#C9A96E',
+    qrText: 'rgba(0, 0, 0, 0.34)'
+  },
+  'theme-garden': {
+    background: ['#F5F6EF', '#E9EFE2', '#506247'],
+    photoOverlay: 'rgba(245, 246, 239, 0.66)',
+    text: '#1F2B1F',
+    muted: 'rgba(31, 43, 31, 0.58)',
+    faint: 'rgba(31, 43, 31, 0.16)',
+    line: 'rgba(80, 98, 71, 0.22)',
+    accent: '#506247',
+    qrText: 'rgba(31, 43, 31, 0.44)'
+  },
+  'theme-heritage': {
+    background: ['#7D1F2B', '#2A090C', '#FAF6EF'],
+    photoOverlay: 'rgba(35, 9, 10, 0.58)',
+    text: '#FFFFFF',
+    muted: 'rgba(255, 255, 255, 0.64)',
+    faint: 'rgba(255, 255, 255, 0.18)',
+    line: 'rgba(201, 169, 110, 0.26)',
+    accent: '#C9A96E',
+    qrText: 'rgba(0, 0, 0, 0.34)'
+  },
+  'theme-shandong': {
+    background: ['#FBF7F1', '#F4E7D8', '#D7B98A'],
+    photoOverlay: 'rgba(251, 247, 241, 0.76)',
+    text: '#2B2118',
+    muted: 'rgba(43, 33, 24, 0.58)',
+    faint: 'rgba(43, 33, 24, 0.16)',
+    line: 'rgba(164, 120, 59, 0.24)',
+    accent: '#A4783B',
+    qrText: 'rgba(43, 33, 24, 0.46)'
+  },
+  'theme-travel': {
+    background: ['#F5F6EF', '#E9EFE2', '#354832'],
+    photoOverlay: 'rgba(245, 246, 239, 0.70)',
+    text: '#1D2A1F',
+    muted: 'rgba(29, 42, 31, 0.58)',
+    faint: 'rgba(29, 42, 31, 0.16)',
+    line: 'rgba(80, 98, 71, 0.24)',
+    accent: '#506247',
+    qrText: 'rgba(29, 42, 31, 0.44)'
+  }
+}
+
+export function getTemplatePosterTheme(id) {
+  const template = getWeddingTemplate(id)
+  return POSTER_THEME_MAP[template.themeClass] || POSTER_THEME_MAP[template.className] || POSTER_THEME_MAP['theme-rose']
 }
 
 export function buildTemplateTimeline(templateId, mainVenueId = 'main-venue') {
