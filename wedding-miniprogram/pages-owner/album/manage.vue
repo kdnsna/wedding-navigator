@@ -51,6 +51,7 @@ const uploading = ref(false)
 const refreshing = ref(false)
 
 const uploadProgress = ref({ current: 0, total: 0 })
+const MAX_UPLOAD_COUNT = 9
 
 async function chooseImage() {
   if (uploading.value) return
@@ -105,7 +106,7 @@ async function chooseImage() {
     }
   } catch (err) {
     console.error('照片上传失败:', err)
-    showError(err?.message || '上传失败，请重试')
+    showUploadError(err)
   } finally {
     hideLoading()
     uploading.value = false
@@ -115,14 +116,22 @@ async function chooseImage() {
 
 function chooseAlbumImages() {
   return new Promise((resolve, reject) => {
-    uni.chooseImage({
-      count: 9,
-      sizeType: ['compressed'],
+    const chooseImageApi = getChooseImageApi()
+    if (!chooseImageApi) {
+      reject(new Error('当前环境不支持选择照片，请在微信小程序中重试'))
+      return
+    }
+
+    chooseImageApi({
+      count: MAX_UPLOAD_COUNT,
+      sizeType: ['compressed', 'original'],
       sourceType: ['album', 'camera'],
       success: (res) => {
-        const paths = (res.tempFilePaths || [])
-          .concat((res.tempFiles || []).map(item => item.tempFilePath || item.path))
-          .filter(Boolean)
+        const paths = extractChosenImagePaths(res)
+        if (!paths.length) {
+          reject(new Error('未获取到照片路径，请重新选择'))
+          return
+        }
         resolve([...new Set(paths)])
       },
       fail: (err) => {
@@ -134,6 +143,29 @@ function chooseAlbumImages() {
   })
 }
 
+function getChooseImageApi() {
+  if (typeof wx !== 'undefined' && typeof wx.chooseImage === 'function') {
+    return wx.chooseImage.bind(wx)
+  }
+  if (typeof uni !== 'undefined' && typeof uni.chooseImage === 'function') {
+    return uni.chooseImage.bind(uni)
+  }
+  return null
+}
+
+function extractChosenImagePaths(res = {}) {
+  const fromPaths = Array.isArray(res.tempFilePaths) ? res.tempFilePaths : []
+  const fromFiles = Array.isArray(res.tempFiles)
+    ? res.tempFiles.map(item => {
+      if (typeof item === 'string') return item
+      return item?.tempFilePath || item?.path || item?.thumbTempFilePath || ''
+    })
+    : []
+  return [...fromPaths, ...fromFiles]
+    .map(item => String(item || '').trim())
+    .filter(Boolean)
+}
+
 function normalizeChooseImageError(message = '') {
   if (message.includes('auth') || message.includes('permission') || message.includes('denied')) {
     return '选择照片失败，请检查微信相册权限'
@@ -142,6 +174,19 @@ function normalizeChooseImageError(message = '') {
     return '选择照片失败，请稍后重试'
   }
   return message || '选择照片失败，请重试'
+}
+
+function showUploadError(err) {
+  const message = err?.message || '上传失败，请重试'
+  if (message.length > 14 || message.includes('云') || message.includes('权限')) {
+    uni.showModal({
+      title: '上传失败',
+      content: message,
+      showCancel: false
+    })
+    return
+  }
+  showError(message)
 }
 
 function buildAlbumCloudPath(localPath, id) {

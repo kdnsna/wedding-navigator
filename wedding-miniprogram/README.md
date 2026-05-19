@@ -29,7 +29,7 @@ P2 大众化/商业化基础已完成第一版：
 - 模板配置新增 `tier` 与 `commercial` 字段，创建向导和婚书编辑会展示免费/高级模板状态，并把商业化状态写入云端
 - 发布检查脚本已加入账号、权益、诊断和模板分层断言，避免后续迭代漏掉 P2 基础设施
 
-相册上传稳定性修复：主人端相册页已移除不稳定的 `wx.chooseMedia` 兜底，统一使用 `uni.chooseImage` 选择图片，避免部分机型或开发者工具反复出现 `chooseMedia:fail`。
+相册上传稳定性修复：主人端相册页已移除不稳定的 `wx.chooseMedia` 兜底，优先使用微信原生 `wx.chooseImage`、再回退到 `uni.chooseImage`，并在上传前同时确保 `wx.cloud` 与 `uni.cloud` 已初始化，避免部分机型出现“选图成功但云存储上传失败”。
 
 地图、天气、地理编码和海报链路继续补强：
 
@@ -340,6 +340,7 @@ MINIPROGRAM_PRIVATE_KEY_PATH=/path/to/private.key npm run upload:mp-weixin
 - 已部署 `deleteWedding`，并在主人端管理后台验证删除后旧邀请链接失效、新建向导可重新打开
 - 已部署 `geocodeVenue`，并为 `geocodeVenue`、`getWeather` 配置 `TENCENT_MAP_KEY` 后验证场地能自动匹配地图和天气
 - 已部署 `generatePoster`，并在主人端“分享设置”验证小程序码能展示，扫码能进入对应婚礼
+- 已在主人端相册页验证选择照片、云存储上传、相册数据保存和失败回滚；如失败，应能看到明确的云开发/权限/网络错误提示
 - 如自动地理编码不可用，已在主人端路书手动填写经纬度并验证宾客端导航可打开
 - 数据库集合已创建：`owners`、`weddings`、`invitations`、`albums`、`venues`、`timelines`、`guests`、`blessings`、`share_stats`、`viewers`
 - 数据库索引已创建：`viewers.wedding_id + viewers.openid`、`guests.guests.phone`、`blessings.blessings.id`
