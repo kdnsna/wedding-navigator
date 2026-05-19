@@ -28,6 +28,8 @@
           @click="selectTemplate(tpl)"
         >
           <view class="template-visual" :style="{ background: tpl.preview }">
+            <image class="template-hero-thumb" :src="tpl.defaultHero" mode="aspectFill" />
+            <view class="template-visual-shade" />
             <text class="template-kicker">{{ tpl.kicker }}</text>
             <text class="template-monogram">{{ tpl.shortName }}</text>
             <view class="template-line" />
@@ -438,6 +440,8 @@ onShow(() => {
   width: 180rpx;
   min-height: 232rpx;
   border-radius: $card-radius;
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -446,7 +450,26 @@ onShow(() => {
   box-shadow: inset 0 0 0 1rpx rgba(255,255,255,0.34);
   box-sizing: border-box;
 }
+.template-hero-thumb,
+.template-visual-shade {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+}
+.template-hero-thumb {
+  z-index: 0;
+}
+.template-visual-shade {
+  z-index: 1;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.12), rgba(0,0,0,0.36) 54%, rgba(0,0,0,0.62));
+}
 .template-kicker {
+  position: relative;
+  z-index: 2;
   color: #fff;
   font-size: 15rpx;
   letter-spacing: 0;
@@ -454,17 +477,23 @@ onShow(() => {
   opacity: 0.76;
 }
 .template-monogram {
+  position: relative;
+  z-index: 2;
   color: #fff;
   font-size: 34rpx;
   font-weight: 600;
   line-height: 1.2;
 }
 .template-line {
+  position: relative;
+  z-index: 2;
   width: 56rpx;
   height: 2rpx;
   background: rgba(255,255,255,0.72);
 }
 .template-venue {
+  position: relative;
+  z-index: 2;
   color: rgba(255,255,255,0.82);
   font-size: 18rpx;
   line-height: 1.3;

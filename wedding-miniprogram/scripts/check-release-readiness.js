@@ -161,6 +161,9 @@ function checkTemplateSystem() {
   assertIncludes('utils/templates.js', 'noir-banquet', 'templates must include noir banquet')
   assertIncludes('utils/templates.js', 'garden-film', 'templates must include garden film')
   assertIncludes('utils/templates.js', 'themeClass', 'templates must expose a theme class beyond the legacy tpl class')
+  assertIncludes('utils/templates.js', 'TEMPLATE_HERO_IMAGES', 'templates must define photorealistic default hero images')
+  assertIncludes('utils/templates.js', 'defaultHero', 'templates must bind a default hero image to each template')
+  assertIncludes('utils/templates.js', 'getTemplateHeroImage', 'templates must expose a reusable hero image resolver')
   assertIncludes('utils/templates.js', 'getTemplatePosterTheme', 'templates must expose poster colors for template-aligned sharing')
   assertIncludes('utils/templates.js', 'buildTemplatePreviewData', 'templates must provide filled mock data for full previews')
   assertIncludes('uni.scss', '--theme-hero-overlay', 'global design tokens must include template hero overlays')
@@ -174,10 +177,12 @@ function checkTemplateSystem() {
   assertIncludes('pages-owner/invitation/edit.vue', 'WEDDING_TEMPLATES', 'invitation editor must use shared template definitions')
   assertIncludes('pages-owner/invitation/edit.vue', 'previewTemplate', 'invitation editor must preview the currently selected template before saving')
   assertIncludes('pages-owner/template/preview.vue', 'buildTemplatePreviewData', 'template preview page must render mock wedding data')
+  assertIncludes('pages-owner/template/preview.vue', 'previewHeroImage', 'template preview page must render the template hero image')
   assertIncludes('pages-owner/template/preview.vue', 'RSVP CARD', 'template preview page must show RSVP mock state')
   assertIncludes('pages-owner/template/preview.vue', '祝福墙', 'template preview page must show blessing wall mock state')
   assertIncludes('pages-owner/invitation/edit.vue', 'applyTemplatePreset', 'invitation editor must expose built-in template preset copy')
   assertIncludes('pages/index/index.vue', 'templateClass', 'home page must apply template styling')
+  assertIncludes('pages/index/index.vue', 'getTemplateHeroImage', 'home page must fall back to the active template hero image')
   assertIncludes('pages/index/index.vue', '--theme-hero-overlay', 'home page must use template-aware hero image overlays')
   assertIncludes('pages/index/index.vue', "const coverImageMode = computed(() => 'aspectFill')", 'home page must fill narrow default covers without visible side bars')
   assertIncludes('pages/guide/index.vue', '--theme-panel-gradient', 'guide page must use template-aware panel colors')
@@ -185,6 +190,7 @@ function checkTemplateSystem() {
   assertIncludes('pages/rsvp/index.vue', 'rsvp-brief', 'RSVP page must show a template-aware wedding brief')
   assertIncludes('pages/album/index.vue', 'activeTemplate.albumMood', 'album page must adapt copy to the active template')
   assertIncludes('utils/posterCanvas.js', 'getTemplatePosterTheme', 'poster canvas must draw with the active template palette')
+  assertIncludes('utils/posterCanvas.js', 'getTemplateHeroImage', 'poster canvas must use template hero images when no album cover exists')
   assertIncludes('pages-owner/album/manage.vue', 'chooseAlbumImages', 'album manager must handle modern WeChat image selection')
   assert(!read('pages-owner/album/manage.vue').includes('chooseMedia'), 'album manager must avoid flaky wx.chooseMedia and use uni.chooseImage')
   assertIncludes('pages-owner/album/manage.vue', 'buildAlbumCloudPath', 'album manager must upload into wedding-scoped cloud paths')
@@ -263,6 +269,7 @@ function checkReleaseDocs() {
   assert(readme.includes('Node.js 20 LTS'), 'README must document Node.js 20 LTS')
   assert(readme.includes('发布前检查清单'), 'README must include a release checklist')
   assert(readme.includes('P2 大众化/商业化'), 'README must document P2 commercialization foundations')
+  assert(readme.includes('写实模板主图'), 'README must document photorealistic template hero images')
   assert(readme.includes('syncOwnerProfile'), 'README must document owner profile sync deployment')
 }
 
@@ -279,6 +286,36 @@ function assertPngSize(file, width, height) {
   assert(size.width === width && size.height === height, `${file}: expected ${width}x${height}, got ${size.width}x${size.height}`)
 }
 
+function readJpegSize(file) {
+  const abs = path.join(root, file)
+  assert(fs.existsSync(abs), `visual asset is missing: ${file}`)
+  const buf = fs.readFileSync(abs)
+  assert(buf[0] === 0xFF && buf[1] === 0xD8, `${file}: must be a JPEG image`)
+
+  let offset = 2
+  while (offset < buf.length - 9) {
+    if (buf[offset] !== 0xFF) {
+      offset += 1
+      continue
+    }
+    const marker = buf[offset + 1]
+    const length = buf.readUInt16BE(offset + 2)
+    if (marker >= 0xC0 && marker <= 0xC3) {
+      return {
+        height: buf.readUInt16BE(offset + 5),
+        width: buf.readUInt16BE(offset + 7)
+      }
+    }
+    offset += 2 + length
+  }
+  throw new Error(`${file}: could not read JPEG dimensions`)
+}
+
+function assertJpegSize(file, width, height) {
+  const size = readJpegSize(file)
+  assert(size.width === width && size.height === height, `${file}: expected ${width}x${height}, got ${size.width}x${size.height}`)
+}
+
 function readSvg(file, viewBox) {
   const abs = path.join(root, file)
   assert(fs.existsSync(abs), `vector asset is missing: ${file}`)
@@ -290,6 +327,19 @@ function readSvg(file, viewBox) {
 
 function checkVisualAssets() {
   assertPngSize('static/visuals/default-cover.png', 640, 1349)
+
+  const expectedHeroImages = [
+    'hero-rose-couture.jpg',
+    'hero-champagne-editorial.jpg',
+    'hero-noir-banquet.jpg',
+    'hero-garden-film.jpg',
+    'hero-heritage-ritual.jpg',
+    'hero-shandong-family.jpg',
+    'hero-travel-friendly.jpg'
+  ]
+  for (const file of expectedHeroImages) {
+    assertJpegSize(`static/visuals/hero/${file}`, 750, 1334)
+  }
 
   const visualsDir = path.join(root, 'static/visuals')
   const visualFiles = fs.readdirSync(visualsDir).filter(name => name.endsWith('.png'))
@@ -312,7 +362,7 @@ function checkVisualAssets() {
   }
 
   const files = walk(root).filter(file => /\.(vue|js|json)$/.test(file))
-  const visualRefPattern = /['"]((?:\/|@\/)?static\/visuals\/[^'"]+\.(?:png|svg))['"]/g
+  const visualRefPattern = /['"]((?:\/|@\/)?static\/visuals\/[^'"]+\.(?:png|svg|jpe?g))['"]/g
   for (const abs of files) {
     const rel = path.relative(root, abs)
     const source = read(rel)

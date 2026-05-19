@@ -18,6 +18,8 @@
           @click="selectTemplate(tpl)"
         >
           <view class="template-preview" :style="{ background: tpl.preview }">
+            <image class="template-hero-thumb" :src="tpl.defaultHero" mode="aspectFill" />
+            <view class="template-preview-shade" />
             <text class="template-kicker">{{ tpl.kicker }}</text>
             <text class="template-text">{{ tpl.shortName }}</text>
             <text class="template-tier" :class="{ premium: isTemplatePremium(tpl) }">{{ getTemplateTierLabel(tpl) }}</text>
@@ -467,7 +469,26 @@ onShow(() => {
   box-sizing: border-box;
   position: relative;
 }
+.template-hero-thumb,
+.template-preview-shade {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+}
+.template-hero-thumb {
+  z-index: 0;
+}
+.template-preview-shade {
+  z-index: 1;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.10), rgba(0,0,0,0.30) 50%, rgba(0,0,0,0.58));
+}
 .template-kicker {
+  position: relative;
+  z-index: 2;
   display: block;
   font-size: 16rpx;
   color: rgba(255,255,255,0.72);
@@ -477,6 +498,8 @@ onShow(() => {
   white-space: normal;
 }
 .template-text {
+  position: relative;
+  z-index: 2;
   font-size: 30rpx;
   font-weight: 600;
   color: #fff;
@@ -484,6 +507,7 @@ onShow(() => {
 }
 .template-tier {
   position: absolute;
+  z-index: 2;
   left: 18rpx;
   bottom: 18rpx;
   padding: 5rpx 12rpx;

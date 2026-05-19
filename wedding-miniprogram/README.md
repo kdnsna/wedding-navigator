@@ -345,6 +345,7 @@ MINIPROGRAM_PRIVATE_KEY_PATH=/path/to/private.key npm run upload:mp-weixin
 - 数据库索引已创建：`viewers.wedding_id + viewers.openid`、`guests.guests.phone`、`blessings.blessings.id`
 - 已运行 `npm run check:release` 并通过
 - 已运行 `npm run build:mp-weixin`，并确认 `dist/build/mp-weixin` 可由微信开发者工具打开
+- 已确认 7 张写实模板主图存在于 `static/visuals/hero/`，首页、模板预览和分享海报在未上传相册封面时能正常兜底展示
 - 如使用 CLI 上传，已设置 `MINIPROGRAM_PRIVATE_KEY_PATH`，且未把上传密钥路径写入仓库
 - 在微信开发者工具中完成首页宾客行动台、RSVP 新字段、祝福墙、到场助手、管理后台发布准备度、宾客管理、统计页的模拟器检查
 - 在主人端“发布诊断”页确认无阻断项；天气 Key、小程序码、内容安全策略等人工项已真机验证
@@ -362,6 +363,8 @@ MINIPROGRAM_PRIVATE_KEY_PATH=/path/to/private.key npm run upload:mp-weixin
 - **异地宾客友好**：清爽白底 + 蓝绿点缀，强调到达时间、交通、住宿、天气和提醒
 
 模板配置集中在 `utils/templates.js`，创建向导会先展示模板并套用对应预设文案、流程角色、路书提示和默认场地信息，婚书编辑、首页、RSVP、相册、路书、流程和更多页都会读取同一份模板配置。
+
+写实模板主图集中在 `static/visuals/hero/`，并通过 `TEMPLATE_HERO_IMAGES` / `defaultHero` 绑定到每套模板。首页封面、完整模板预览和 Canvas 分享海报会优先使用用户上传的相册封面；没有上传时才使用当前模板的竖版婚纱照兜底，旧的 `default-cover.png` 仅保留为极端兜底。
 
 模板商业化配置集中在 `utils/commercial.js` 与 `utils/templates.js`：
 

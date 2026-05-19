@@ -28,8 +28,8 @@
       <view class="phone-screen">
         <view v-if="activeTab === 'home'" class="mock-page mock-home">
           <view class="mock-hero">
-            <image class="mock-cover-bg" src="/static/visuals/default-cover.png" mode="aspectFill" />
-            <image class="mock-cover" src="/static/visuals/default-cover.png" mode="aspectFit" />
+            <image class="mock-cover-bg" :src="previewHeroImage" mode="aspectFill" />
+            <image class="mock-cover" :src="previewHeroImage" mode="aspectFill" />
             <view class="mock-hero-overlay" />
             <view class="mock-hero-text">
               <text class="mock-kicker">{{ preview.template.kicker }}</text>
@@ -175,7 +175,7 @@
 
         <view v-if="activeTab === 'poster'" class="mock-page">
           <view class="poster-mock">
-            <image class="poster-bg" src="/static/visuals/default-cover.png" mode="aspectFill" />
+            <image class="poster-bg" :src="previewHeroImage" mode="aspectFill" />
             <view class="poster-overlay" />
             <view class="poster-content">
               <text class="mock-kicker">WEDDING INVITATION</text>
@@ -231,6 +231,7 @@ const tabs = [
 ]
 
 const preview = computed(() => buildTemplatePreviewData(templateId.value))
+const previewHeroImage = computed(() => preview.value.template.defaultHero || '/static/visuals/default-cover.png')
 
 function formatDate(date) {
   if (!date) return '日期待定'

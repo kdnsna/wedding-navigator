@@ -1,5 +1,5 @@
 import { resolveImagePath } from '@/utils/imagePaths.js'
-import { getTemplatePosterTheme } from '@/utils/templates.js'
+import { getTemplateHeroImage, getTemplatePosterTheme } from '@/utils/templates.js'
 
 // 画布尺寸：设计稿 750x1334，页面上按 375x667 逻辑像素渲染。
 export const POSTER_CANVAS_WIDTH = 375
@@ -45,7 +45,10 @@ export async function drawWeddingPoster({ instance, store, qrCodePath = '' }) {
   const H = POSTER_CANVAS_HEIGHT
   const theme = getTemplatePosterTheme(store.invitation?.template)
 
-  const bgPath = await resolveImagePath(store.album?.photos?.[0]?.url || '', 'poster_bg')
+  const bgPath = await resolveImagePath(
+    store.album?.photos?.[0]?.url || getTemplateHeroImage(store.invitation?.template),
+    'poster_bg'
+  )
 
   if (bgPath) {
     ctx.drawImage(bgPath, 0, 0, W, H)

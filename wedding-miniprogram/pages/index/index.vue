@@ -8,7 +8,7 @@
         :src="coverImage"
         :mode="coverImageMode"
       />
-      <view class="hero-gradient" :class="{ default: isDefaultCover }" />
+      <view class="hero-gradient" :class="{ default: isLegacyDefaultCover }" />
       <text class="xi-watermark">囍</text>
       <view class="hero-content">
         <text class="hero-tag animate-fade-in delay-2">{{ activeTemplate.kicker }}</text>
@@ -263,6 +263,7 @@ import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { fetchWedding, recordShare, recordView } from '@/composables/useCloud.js'
 import { formatDate, getWeekDay } from '@/utils/index.js'
+import { getTemplateHeroImage } from '@/utils/templates.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
@@ -317,9 +318,11 @@ function onPageTap() {
 const coverImage = computed(() => {
   const photos = store.album?.photos || []
   const cover = photos.find(p => p.type === 'cover')
-  return cover?.url || photos[0]?.url || '/static/visuals/default-cover.png'
+  return cover?.url || photos[0]?.url || getTemplateHeroImage(store.invitation?.template) || '/static/visuals/default-cover.png'
 })
-const isDefaultCover = computed(() => coverImage.value === '/static/visuals/default-cover.png')
+const isGeneratedTemplateCover = computed(() => String(coverImage.value || '').startsWith('/static/visuals/hero/'))
+const isLegacyDefaultCover = computed(() => coverImage.value === '/static/visuals/default-cover.png')
+const isDefaultCover = computed(() => isGeneratedTemplateCover.value || isLegacyDefaultCover.value)
 const coverImageMode = computed(() => 'aspectFill')
 
 const groomName = computed(() => store.invitation?.couple?.groom?.name || '新郎')

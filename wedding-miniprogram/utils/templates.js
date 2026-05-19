@@ -1,3 +1,13 @@
+export const TEMPLATE_HERO_IMAGES = {
+  'rose-couture': '/static/visuals/hero/hero-rose-couture.jpg',
+  'champagne-editorial': '/static/visuals/hero/hero-champagne-editorial.jpg',
+  'noir-banquet': '/static/visuals/hero/hero-noir-banquet.jpg',
+  'garden-film': '/static/visuals/hero/hero-garden-film.jpg',
+  'heritage-ritual': '/static/visuals/hero/hero-heritage-ritual.jpg',
+  'shandong-family': '/static/visuals/hero/hero-shandong-family.jpg',
+  'travel-friendly': '/static/visuals/hero/hero-travel-friendly.jpg'
+}
+
 export const WEDDING_TEMPLATES = [
   {
     id: 'rose-couture',
@@ -11,6 +21,7 @@ export const WEDDING_TEMPLATES = [
     accent: '#B03A5B',
     surface: '#1A1A1A',
     preview: 'linear-gradient(145deg, #4B111E 0%, #B03A5B 52%, #C9A96E 100%)',
+    defaultHero: TEMPLATE_HERO_IMAGES['rose-couture'],
     photoMood: '建议使用竖版主封面，人物居中偏上，留出底部文字空间',
     albumMood: '高定相册',
     copy: '适合酒店、宴会厅、正式仪式和大多数婚礼场景',
@@ -61,6 +72,7 @@ export const WEDDING_TEMPLATES = [
     accent: '#A4783B',
     surface: '#F7EEE4',
     preview: 'linear-gradient(145deg, #F7EEE4 0%, #FFFFFF 52%, #C9A96E 100%)',
+    defaultHero: TEMPLATE_HERO_IMAGES['champagne-editorial'],
     photoMood: '建议使用浅色、户外或白纱照片，画面保留自然留白',
     albumMood: '杂志影像',
     copy: '适合草坪、极简、白绿色或香槟色婚礼',
@@ -110,6 +122,7 @@ export const WEDDING_TEMPLATES = [
     accent: '#C9A96E',
     surface: '#111111',
     preview: 'linear-gradient(145deg, #050505 0%, #2C2C2C 58%, #C9A96E 100%)',
+    defaultHero: TEMPLATE_HERO_IMAGES['noir-banquet'],
     photoMood: '建议使用夜景、宴会厅、灯光或黑礼服照片',
     albumMood: '晚宴片场',
     copy: '适合晚宴、酒店宴会厅、高级餐厅和黑金主题',
@@ -159,6 +172,7 @@ export const WEDDING_TEMPLATES = [
     accent: '#6F7E5D',
     surface: '#F5F6EF',
     preview: 'linear-gradient(145deg, #EAF0E2 0%, #FFFFFF 54%, #6F7E5D 100%)',
+    defaultHero: TEMPLATE_HERO_IMAGES['garden-film'],
     photoMood: '建议使用草坪、花园、旅拍或自然光照片',
     albumMood: '胶片故事',
     copy: '适合户外、草坪、旅拍和温柔生活感婚礼',
@@ -208,6 +222,7 @@ export const WEDDING_TEMPLATES = [
     accent: '#A8323E',
     surface: '#FAF6EF',
     preview: 'linear-gradient(145deg, #8A1F2D 0%, #FAF6EF 54%, #C9A96E 100%)',
+    defaultHero: TEMPLATE_HERO_IMAGES['heritage-ritual'],
     photoMood: '建议使用中式礼服、敬茶或家宴场景照片，画面要端正、留白充足',
     albumMood: '礼序影像',
     copy: '适合中式礼服、敬茶改口、证婚和家庭仪式感较强的婚礼',
@@ -258,6 +273,7 @@ export const WEDDING_TEMPLATES = [
     accent: '#A4783B',
     surface: '#FBF7F1',
     preview: 'linear-gradient(145deg, #F9E4D2 0%, #FFFFFF 48%, #A4783B 100%)',
+    defaultHero: TEMPLATE_HERO_IMAGES['shandong-family'],
     photoMood: '建议使用端正合影、家宴或仪式照片，信息区域保持清晰易读',
     albumMood: '家宴纪实',
     copy: '适合重视亲友到场、接亲、会亲、回门和席位安排的山东家庭婚礼',
@@ -309,6 +325,7 @@ export const WEDDING_TEMPLATES = [
     accent: '#506247',
     surface: '#F5F6EF',
     preview: 'linear-gradient(145deg, #E7EFE0 0%, #FFFFFF 50%, #506247 100%)',
+    defaultHero: TEMPLATE_HERO_IMAGES['travel-friendly'],
     photoMood: '建议使用城市、酒店、合影或旅拍照片，信息层要足够清楚',
     albumMood: '到场手册',
     copy: '适合异地宾客较多、需要重点说明住宿交通和时间安排的婚礼',
@@ -370,6 +387,11 @@ export function getWeddingTemplate(id) {
 export function getTemplateClass(id) {
   const template = getWeddingTemplate(id)
   return [template.className, template.themeClass].filter(Boolean).join(' ')
+}
+
+export function getTemplateHeroImage(id) {
+  const template = getWeddingTemplate(id)
+  return template.defaultHero || TEMPLATE_HERO_IMAGES[DEFAULT_TEMPLATE_ID]
 }
 
 const POSTER_THEME_MAP = {
