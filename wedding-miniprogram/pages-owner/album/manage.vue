@@ -117,15 +117,98 @@ async function chooseImage() {
 function chooseAlbumImages() {
   return new Promise((resolve, reject) => {
     const chooseImageApi = getChooseImageApi()
-    if (!chooseImageApi) {
+    if (!chooseImageApi.length) {
       reject(new Error('当前环境不支持选择照片，请在微信小程序中重试'))
       return
     }
 
-    chooseImageApi({
-      count: MAX_UPLOAD_COUNT,
-      sizeType: ['compressed', 'original'],
-      sourceType: ['album', 'camera'],
+    ensureAlbumPrivacyAuthorized()
+      .then(() => chooseWithFallback(chooseImageApi))
+      .then(resolve)
+      .catch(reject)
+  })
+}
+
+function getChooseImageApi() {
+  const apis = []
+  if (typeof wx !== 'undefined' && typeof wx.chooseImage === 'function') {
+    apis.push({
+      name: 'wx.chooseImage',
+      choose: wx.chooseImage.bind(wx),
+      options: {
+        count: MAX_UPLOAD_COUNT,
+        sizeType: ['compressed', 'original'],
+        sourceType: ['album', 'camera']
+      }
+    })
+  }
+  if (typeof uni !== 'undefined' && typeof uni.chooseImage === 'function') {
+    apis.push({
+      name: 'uni.chooseImage',
+      choose: uni.chooseImage.bind(uni),
+      options: {
+        count: MAX_UPLOAD_COUNT,
+        sizeType: ['compressed', 'original'],
+        sourceType: ['album', 'camera']
+      }
+    })
+  }
+  if (typeof wx !== 'undefined' && typeof wx.chooseMedia === 'function') {
+    apis.push({
+      name: 'wx.chooseMedia',
+      choose: wx.chooseMedia.bind(wx),
+      options: {
+        count: MAX_UPLOAD_COUNT,
+        mediaType: ['image'],
+        sourceType: ['album', 'camera'],
+        sizeType: ['compressed'],
+        camera: 'back'
+      }
+    })
+  }
+  return apis
+}
+
+function ensureAlbumPrivacyAuthorized() {
+  return new Promise((resolve, reject) => {
+    if (typeof wx === 'undefined' || typeof wx.requirePrivacyAuthorize !== 'function') {
+      resolve()
+      return
+    }
+
+    wx.requirePrivacyAuthorize({
+      success: resolve,
+      fail: (err) => {
+        const message = err?.errMsg || err?.message || ''
+        reject(new Error(normalizeChooseImageError(message)))
+      }
+    })
+  })
+}
+
+async function chooseWithFallback(apis) {
+  let lastError = null
+
+  for (const api of apis) {
+    try {
+      return await runChooseApi(api)
+    } catch (err) {
+      lastError = err
+      const raw = err?.rawMessage || err?.message || ''
+      if (shouldStopChooseFallback(raw)) {
+        throw err
+      }
+      console.warn(`[album] ${api.name} failed, trying next picker:`, raw)
+    }
+  }
+
+  throw lastError || new Error('选择照片失败，请重试')
+}
+
+function runChooseApi(api) {
+  return new Promise((resolve, reject) => {
+    api.choose({
+      ...api.options,
       success: (res) => {
         const paths = extractChosenImagePaths(res)
         if (!paths.length) {
@@ -135,22 +218,19 @@ function chooseAlbumImages() {
         resolve([...new Set(paths)])
       },
       fail: (err) => {
-        const msg = err?.errMsg || ''
+        const msg = err?.errMsg || err?.message || ''
         if (msg.includes('cancel')) { resolve([]); return }
-        reject(new Error(normalizeChooseImageError(msg)))
+        const error = new Error(normalizeChooseImageError(msg))
+        error.rawMessage = msg
+        error.apiName = api.name
+        reject(error)
       }
     })
   })
 }
 
-function getChooseImageApi() {
-  if (typeof wx !== 'undefined' && typeof wx.chooseImage === 'function') {
-    return wx.chooseImage.bind(wx)
-  }
-  if (typeof uni !== 'undefined' && typeof uni.chooseImage === 'function') {
-    return uni.chooseImage.bind(uni)
-  }
-  return null
+function shouldStopChooseFallback(message = '') {
+  return /privacy|隐私|permission|denied|auth|authorize|scope|cancel/i.test(message)
 }
 
 function extractChosenImagePaths(res = {}) {
@@ -167,17 +247,36 @@ function extractChosenImagePaths(res = {}) {
 }
 
 function normalizeChooseImageError(message = '') {
-  if (message.includes('auth') || message.includes('permission') || message.includes('denied')) {
-    return '选择照片失败，请检查微信相册权限'
+  const raw = String(message || '')
+  if (raw.includes('api scope is not declared') || raw.includes('privacy agreement')) {
+    return '上传照片前，请先在微信公众平台隐私保护指引中声明“照片或视频信息”和“摄像头”用途'
   }
-  if (message.includes('chooseImage:fail')) {
-    return '选择照片失败，请稍后重试'
+  if (/privacy|隐私/i.test(raw)) {
+    return '请先同意小程序隐私保护指引后再上传照片'
   }
-  return message || '选择照片失败，请重试'
+  if (/auth|permission|denied|authorize|scope/i.test(raw)) {
+    return '选择照片失败，请在微信设置中允许访问相册或相机'
+  }
+  if (raw.includes('chooseImage:fail') || raw.includes('chooseMedia:fail')) {
+    return '选择照片失败，请稍后重试；也可以尝试重新进入小程序后上传'
+  }
+  return raw || '选择照片失败，请重试'
 }
 
 function showUploadError(err) {
   const message = err?.message || '上传失败，请重试'
+  if (message.includes('微信设置')) {
+    uni.showModal({
+      title: '无法选择照片',
+      content: message,
+      confirmText: '去设置',
+      cancelText: '知道了',
+      success: (res) => {
+        if (res.confirm) openAppSettings()
+      }
+    })
+    return
+  }
   if (message.length > 14 || message.includes('云') || message.includes('权限')) {
     uni.showModal({
       title: '上传失败',
@@ -187,6 +286,12 @@ function showUploadError(err) {
     return
   }
   showError(message)
+}
+
+function openAppSettings() {
+  const api = typeof wx !== 'undefined' && wx.openSetting ? wx : (typeof uni !== 'undefined' && uni.openSetting ? uni : null)
+  if (!api) return
+  api.openSetting({})
 }
 
 function buildAlbumCloudPath(localPath, id) {

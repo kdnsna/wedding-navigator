@@ -54,7 +54,7 @@
     </view>
 
     <!-- 地图 Tab -->
-    <view class="tab-content" v-show="activeTab === 'map'">
+    <view class="tab-content map-tab" v-if="activeTab === 'map'">
       <view class="map-container">
         <map
           v-if="mapReady"
@@ -66,6 +66,9 @@
           :markers="markers"
           :polyline="polyline"
           :show-location="true"
+          :show-compass="true"
+          :enable-zoom="true"
+          :enable-scroll="true"
           @markertap="onMarkerTap"
         />
         <view class="map-empty" v-else>
@@ -660,18 +663,32 @@ onShow(async () => {
 
 .tab-content {
   flex: 1;
+  min-height: 0;
   overflow: hidden;
+}
+.map-tab {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--theme-page, $bg-color);
 }
 
 /* 地图 */
 .map-container {
-  flex: 1;
-  min-height: 300rpx;
+  position: relative;
+  height: 420rpx;
+  min-height: 420rpx;
+  flex-shrink: 0;
+  margin: 24rpx 24rpx 18rpx;
   background: var(--theme-page-soft, $bg-muted);
+  border: 1rpx solid var(--theme-border, $border-color);
+  border-radius: $card-radius;
+  overflow: hidden;
 }
 .map {
   width: 100%;
-  height: 100%;
+  height: 420rpx;
+  display: block;
 }
 .map-empty {
   height: 100%;
@@ -703,29 +720,25 @@ onShow(async () => {
 }
 
 .venue-list {
-  max-height: 45vh;
-  padding: 24rpx;
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+  padding: 0 24rpx 24rpx;
+  box-sizing: border-box;
   background: var(--theme-page, $bg-color);
 }
 
 .venue-card {
   background: var(--theme-surface, $bg-surface);
   border-radius: $card-radius;
-  padding: 32rpx;
+  padding: 26rpx;
   margin-bottom: 16rpx;
   transition: all 0.2s ease;
   border: 1rpx solid var(--theme-border, transparent);
 }
 .venue-card.active {
-  background: var(--theme-strong-bg, $text-primary);
-  border-color: var(--theme-strong-border, $text-primary);
-}
-.venue-card.active .venue-name,
-.venue-card.active .venue-address,
-.venue-card.active .venue-type,
-.venue-card.active .venue-time,
-.venue-card.active .venue-geo {
-  color: rgba(255,255,255,0.85);
+  background: var(--theme-accent-soft, rgba(176,58,91,0.08));
+  border-color: var(--theme-accent, $color-primary);
 }
 .venue-meta {
   display: flex;
@@ -1160,23 +1173,36 @@ onShow(async () => {
     border-color: var(--theme-border, $border-color);
   }
 
-  .arrival-card,
-  .venue-card.active {
+  .arrival-card {
     background: var(--theme-strong-bg, $text-primary);
     border-color: var(--theme-strong-border, transparent);
   }
 
-  .arrival-name,
-  .venue-card.active .venue-name {
+  .venue-card.active {
+    background: var(--theme-accent-soft, rgba(176,58,91,0.08));
+    border-color: var(--theme-accent, $color-primary);
+  }
+
+  .arrival-name {
     color: var(--theme-strong-ink, #fff);
   }
 
-  .arrival-label,
-  .arrival-address,
+  .venue-card.active .venue-name {
+    color: var(--theme-ink, $text-primary);
+  }
+
   .venue-card.active .venue-address,
   .venue-card.active .venue-type,
-  .venue-card.active .venue-time,
+  .venue-card.active .venue-time {
+    color: var(--theme-muted, $text-secondary);
+  }
+
   .venue-card.active .venue-geo {
+    color: $color-success;
+  }
+
+  .arrival-label,
+  .arrival-address {
     color: var(--theme-strong-muted, rgba(255,255,255,0.68));
   }
 

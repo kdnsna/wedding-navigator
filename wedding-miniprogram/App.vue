@@ -6,6 +6,7 @@ import { useUserStore } from '@/stores/user.js'
 onLaunch(() => {
   useUserStore().loadFromStorage()
   initCloud()
+  setupPrivacyAuthorization()
   checkPrivacySetting()
   checkUpdate()
 })
@@ -57,6 +58,32 @@ function checkUpdate() {
 }
 
 // 隐私保护指引检查
+let privacyAuthorizationReady = false
+
+function setupPrivacyAuthorization() {
+  if (privacyAuthorizationReady) return
+  if (typeof wx === 'undefined' || typeof wx.onNeedPrivacyAuthorization !== 'function') return
+  privacyAuthorizationReady = true
+
+  wx.onNeedPrivacyAuthorization((resolve) => {
+    uni.showModal({
+      title: '隐私保护指引',
+      content: '上传照片、地图导航和婚礼邀请功能需要使用相册、相机和位置信息。请同意《隐私保护指引》后继续。',
+      confirmText: '同意并继续',
+      cancelText: '暂不同意',
+      success: (modalRes) => {
+        resolve({
+          event: modalRes.confirm ? 'agree' : 'disagree',
+          buttonId: modalRes.confirm ? 'agree-btn' : 'disagree-btn'
+        })
+      },
+      fail: () => {
+        resolve({ event: 'disagree', buttonId: 'modal-fail' })
+      }
+    })
+  })
+}
+
 function checkPrivacySetting() {
   if (typeof wx !== 'undefined' && wx.getPrivacySetting) {
     wx.getPrivacySetting({
