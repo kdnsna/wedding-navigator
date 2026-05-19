@@ -81,6 +81,13 @@
           }
         },
         {
+          "path": "template/preview",
+          "style": {
+            "navigationBarTitleText": "模板预览",
+            "navigationStyle": "custom"
+          }
+        },
+        {
           "path": "album/manage",
           "style": {
             "navigationBarTitleText": "相册管理"

@@ -44,6 +44,10 @@
             <text class="template-desc">{{ tpl.desc }}</text>
             <text class="template-copy">{{ tpl.copy }}</text>
             <text class="template-photo">{{ tpl.photoMood }}</text>
+            <view class="template-actions">
+              <button class="template-action primary" @click.stop="selectTemplate(tpl)">{{ form.template === tpl.id ? '已选择' : '选择模板' }}</button>
+              <button class="template-action" @click.stop="previewTemplate(tpl)">完整预览</button>
+            </view>
           </view>
         </view>
       </view>
@@ -125,6 +129,7 @@
 
 <script setup>
 import { computed, ref } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { useUserStore } from '@/stores/user.js'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { createWedding } from '@/composables/useCloud.js'
@@ -161,6 +166,18 @@ function selectTemplate(tpl) {
   if (!form.value.venueName.trim()) {
     form.value.venueName = tpl.preset?.venueName || ''
   }
+}
+
+function previewTemplate(tpl) {
+  uni.navigateTo({ url: `/pages-owner/template/preview?id=${encodeURIComponent(tpl.id)}` })
+}
+
+function applyPendingTemplate() {
+  const pendingTemplateId = uni.getStorageSync('pending_template_id')
+  if (!pendingTemplateId) return
+  uni.removeStorageSync('pending_template_id')
+  const tpl = getWeddingTemplate(pendingTemplateId)
+  selectTemplate(tpl)
 }
 
 function nextStep() {
@@ -296,6 +313,10 @@ async function createWeddingAction() {
     uni.hideLoading()
   }
 }
+
+onShow(() => {
+  applyPendingTemplate()
+})
 </script>
 
 <style lang="scss" scoped>
@@ -535,6 +556,27 @@ async function createWeddingAction() {
   white-space: nowrap;
   text-overflow: ellipsis;
 }
+.template-actions {
+  display: flex;
+  gap: 12rpx;
+  margin-top: 18rpx;
+}
+.template-action {
+  flex: 1;
+  min-width: 0;
+  height: $control-height-sm;
+  line-height: $control-height-sm;
+  border-radius: $radius-full;
+  background: $bg-muted;
+  color: $text-primary;
+  font-size: 24rpx;
+  padding: 0;
+}
+.template-action.primary {
+  background: $text-primary;
+  color: #fff;
+}
+.template-action::after { border: none; }
 .template-note {
   margin-top: 28rpx;
   padding: 28rpx;

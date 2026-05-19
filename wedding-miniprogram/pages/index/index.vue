@@ -3,18 +3,12 @@
     <!-- 封面大图 -->
     <view class="hero">
       <image
-        v-if="isDefaultCover"
-        class="hero-image hero-backdrop"
-        :src="coverImage"
-        mode="aspectFill"
-      />
-      <image
         class="hero-image hero-image-main"
         :class="{ default: isDefaultCover }"
         :src="coverImage"
         :mode="coverImageMode"
       />
-      <view class="hero-gradient" />
+      <view class="hero-gradient" :class="{ default: isDefaultCover }" />
       <text class="xi-watermark">囍</text>
       <view class="hero-content">
         <text class="hero-tag animate-fade-in delay-2">{{ activeTemplate.kicker }}</text>
@@ -326,7 +320,7 @@ const coverImage = computed(() => {
   return cover?.url || photos[0]?.url || '/static/visuals/default-cover.png'
 })
 const isDefaultCover = computed(() => coverImage.value === '/static/visuals/default-cover.png')
-const coverImageMode = computed(() => isDefaultCover.value ? 'aspectFit' : 'aspectFill')
+const coverImageMode = computed(() => 'aspectFill')
 
 const groomName = computed(() => store.invitation?.couple?.groom?.name || '新郎')
 const brideName = computed(() => store.invitation?.couple?.bride?.name || '新娘')
@@ -562,14 +556,15 @@ onUnmounted(() => {
   background-color: var(--theme-page, $bg-color);
   color: var(--theme-ink, $text-primary);
   min-height: 100vh;
-  padding-bottom: calc(260rpx + env(safe-area-inset-bottom));
+  padding-bottom: calc(96rpx + env(safe-area-inset-bottom));
 }
 
 /* ========== 封面大图 ========== */
 .hero {
   position: relative;
-  height: 86vh;
-  min-height: 1040rpx;
+  height: 80vh;
+  min-height: 940rpx;
+  max-height: 1220rpx;
   overflow: hidden;
   background: var(--theme-hero-bg, #fcf6f0);
 }
@@ -581,15 +576,8 @@ onUnmounted(() => {
   height: 100%;
   background: var(--theme-hero-bg, #fcf6f0);
 }
-.hero-backdrop {
-  z-index: 0;
-  transform: scale(1.12);
-  transform-origin: center;
-  opacity: var(--theme-default-cover-opacity, 0.78);
-  filter: blur(38rpx) saturate(0.92) brightness(1.02);
-}
 .hero-image-main {
-  z-index: 1;
+  z-index: 0;
   filter: var(--theme-hero-filter, none);
 }
 .hero-image.default {
@@ -612,6 +600,10 @@ onUnmounted(() => {
     rgba(255,255,255,1) 100%
   ));
 }
+.hero-gradient.default {
+  background:
+    linear-gradient(to bottom, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.08) 28%, rgba(48,22,28,0.16) 48%, rgba(58,24,32,0.48) 72%, rgba(255,255,255,0.96) 96%, #fff 100%);
+}
 .xi-watermark {
   position: absolute;
   top: 50%;
@@ -631,7 +623,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: flex-end;
   height: 100%;
-  padding: 60rpx $page-gutter 96rpx;
+  padding: 60rpx $page-gutter 86rpx;
   text-align: center;
 }
 
@@ -714,12 +706,12 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   gap: 24rpx;
-  margin-bottom: 80rpx;
+  margin-bottom: 58rpx;
   width: 100%;
   max-width: 560rpx;
 }
 .countdown-num {
-  font-size: 112rpx;
+  font-size: 104rpx;
   font-weight: 400;
   color: #fff;
   font-variant-numeric: tabular-nums;
@@ -761,7 +753,7 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   gap: 8rpx;
-  margin-bottom: 80rpx;
+  margin-bottom: 58rpx;
 }
 .today-label {
   font-size: 72rpx;
@@ -1318,14 +1310,9 @@ onUnmounted(() => {
 
 /* ========== 悬浮操作 ========== */
 .float-actions {
-  position: fixed;
-  bottom: calc(128rpx + constant(safe-area-inset-bottom));
-  bottom: calc(128rpx + env(safe-area-inset-bottom));
-  left: $page-gutter;
-  right: $page-gutter;
+  margin: 16rpx $page-gutter calc(36rpx + env(safe-area-inset-bottom));
   display: flex;
   gap: 16rpx;
-  z-index: 100;
 }
 .float-btn {
   height: $control-height;
@@ -1541,12 +1528,13 @@ onUnmounted(() => {
     filter: var(--theme-hero-filter, none);
   }
 
-  .hero-backdrop {
-    opacity: var(--theme-default-cover-opacity, 0.78);
-  }
-
   .hero-gradient {
     background: var(--theme-hero-overlay);
+  }
+
+  .hero-gradient.default {
+    background:
+      linear-gradient(to bottom, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.08) 28%, rgba(48,22,28,0.16) 48%, rgba(58,24,32,0.48) 72%, rgba(255,255,255,0.96) 96%, #fff 100%);
   }
 
   .daypack-section,

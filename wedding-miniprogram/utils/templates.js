@@ -450,6 +450,134 @@ export function getTemplatePosterTheme(id) {
   return POSTER_THEME_MAP[template.themeClass] || POSTER_THEME_MAP[template.className] || POSTER_THEME_MAP['theme-rose']
 }
 
+const TEMPLATE_PREVIEW_EXAMPLES = {
+  'rose-couture': {
+    couple: { groom: '顾临川', bride: '沈知夏' },
+    date: '2026-11-14',
+    time: '12:08',
+    venueName: '玫瑰宴会厅',
+    address: '济南市历下区经十路 99 号',
+    coverLine: '玫瑰、灯光与正式宴会',
+    weather: '晴 18-25°C',
+    transport: '建议 11:30 前到达，酒店地下停车场可用',
+    rsvpName: '王一鸣',
+    blessings: ['愿你们在日常里一直相爱，在热闹里也能听见彼此。', '今天的玫瑰和灯光都很衬你们，祝新婚快乐。'],
+    gallery: ['迎宾合影', '宴会厅仪式', '玫瑰花墙']
+  },
+  'champagne-editorial': {
+    couple: { groom: '周予安', bride: '林若晴' },
+    date: '2026-05-20',
+    time: '11:00',
+    venueName: '香槟花园厅',
+    address: '青岛市崂山区海景路 28 号',
+    coverLine: '花园、白纱与一页短笺',
+    weather: '多云 19-24°C',
+    transport: '户外仪式请从花园南门进入，雨天改为室内厅',
+    rsvpName: '陈思远',
+    blessings: ['像今天的风一样轻盈，愿你们把温柔过成很长的以后。', '草坪和香槟色都刚刚好，祝你们新婚快乐。'],
+    gallery: ['草坪仪式', '花园茶歇', '白纱影像']
+  },
+  'noir-banquet': {
+    couple: { groom: '陆辰', bride: '许知意' },
+    date: '2026-10-18',
+    time: '18:18',
+    venueName: '黑金宴会厅',
+    address: '上海市黄浦区外滩中山东一路 8 号',
+    coverLine: '夜幕、灯火与举杯时刻',
+    weather: '晴 17-22°C',
+    transport: '晚高峰建议打车到酒店正门，地下 B2 可停车',
+    rsvpName: '赵嘉禾',
+    blessings: ['今晚的灯光很像电影结尾，愿你们一直有好故事。', '祝你们在人生的每一次举杯里，都有彼此。'],
+    gallery: ['夜宴入场', '烛光誓言', '举杯致谢']
+  },
+  'garden-film': {
+    couple: { groom: '宋屿', bride: '唐栀' },
+    date: '2026-04-26',
+    time: '10:18',
+    venueName: '花园草坪仪式区',
+    address: '杭州市西湖区龙井路 66 号',
+    coverLine: '自然光、胶片与生活感',
+    weather: '晴 16-23°C',
+    transport: '草坪入口在园区东侧，建议步行或拼车到达',
+    rsvpName: '刘可',
+    blessings: ['愿你们把每个普通清晨，都过成值得收藏的胶片。', '今天像春天本身，祝你们一直鲜活相爱。'],
+    gallery: ['花园合影', '自然光仪式', '胶片故事']
+  },
+  'heritage-ritual': {
+    couple: { groom: '贺云舟', bride: '温明月' },
+    date: '2026-09-12',
+    time: '12:08',
+    venueName: '中式礼宴厅',
+    address: '南京市秦淮区夫子庙街 18 号',
+    coverLine: '敬茶、礼序与两家团圆',
+    weather: '晴 20-27°C',
+    transport: '亲友 11:30 前到达喜宴厅，敬茶亲属按家庭群通知集合',
+    rsvpName: '张伯远',
+    blessings: ['良辰美景，佳偶天成，愿两家亲友同享长久欢喜。', '礼成之日，祝新人琴瑟和鸣，岁岁安康。'],
+    gallery: ['敬茶改口', '礼宴入席', '合家欢喜']
+  },
+  'shandong-family': {
+    couple: { groom: '赵明远', bride: '孙嘉宁' },
+    date: '2026-11-14',
+    time: '12:08',
+    venueName: '喜宴大厅',
+    address: '济南市市中区经七路 168 号',
+    coverLine: '席设何处、几点到场、亲友明白',
+    weather: '晴 12-20°C',
+    transport: '普通宾客直接到喜宴大厅，接亲亲友按家庭群路线集合',
+    rsvpName: '刘叔',
+    blessings: ['喜期已定，亲友同贺，祝小两口日子越过越红火。', '喜事新办也体面，祝新人百年好合，阖家欢乐。'],
+    gallery: ['接亲路线', '认亲合影', '喜宴开席']
+  },
+  'travel-friendly': {
+    couple: { groom: '陈北辰', bride: '乔南枝' },
+    date: '2026-08-22',
+    time: '12:08',
+    venueName: '婚礼主场地',
+    address: '苏州市工业园区月光码头 6 号',
+    coverLine: '远道而来，也能顺利抵达',
+    weather: '多云 24-31°C',
+    transport: '外地亲友先办理入住，再打车 12 分钟到主场地',
+    rsvpName: '李梦然',
+    blessings: ['从很远的地方来，也很值得。祝你们一路相伴，一路有光。', '路书很清楚，婚礼很温暖，祝新婚快乐。'],
+    gallery: ['酒店入住', '主场地路线', '亲友相聚']
+  }
+}
+
+export function buildTemplatePreviewData(templateId) {
+  const template = getWeddingTemplate(templateId)
+  const example = TEMPLATE_PREVIEW_EXAMPLES[template.id] || TEMPLATE_PREVIEW_EXAMPLES[DEFAULT_TEMPLATE_ID]
+  const timeline = buildTemplateTimeline(template.id).events
+  const guide = buildTemplateGuide(template.id, {
+    venueName: example.venueName,
+    venueAddress: example.address,
+    time: example.time
+  })
+  return {
+    template,
+    templateClass: getTemplateClass(template.id),
+    couple: example.couple,
+    date: example.date,
+    time: example.time,
+    venueName: example.venueName,
+    address: example.address,
+    coverLine: example.coverLine,
+    weather: example.weather,
+    transport: example.transport,
+    rsvpName: example.rsvpName,
+    invitationText: template.preset?.mainText || '',
+    gallery: example.gallery,
+    blessings: example.blessings,
+    timeline,
+    guide,
+    stats: {
+      rsvp: 86,
+      blessings: 24,
+      views: 1298
+    }
+  }
+}
+
 export function buildTemplateTimeline(templateId, mainVenueId = 'main-venue') {
   const template = getWeddingTemplate(templateId)
   const timeline = template.plan?.timeline || []

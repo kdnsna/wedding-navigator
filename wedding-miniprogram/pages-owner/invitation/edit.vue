@@ -373,10 +373,29 @@ function previewInvitation() {
 }
 
 function previewTemplate() {
-  previewInvitation()
+  uni.navigateTo({ url: `/pages-owner/template/preview?id=${encodeURIComponent(form.value.template)}` })
 }
 
-onShow(() => { useOwnerGuard(); loadFromStore() })
+function applyPendingTemplate() {
+  const pendingTemplateId = uni.getStorageSync('pending_template_id')
+  if (!pendingTemplateId) return
+  uni.removeStorageSync('pending_template_id')
+  const tpl = getWeddingTemplate(pendingTemplateId)
+  form.value.template = normalizeTemplateId(tpl.id)
+  if (!form.value.content) {
+    form.value.content = tpl.preset?.mainText || ''
+  }
+  if (!form.value.venueName) {
+    form.value.venueName = tpl.preset?.venueName || ''
+  }
+  applyLocalPreviewData()
+}
+
+onShow(() => {
+  useOwnerGuard()
+  loadFromStore()
+  applyPendingTemplate()
+})
 </script>
 
 <style lang="scss" scoped>
