@@ -174,6 +174,7 @@ function checkTemplateSystem() {
   assertIncludes('pages-owner/invitation/edit.vue', 'applyTemplatePreset', 'invitation editor must expose built-in template preset copy')
   assertIncludes('pages/index/index.vue', 'templateClass', 'home page must apply template styling')
   assertIncludes('pages/index/index.vue', '--theme-hero-overlay', 'home page must use template-aware hero image overlays')
+  assertIncludes('pages/index/index.vue', 'hero-backdrop', 'home page must fill narrow default covers without visible side bars')
   assertIncludes('pages/guide/index.vue', '--theme-panel-gradient', 'guide page must use template-aware panel colors')
   assertIncludes('pages/timeline/index.vue', '--theme-accent', 'timeline page must use template accent colors')
   assertIncludes('pages/rsvp/index.vue', 'rsvp-brief', 'RSVP page must show a template-aware wedding brief')

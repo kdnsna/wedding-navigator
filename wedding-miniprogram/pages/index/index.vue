@@ -3,7 +3,13 @@
     <!-- 封面大图 -->
     <view class="hero">
       <image
-        class="hero-image"
+        v-if="isDefaultCover"
+        class="hero-image hero-backdrop"
+        :src="coverImage"
+        mode="aspectFill"
+      />
+      <image
+        class="hero-image hero-image-main"
         :class="{ default: isDefaultCover }"
         :src="coverImage"
         :mode="coverImageMode"
@@ -574,14 +580,25 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
   background: var(--theme-hero-bg, #fcf6f0);
+}
+.hero-backdrop {
+  z-index: 0;
+  transform: scale(1.12);
+  transform-origin: center;
+  opacity: var(--theme-default-cover-opacity, 0.78);
+  filter: blur(38rpx) saturate(0.92) brightness(1.02);
+}
+.hero-image-main {
+  z-index: 1;
   filter: var(--theme-hero-filter, none);
 }
 .hero-image.default {
   padding: 0;
-  opacity: var(--theme-default-cover-opacity, 1);
+  opacity: 1;
 }
 .hero-gradient {
   position: absolute;
+  z-index: 2;
   top: 0;
   left: 0;
   width: 100%;
@@ -604,11 +621,11 @@ onUnmounted(() => {
   font-weight: 900;
   color: rgba(255,255,255,0.04);
   pointer-events: none;
-  z-index: 1;
+  z-index: 3;
 }
 .hero-content {
   position: relative;
-  z-index: 2;
+  z-index: 4;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1517,11 +1534,15 @@ onUnmounted(() => {
   .hero,
   .hero-image.default {
     background: var(--theme-hero-bg, #fcf6f0);
-    opacity: var(--theme-default-cover-opacity, 1);
+    opacity: 1;
   }
 
-  .hero-image {
+  .hero-image-main {
     filter: var(--theme-hero-filter, none);
+  }
+
+  .hero-backdrop {
+    opacity: var(--theme-default-cover-opacity, 0.78);
   }
 
   .hero-gradient {
