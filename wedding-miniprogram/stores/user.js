@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { DEFAULT_ENTITLEMENTS, getPlanTier, normalizeEntitlements } from '@/utils/commercial.js'
 
 export const useUserStore = defineStore('user', () => {
   // State
@@ -8,10 +9,16 @@ export const useUserStore = defineStore('user', () => {
   const isOwner = ref(false)
   const weddingId = ref('')
   const ownerVerified = ref(false)
+  const profile = ref({ nickname: '', phone: '', role: '主人' })
+  const plan = ref('free')
+  const entitlements = ref({ ...DEFAULT_ENTITLEMENTS })
+  const workspaces = ref([])
 
   // Getters
   const isLoggedIn = computed(() => !!openid.value)
   const canEdit = computed(() => isOwner.value && ownerVerified.value)
+  const planTier = computed(() => getPlanTier(plan.value))
+  const hasPremiumTemplate = computed(() => entitlements.value.premium_templates === true)
 
   // Actions
   function setUser(info) {
@@ -22,6 +29,40 @@ export const useUserStore = defineStore('user', () => {
     if (info.ownerVerified !== undefined) {
       ownerVerified.value = info.ownerVerified
     }
+    if (info.profile) {
+      profile.value = { ...profile.value, ...info.profile }
+    }
+    if (info.plan) {
+      plan.value = info.plan
+    }
+    if (info.entitlements) {
+      entitlements.value = normalizeEntitlements(info.entitlements)
+    }
+    if (Array.isArray(info.workspaces)) {
+      workspaces.value = info.workspaces
+    }
+  }
+
+  function setOwnerProfile(info = {}) {
+    if (info.openid) openid.value = info.openid
+    if (info.phone) phone.value = info.phone
+    profile.value = {
+      ...profile.value,
+      ...(info.profile || {})
+    }
+    if (profile.value.phone) {
+      phone.value = profile.value.phone
+    }
+    plan.value = info.plan || plan.value || 'free'
+    entitlements.value = normalizeEntitlements(info.entitlements)
+    workspaces.value = Array.isArray(info.workspaces) ? info.workspaces : workspaces.value
+    isOwner.value = true
+    ownerVerified.value = true
+    saveToStorage()
+  }
+
+  function hasEntitlement(key) {
+    return entitlements.value?.[key] === true
   }
 
   function verifyOwner(verified) {
@@ -55,7 +96,11 @@ export const useUserStore = defineStore('user', () => {
       phone: phone.value,
       isOwner: isOwner.value,
       weddingId: weddingId.value,
-      ownerVerified: ownerVerified.value
+      ownerVerified: ownerVerified.value,
+      profile: profile.value,
+      plan: plan.value,
+      entitlements: entitlements.value,
+      workspaces: workspaces.value
     }))
   }
 
@@ -65,6 +110,10 @@ export const useUserStore = defineStore('user', () => {
     isOwner.value = false
     weddingId.value = ''
     ownerVerified.value = false
+    profile.value = { nickname: '', phone: '', role: '主人' }
+    plan.value = 'free'
+    entitlements.value = { ...DEFAULT_ENTITLEMENTS }
+    workspaces.value = []
     uni.removeStorageSync('userInfo')
     uni.removeStorageSync('currentWeddingId')
   }
@@ -75,9 +124,17 @@ export const useUserStore = defineStore('user', () => {
     isOwner,
     weddingId,
     ownerVerified,
+    profile,
+    plan,
+    entitlements,
+    workspaces,
     isLoggedIn,
     canEdit,
+    planTier,
+    hasPremiumTemplate,
     setUser,
+    setOwnerProfile,
+    hasEntitlement,
     verifyOwner,
     setWeddingId,
     loadFromStorage,

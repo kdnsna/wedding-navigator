@@ -1,5 +1,5 @@
 <template>
-  <view class="page">
+  <view class="page" :class="templateClass">
     <!-- 顶部标题 -->
     <view class="page-header">
       <view class="header-top">
@@ -21,6 +21,10 @@
             :style="{ width: canvasStyle.width, height: canvasStyle.height }"
           />
         </view>
+      </view>
+      <view class="poster-status" v-if="posterNotice">
+        <image class="poster-status-icon" src="/static/visuals/icon-warning.svg" mode="aspectFit" />
+        <text>{{ posterNotice }}</text>
       </view>
     </view>
 
@@ -47,11 +51,11 @@
 </template>
 
 <script setup>
-import { ref, nextTick, getCurrentInstance } from 'vue'
+import { computed, ref, nextTick, getCurrentInstance } from 'vue'
 import { onLoad, onShareAppMessage } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
-import { generatePoster } from '@/composables/useCloud.js'
+import { fetchWedding, generatePoster } from '@/composables/useCloud.js'
 import { drawWeddingPoster, POSTER_CANVAS_STYLE } from '@/utils/posterCanvas.js'
 
 const store = useWeddingStore()
@@ -62,12 +66,20 @@ const qrCodePath = ref('')
 const posterReady = ref(false)
 const loading = ref(false)
 const loadingText = ref('生成海报中...')
+const posterNotice = ref('')
 const canvasStyle = POSTER_CANVAS_STYLE
+const templateClass = computed(() => store.templateClass)
 
 async function generateQRCode() {
   loading.value = true
   loadingText.value = '生成小程序码...'
+  posterNotice.value = ''
   try {
+    if (!userStore.weddingId) {
+      posterNotice.value = '缺少婚礼 ID，海报会先使用无小程序码模式'
+      qrCodePath.value = ''
+      return
+    }
     const res = await generatePoster(
       'pages/index/index',
       userStore.weddingId || '',
@@ -75,18 +87,19 @@ async function generateQRCode() {
     )
 
     if (res.isConfigError) {
-      // 未配置体验版，降级为本地小程序码
       qrCodePath.value = ''
-      uni.showToast({ title: '请发布后再生成海报', icon: 'none' })
+      posterNotice.value = res.message || '请发布小程序或配置体验版后再生成小程序码'
     } else if (res.success && res.data) {
       qrCodePath.value = res.data
+      posterNotice.value = ''
     } else {
       qrCodePath.value = ''
-      uni.showToast({ title: '生成码失败，使用备用模式', icon: 'none' })
+      posterNotice.value = res?.message || '小程序码生成失败，海报会先使用无小程序码模式'
     }
   } catch (err) {
     console.error('generateQRCode error:', err)
     qrCodePath.value = ''
+    posterNotice.value = err?.result?.message || err?.message || '小程序码生成失败，海报会先使用无小程序码模式'
   } finally {
     loading.value = false
   }
@@ -99,7 +112,8 @@ function onPosterReady() {
 
 function onPosterFail(err) {
   console.error('poster draw fail:', err)
-  uni.showToast({ title: '海报绘制失败', icon: 'none' })
+  posterNotice.value = '海报绘制失败，请检查封面图或稍后重试'
+  posterReady.value = false
   loading.value = false
 }
 
@@ -124,44 +138,50 @@ async function saveToAlbum() {
   loadingText.value = '保存到相册...'
 
   try {
-    const res = await uni.canvasToTempFilePath({
-      canvasId: 'posterCanvas',
-      quality: 0.95,
-      success: (tempRes) => {
-        uni.saveImageToPhotosAlbum({
-          filePath: tempRes.tempFilePath,
-          success: () => {
-            uni.showToast({ title: '已保存到相册', icon: 'success' })
-          },
-          fail: (err) => {
-            if (err.errMsg?.includes('auth deny')) {
-              uni.showModal({
-                title: '需要授权',
-                content: '请允许保存图片到相册',
-                confirmText: '去设置',
-                success: (res) => {
-                  if (res.confirm) {
-                    uni.openSetting()
-                  }
+    const tempRes = await canvasToTempFilePath()
+    await new Promise((resolve, reject) => {
+      uni.saveImageToPhotosAlbum({
+        filePath: tempRes.tempFilePath,
+        success: () => {
+          uni.showToast({ title: '已保存到相册', icon: 'success' })
+          resolve()
+        },
+        fail: (err) => {
+          if (err.errMsg?.includes('auth deny')) {
+            uni.showModal({
+              title: '需要授权',
+              content: '请允许保存图片到相册',
+              confirmText: '去设置',
+              success: (res) => {
+                if (res.confirm) {
+                  uni.openSetting()
                 }
-              })
-            } else {
-              uni.showToast({ title: '保存失败', icon: 'none' })
-            }
+              }
+            })
+          } else {
+            uni.showToast({ title: '保存失败', icon: 'none' })
           }
-        })
-      },
-      fail: (err) => {
-        console.error('canvasToTempFilePath fail:', err)
-        uni.showToast({ title: '保存失败', icon: 'none' })
-      }
-    }, instance)
+          reject(err)
+        }
+      })
+    })
   } catch (err) {
     console.error('saveToAlbum error:', err)
     uni.showToast({ title: '保存失败', icon: 'none' })
   } finally {
     loading.value = false
   }
+}
+
+function canvasToTempFilePath() {
+  return new Promise((resolve, reject) => {
+    uni.canvasToTempFilePath({
+      canvasId: 'posterCanvas',
+      quality: 0.95,
+      success: resolve,
+      fail: reject
+    }, instance)
+  })
 }
 
 function sharePoster() {
@@ -183,7 +203,31 @@ onShareAppMessage(() => {
   }
 })
 
+async function ensureWeddingLoaded(options = {}) {
+  const weddingId = parseWeddingId(options) || userStore.weddingId
+  if (weddingId) userStore.setWeddingId(weddingId)
+  if (!userStore.weddingId) return
+  if (store.wedding?._id || store.wedding?.wedding_id) return
+  try {
+    await fetchWedding(userStore.weddingId)
+  } catch (err) {
+    console.warn('海报页加载婚礼数据失败:', err)
+    posterNotice.value = err?.message || '婚礼数据加载失败，海报将使用默认信息'
+  }
+}
+
+function parseWeddingId(options = {}) {
+  if (options.id) return options.id
+  if (options.weddingId) return options.weddingId
+  const scene = options.scene ? decodeURIComponent(options.scene) : ''
+  if (!scene) return ''
+  if (!scene.includes('=')) return scene
+  const pair = scene.split('&').map(item => item.split('=')).find(([key]) => key === 'id' || key === 'weddingId')
+  return pair?.[1] || ''
+}
+
 onLoad(async (options) => {
+  await ensureWeddingLoaded(options)
   await generateQRCode()
   await redrawPoster()
 })
@@ -191,14 +235,15 @@ onLoad(async (options) => {
 
 <style lang="scss" scoped>
 .page {
-  background-color: $bg-color;
+  background-color: var(--theme-page, $bg-color);
+  color: var(--theme-ink, $text-primary);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
 .page-header {
-  padding: 48rpx 48rpx 24rpx;
+  padding: $page-gutter $page-gutter 24rpx;
   flex-shrink: 0;
 }
 .header-top {
@@ -235,16 +280,18 @@ onLoad(async (options) => {
 .poster-preview {
   flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 24rpx 48rpx;
+  gap: 20rpx;
+  padding: 24rpx $page-gutter;
 }
 .poster-container {
   width: 375px;
   height: 667px;
-  border-radius: 32rpx;
+  border-radius: $card-radius;
   overflow: hidden;
-  box-shadow: 0 24rpx 80rpx rgba(0, 0, 0, 0.18);
+  box-shadow: $shadow-md;
 }
 .poster-wrapper {
   display: flex;
@@ -253,19 +300,38 @@ onLoad(async (options) => {
 }
 .poster-canvas {
   border-radius: 16rpx;
-  box-shadow: 0 16rpx 48rpx rgba(0, 0, 0, 0.25);
+  box-shadow: $shadow-sm;
+}
+.poster-status {
+  max-width: 375px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10rpx;
+  padding: 16rpx 20rpx;
+  border-radius: $card-radius;
+  background: rgba(249,171,0,0.12);
+  color: #8F6100;
+  font-size: 23rpx;
+  line-height: 1.45;
+  box-sizing: border-box;
+}
+.poster-status-icon {
+  width: 28rpx;
+  height: 28rpx;
+  flex-shrink: 0;
+  margin-top: 2rpx;
 }
 
 .actions {
   display: flex;
   gap: 20rpx;
-  padding: 24rpx 48rpx calc(48rpx + constant(safe-area-inset-bottom));
+  padding: 24rpx $page-gutter calc(48rpx + constant(safe-area-inset-bottom));
   padding-bottom: calc(48rpx + env(safe-area-inset-bottom));
   flex-shrink: 0;
 }
 .action-btn {
   flex: 1;
-  height: 96rpx;
+  height: $control-height;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -308,7 +374,7 @@ onLoad(async (options) => {
 .loading-content {
   background: $bg-surface;
   border-radius: $radius-lg;
-  padding: 48rpx 64rpx;
+  padding: $page-gutter 56rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -328,5 +394,54 @@ onLoad(async (options) => {
 .loading-text {
   font-size: 26rpx;
   color: $text-primary;
+}
+
+.theme-rose,
+.theme-champagne,
+.theme-noir,
+.theme-garden,
+.theme-heritage,
+.theme-shandong,
+.theme-travel {
+  background: var(--theme-page, $bg-color);
+  color: var(--theme-ink, $text-primary);
+
+  .back-btn,
+  .page-title,
+  .action-btn,
+  .loading-text {
+    color: var(--theme-ink, $text-primary);
+  }
+
+  .page-desc {
+    color: var(--theme-muted, $text-muted);
+  }
+
+  .share-btn {
+    color: var(--theme-accent, $color-primary);
+  }
+
+  .poster-container,
+  .poster-canvas {
+    border-radius: $card-radius;
+    box-shadow: $shadow-sm;
+  }
+
+  .action-btn,
+  .loading-content {
+    background: var(--theme-surface, $bg-surface);
+    border-color: var(--theme-border, $border-color);
+  }
+
+  .action-btn.primary {
+    background: var(--theme-accent, $text-primary);
+    border-color: var(--theme-accent, $text-primary);
+    color: var(--theme-on-accent, #fff);
+  }
+
+  .loading-spinner {
+    border-color: var(--theme-border, $border-color);
+    border-top-color: var(--theme-accent, $text-primary);
+  }
 }
 </style>

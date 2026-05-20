@@ -73,6 +73,20 @@ $spacing-xl: 48rpx;
 $spacing-2xl: 64rpx;
 $spacing-3xl: 96rpx;
 
+/* ========== P1 像素级一致性 token ========== */
+$page-gutter: 48rpx;          // 页面默认左右留白
+$page-gutter-sm: 32rpx;       // 地图/紧凑工具页左右留白
+$page-header-top: 56rpx;      // 普通页面标题顶部留白
+$page-header-bottom: 32rpx;   // 普通页面标题底部留白
+$control-height: 88rpx;       // 主输入/主按钮高度
+$control-height-sm: 72rpx;    // 次级按钮/小控件高度
+$tap-min-height: 80rpx;       // 小程序最小舒适点击高度
+$card-radius: $radius-lg;     // 卡片最大常规圆角
+$modal-radius: 32rpx;         // 底部弹层顶部圆角
+$ui-letter-spacing: 0;        // 平台规范：不拉伸字距，避免小屏中文被撑开
+$ui-letter-spacing-tight: 0;
+$safe-bottom-gap: 40rpx;
+
 /* ========== 字体系统：更大字号阶梯 ========== */
 $font-display: 72rpx;   // 展示级：新人名字
 $font-h1: 48rpx;        // 大标题
@@ -98,3 +112,172 @@ $duration-slower: 0.7s;
 $gradient-primary: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
 $gradient-overlay: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.5) 100%);
 $gradient-hero: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.98) 100%);
+
+/* ========== 模板主题变量：封面、页面、模块统一入口 ========== */
+.theme-rose {
+  --theme-page: #FFFFFF;
+  --theme-page-soft: #FFF7F8;
+  --theme-surface: #FFFFFF;
+  --theme-elevated: #F8F1F3;
+  --theme-ink: #1A1A1A;
+  --theme-muted: #7C6670;
+  --theme-border: rgba(176, 58, 91, 0.14);
+  --theme-accent: #B03A5B;
+  --theme-accent-deep: #8A2E4A;
+  --theme-accent-soft: rgba(176, 58, 91, 0.10);
+  --theme-on-accent: #FFFFFF;
+  --theme-strong-bg: #1A1A1A;
+  --theme-strong-ink: #FFFFFF;
+  --theme-strong-muted: rgba(255, 255, 255, 0.68);
+  --theme-strong-soft: rgba(255, 255, 255, 0.13);
+  --theme-strong-border: rgba(255, 255, 255, 0.16);
+  --theme-hero-bg: #4B111E;
+  --theme-hero-filter: saturate(1.06) contrast(1.03);
+  --theme-default-cover-opacity: 1;
+  --theme-hero-overlay: radial-gradient(circle at 50% 30%, rgba(176, 58, 91, 0.18), transparent 42%), linear-gradient(to bottom, rgba(16, 5, 8, 0.18) 0%, rgba(16, 5, 8, 0.10) 34%, rgba(24, 8, 12, 0.66) 76%, rgba(255, 255, 255, 0.96) 94%, #FFFFFF 100%);
+  --theme-panel-gradient: linear-gradient(135deg, #FFF9FA 0%, #F8F1F3 100%);
+}
+
+.theme-champagne {
+  --theme-page: #FBF7F1;
+  --theme-page-soft: #F7EEE4;
+  --theme-surface: #FFFFFF;
+  --theme-elevated: #F3E7D8;
+  --theme-ink: #2A2118;
+  --theme-muted: #8A7864;
+  --theme-border: rgba(164, 120, 59, 0.16);
+  --theme-accent: #A4783B;
+  --theme-accent-deep: #7E5A2A;
+  --theme-accent-soft: rgba(164, 120, 59, 0.12);
+  --theme-on-accent: #FFFFFF;
+  --theme-strong-bg: #FFFFFF;
+  --theme-strong-ink: #2A2118;
+  --theme-strong-muted: #8A7864;
+  --theme-strong-soft: rgba(164, 120, 59, 0.10);
+  --theme-strong-border: rgba(164, 120, 59, 0.18);
+  --theme-hero-bg: #F7EEE4;
+  --theme-hero-filter: saturate(0.92) brightness(1.04);
+  --theme-default-cover-opacity: 0.78;
+  --theme-hero-overlay: linear-gradient(to bottom, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.12) 40%, rgba(247, 238, 228, 0.82) 82%, #FBF7F1 100%);
+  --theme-panel-gradient: linear-gradient(135deg, #FFFDF9 0%, #F7EEE4 100%);
+}
+
+.theme-noir {
+  --theme-page: #111111;
+  --theme-page-soft: #171717;
+  --theme-surface: #191919;
+  --theme-elevated: #222222;
+  --theme-ink: #FFFFFF;
+  --theme-muted: rgba(255, 255, 255, 0.62);
+  --theme-border: rgba(201, 169, 110, 0.16);
+  --theme-accent: #C9A96E;
+  --theme-accent-deep: #DCC8A0;
+  --theme-accent-soft: rgba(201, 169, 110, 0.14);
+  --theme-on-accent: #111111;
+  --theme-strong-bg: #050505;
+  --theme-strong-ink: #FFFFFF;
+  --theme-strong-muted: rgba(255, 255, 255, 0.66);
+  --theme-strong-soft: rgba(201, 169, 110, 0.12);
+  --theme-strong-border: rgba(201, 169, 110, 0.24);
+  --theme-hero-bg: #050505;
+  --theme-hero-filter: saturate(0.96) contrast(1.08) brightness(0.86);
+  --theme-default-cover-opacity: 0.92;
+  --theme-hero-overlay: radial-gradient(circle at 50% 18%, rgba(201, 169, 110, 0.20), transparent 35%), linear-gradient(to bottom, rgba(0, 0, 0, 0.10), rgba(0, 0, 0, 0.35) 34%, rgba(3, 3, 3, 0.92) 88%, #111111 100%);
+  --theme-panel-gradient: linear-gradient(135deg, #191919 0%, #101010 100%);
+}
+
+.theme-garden {
+  --theme-page: #F5F6EF;
+  --theme-page-soft: #EEF2E7;
+  --theme-surface: #FFFFFF;
+  --theme-elevated: #E8EEDF;
+  --theme-ink: #1F2B1F;
+  --theme-muted: #697763;
+  --theme-border: rgba(80, 98, 71, 0.14);
+  --theme-accent: #506247;
+  --theme-accent-deep: #394A35;
+  --theme-accent-soft: rgba(80, 98, 71, 0.12);
+  --theme-on-accent: #FFFFFF;
+  --theme-strong-bg: #506247;
+  --theme-strong-ink: #FFFFFF;
+  --theme-strong-muted: rgba(255, 255, 255, 0.72);
+  --theme-strong-soft: rgba(255, 255, 255, 0.14);
+  --theme-strong-border: rgba(255, 255, 255, 0.14);
+  --theme-hero-bg: #E7EFE0;
+  --theme-hero-filter: saturate(0.95) brightness(1.02);
+  --theme-default-cover-opacity: 0.78;
+  --theme-hero-overlay: linear-gradient(to bottom, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.10) 38%, rgba(38, 55, 42, 0.56) 76%, #F5F6EF 100%);
+  --theme-panel-gradient: linear-gradient(135deg, #FBFCF7 0%, #EEF2E7 100%);
+}
+
+.theme-heritage {
+  --theme-page: #FAF6EF;
+  --theme-page-soft: #F6EDE2;
+  --theme-surface: #FFFDF8;
+  --theme-elevated: #EFE1D0;
+  --theme-ink: #2A1712;
+  --theme-muted: #846B5E;
+  --theme-border: rgba(168, 50, 62, 0.16);
+  --theme-accent: #A8323E;
+  --theme-accent-deep: #7D1F2B;
+  --theme-accent-soft: rgba(168, 50, 62, 0.12);
+  --theme-on-accent: #FFFFFF;
+  --theme-strong-bg: #7D1F2B;
+  --theme-strong-ink: #FFFFFF;
+  --theme-strong-muted: rgba(255, 255, 255, 0.72);
+  --theme-strong-soft: rgba(255, 255, 255, 0.14);
+  --theme-strong-border: rgba(255, 255, 255, 0.16);
+  --theme-hero-bg: #7D1F2B;
+  --theme-hero-filter: saturate(1.04) contrast(1.02);
+  --theme-default-cover-opacity: 0.94;
+  --theme-hero-overlay: radial-gradient(circle at 50% 22%, rgba(201, 169, 110, 0.18), transparent 38%), linear-gradient(to bottom, rgba(35, 9, 10, 0.12), rgba(35, 9, 10, 0.26) 44%, rgba(125, 31, 43, 0.70) 78%, rgba(250, 246, 239, 0.96) 94%, #FAF6EF 100%);
+  --theme-panel-gradient: linear-gradient(135deg, #FFFDF8 0%, #F6EDE2 100%);
+}
+
+.theme-shandong {
+  --theme-page: #FBF7F1;
+  --theme-page-soft: #F4E7D8;
+  --theme-surface: #FFFDF8;
+  --theme-elevated: #F0DFCA;
+  --theme-ink: #2B2118;
+  --theme-muted: #7B6754;
+  --theme-border: rgba(164, 120, 59, 0.18);
+  --theme-accent: #A4783B;
+  --theme-accent-deep: #785426;
+  --theme-accent-soft: rgba(164, 120, 59, 0.12);
+  --theme-on-accent: #FFFFFF;
+  --theme-strong-bg: #FFFDF8;
+  --theme-strong-ink: #2B2118;
+  --theme-strong-muted: #7B6754;
+  --theme-strong-soft: rgba(164, 120, 59, 0.10);
+  --theme-strong-border: rgba(164, 120, 59, 0.20);
+  --theme-hero-bg: #F4E7D8;
+  --theme-hero-filter: saturate(0.94) brightness(1.02);
+  --theme-default-cover-opacity: 0.72;
+  --theme-hero-overlay: linear-gradient(to bottom, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.14) 34%, rgba(244, 231, 216, 0.84) 80%, #FBF7F1 100%);
+  --theme-panel-gradient: linear-gradient(135deg, #FFFDF8 0%, #F4E7D8 100%);
+}
+
+.theme-travel {
+  --theme-page: #F5F6EF;
+  --theme-page-soft: #E9EFE2;
+  --theme-surface: #FFFFFF;
+  --theme-elevated: #E0E9D9;
+  --theme-ink: #1D2A1F;
+  --theme-muted: #63735F;
+  --theme-border: rgba(80, 98, 71, 0.16);
+  --theme-accent: #506247;
+  --theme-accent-deep: #354832;
+  --theme-accent-soft: rgba(80, 98, 71, 0.12);
+  --theme-on-accent: #FFFFFF;
+  --theme-strong-bg: #354832;
+  --theme-strong-ink: #FFFFFF;
+  --theme-strong-muted: rgba(255, 255, 255, 0.72);
+  --theme-strong-soft: rgba(255, 255, 255, 0.14);
+  --theme-strong-border: rgba(255, 255, 255, 0.14);
+  --theme-hero-bg: #E9EFE2;
+  --theme-hero-filter: saturate(0.94) contrast(1.02);
+  --theme-default-cover-opacity: 0.74;
+  --theme-hero-overlay: linear-gradient(to bottom, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.10) 36%, rgba(53, 72, 50, 0.62) 78%, #F5F6EF 100%);
+  --theme-panel-gradient: linear-gradient(135deg, #FBFCF8 0%, #E9EFE2 100%);
+}

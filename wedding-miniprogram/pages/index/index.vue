@@ -3,12 +3,12 @@
     <!-- 封面大图 -->
     <view class="hero">
       <image
-        class="hero-image"
+        class="hero-image hero-image-main"
         :class="{ default: isDefaultCover }"
         :src="coverImage"
         :mode="coverImageMode"
       />
-      <view class="hero-gradient" />
+      <view class="hero-gradient" :class="{ default: isLegacyDefaultCover }" />
       <text class="xi-watermark">囍</text>
       <view class="hero-content">
         <text class="hero-tag animate-fade-in delay-2">{{ activeTemplate.kicker }}</text>
@@ -21,7 +21,7 @@
           <view class="hero-meta-dot" />
           <text>{{ venueName || '婚礼场地' }}</text>
         </view>
-        <view class="hero-countdown animate-fade-up delay-8" v-if="countdown && !countdown.isToday">
+        <view class="hero-countdown animate-fade-up delay-8" v-if="showCountdown && countdown && !countdown.isToday">
           <text class="countdown-num">{{ countdown.days }}</text>
           <view class="countdown-divider" />
           <view class="countdown-info">
@@ -29,7 +29,7 @@
             <text class="countdown-desc">距离我们结婚</text>
           </view>
         </view>
-        <view class="hero-today animate-fade-up delay-8" v-if="countdown?.isToday">
+        <view class="hero-today animate-fade-up delay-8" v-if="showCountdown && countdown?.isToday">
           <text class="today-label">TODAY</text>
           <text class="today-desc">就是今天</text>
         </view>
@@ -48,7 +48,7 @@
           <text class="daypack-title">{{ countdown?.isToday ? '婚礼当天助手' : '宾客行动台' }}</text>
           <text class="daypack-template">{{ activeTemplate.shortName }} · {{ activeTemplate.albumMood }}</text>
         </view>
-        <view class="daypack-status" :class="{ done: hasSubmittedRsvp }" @click="goToRSVP">
+        <view class="daypack-status" v-if="isRsvpEnabled" :class="{ done: hasSubmittedRsvp }" @click="goToRSVP">
           <text>{{ hasSubmittedRsvp ? '已回执' : '待回执' }}</text>
         </view>
       </view>
@@ -61,7 +61,7 @@
         <button class="daypack-action" @click.stop="openNavigation">导航</button>
       </view>
       <view class="daypack-grid">
-        <view class="daypack-mini" @click="goToTimeline">
+        <view class="daypack-mini" v-if="isTimelineEnabled" @click="goToTimeline">
           <text class="mini-label">最近流程</text>
           <text class="mini-value">{{ nextEventText }}</text>
         </view>
@@ -71,8 +71,9 @@
         </view>
       </view>
       <view class="daypack-actions">
-        <button class="daypack-pill primary" @click="goToRSVP">{{ hasSubmittedRsvp ? '修改回执' : '确认出席' }}</button>
-        <button class="daypack-pill" @click="goToBlessing">写祝福</button>
+        <button class="daypack-pill primary" v-if="isRsvpEnabled" @click="goToRSVP">{{ hasSubmittedRsvp ? '修改回执' : '确认出席' }}</button>
+        <button class="daypack-pill" v-if="isBlessingEnabled" @click="goToBlessing">写祝福</button>
+        <button class="daypack-pill primary" v-if="!isRsvpEnabled && !isBlessingEnabled" @click="goToGuide">查看路线</button>
       </view>
     </view>
 
@@ -177,7 +178,7 @@
           </view>
           <text class="quick-arrow">›</text>
         </view>
-        <view class="quick-item stagger-3" @click="goToTimeline">
+        <view class="quick-item stagger-3" v-if="isTimelineEnabled" @click="goToTimeline">
           <image class="visual-icon quick-icon" src="/static/visuals/icon-timeline.svg" mode="aspectFit" />
           <view class="quick-meta">
             <text class="quick-label">婚礼流程</text>
@@ -185,7 +186,7 @@
           </view>
           <text class="quick-arrow">›</text>
         </view>
-        <view class="quick-item stagger-4" @click="goToBlessing">
+        <view class="quick-item stagger-4" v-if="isBlessingEnabled" @click="goToBlessing">
           <image class="visual-icon quick-icon" src="/static/visuals/icon-blessing.svg" mode="aspectFit" />
           <view class="quick-meta">
             <text class="quick-label">祝福留言</text>
@@ -216,7 +217,7 @@
           />
         </view>
       </view>
-      <view class="preview-block" v-if="latestBlessings.length > 0" @click="goToBlessing">
+      <view class="preview-block" v-if="isBlessingEnabled && latestBlessings.length > 0" @click="goToBlessing">
         <view class="preview-header">
           <text class="preview-title">最近祝福</text>
           <text class="preview-more">去祝福墙</text>
@@ -237,7 +238,7 @@
 
     <!-- 悬浮操作 -->
     <view class="float-actions">
-      <button class="float-btn rsvp" @click="goToRSVP">确认出席</button>
+      <button class="float-btn rsvp" v-if="isRsvpEnabled" @click="goToRSVP">确认出席</button>
       <button class="float-btn share" open-type="share">
         <text class="share-icon">↗</text>
       </button>
@@ -262,6 +263,7 @@ import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { fetchWedding, recordShare, recordView } from '@/composables/useCloud.js'
 import { formatDate, getWeekDay } from '@/utils/index.js'
+import { getTemplateHeroImage } from '@/utils/templates.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
@@ -316,10 +318,12 @@ function onPageTap() {
 const coverImage = computed(() => {
   const photos = store.album?.photos || []
   const cover = photos.find(p => p.type === 'cover')
-  return cover?.url || photos[0]?.url || '/static/visuals/default-cover.png'
+  return cover?.url || photos[0]?.url || getTemplateHeroImage(store.invitation?.template) || '/static/visuals/default-cover.png'
 })
-const isDefaultCover = computed(() => coverImage.value === '/static/visuals/default-cover.png')
-const coverImageMode = computed(() => isDefaultCover.value ? 'aspectFit' : 'aspectFill')
+const isGeneratedTemplateCover = computed(() => String(coverImage.value || '').startsWith('/static/visuals/hero/'))
+const isLegacyDefaultCover = computed(() => coverImage.value === '/static/visuals/default-cover.png')
+const isDefaultCover = computed(() => isGeneratedTemplateCover.value || isLegacyDefaultCover.value)
+const coverImageMode = computed(() => 'aspectFill')
 
 const groomName = computed(() => store.invitation?.couple?.groom?.name || '新郎')
 const brideName = computed(() => store.invitation?.couple?.bride?.name || '新娘')
@@ -329,10 +333,15 @@ const venueName = computed(() => store.venueName)
 const venueAddress = computed(() => store.invitation?.wedding?.venue_address || '')
 const activeTemplate = computed(() => store.activeTemplate)
 const templateClass = computed(() => store.templateClass)
+const showCountdown = computed(() => store.showCountdown)
+const isRsvpEnabled = computed(() => store.isRsvpEnabled)
+const isBlessingEnabled = computed(() => store.isBlessingEnabled)
+const isTimelineEnabled = computed(() => store.isTimelineEnabled)
 const primaryVenue = computed(() => store.primaryVenue || { name: venueName.value || '婚礼场地', address: venueAddress.value })
 const latestBlessings = computed(() => store.latestBlessings || [])
 const featuredPhotos = computed(() => store.featuredPhotos || [])
 const hasSubmittedRsvp = computed(() => {
+  if (!isRsvpEnabled.value) return false
   const list = store.guests?.guests || []
   return list.some(item => {
     if (userStore.openid && item.openid === userStore.openid) return true
@@ -362,9 +371,27 @@ function updateCountdown() {
 
 function goToAlbum() { uni.switchTab({ url: '/pages/album/index' }) }
 function goToGuide() { uni.switchTab({ url: '/pages/guide/index' }) }
-function goToTimeline() { uni.switchTab({ url: '/pages/timeline/index' }) }
-function goToRSVP() { uni.navigateTo({ url: '/pages/rsvp/index' }) }
-function goToBlessing() { uni.navigateTo({ url: '/pages/blessing/index' }) }
+function goToTimeline() {
+  if (!isTimelineEnabled.value) {
+    uni.showToast({ title: '新人暂未开放婚礼流程', icon: 'none' })
+    return
+  }
+  uni.switchTab({ url: '/pages/timeline/index' })
+}
+function goToRSVP() {
+  if (!isRsvpEnabled.value) {
+    uni.showToast({ title: '新人暂未开放在线回执', icon: 'none' })
+    return
+  }
+  uni.navigateTo({ url: '/pages/rsvp/index' })
+}
+function goToBlessing() {
+  if (!isBlessingEnabled.value) {
+    uni.showToast({ title: '新人暂未开放祝福墙', icon: 'none' })
+    return
+  }
+  uni.navigateTo({ url: '/pages/blessing/index' })
+}
 
 function openNavigation() {
   const venueList = store.venues?.venues || []
@@ -430,6 +457,17 @@ function getSharePath() {
     : '/pages/index/index'
 }
 
+function parseWeddingIdFromOptions(options = {}) {
+  if (options.id) return options.id
+  if (options.weddingId) return options.weddingId
+  const rawScene = options.scene ? decodeURIComponent(options.scene) : ''
+  if (!rawScene) return ''
+  if (!rawScene.includes('=')) return rawScene
+  const pairs = rawScene.split('&').map(item => item.split('='))
+  const idPair = pairs.find(([key]) => key === 'id' || key === 'weddingId')
+  return idPair?.[1] || ''
+}
+
 function trackShare() {
   if (userStore.weddingId) {
     recordShare(userStore.weddingId).catch(() => {})
@@ -457,7 +495,7 @@ onShareTimeline(() => {
 })
 
 onLoad(async (options) => {
-  const weddingId = options?.id || userStore.weddingId
+  const weddingId = parseWeddingIdFromOptions(options) || userStore.weddingId
   if (weddingId) {
     userStore.setWeddingId(weddingId)
     try {
@@ -518,17 +556,20 @@ onUnmounted(() => {
 
 <style lang="scss" scoped>
 .page {
-  background-color: $bg-color;
+  background-color: var(--theme-page, $bg-color);
+  color: var(--theme-ink, $text-primary);
   min-height: 100vh;
-  padding-bottom: 160rpx;
+  padding-bottom: calc(96rpx + env(safe-area-inset-bottom));
 }
 
 /* ========== 封面大图 ========== */
 .hero {
   position: relative;
-  height: 88vh;
-  min-height: 1100rpx;
+  height: 80vh;
+  min-height: 940rpx;
+  max-height: 1220rpx;
   overflow: hidden;
+  background: var(--theme-hero-bg, #fcf6f0);
 }
 .hero-image {
   position: absolute;
@@ -536,25 +577,35 @@ onUnmounted(() => {
   left: 0;
   width: 100%;
   height: 100%;
-  background: #fcf6f0;
+  background: var(--theme-hero-bg, #fcf6f0);
+}
+.hero-image-main {
+  z-index: 0;
+  filter: var(--theme-hero-filter, none);
 }
 .hero-image.default {
   padding: 0;
+  opacity: 1;
 }
 .hero-gradient {
   position: absolute;
+  z-index: 2;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(
+  background: var(--theme-hero-overlay, linear-gradient(
     to bottom,
     rgba(0,0,0,0.25) 0%,
     rgba(0,0,0,0.05) 25%,
     rgba(0,0,0,0.15) 60%,
     rgba(255,255,255,0.95) 90%,
     rgba(255,255,255,1) 100%
-  );
+  ));
+}
+.hero-gradient.default {
+  background:
+    linear-gradient(to bottom, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.08) 28%, rgba(48,22,28,0.16) 48%, rgba(58,24,32,0.48) 72%, rgba(255,255,255,0.96) 96%, #fff 100%);
 }
 .xi-watermark {
   position: absolute;
@@ -565,24 +616,24 @@ onUnmounted(() => {
   font-weight: 900;
   color: rgba(255,255,255,0.04);
   pointer-events: none;
-  z-index: 1;
+  z-index: 3;
 }
 .hero-content {
   position: relative;
-  z-index: 2;
+  z-index: 4;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
   height: 100%;
-  padding: 60rpx 48rpx 100rpx;
+  padding: 60rpx $page-gutter 86rpx;
   text-align: center;
 }
 
 .hero-tag {
   font-size: 22rpx;
   color: rgba(255,255,255,0.65);
-  letter-spacing: 8rpx;
+  letter-spacing: 0;
   font-weight: 300;
   margin-bottom: 20rpx;
 }
@@ -594,18 +645,23 @@ onUnmounted(() => {
 }
 
 .hero-names {
-  font-size: 72rpx;
+  display: block;
+  width: 100%;
+  max-width: 560rpx;
+  font-size: 56rpx;
   font-weight: 700;
   color: #fff;
-  letter-spacing: 6rpx;
+  letter-spacing: 0;
   margin-bottom: 12rpx;
   text-shadow: 0 4rpx 24rpx rgba(0,0,0,0.3);
   line-height: 1.2;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .hero-sub {
   font-size: 24rpx;
   color: rgba(255,255,255,0.7);
-  letter-spacing: 4rpx;
+  letter-spacing: 0;
   font-weight: 300;
   margin-bottom: 20rpx;
   font-style: italic;
@@ -613,7 +669,7 @@ onUnmounted(() => {
 .hero-date {
   font-size: 28rpx;
   color: rgba(255,255,255,0.95);
-  letter-spacing: 6rpx;
+  letter-spacing: 0;
   margin-bottom: 18rpx;
   text-shadow: 0 2rpx 12rpx rgba(0,0,0,0.25);
 }
@@ -629,9 +685,16 @@ onUnmounted(() => {
   border: 1rpx solid rgba(255,255,255,0.26);
   color: rgba(255,255,255,0.86);
   font-size: 22rpx;
-  letter-spacing: 2rpx;
+  letter-spacing: 0;
   background: rgba(20,20,20,0.18);
   backdrop-filter: blur(12rpx);
+  max-width: 100%;
+}
+.hero-meta-line text {
+  max-width: 280rpx;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .hero-meta-dot {
   width: 6rpx;
@@ -644,11 +707,14 @@ onUnmounted(() => {
 .hero-countdown {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 24rpx;
-  margin-bottom: 80rpx;
+  margin-bottom: 58rpx;
+  width: 100%;
+  max-width: 560rpx;
 }
 .countdown-num {
-  font-size: 120rpx;
+  font-size: 104rpx;
   font-weight: 400;
   color: #fff;
   font-variant-numeric: tabular-nums;
@@ -665,17 +731,23 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: flex-start;
   gap: 8rpx;
+  min-width: 0;
+  max-width: 220rpx;
 }
 .countdown-label {
-  font-size: 28rpx;
+  font-size: 26rpx;
   color: rgba(255,255,255,0.75);
-  letter-spacing: 6rpx;
+  letter-spacing: 0;
   font-weight: 400;
 }
 .countdown-desc {
-  font-size: 26rpx;
+  font-size: 24rpx;
   color: rgba(255,255,255,0.92);
-  letter-spacing: 2rpx;
+  letter-spacing: 0;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 /* 婚礼当天 */
@@ -684,20 +756,20 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   gap: 8rpx;
-  margin-bottom: 80rpx;
+  margin-bottom: 58rpx;
 }
 .today-label {
   font-size: 72rpx;
   font-weight: 400;
   color: #fff;
-  letter-spacing: 12rpx;
+  letter-spacing: 0;
   text-shadow: 0 4rpx 24rpx rgba(0,0,0,0.35), 0 1rpx 2rpx rgba(0,0,0,0.2);
   line-height: 1;
 }
 .today-desc {
   font-size: 32rpx;
   color: rgba(255,255,255,0.95);
-  letter-spacing: 16rpx;
+  letter-spacing: 0;
   text-shadow: 0 2rpx 12rpx rgba(0,0,0,0.25);
 }
 
@@ -717,18 +789,18 @@ onUnmounted(() => {
 .scroll-text {
   font-size: 20rpx;
   color: rgba(255,255,255,0.4);
-  letter-spacing: 4rpx;
+  letter-spacing: 0;
 }
 
 /* ========== 通用 section ========== */
 .section {
-  padding: 80rpx 48rpx;
+  padding: 80rpx $page-gutter;
 }
 
 /* ========== 宾客行动台 ========== */
 .daypack-section {
   padding-top: 52rpx;
-  padding-bottom: 60rpx;
+  padding-bottom: calc(80rpx + env(safe-area-inset-bottom));
 }
 .daypack-head {
   display: flex;
@@ -740,29 +812,29 @@ onUnmounted(() => {
 .daypack-kicker {
   display: block;
   font-size: 20rpx;
-  color: $color-primary;
-  letter-spacing: 5rpx;
+  color: var(--theme-accent, $color-primary);
+  letter-spacing: 0;
   margin-bottom: 8rpx;
   font-weight: 600;
 }
 .daypack-title {
   display: block;
   font-size: 40rpx;
-  color: $text-primary;
+  color: var(--theme-ink, $text-primary);
   font-weight: 600;
 }
 .daypack-template {
   display: block;
   margin-top: 8rpx;
   font-size: 22rpx;
-  color: $text-muted;
-  letter-spacing: 2rpx;
+  color: var(--theme-muted, $text-muted);
+  letter-spacing: 0;
 }
 .daypack-status {
   padding: 10rpx 20rpx;
   border-radius: $radius-full;
-  background: rgba(176,58,91,0.08);
-  color: $color-primary;
+  background: var(--theme-accent-soft, rgba(176,58,91,0.08));
+  color: var(--theme-accent, $color-primary);
   font-size: 24rpx;
   flex-shrink: 0;
 }
@@ -775,12 +847,13 @@ onUnmounted(() => {
   align-items: center;
   gap: 24rpx;
   padding: 32rpx;
-  border-radius: $radius-lg;
-  border: 1rpx solid $border-color;
+  border-radius: $card-radius;
+  border: 1rpx solid var(--theme-border, $border-color);
   margin-bottom: 16rpx;
 }
 .daypack-card.primary {
-  background: $text-primary;
+  background: var(--theme-strong-bg, $text-primary);
+  border-color: var(--theme-strong-border, transparent);
 }
 .daypack-card-main {
   flex: 1;
@@ -789,13 +862,13 @@ onUnmounted(() => {
 .daypack-label {
   display: block;
   font-size: 22rpx;
-  color: rgba(255,255,255,0.52);
+  color: var(--theme-strong-muted, rgba(255,255,255,0.52));
   margin-bottom: 8rpx;
 }
 .daypack-value {
   display: block;
   font-size: 34rpx;
-  color: #fff;
+  color: var(--theme-strong-ink, #fff);
   font-weight: 600;
   margin-bottom: 8rpx;
   overflow: hidden;
@@ -805,16 +878,20 @@ onUnmounted(() => {
 .daypack-sub {
   display: block;
   font-size: 24rpx;
-  color: rgba(255,255,255,0.7);
+  color: var(--theme-strong-muted, rgba(255,255,255,0.7));
   line-height: 1.5;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 .daypack-action {
   width: 116rpx;
-  height: 64rpx;
-  line-height: 64rpx;
+  height: $control-height-sm;
+  line-height: $control-height-sm;
   border-radius: $radius-full;
-  background: #fff;
-  color: $text-primary;
+  background: var(--theme-strong-soft, #fff);
+  color: var(--theme-strong-ink, $text-primary);
   font-size: 26rpx;
   padding: 0;
   flex-shrink: 0;
@@ -828,21 +905,26 @@ onUnmounted(() => {
 }
 .daypack-mini {
   padding: 28rpx;
-  background: $bg-muted;
-  border-radius: $radius-lg;
+  background: var(--theme-elevated, $bg-muted);
+  border-radius: $card-radius;
+  min-height: 132rpx;
 }
 .mini-label {
   display: block;
   font-size: 22rpx;
-  color: $text-muted;
+  color: var(--theme-muted, $text-muted);
   margin-bottom: 10rpx;
 }
 .mini-value {
   display: block;
   font-size: 28rpx;
-  color: $text-primary;
+  color: var(--theme-ink, $text-primary);
   font-weight: 600;
   line-height: 1.35;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 .daypack-actions {
   display: flex;
@@ -853,27 +935,27 @@ onUnmounted(() => {
   height: 84rpx;
   line-height: 84rpx;
   border-radius: $radius-full;
-  background: $bg-muted;
-  color: $text-primary;
+  background: var(--theme-elevated, $bg-muted);
+  color: var(--theme-ink, $text-primary);
   font-size: 28rpx;
 }
 .daypack-pill.primary {
-  background: $color-primary;
-  color: #fff;
+  background: var(--theme-accent, $color-primary);
+  color: var(--theme-on-accent, #fff);
 }
 .daypack-pill::after { border: none; }
 
 .preview-section {
   padding-top: 32rpx;
   padding-bottom: 32rpx;
-  background: $bg-muted;
+  background: var(--theme-page-soft, $bg-muted);
 }
 .preview-block {
-  background: $bg-surface;
-  border-radius: $radius-lg;
+  background: var(--theme-surface, $bg-surface);
+  border-radius: $card-radius;
   padding: 28rpx;
   margin-bottom: 20rpx;
-  border: 1rpx solid $border-color;
+  border: 1rpx solid var(--theme-border, $border-color);
 }
 .preview-block:last-child {
   margin-bottom: 0;
@@ -888,7 +970,7 @@ onUnmounted(() => {
   display: block;
   font-size: 30rpx;
   font-weight: 600;
-  color: $text-primary;
+  color: var(--theme-ink, $text-primary);
 }
 .preview-sub {
   display: block;
@@ -896,11 +978,15 @@ onUnmounted(() => {
   margin-top: 6rpx;
   font-size: 22rpx;
   line-height: 1.45;
-  color: $text-muted;
+  color: var(--theme-muted, $text-muted);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 .preview-more {
   font-size: 24rpx;
-  color: $color-primary;
+  color: var(--theme-accent, $color-primary);
 }
 .photo-strip {
   display: flex;
@@ -918,7 +1004,7 @@ onUnmounted(() => {
 }
 .blessing-preview {
   padding: 20rpx 0;
-  border-top: 1rpx solid $border-color;
+  border-top: 1rpx solid var(--theme-border, $border-color);
 }
 .blessing-preview:first-of-type {
   border-top: none;
@@ -927,14 +1013,18 @@ onUnmounted(() => {
 .blessing-name {
   display: block;
   font-size: 24rpx;
-  color: $text-muted;
+  color: var(--theme-muted, $text-muted);
   margin-bottom: 8rpx;
 }
 .blessing-text {
   display: block;
   font-size: 28rpx;
-  color: $text-primary;
+  color: var(--theme-ink, $text-primary);
   line-height: 1.6;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 /* ========== 婚书正文 ========== */
@@ -954,7 +1044,7 @@ onUnmounted(() => {
 .quote-mark {
   font-size: 80rpx;
   line-height: 1;
-  color: $border-color;
+  color: var(--theme-border, $border-color);
   font-family: Georgia, serif;
 }
 .invitation-body {
@@ -964,8 +1054,8 @@ onUnmounted(() => {
 .invitation-text {
   font-size: 32rpx;
   line-height: 2.2;
-  color: $text-primary;
-  letter-spacing: 4rpx;
+  color: var(--theme-ink, $text-primary);
+  letter-spacing: 0;
   font-weight: 400;
 }
 .invitation-couple {
@@ -983,14 +1073,14 @@ onUnmounted(() => {
 }
 .couple-label {
   font-size: 18rpx;
-  color: $text-muted;
-  letter-spacing: 4rpx;
+  color: var(--theme-muted, $text-muted);
+  letter-spacing: 0;
 }
 .couple-name {
   font-size: 36rpx;
   font-weight: 600;
-  letter-spacing: 8rpx;
-  color: $text-primary;
+  letter-spacing: 0;
+  color: var(--theme-ink, $text-primary);
 }
 .couple-divider {
   display: flex;
@@ -1001,12 +1091,12 @@ onUnmounted(() => {
 .couple-line {
   width: 1rpx;
   height: 20rpx;
-  background: $border-color;
+  background: var(--theme-border, $border-color);
 }
 .couple-heart {
   width: 10rpx;
   height: 10rpx;
-  background: $color-primary;
+  background: var(--theme-accent, $color-primary);
   transform: rotate(45deg);
   position: relative;
 }
@@ -1016,7 +1106,7 @@ onUnmounted(() => {
   position: absolute;
   width: 10rpx;
   height: 10rpx;
-  background: $color-primary;
+  background: var(--theme-accent, $color-primary);
   border-radius: 50%;
 }
 .couple-heart::before { left: -5rpx; top: 0; }
@@ -1024,9 +1114,9 @@ onUnmounted(() => {
 
 /* ========== 婚礼信息 ========== */
 .info-section {
-  background: $bg-muted;
+  background: var(--theme-page-soft, $bg-muted);
   padding-top: 80rpx;
-  padding-bottom: 80rpx;
+  padding-bottom: calc(80rpx + env(safe-area-inset-bottom));
 }
 .section-header {
   display: flex;
@@ -1039,7 +1129,7 @@ onUnmounted(() => {
   flex: 1;
   max-width: 80rpx;
   height: 1rpx;
-  background: $border-color;
+  background: var(--theme-border, $border-color);
 }
 .header-text {
   display: flex;
@@ -1050,18 +1140,18 @@ onUnmounted(() => {
 .info-title {
   font-size: 36rpx;
   font-weight: 600;
-  color: $text-primary;
-  letter-spacing: 4rpx;
+  color: var(--theme-ink, $text-primary);
+  letter-spacing: 0;
 }
 .info-sub {
   font-size: 20rpx;
-  color: $text-muted;
-  letter-spacing: 6rpx;
+  color: var(--theme-muted, $text-muted);
+  letter-spacing: 0;
 }
 
 .info-list {
-  background: $bg-surface;
-  border-radius: $radius-lg;
+  background: var(--theme-surface, $bg-surface);
+  border-radius: $card-radius;
   overflow: hidden;
 }
 .info-row {
@@ -1071,13 +1161,13 @@ onUnmounted(() => {
   transition: background 0.15s ease;
 }
 .info-row:active {
-  background: $bg-muted;
+  background: var(--theme-elevated, $bg-muted);
 }
 .info-icon-wrap {
   width: 72rpx;
-  height: 72rpx;
+  height: $control-height-sm;
   border-radius: 50%;
-  background: $bg-muted;
+  background: var(--theme-elevated, $bg-muted);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1089,34 +1179,42 @@ onUnmounted(() => {
 }
 .info-meta {
   flex: 1;
+  min-width: 0;
 }
 .info-label {
   display: block;
   font-size: 20rpx;
-  color: $text-muted;
+  color: var(--theme-muted, $text-muted);
   margin-bottom: 6rpx;
-  letter-spacing: 3rpx;
+  letter-spacing: 0;
 }
 .info-value {
   display: block;
   font-size: 30rpx;
-  color: $text-primary;
+  color: var(--theme-ink, $text-primary);
   font-weight: 500;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .info-address {
   display: block;
   font-size: 24rpx;
-  color: $text-secondary;
+  color: var(--theme-muted, $text-secondary);
   margin-top: 4rpx;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 .info-action {
   font-size: 32rpx;
-  color: $text-muted;
+  color: var(--theme-muted, $text-muted);
   padding: 16rpx;
 }
 .info-divider {
   height: 1rpx;
-  background: $border-color;
+  background: var(--theme-border, $border-color);
   margin: 0 32rpx;
 }
 
@@ -1127,13 +1225,13 @@ onUnmounted(() => {
 .quick-title {
   font-size: 36rpx;
   font-weight: 600;
-  color: $text-primary;
-  letter-spacing: 4rpx;
+  color: var(--theme-ink, $text-primary);
+  letter-spacing: 0;
 }
 .quick-sub {
   font-size: 20rpx;
-  color: $text-muted;
-  letter-spacing: 6rpx;
+  color: var(--theme-muted, $text-muted);
+  letter-spacing: 0;
 }
 .quick-grid {
   display: grid;
@@ -1146,13 +1244,13 @@ onUnmounted(() => {
   align-items: center;
   gap: 20rpx;
   padding: 32rpx 24rpx;
-  background: $bg-surface;
-  border-radius: $radius-lg;
-  border: 1rpx solid $border-color;
+  background: var(--theme-surface, $bg-surface);
+  border-radius: $card-radius;
+  border: 1rpx solid var(--theme-border, $border-color);
   transition: all 0.25s ease;
 }
 .quick-item:active {
-  background: $bg-muted;
+  background: var(--theme-elevated, $bg-muted);
   transform: scale(0.98);
 }
 .quick-icon {
@@ -1167,19 +1265,22 @@ onUnmounted(() => {
   gap: 4rpx;
 }
 .quick-label {
+  display: block;
   font-size: 28rpx;
-  color: $text-primary;
+  color: var(--theme-ink, $text-primary);
   font-weight: 500;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .quick-en {
   font-size: 18rpx;
-  color: $text-muted;
-  letter-spacing: 2rpx;
+  color: var(--theme-muted, $text-muted);
+  letter-spacing: 0;
 }
 .quick-arrow {
   font-size: 28rpx;
-  color: $text-muted;
+  color: var(--theme-muted, $text-muted);
 }
 
 /* ========== 底部 ========== */
@@ -1191,39 +1292,34 @@ onUnmounted(() => {
 .footer-line {
   width: 40rpx;
   height: 1rpx;
-  background: $border-color;
+  background: var(--theme-border, $border-color);
   margin: 0 auto 32rpx;
 }
 .footer-text {
   display: block;
   font-size: 28rpx;
-  color: $text-primary;
-  letter-spacing: 8rpx;
+  color: var(--theme-ink, $text-primary);
+  letter-spacing: 0;
   margin-bottom: 12rpx;
   font-weight: 500;
 }
 .footer-sub {
   display: block;
   font-size: 22rpx;
-  color: $text-muted;
-  letter-spacing: 3rpx;
+  color: var(--theme-muted, $text-muted);
+  letter-spacing: 0;
   font-weight: 300;
 }
 
 /* ========== 悬浮操作 ========== */
 .float-actions {
-  position: fixed;
-  bottom: calc(40rpx + constant(safe-area-inset-bottom));
-  bottom: calc(40rpx + env(safe-area-inset-bottom));
-  left: 48rpx;
-  right: 48rpx;
+  margin: 16rpx $page-gutter calc(36rpx + env(safe-area-inset-bottom));
   display: flex;
   gap: 16rpx;
-  z-index: 100;
 }
 .float-btn {
-  height: 88rpx;
-  line-height: 88rpx;
+  height: $control-height;
+  line-height: $control-height;
   text-align: center;
   border-radius: $radius-full;
   font-size: 30rpx;
@@ -1235,15 +1331,15 @@ onUnmounted(() => {
 .float-btn.rsvp {
   flex: 1;
   min-width: 0;
-  background: $text-primary;
-  color: #fff;
-  box-shadow: 0 8rpx 24rpx rgba(0,0,0,0.15);
+  background: var(--theme-accent, $text-primary);
+  color: var(--theme-on-accent, #fff);
+  box-shadow: $shadow-sm;
 }
 .float-btn.share {
   width: 88rpx;
-  background: $bg-surface;
-  color: $text-primary;
-  border: 1rpx solid $border-color;
+  background: var(--theme-surface, $bg-surface);
+  color: var(--theme-ink, $text-primary);
+  border: 1rpx solid var(--theme-border, $border-color);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1258,16 +1354,16 @@ onUnmounted(() => {
   position: fixed;
   top: calc(80rpx + env(safe-area-inset-top));
   right: 32rpx;
-  width: 72rpx;
-  height: 72rpx;
+  width: $tap-min-height;
+  height: $tap-min-height;
   border-radius: 50%;
-  background: rgba(255,255,255,0.9);
-  border: 1rpx solid $border-color;
+  background: var(--theme-surface, rgba(255,255,255,0.9));
+  border: 1rpx solid var(--theme-border, $border-color);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 200;
-  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.08);
+  box-shadow: $shadow-xs;
   transition: all 0.2s ease;
 }
 .music-control:active { transform: scale(0.92); }
@@ -1413,6 +1509,136 @@ onUnmounted(() => {
   }
   .photo-thumb {
     border-radius: 8rpx;
+  }
+}
+
+.theme-rose,
+.theme-champagne,
+.theme-noir,
+.theme-garden,
+.theme-heritage,
+.theme-shandong,
+.theme-travel {
+  background: var(--theme-page, $bg-color);
+
+  .hero,
+  .hero-image.default {
+    background: var(--theme-hero-bg, #fcf6f0);
+    opacity: 1;
+  }
+
+  .hero-image-main {
+    filter: var(--theme-hero-filter, none);
+  }
+
+  .hero-gradient {
+    background: var(--theme-hero-overlay);
+  }
+
+  .hero-gradient.default {
+    background:
+      linear-gradient(to bottom, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.08) 28%, rgba(48,22,28,0.16) 48%, rgba(58,24,32,0.48) 72%, rgba(255,255,255,0.96) 96%, #fff 100%);
+  }
+
+  .daypack-section,
+  .preview-section,
+  .info-section {
+    background: var(--theme-page-soft, $bg-muted);
+  }
+
+  .invitation-section,
+  .quick-section,
+  .footer-section {
+    background: var(--theme-page, $bg-color);
+  }
+
+  .daypack-title,
+  .mini-value,
+  .preview-title,
+  .blessing-text,
+  .invitation-text,
+  .couple-name,
+  .info-title,
+  .info-value,
+  .quick-title,
+  .quick-label,
+  .footer-text {
+    color: var(--theme-ink, $text-primary);
+  }
+
+  .daypack-template,
+  .mini-label,
+  .preview-sub,
+  .blessing-name,
+  .couple-label,
+  .info-sub,
+  .info-label,
+  .info-address,
+  .quick-sub,
+  .quick-en,
+  .footer-sub,
+  .quick-arrow {
+    color: var(--theme-muted, $text-muted);
+  }
+
+  .daypack-kicker,
+  .preview-more {
+    color: var(--theme-accent, $color-primary);
+  }
+
+  .hero-divider,
+  .daypack-pill.primary,
+  .float-btn.rsvp,
+  .couple-heart,
+  .couple-heart::before,
+  .couple-heart::after {
+    background: var(--theme-accent, $color-primary);
+    color: var(--theme-on-accent, #fff);
+  }
+
+  .daypack-card.primary {
+    background: var(--theme-strong-bg, $text-primary);
+    border-color: var(--theme-strong-border, transparent);
+  }
+
+  .daypack-label,
+  .daypack-sub {
+    color: var(--theme-strong-muted, rgba(255,255,255,0.68));
+  }
+
+  .daypack-value {
+    color: var(--theme-strong-ink, #fff);
+  }
+
+  .daypack-action {
+    background: var(--theme-strong-soft, rgba(255,255,255,0.14));
+    color: var(--theme-strong-ink, #fff);
+  }
+
+  .daypack-mini,
+  .daypack-pill,
+  .info-icon-wrap {
+    background: var(--theme-elevated, $bg-muted);
+  }
+
+  .preview-block,
+  .info-list,
+  .quick-item,
+  .float-btn.share,
+  .music-control {
+    background: var(--theme-surface, $bg-surface);
+    border-color: var(--theme-border, $border-color);
+  }
+
+  .header-line,
+  .footer-line,
+  .couple-line,
+  .info-divider {
+    background: var(--theme-border, $border-color);
+  }
+
+  .blessing-preview {
+    border-top-color: var(--theme-border, $border-color);
   }
 }
 </style>

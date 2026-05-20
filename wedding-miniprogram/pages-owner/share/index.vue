@@ -9,10 +9,14 @@
     <!-- 小程序码 -->
     <view class="qrcode-section">
       <view class="qrcode-box">
-        <text class="qrcode-placeholder">小程序码</text>
-        <text class="qrcode-hint">部署后自动生成</text>
+        <image class="qrcode-image" v-if="qrCodePath" :src="qrCodePath" mode="aspectFit" />
+        <view class="qrcode-state" v-else>
+          <text class="qrcode-placeholder">{{ qrLoading ? '生成中' : '小程序码' }}</text>
+          <text class="qrcode-hint">{{ qrError || '部署后自动生成' }}</text>
+        </view>
       </view>
       <text class="qrcode-tip">微信扫一扫，查看婚礼邀请</text>
+      <button class="qrcode-refresh" :loading="qrLoading" :disabled="qrLoading" @click="refreshQrCode">重新生成小程序码</button>
     </view>
 
     <!-- 分享卡片设置 -->
@@ -30,7 +34,9 @@
 
     <!-- 分享按钮 -->
     <view class="share-actions">
+      <button class="share-btn primary" :loading="saving" :disabled="saving" @click="saveShareSettings">保存分享设置</button>
       <button class="share-btn primary" open-type="share">分享给微信好友</button>
+      <button class="share-btn" @click="goToPoster">生成分享海报</button>
       <button class="share-btn" @click="copyPath">复制小程序路径</button>
     </view>
   </view>
@@ -41,13 +47,19 @@ import { ref, computed } from 'vue'
 import { onShow, onShareAppMessage } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
-import { showSuccess } from '@/utils/index.js'
+import { showError, showSuccess } from '@/utils/index.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
+import { generatePoster, recordShare, updateWedding } from '@/composables/useCloud.js'
+import { resolveImagePath } from '@/utils/imagePaths.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
 
 const shareForm = ref({ title: '', description: '' })
+const saving = ref(false)
+const qrCodePath = ref('')
+const qrLoading = ref(false)
+const qrError = ref('')
 
 const weddingId = computed(() => userStore.weddingId)
 
@@ -66,10 +78,76 @@ function copyPath() {
   uni.setClipboardData({ data: path, success: () => showSuccess('已复制') })
 }
 
+function goToPoster() {
+  if (!weddingId.value) {
+    showError('请先创建婚礼')
+    return
+  }
+  uni.navigateTo({ url: '/pages/poster/index' })
+}
+
+async function refreshQrCode() {
+  if (qrLoading.value) return
+  if (!weddingId.value) {
+    showError('请先创建婚礼')
+    return
+  }
+  qrLoading.value = true
+  qrError.value = ''
+  try {
+    const res = await generatePoster('pages/index/index', weddingId.value, 430)
+    if (res?.success && res.data) {
+      qrCodePath.value = await resolveImagePath(res.data, 'share_qr')
+      if (!qrCodePath.value) {
+        qrError.value = '小程序码已生成，但本地预览失败'
+      }
+    } else {
+      qrCodePath.value = ''
+      qrError.value = res?.message || '小程序码生成失败'
+    }
+  } catch (err) {
+    console.error('小程序码生成失败:', err)
+    qrCodePath.value = ''
+    qrError.value = err?.result?.message || err?.message || '小程序码生成失败，请检查 generatePoster 云函数'
+  } finally {
+    qrLoading.value = false
+  }
+}
+
+async function saveShareSettings() {
+  if (saving.value) return
+  if (!weddingId.value) {
+    showError('请先创建婚礼')
+    return
+  }
+  const shareConfig = {
+    ...(store.wedding?.share_config || {}),
+    title: shareForm.value.title.trim() || `${store.coupleName}的婚礼邀请`,
+    description: shareForm.value.description.trim() || `${store.weddingDate}，我们结婚啦！诚邀您的见证~`
+  }
+  saving.value = true
+  try {
+    await updateWedding(weddingId.value, 'weddings', { share_config: shareConfig })
+    store.updateWeddingField('share_config', shareConfig)
+    const weddings = uni.getStorageSync('weddings') || {}
+    if (weddings[weddingId.value]) {
+      weddings[weddingId.value].share_config = shareConfig
+      uni.setStorageSync('weddings', weddings)
+    }
+    showSuccess('已同步云端')
+  } catch (err) {
+    console.error('分享设置保存失败:', err)
+    showError(err?.message || '保存失败，请重试')
+  } finally {
+    saving.value = false
+  }
+}
+
 onShareAppMessage(() => {
   if (!weddingId.value) {
     return { title: '甜囍手册', path: '/pages-owner/wizard/index' }
   }
+  recordShare(weddingId.value).catch(() => {})
   return {
     title: shareForm.value.title,
     path: `/pages/index/index?id=${weddingId.value}`,
@@ -77,25 +155,29 @@ onShareAppMessage(() => {
   }
 })
 
-onShow(() => { useOwnerGuard(); loadFromStore() })
+onShow(() => {
+  useOwnerGuard()
+  loadFromStore()
+  if (!qrCodePath.value && weddingId.value) refreshQrCode()
+})
 </script>
 
 <style lang="scss" scoped>
 .page {
   background-color: $bg-color;
   min-height: 100vh;
-  padding-bottom: 60rpx;
+  padding-bottom: calc(80rpx + env(safe-area-inset-bottom));
 }
 
 /* 顶部标题 */
 .page-header {
-  padding: 60rpx 48rpx 36rpx;
+  padding: $page-header-top $page-gutter $page-header-bottom;
 }
 .page-tag {
   display: block;
   font-size: 22rpx;
   color: $text-muted;
-  letter-spacing: 6rpx;
+  letter-spacing: 0;
   margin-bottom: 12rpx;
 }
 .page-title {
@@ -108,18 +190,30 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
 /* 小程序码 */
 .qrcode-section {
   text-align: center;
-  padding: 48rpx;
+  padding: $page-gutter;
 }
 .qrcode-box {
   width: 280rpx;
   height: 280rpx;
   margin: 0 auto 32rpx;
   background: $bg-muted;
-  border-radius: $radius-lg;
+  border-radius: $card-radius;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+}
+.qrcode-image {
+  width: 240rpx;
+  height: 240rpx;
+}
+.qrcode-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24rpx;
 }
 .qrcode-placeholder {
   font-size: 28rpx;
@@ -129,15 +223,29 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
 .qrcode-hint {
   font-size: 22rpx;
   color: $text-muted;
+  line-height: 1.4;
+  text-align: center;
 }
 .qrcode-tip {
   font-size: 26rpx;
   color: $text-secondary;
 }
+.qrcode-refresh {
+  width: 260rpx;
+  height: $control-height-sm;
+  line-height: $control-height-sm;
+  margin: 24rpx auto 0;
+  border-radius: $radius-full;
+  background: $bg-muted;
+  color: $text-primary;
+  font-size: 24rpx;
+}
+.qrcode-refresh::after { border: none; }
+.qrcode-refresh[disabled] { opacity: 0.62; }
 
 /* 表单 */
 .section {
-  padding: 0 48rpx;
+  padding: 0 $page-gutter;
   margin-bottom: 48rpx;
 }
 .section-label {
@@ -157,7 +265,7 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
 }
 .form-input {
   width: 100%;
-  height: 80rpx;
+  height: $control-height;
   padding: 0 4rpx;
   border-bottom: 2rpx solid $border-color;
   font-size: 30rpx;
@@ -167,15 +275,15 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
 
 /* 分享按钮 */
 .share-actions {
-  padding: 0 48rpx;
+  padding: 0 $page-gutter;
   display: flex;
   flex-direction: column;
   gap: 16rpx;
 }
 .share-btn {
   width: 100%;
-  height: 96rpx;
-  line-height: 96rpx;
+  height: $control-height;
+  line-height: $control-height;
   text-align: center;
   border-radius: $radius-full;
   background: $bg-muted;
@@ -189,5 +297,8 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
 .share-btn.primary {
   background: $text-primary;
   color: #fff;
+}
+.share-btn.primary + .share-btn.primary {
+  background: $color-primary;
 }
 </style>

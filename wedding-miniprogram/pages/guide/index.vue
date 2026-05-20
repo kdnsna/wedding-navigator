@@ -34,6 +34,9 @@
         <image class="visual-icon-xs parking-icon" src="/static/visuals/icon-parking.svg" mode="aspectFit" />
         <text>{{ transportInfo.parking }}</text>
       </view>
+      <view class="route-tip-list" v-if="routeTips.length">
+        <text class="route-tip" v-for="tip in routeTips" :key="tip">{{ tip }}</text>
+      </view>
     </view>
 
     <!-- 顶部 Tab 栏 -->
@@ -51,9 +54,10 @@
     </view>
 
     <!-- 地图 Tab -->
-    <view class="tab-content" v-show="activeTab === 'map'">
+    <view class="tab-content map-tab" v-if="activeTab === 'map'">
       <view class="map-container">
         <map
+          v-if="mapReady"
           id="weddingMap"
           class="map"
           :latitude="center.latitude"
@@ -62,8 +66,16 @@
           :markers="markers"
           :polyline="polyline"
           :show-location="true"
+          :show-compass="true"
+          :enable-zoom="true"
+          :enable-scroll="true"
           @markertap="onMarkerTap"
         />
+        <view class="map-empty" v-else>
+          <image class="empty-visual compact" src="/static/visuals/empty-guide.svg" mode="aspectFit" />
+          <text class="map-empty-title">主场地还未匹配地图</text>
+          <text class="map-empty-sub">主人补充场地地址或地图选点后，这里会自动显示路线和当地天气</text>
+        </view>
       </view>
 
       <scroll-view class="venue-list" scroll-y>
@@ -80,9 +92,14 @@
           </view>
           <text class="venue-name">{{ venue.name }}</text>
           <text class="venue-address">{{ venue.address }}</text>
+          <text class="venue-geo" :class="{ missing: !hasCoordinate(venue) }">
+            {{ hasCoordinate(venue) ? '地图已匹配' : '待主人匹配地图' }}
+          </text>
           <view class="venue-actions">
             <button class="action-btn" @click.stop="callPhone(venue.contact_phone)" v-if="venue.contact_phone">电话</button>
-            <button class="action-btn primary" @click.stop="navigateTo(venue)">导航</button>
+            <button class="action-btn primary" :class="{ disabled: !hasCoordinate(venue) }" @click.stop="navigateTo(venue)">
+              {{ hasCoordinate(venue) ? '导航' : '待匹配' }}
+            </button>
           </view>
         </view>
       </scroll-view>
@@ -119,9 +136,10 @@
 
       <!-- 无天气数据 -->
       <view class="empty-state" v-if="!weatherLoading && !weatherData">
-        <image class="empty-visual" src="/static/visuals/empty-weather.png" mode="aspectFit" />
+        <image class="empty-visual" src="/static/visuals/empty-weather.svg" mode="aspectFit" />
         <text class="empty-text">暂无天气数据</text>
-        <text class="empty-sub">请在主人端设置场地坐标以获取天气</text>
+        <text class="empty-sub">{{ weatherError || '请在主人端填写场地地址或地图选点后自动获取' }}</text>
+        <button class="retry-btn" v-if="weatherError" @click="loadWeather">重新获取</button>
       </view>
 
       <!-- 天气详情 -->
@@ -183,8 +201,20 @@
         </view>
       </view>
 
+      <view class="info-card" v-if="routeTips.length">
+        <view class="info-row compact" v-for="tip in routeTips" :key="tip">
+          <view class="info-icon-wrap">
+            <image class="visual-icon info-row-icon" src="/static/visuals/icon-guide.svg" mode="aspectFit" />
+          </view>
+          <view class="info-content">
+            <text class="info-label">角色路线</text>
+            <text class="info-value">{{ tip }}</text>
+          </view>
+        </view>
+      </view>
+
       <view class="empty-state" v-if="!transportInfo.transport && !transportInfo.parking">
-        <image class="empty-visual" src="/static/visuals/empty-transport.png" mode="aspectFit" />
+        <image class="empty-visual" src="/static/visuals/empty-transport.svg" mode="aspectFit" />
         <text class="empty-text">暂无交通指引</text>
         <text class="empty-sub">主人尚未添加交通信息</text>
       </view>
@@ -217,7 +247,7 @@
       </view>
 
       <view class="empty-state" v-if="accommodations.length === 0">
-        <image class="empty-visual" src="/static/visuals/empty-hotel.png" mode="aspectFit" />
+        <image class="empty-visual" src="/static/visuals/empty-hotel.svg" mode="aspectFit" />
         <text class="empty-text">暂无推荐住宿</text>
         <text class="empty-sub">主人尚未添加住宿推荐</text>
       </view>
@@ -253,6 +283,7 @@ const selectedVenue = ref(null)
 // 天气
 const weatherData = ref(null)
 const weatherLoading = ref(false)
+const weatherError = ref('')
 const weatherIcon = computed(() => {
   const iconMap = {
     sunny: '/static/visuals/icon-weather-sunny.svg',
@@ -269,35 +300,42 @@ const weatherIcon = computed(() => {
 })
 
 const venues = computed(() => store.venues?.venues || [])
+const geocodedVenues = computed(() => venues.value.filter(hasCoordinate))
 const primaryVenue = computed(() => store.primaryVenue || venues.value[0] || {})
 const transportInfo = computed(() => store.venues?.transportation || {})
 const accommodations = computed(() => store.venues?.accommodations || [])
+const routeTips = computed(() => transportInfo.value.route_tips || [])
+const mapReady = computed(() => geocodedVenues.value.length > 0)
 const weatherHint = computed(() => {
   if (weatherLoading.value) return '加载中'
+  if (weatherError.value) return '待配置'
   if (!weatherData.value) return '点此查看'
   if (weatherData.value.precip > 30) return `可能降雨 ${weatherData.value.precip}%`
   return `${weatherData.value.text || '适合出行'} ${weatherData.value.temp_min || ''}-${weatherData.value.temp_max || ''}°`
 })
 
 const markers = computed(() => {
-  return venues.value.map((v, i) => ({
-    id: i,
-    latitude: v.coordinate?.latitude || center.value.latitude,
-    longitude: v.coordinate?.longitude || center.value.longitude,
-    title: v.name,
-    iconPath: MARKER_ICON || '',
-    width: 30,
-    height: 30,
-    callout: {
-      content: v.name, color: '#333', fontSize: 14,
-      borderRadius: 8, bgColor: '#fff', padding: 10, display: 'BYCLICK'
+  return geocodedVenues.value.map((v, i) => {
+    const marker = {
+      id: i,
+      latitude: Number(v.coordinate.latitude),
+      longitude: Number(v.coordinate.longitude),
+      title: v.name,
+      width: 30,
+      height: 30,
+      callout: {
+        content: v.name, color: '#333', fontSize: 14,
+        borderRadius: 8, bgColor: '#fff', padding: 10, display: 'BYCLICK'
+      }
     }
-  }))
+    if (MARKER_ICON) marker.iconPath = MARKER_ICON
+    return marker
+  })
 })
 
 const polyline = computed(() => {
-  const points = venues.value.filter(v => v.coordinate).map(v => ({
-    latitude: v.coordinate.latitude, longitude: v.coordinate.longitude
+  const points = geocodedVenues.value.map(v => ({
+    latitude: Number(v.coordinate.latitude), longitude: Number(v.coordinate.longitude)
   }))
   if (points.length < 2) return []
   return [{ points, color: '#B03A5B', width: 3, dottedLine: false }]
@@ -308,10 +346,27 @@ function typeLabel(type) {
   return map[type] || '场地'
 }
 
+function hasCoordinate(venue) {
+  return Boolean(venue?.coordinate?.latitude && venue?.coordinate?.longitude)
+}
+
+function syncMapCenter() {
+  const selected = selectedVenue.value && hasCoordinate(selectedVenue.value) ? selectedVenue.value : null
+  const first = selected || geocodedVenues.value[0]
+  if (first?.coordinate) {
+    center.value = {
+      latitude: Number(first.coordinate.latitude),
+      longitude: Number(first.coordinate.longitude)
+    }
+    selectedVenue.value = first
+    scale.value = 15
+  }
+}
+
 function selectVenue(venue) {
   selectedVenue.value = venue
-  if (venue.coordinate) {
-    center.value = { latitude: venue.coordinate.latitude, longitude: venue.coordinate.longitude }
+  if (hasCoordinate(venue)) {
+    center.value = { latitude: Number(venue.coordinate.latitude), longitude: Number(venue.coordinate.longitude) }
     scale.value = 16
   }
   activeTab.value = 'map'
@@ -319,17 +374,17 @@ function selectVenue(venue) {
 
 function onMarkerTap(e) {
   const idx = e.detail.markerId
-  if (venues.value[idx]) selectVenue(venues.value[idx])
+  if (geocodedVenues.value[idx]) selectVenue(geocodedVenues.value[idx])
 }
 
 function navigateTo(venue) {
-  if (!venue.coordinate) {
-    uni.showToast({ title: '暂无坐标信息', icon: 'none' })
+  if (!hasCoordinate(venue)) {
+    uni.showToast({ title: '场地还未匹配地图', icon: 'none' })
     return
   }
   uni.openLocation({
-    latitude: venue.coordinate.latitude,
-    longitude: venue.coordinate.longitude,
+    latitude: Number(venue.coordinate.latitude),
+    longitude: Number(venue.coordinate.longitude),
     name: venue.name,
     address: venue.address
   })
@@ -360,16 +415,20 @@ function formatWeatherDate(dateStr) {
 async function loadWeather() {
   if (!userStore.weddingId) return
   weatherLoading.value = true
+  weatherError.value = ''
   try {
     const res = await getWeather(userStore.weddingId)
     if (res?.success) {
       weatherData.value = res.data
+      weatherError.value = ''
     } else {
       weatherData.value = null
+      weatherError.value = res?.message || '天气数据暂不可用'
     }
   } catch (err) {
     console.error('loadWeather error:', err)
     weatherData.value = null
+    weatherError.value = err?.message || '天气服务暂不可用'
   } finally {
     weatherLoading.value = false
   }
@@ -380,15 +439,13 @@ onShow(async () => {
   if (userStore.weddingId && !hasLoadedWedding) {
     try {
       await fetchWedding(userStore.weddingId)
-      const first = venues.value[0]
-      if (first?.coordinate) {
-        center.value = { latitude: first.coordinate.latitude, longitude: first.coordinate.longitude }
-      }
+      syncMapCenter()
     } catch (err) {
       console.warn('路书数据加载失败:', err)
       uni.showToast({ title: '加载失败，下拉重试', icon: 'none' })
     }
   }
+  syncMapCenter()
   if (userStore.weddingId && !weatherData.value && !weatherLoading.value) {
     await loadWeather()
   }
@@ -400,14 +457,15 @@ onShow(async () => {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: $bg-color;
+  background: var(--theme-page, $bg-color);
+  color: var(--theme-ink, $text-primary);
 }
 
 /* 到场助手 */
 .arrival-pack {
-  padding: 36rpx 32rpx 24rpx;
-  border-bottom: 1rpx solid $border-color;
-  background: $bg-color;
+  padding: 36rpx $page-gutter-sm 24rpx;
+  border-bottom: 1rpx solid var(--theme-border, $border-color);
+  background: var(--theme-page, $bg-color);
   flex-shrink: 0;
 }
 .arrival-head {
@@ -420,30 +478,36 @@ onShow(async () => {
 .arrival-kicker {
   display: block;
   font-size: 18rpx;
-  color: $color-primary;
-  letter-spacing: 5rpx;
+  color: var(--theme-accent, $color-primary);
+  letter-spacing: 0;
   margin-bottom: 8rpx;
   font-weight: 600;
 }
 .arrival-title {
   display: block;
   font-size: 38rpx;
-  color: $text-primary;
+  color: var(--theme-ink, $text-primary);
   font-weight: 600;
 }
 .arrival-date {
   font-size: 24rpx;
-  color: $text-muted;
+  color: var(--theme-muted, $text-muted);
   padding-top: 8rpx;
 }
 .arrival-card {
   display: flex;
+  flex-direction: column;
   gap: 24rpx;
-  align-items: center;
+  align-items: stretch;
   padding: 28rpx;
-  background: $text-primary;
-  border-radius: $radius-lg;
+  background: var(--theme-strong-bg, $text-primary);
+  border: 1rpx solid var(--theme-strong-border, transparent);
+  border-radius: $card-radius;
   margin-bottom: 16rpx;
+  width: calc(100vw - 64rpx);
+  margin-left: auto;
+  margin-right: auto;
+  overflow: hidden;
 }
 .arrival-main {
   flex: 1;
@@ -452,13 +516,13 @@ onShow(async () => {
 .arrival-label {
   display: block;
   font-size: 22rpx;
-  color: rgba(255,255,255,0.55);
+  color: var(--theme-strong-muted, rgba(255,255,255,0.55));
   margin-bottom: 8rpx;
 }
 .arrival-name {
   display: block;
   font-size: 32rpx;
-  color: #fff;
+  color: var(--theme-strong-ink, #fff);
   font-weight: 600;
   margin-bottom: 8rpx;
   overflow: hidden;
@@ -468,51 +532,65 @@ onShow(async () => {
 .arrival-address {
   display: block;
   font-size: 24rpx;
-  color: rgba(255,255,255,0.72);
+  color: var(--theme-strong-muted, rgba(255,255,255,0.72));
   line-height: 1.5;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 .arrival-actions {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 12rpx;
   flex-shrink: 0;
+  width: 100%;
 }
 .arrival-btn {
-  width: 116rpx;
-  height: 58rpx;
-  line-height: 58rpx;
+  flex: 1;
+  min-width: 0;
+  width: auto;
+  height: $control-height-sm;
+  line-height: $control-height-sm;
   border-radius: $radius-full;
-  background: rgba(255,255,255,0.12);
-  color: #fff;
+  background: var(--theme-strong-soft, rgba(255,255,255,0.12));
+  color: var(--theme-strong-ink, #fff);
   font-size: 24rpx;
   padding: 0;
 }
 .arrival-btn.primary {
-  background: #fff;
-  color: $text-primary;
+  background: var(--theme-accent, #fff);
+  color: var(--theme-on-accent, $text-primary);
 }
 .arrival-btn::after { border: none; }
 .arrival-summary {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14rpx;
+  width: calc(100vw - 64rpx);
+  margin-left: auto;
+  margin-right: auto;
 }
 .arrival-summary-item {
   padding: 20rpx 22rpx;
-  background: $bg-muted;
-  border-radius: $radius-md;
+  background: var(--theme-elevated, $bg-muted);
+  border-radius: $card-radius;
+  min-width: 0;
 }
 .summary-label {
   display: block;
   font-size: 22rpx;
-  color: $text-muted;
+  color: var(--theme-muted, $text-muted);
   margin-bottom: 8rpx;
 }
 .summary-value {
   display: block;
   font-size: 26rpx;
-  color: $text-primary;
+  color: var(--theme-ink, $text-primary);
   font-weight: 600;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .parking-note {
   display: flex;
@@ -521,8 +599,8 @@ onShow(async () => {
   margin-top: 16rpx;
   padding: 18rpx 20rpx;
   border-radius: $radius-md;
-  background: rgba(176,58,91,0.06);
-  color: $color-primary;
+  background: var(--theme-accent-soft, rgba(176,58,91,0.06));
+  color: var(--theme-accent, $color-primary);
   font-size: 24rpx;
   line-height: 1.5;
 }
@@ -530,12 +608,27 @@ onShow(async () => {
   margin-top: 4rpx;
   flex-shrink: 0;
 }
+.route-tip-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+  margin-top: 16rpx;
+}
+.route-tip {
+  display: block;
+  padding: 14rpx 18rpx;
+  border-radius: $radius-md;
+  background: var(--theme-elevated, $bg-muted);
+  color: var(--theme-muted, $text-secondary);
+  font-size: 23rpx;
+  line-height: 1.45;
+}
 
 /* Tab 栏 */
 .tab-bar {
   display: flex;
-  background: $bg-surface;
-  border-bottom: 1rpx solid $border-color;
+  background: var(--theme-surface, $bg-surface);
+  border-bottom: 1rpx solid var(--theme-border, $border-color);
   flex-shrink: 0;
   padding: 0 16rpx;
 }
@@ -550,19 +643,19 @@ onShow(async () => {
 }
 .tab-label {
   font-size: 26rpx;
-  color: $text-muted;
+  color: var(--theme-muted, $text-muted);
   font-weight: 500;
   transition: color 0.2s ease;
 }
 .tab-item.active .tab-label {
-  color: $text-primary;
+  color: var(--theme-accent, $text-primary);
   font-weight: 600;
 }
 .tab-dot {
   width: 8rpx;
   height: 8rpx;
   border-radius: 50%;
-  background: $color-primary;
+  background: var(--theme-accent, $color-primary);
   position: absolute;
   top: 16rpx;
   right: calc(50% - 24rpx);
@@ -570,42 +663,82 @@ onShow(async () => {
 
 .tab-content {
   flex: 1;
+  min-height: 0;
   overflow: hidden;
+}
+.map-tab {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--theme-page, $bg-color);
 }
 
 /* 地图 */
 .map-container {
-  flex: 1;
-  min-height: 300rpx;
+  position: relative;
+  height: 420rpx;
+  min-height: 420rpx;
+  flex-shrink: 0;
+  margin: 24rpx 24rpx 18rpx;
+  background: var(--theme-page-soft, $bg-muted);
+  border: 1rpx solid var(--theme-border, $border-color);
+  border-radius: $card-radius;
+  overflow: hidden;
 }
 .map {
   width: 100%;
+  height: 420rpx;
+  display: block;
+}
+.map-empty {
   height: 100%;
+  padding: 42rpx;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.empty-visual.compact {
+  width: 150rpx;
+  height: 150rpx;
+  margin-bottom: 16rpx;
+}
+.map-empty-title {
+  display: block;
+  font-size: 28rpx;
+  color: var(--theme-ink, $text-primary);
+  font-weight: 500;
+  margin-bottom: 8rpx;
+}
+.map-empty-sub {
+  display: block;
+  font-size: 23rpx;
+  color: var(--theme-muted, $text-muted);
+  line-height: 1.55;
 }
 
 .venue-list {
-  max-height: 45vh;
-  padding: 24rpx;
-  background: $bg-color;
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+  padding: 0 24rpx 24rpx;
+  box-sizing: border-box;
+  background: var(--theme-page, $bg-color);
 }
 
 .venue-card {
-  background: $bg-surface;
-  border-radius: $radius-lg;
-  padding: 32rpx;
+  background: var(--theme-surface, $bg-surface);
+  border-radius: $card-radius;
+  padding: 26rpx;
   margin-bottom: 16rpx;
   transition: all 0.2s ease;
-  border: 1rpx solid transparent;
+  border: 1rpx solid var(--theme-border, transparent);
 }
 .venue-card.active {
-  background: $text-primary;
-  border-color: $text-primary;
-}
-.venue-card.active .venue-name,
-.venue-card.active .venue-address,
-.venue-card.active .venue-type,
-.venue-card.active .venue-time {
-  color: rgba(255,255,255,0.85);
+  background: var(--theme-accent-soft, rgba(176,58,91,0.08));
+  border-color: var(--theme-accent, $color-primary);
 }
 .venue-meta {
   display: flex;
@@ -615,51 +748,78 @@ onShow(async () => {
 }
 .venue-type {
   padding: 4rpx 12rpx;
-  background: $bg-muted;
-  color: $text-secondary;
+  background: var(--theme-elevated, $bg-muted);
+  color: var(--theme-muted, $text-secondary);
   font-size: 20rpx;
   border-radius: 6rpx;
   font-weight: 500;
 }
-.venue-time { font-size: 22rpx; color: $text-muted; }
+.venue-time { font-size: 22rpx; color: var(--theme-muted, $text-muted); }
 .venue-name {
   display: block;
   font-size: 30rpx;
   font-weight: 500;
-  color: $text-primary;
+  color: var(--theme-ink, $text-primary);
   margin-bottom: 4rpx;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .venue-address {
   display: block;
   font-size: 24rpx;
-  color: $text-secondary;
+  color: var(--theme-muted, $text-secondary);
+  margin-bottom: 8rpx;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.venue-geo {
+  display: inline-block;
   margin-bottom: 16rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 6rpx;
+  background: rgba(52,168,83,0.08);
+  color: $color-success;
+  font-size: 20rpx;
+}
+.venue-geo.missing {
+  background: rgba(249,171,0,0.12);
+  color: #A66A00;
 }
 .venue-actions {
   display: flex;
   gap: 12rpx;
 }
 .action-btn {
-  padding: 10rpx 28rpx;
+  min-width: 116rpx;
+  height: $control-height-sm;
+  line-height: $control-height-sm;
+  padding: 0 24rpx;
   font-size: 24rpx;
   border-radius: $radius-full;
-  background: $bg-muted;
-  color: $text-primary;
+  background: var(--theme-elevated, $bg-muted);
+  color: var(--theme-ink, $text-primary);
   border: none;
   line-height: 1.5;
 }
 .action-btn.primary {
-  background: $color-primary;
-  color: #fff;
+  background: var(--theme-accent, $color-primary);
+  color: var(--theme-on-accent, #fff);
+}
+.action-btn.disabled {
+  background: $bg-muted;
+  color: $text-muted;
 }
 .action-btn::after { border: none; }
 
 /* 天气 */
 .weather-banner {
-  padding: 48rpx;
-  background: linear-gradient(135deg, #fef9f3 0%, #fdf2eb 100%);
+  padding: $page-gutter;
+  background: var(--theme-panel-gradient, linear-gradient(135deg, #fef9f3 0%, #fdf2eb 100%));
   margin: 24rpx;
-  border-radius: $radius-lg;
+  border-radius: $card-radius;
 }
 .weather-main {
   display: flex;
@@ -669,7 +829,7 @@ onShow(async () => {
 }
 .weather-icon {
   width: 88rpx;
-  height: 88rpx;
+  height: $control-height;
   flex-shrink: 0;
 }
 .weather-temp {
@@ -680,17 +840,17 @@ onShow(async () => {
 .temp-max {
   font-size: 64rpx;
   font-weight: 300;
-  color: $text-primary;
+  color: var(--theme-ink, $text-primary);
   font-variant-numeric: tabular-nums;
 }
 .temp-sep {
   font-size: 32rpx;
-  color: $text-muted;
+  color: var(--theme-muted, $text-muted);
   font-weight: 300;
 }
 .temp-min {
   font-size: 32rpx;
-  color: $text-muted;
+  color: var(--theme-muted, $text-muted);
   font-variant-numeric: tabular-nums;
 }
 .weather-desc {
@@ -700,12 +860,12 @@ onShow(async () => {
 }
 .weather-text {
   font-size: 32rpx;
-  color: $text-primary;
+  color: var(--theme-ink, $text-primary);
   font-weight: 500;
 }
 .weather-date {
   font-size: 24rpx;
-  color: $text-muted;
+  color: var(--theme-muted, $text-muted);
 }
 .weather-tags {
   margin-top: 16rpx;
@@ -715,7 +875,7 @@ onShow(async () => {
   align-items: center;
   gap: 8rpx;
   font-size: 22rpx;
-  color: $text-secondary;
+  color: var(--theme-muted, $text-secondary);
   background: rgba(255,255,255,0.7);
   padding: 8rpx 16rpx;
   border-radius: $radius-full;
@@ -725,9 +885,9 @@ onShow(async () => {
 
 .weather-details {
   margin: 24rpx;
-  background: $bg-surface;
-  border-radius: $radius-lg;
-  border: 1rpx solid $border-color;
+  background: var(--theme-surface, $bg-surface);
+  border-radius: $card-radius;
+  border: 1rpx solid var(--theme-border, $border-color);
   overflow: hidden;
 }
 .detail-row {
@@ -740,8 +900,8 @@ onShow(async () => {
   height: 40rpx;
   margin-right: 16rpx;
 }
-.detail-text { font-size: 26rpx; color: $text-primary; }
-.detail-divider { height: 1rpx; background: $border-color; margin: 0 32rpx; }
+.detail-text { font-size: 26rpx; color: var(--theme-ink, $text-primary); }
+.detail-divider { height: 1rpx; background: var(--theme-border, $border-color); margin: 0 32rpx; }
 
 .weather-loading {
   display: flex;
@@ -752,13 +912,13 @@ onShow(async () => {
 }
 .loading-spinner {
   width: 56rpx; height: 56rpx;
-  border: 3rpx solid $border-color;
-  border-top-color: $text-primary;
+  border: 3rpx solid var(--theme-border, $border-color);
+  border-top-color: var(--theme-ink, $text-primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
-.loading-text { font-size: 26rpx; color: $text-muted; }
+.loading-text { font-size: 26rpx; color: var(--theme-muted, $text-muted); }
 
 .api-note {
   display: flex;
@@ -767,7 +927,7 @@ onShow(async () => {
   margin: 24rpx;
   padding: 20rpx 24rpx;
   background: #FFF7E6;
-  border-radius: $radius-lg;
+  border-radius: $card-radius;
 }
 .note-icon { flex-shrink: 0; }
 .note-text { font-size: 22rpx; color: #B8860B; }
@@ -786,17 +946,17 @@ onShow(async () => {
 .section-title {
   font-size: 30rpx;
   font-weight: 600;
-  color: $text-primary;
+  color: var(--theme-ink, $text-primary);
 }
 .section-date {
   font-size: 22rpx;
-  color: $text-muted;
+  color: var(--theme-muted, $text-muted);
 }
 
 .info-card {
-  background: $bg-surface;
-  border-radius: $radius-lg;
-  border: 1rpx solid $border-color;
+  background: var(--theme-surface, $bg-surface);
+  border-radius: $card-radius;
+  border: 1rpx solid var(--theme-border, $border-color);
   overflow: hidden;
   margin-bottom: 24rpx;
 }
@@ -805,6 +965,12 @@ onShow(async () => {
   align-items: flex-start;
   padding: 32rpx;
   gap: 20rpx;
+}
+.info-row.compact {
+  padding: 24rpx 32rpx;
+}
+.info-row.compact + .info-row.compact {
+  border-top: 1rpx solid var(--theme-border, $border-color);
 }
 .info-icon-wrap {
   width: 52rpx;
@@ -815,59 +981,69 @@ onShow(async () => {
   width: 52rpx;
   height: 52rpx;
 }
-.info-content { flex: 1; }
+.info-content {
+  flex: 1;
+  min-width: 0;
+}
 .info-label {
   display: block;
   font-size: 22rpx;
-  color: $text-muted;
+  color: var(--theme-muted, $text-muted);
   margin-bottom: 6rpx;
-  letter-spacing: 2rpx;
+  letter-spacing: 0;
 }
 .info-value {
   display: block;
   font-size: 28rpx;
-  color: $text-primary;
+  color: var(--theme-ink, $text-primary);
   line-height: 1.5;
+  word-break: break-word;
 }
-.info-divider { height: 1rpx; background: $border-color; margin: 0 32rpx; }
+.info-divider { height: 1rpx; background: var(--theme-border, $border-color); margin: 0 32rpx; }
 
 /* 住宿列表 */
 .hotel-list { display: flex; flex-direction: column; gap: 16rpx; }
 .hotel-card {
-  background: $bg-surface;
-  border-radius: $radius-lg;
-  border: 1rpx solid $border-color;
+  background: var(--theme-surface, $bg-surface);
+  border-radius: $card-radius;
+  border: 1rpx solid var(--theme-border, $border-color);
   padding: 32rpx;
 }
 .hotel-name {
   display: block;
   font-size: 30rpx;
   font-weight: 500;
-  color: $text-primary;
+  color: var(--theme-ink, $text-primary);
   margin-bottom: 8rpx;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .hotel-tags { display: flex; gap: 12rpx; margin: 8rpx 0; }
 .hotel-tag {
   font-size: 20rpx;
-  color: $text-secondary;
-  background: $bg-muted;
+  color: var(--theme-muted, $text-secondary);
+  background: var(--theme-elevated, $bg-muted);
   padding: 4rpx 12rpx;
   border-radius: 4rpx;
 }
 .hotel-notes {
   display: block;
   font-size: 24rpx;
-  color: $text-muted;
+  color: var(--theme-muted, $text-muted);
   margin-top: 8rpx;
+  line-height: 1.5;
+  word-break: break-word;
 }
 .hotel-actions { margin-top: 20rpx; }
 .hotel-btn {
   display: inline-flex;
   align-items: center;
   gap: 10rpx;
-  padding: 14rpx 32rpx;
-  background: $text-primary;
-  color: #fff;
+  height: $control-height-sm;
+  padding: 0 32rpx;
+  background: var(--theme-accent, $text-primary);
+  color: var(--theme-on-accent, #fff);
   border-radius: $radius-full;
   font-size: 24rpx;
   border: none;
@@ -893,14 +1069,29 @@ onShow(async () => {
 .empty-text {
   display: block;
   font-size: 28rpx;
-  color: $text-primary;
+  color: var(--theme-ink, $text-primary);
   font-weight: 500;
   margin-bottom: 8rpx;
 }
 .empty-sub {
   display: block;
   font-size: 24rpx;
-  color: $text-muted;
+  color: var(--theme-muted, $text-muted);
+  line-height: 1.5;
+  padding: 0 48rpx;
+}
+.retry-btn {
+  margin-top: 24rpx;
+  width: 220rpx;
+  height: $control-height-sm;
+  line-height: $control-height-sm;
+  border-radius: $radius-full;
+  background: var(--theme-accent, $text-primary);
+  color: var(--theme-on-accent, #fff);
+  font-size: 26rpx;
+}
+.retry-btn::after {
+  border: none;
 }
 
 .tpl-champagne {
@@ -962,6 +1153,136 @@ onShow(async () => {
   .action-btn.primary,
   .hotel-btn {
     background: #506247;
+  }
+}
+
+.theme-rose,
+.theme-champagne,
+.theme-noir,
+.theme-garden,
+.theme-heritage,
+.theme-shandong,
+.theme-travel {
+  background: var(--theme-page, $bg-color);
+  color: var(--theme-ink, $text-primary);
+
+  .arrival-pack,
+  .tab-bar,
+  .venue-list {
+    background: var(--theme-page, $bg-color);
+    border-color: var(--theme-border, $border-color);
+  }
+
+  .arrival-card {
+    background: var(--theme-strong-bg, $text-primary);
+    border-color: var(--theme-strong-border, transparent);
+  }
+
+  .venue-card.active {
+    background: var(--theme-accent-soft, rgba(176,58,91,0.08));
+    border-color: var(--theme-accent, $color-primary);
+  }
+
+  .arrival-name {
+    color: var(--theme-strong-ink, #fff);
+  }
+
+  .venue-card.active .venue-name {
+    color: var(--theme-ink, $text-primary);
+  }
+
+  .venue-card.active .venue-address,
+  .venue-card.active .venue-type,
+  .venue-card.active .venue-time {
+    color: var(--theme-muted, $text-secondary);
+  }
+
+  .venue-card.active .venue-geo {
+    color: $color-success;
+  }
+
+  .arrival-label,
+  .arrival-address {
+    color: var(--theme-strong-muted, rgba(255,255,255,0.68));
+  }
+
+  .arrival-title,
+  .summary-value,
+  .venue-name,
+  .section-title,
+  .info-value,
+  .hotel-name,
+  .weather-text,
+  .temp-max,
+  .detail-text,
+  .empty-text,
+  .map-empty-title {
+    color: var(--theme-ink, $text-primary);
+  }
+
+  .arrival-date,
+  .summary-label,
+  .venue-address,
+  .section-date,
+  .info-label,
+  .hotel-notes,
+  .weather-date,
+  .temp-min,
+  .temp-sep,
+  .loading-text,
+  .empty-sub,
+  .map-empty-sub {
+    color: var(--theme-muted, $text-muted);
+  }
+
+  .arrival-kicker,
+  .tab-item.active .tab-label {
+    color: var(--theme-accent, $color-primary);
+  }
+
+  .tab-dot,
+  .arrival-btn.primary,
+  .action-btn.primary,
+  .hotel-btn,
+  .retry-btn {
+    background: var(--theme-accent, $color-primary);
+    color: var(--theme-on-accent, #fff);
+  }
+
+  .arrival-btn {
+    background: var(--theme-strong-soft, rgba(255,255,255,0.12));
+    color: var(--theme-strong-ink, #fff);
+  }
+
+  .arrival-summary-item,
+  .route-tip,
+  .action-btn,
+  .hotel-tag,
+  .map-container {
+    background: var(--theme-elevated, $bg-muted);
+    color: var(--theme-muted, $text-secondary);
+  }
+
+  .parking-note {
+    background: var(--theme-accent-soft, rgba(176,58,91,0.06));
+    color: var(--theme-accent, $color-primary);
+  }
+
+  .venue-card,
+  .info-card,
+  .hotel-card,
+  .weather-details {
+    background: var(--theme-surface, $bg-surface);
+    border-color: var(--theme-border, $border-color);
+  }
+
+  .weather-banner {
+    background: var(--theme-panel-gradient);
+  }
+
+  .info-divider,
+  .detail-divider {
+    background: var(--theme-border, $border-color);
   }
 }
 </style>

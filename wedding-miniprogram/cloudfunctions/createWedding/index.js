@@ -3,7 +3,13 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 
-const RELATED_COLLECTIONS = ['invitations', 'albums', 'venues', 'timelines', 'guests', 'blessings', 'share_stats', 'viewers']
+const RELATED_COLLECTIONS = ['owners', 'invitations', 'albums', 'venues', 'timelines', 'guests', 'blessings', 'share_stats', 'viewers']
+const DEFAULT_ENTITLEMENTS = {
+  premium_templates: false,
+  poster_pack: false,
+  remove_branding: false,
+  workspace_multi: false
+}
 
 async function ensureCollection(collectionName) {
   try {
@@ -17,14 +23,19 @@ async function ensureCollection(collectionName) {
 }
 
 exports.main = async (event, context) => {
-  const { weddingData, wedding, invitation } = event
+  const { weddingData, wedding, invitation, venues, timeline } = event
   const { OPENID } = cloud.getWXContext()
 
   const weddingPayload = weddingData?.wedding || wedding
   const invitationPayload = weddingData?.invitation || invitation
+  const venuesPayload = weddingData?.venues || venues || { venues: [] }
+  const timelinePayload = weddingData?.timeline || timeline || { events: [] }
 
   if (!weddingPayload) {
     return { success: false, message: '缺少婚礼数据' }
+  }
+  if (!OPENID) {
+    return { success: false, message: '无法识别微信身份，请重新打开小程序' }
   }
 
   let weddingId = null
@@ -41,11 +52,13 @@ exports.main = async (event, context) => {
     }
 
     const now = Date.now()
+    await ensureOwnerProfile(OPENID, now)
 
     // DB 自动分配 _id，消除 check-then-act 竞态
     const weddingRes = await db.collection('weddings').add({
       data: {
         ...weddingPayload,
+        owner_profile_id: OPENID,
         owner_openid: OPENID,
         created_at: now,
         updated_at: now
@@ -61,10 +74,10 @@ exports.main = async (event, context) => {
         data: { _id: weddingId, photos: [], created_at: now, updated_at: now }
       }),
       db.collection('venues').add({
-        data: { _id: weddingId, venues: [], created_at: now, updated_at: now }
+        data: { _id: weddingId, ...venuesPayload, created_at: now, updated_at: now }
       }),
       db.collection('timelines').add({
-        data: { _id: weddingId, events: [], created_at: now, updated_at: now }
+        data: { _id: weddingId, ...timelinePayload, created_at: now, updated_at: now }
       }),
       db.collection('guests').add({
         data: { _id: weddingId, guests: [], created_at: now, updated_at: now }
@@ -92,4 +105,35 @@ async function cleanupPartialCreation(weddingId) {
   for (const col of RELATED_COLLECTIONS) {
     try { await db.collection(col).doc(weddingId).remove() } catch (e) {}
   }
+}
+
+async function ensureOwnerProfile(openid, now) {
+  if (!openid) return
+  const ref = db.collection('owners').doc(openid)
+  const existing = await ref.get().catch(() => ({ data: null }))
+  if (existing.data) {
+    await ref.update({
+      data: {
+        updated_at: now
+      }
+    })
+    return
+  }
+
+  await ref.set({
+    data: {
+      openid,
+      unionid: '',
+      appid: '',
+      profile: {
+        nickname: '',
+        phone: '',
+        role: '主人'
+      },
+      plan: 'free',
+      entitlements: DEFAULT_ENTITLEMENTS,
+      created_at: now,
+      updated_at: now
+    }
+  })
 }

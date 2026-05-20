@@ -1,7 +1,7 @@
 <template>
   <view class="page" :class="templateClass">
     <!-- 顶部标题 -->
-    <view class="page-header">
+    <view class="page-header" v-if="isTimelineEnabled">
       <text class="page-tag">TIMELINE</text>
       <text class="page-title">婚礼流程</text>
       <view class="page-divider" />
@@ -14,7 +14,14 @@
     </view>
 
     <!-- 日期展示 -->
-    <view class="date-banner" v-if="weddingDate">
+    <view class="feature-closed" v-if="!isTimelineEnabled">
+      <image class="empty-visual" src="/static/visuals/icon-timeline.svg" mode="aspectFit" />
+      <text class="feature-title">新人暂未开放婚礼流程</text>
+      <text class="feature-desc">您仍可查看婚礼时间、地点和到场路线。</text>
+      <button class="feature-action" @click="goToGuide">查看路线</button>
+    </view>
+
+    <view class="date-banner" v-if="isTimelineEnabled && weddingDate">
       <text class="date-num">{{ weddingDay }}</text>
       <view class="date-meta">
         <text class="date-month">{{ weddingMonth }}</text>
@@ -23,10 +30,22 @@
     </view>
 
     <!-- 时间轴 -->
-    <view class="timeline" v-if="events.length > 0">
+    <view class="role-filter" v-if="isTimelineEnabled && roleFilters.length > 1">
+      <text
+        class="role-pill"
+        v-for="role in roleFilters"
+        :key="role.id"
+        :class="{ active: activeRole === role.id }"
+        @click="activeRole = role.id"
+      >
+        {{ role.name }}
+      </text>
+    </view>
+
+    <view class="timeline" v-if="isTimelineEnabled && visibleEvents.length > 0">
       <view
         class="timeline-item"
-        v-for="(event, index) in events"
+        v-for="(event, index) in visibleEvents"
         :key="event.id"
         :class="getEventStatus(event.time)"
         :style="{ animationDelay: `${index * 0.1}s` }"
@@ -62,14 +81,14 @@
     </view>
 
     <!-- 空状态 -->
-    <view class="empty-state" v-if="events.length === 0">
-      <image class="empty-visual empty-icon" src="/static/visuals/empty-timeline.png" mode="aspectFit" />
+    <view class="empty-state" v-if="isTimelineEnabled && visibleEvents.length === 0">
+      <image class="empty-visual empty-icon" src="/static/visuals/empty-timeline.svg" mode="aspectFit" />
       <text class="empty-text">{{ emptyText }}</text>
       <text class="empty-sub">{{ emptySub }}</text>
     </view>
 
     <!-- 底部 -->
-    <view class="page-footer" v-if="events.length > 0">
+    <view class="page-footer" v-if="isTimelineEnabled && visibleEvents.length > 0">
       <view class="footer-line" />
       <text class="footer-text">以上为预计安排，以现场为准</text>
     </view>
@@ -87,12 +106,31 @@ const store = useWeddingStore()
 const userStore = useUserStore()
 const loadError = ref('')
 const templateClass = computed(() => store.templateClass)
+const isTimelineEnabled = computed(() => store.isTimelineEnabled)
+const activeRole = ref('all')
 
 const weddingDate = computed(() => store.weddingDate)
 const countdown = computed(() => store.countdown)
 const events = computed(() => store.timeline?.events || [])
 const venues = computed(() => store.venues?.venues || [])
 const roles = computed(() => store.timeline?.roles || [])
+const roleFilters = computed(() => {
+  const roleList = roles.value.length ? roles.value : [
+    { id: 'guest', name: '普通宾客' },
+    { id: 'party', name: '伴郎伴娘' },
+    { id: 'parents', name: '双方父母' },
+    { id: 'vendor', name: '摄影司仪' }
+  ]
+  return [{ id: 'all', name: '全部' }, ...roleList]
+})
+const visibleEvents = computed(() => {
+  if (activeRole.value === 'all') return events.value
+  return events.value.filter(event => {
+    const ids = event.assignee_ids || []
+    if (!ids.length) return true
+    return ids.includes(activeRole.value)
+  })
+})
 const emptyText = computed(() => {
   if (!userStore.weddingId) return '请从有效婚礼邀请进入'
   if (loadError.value) return '流程加载失败'
@@ -148,6 +186,10 @@ function getEventStatus(timeStr) {
   return 'upcoming'
 }
 
+function goToGuide() {
+  uni.switchTab({ url: '/pages/guide/index' })
+}
+
 onShow(async () => {
   if (userStore.weddingId && events.value.length === 0) {
     loadError.value = ''
@@ -158,20 +200,21 @@ onShow(async () => {
 
 <style lang="scss" scoped>
 .page {
-  background-color: $bg-color;
+  background-color: var(--theme-page, $bg-color);
+  color: var(--theme-ink, $text-primary);
   min-height: 100vh;
-  padding-bottom: 80rpx;
+  padding-bottom: calc(80rpx + env(safe-area-inset-bottom));
 }
 
 /* 顶部标题 */
 .page-header {
-  padding: 60rpx 48rpx 36rpx;
+  padding: $page-header-top $page-gutter $page-header-bottom;
 }
 .page-tag {
   display: block;
   font-size: 22rpx;
   color: $text-muted;
-  letter-spacing: 6rpx;
+  letter-spacing: 0;
   margin-bottom: 12rpx;
 }
 .page-title {
@@ -197,13 +240,42 @@ onShow(async () => {
   font-weight: 500;
 }
 
+.feature-closed {
+  text-align: center;
+  padding: 180rpx 64rpx;
+}
+.feature-title {
+  display: block;
+  font-size: 34rpx;
+  color: $text-primary;
+  font-weight: 600;
+  margin-bottom: 14rpx;
+}
+.feature-desc {
+  display: block;
+  font-size: 26rpx;
+  color: $text-secondary;
+  line-height: 1.6;
+  margin-bottom: 36rpx;
+}
+.feature-action {
+  width: 260rpx;
+  height: $control-height-sm;
+  line-height: $control-height-sm;
+  border-radius: $radius-full;
+  background: $text-primary;
+  color: #fff;
+  font-size: 26rpx;
+}
+.feature-action::after { border: none; }
+
 /* 日期横幅 */
 .date-banner {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 20rpx;
-  padding: 24rpx 48rpx 48rpx;
+  padding: 24rpx $page-gutter 48rpx;
 }
 .date-num {
   font-size: 80rpx;
@@ -220,7 +292,7 @@ onShow(async () => {
 .date-month {
   font-size: 24rpx;
   color: $text-primary;
-  letter-spacing: 4rpx;
+  letter-spacing: 0;
   font-weight: 500;
 }
 .date-week {
@@ -230,7 +302,29 @@ onShow(async () => {
 
 /* 时间轴 */
 .timeline {
-  padding: 0 48rpx;
+  padding: 0 $page-gutter;
+}
+.role-filter {
+  display: flex;
+  gap: 12rpx;
+  padding: 0 $page-gutter 32rpx;
+  overflow-x: auto;
+}
+.role-pill {
+  min-height: $control-height-sm;
+  padding: 0 26rpx;
+  border-radius: $radius-full;
+  background: $bg-muted;
+  color: $text-secondary;
+  font-size: 24rpx;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.role-pill.active {
+  background: $text-primary;
+  color: #fff;
 }
 .timeline-item {
   display: flex;
@@ -315,6 +409,11 @@ onShow(async () => {
   font-size: 32rpx;
   font-weight: 600;
   color: $text-primary;
+  min-width: 0;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 .status-badge {
   padding: 4rpx 12rpx;
@@ -355,6 +454,7 @@ onShow(async () => {
   color: $text-muted;
   margin-top: 8rpx;
   line-height: 1.5;
+  word-break: break-word;
 }
 
 /* 状态样式 */
@@ -422,6 +522,7 @@ onShow(async () => {
     background: #fff;
     border-color: rgba(164,120,59,0.14);
   }
+  .feature-action,
   .timeline-dot,
   .timeline-item.current .timeline-dot {
     background: #A4783B;
@@ -433,11 +534,13 @@ onShow(async () => {
 .tpl-noir {
   background: #111;
   .page-title,
+  .feature-title,
   .date-num,
   .content-title {
     color: #fff;
   }
   .page-desc,
+  .feature-desc,
   .date-month,
   .date-week,
   .meta-text,
@@ -450,6 +553,7 @@ onShow(async () => {
     background: #191919;
     border-color: rgba(201,169,110,0.16);
   }
+  .feature-action,
   .timeline-dot,
   .timeline-item.current .timeline-dot {
     background: $color-gold;
@@ -465,12 +569,107 @@ onShow(async () => {
     background: #fff;
     border-color: rgba(80,98,71,0.14);
   }
+  .feature-action,
   .timeline-dot,
   .timeline-item.current .timeline-dot {
     background: #506247;
   }
   .timeline-item.current .timeline-time {
     color: #506247;
+  }
+}
+
+.theme-rose,
+.theme-champagne,
+.theme-noir,
+.theme-garden,
+.theme-heritage,
+.theme-shandong,
+.theme-travel {
+  background: var(--theme-page, $bg-color);
+  color: var(--theme-ink, $text-primary);
+
+  .page-title,
+  .feature-title,
+  .date-num,
+  .date-month,
+  .content-title,
+  .empty-text {
+    color: var(--theme-ink, $text-primary);
+  }
+
+  .page-tag,
+  .page-desc,
+  .feature-desc,
+  .date-week,
+  .timeline-time,
+  .meta-text,
+  .content-notes,
+  .footer-text,
+  .empty-sub {
+    color: var(--theme-muted, $text-muted);
+  }
+
+  .page-desc.today,
+  .timeline-item.current .timeline-time {
+    color: var(--theme-accent, $color-primary);
+  }
+
+  .page-divider,
+  .timeline-item.current .timeline-dot,
+  .feature-action,
+  .role-pill.active {
+    background: var(--theme-accent, $color-primary);
+    color: var(--theme-on-accent, #fff);
+  }
+
+  .date-banner,
+  .timeline-content {
+    background: var(--theme-surface, $bg-surface);
+    border: 1rpx solid var(--theme-border, $border-color);
+    border-radius: $card-radius;
+  }
+
+  .timeline-content {
+    padding: 28rpx;
+    margin-top: 10rpx;
+  }
+
+  .role-pill,
+  .status-badge.upcoming {
+    background: var(--theme-elevated, $bg-muted);
+    color: var(--theme-muted, $text-secondary);
+  }
+
+  .status-badge.current {
+    background: var(--theme-accent-soft, rgba(176,58,91,0.10));
+    color: var(--theme-accent, $color-primary);
+  }
+
+  .timeline-dot {
+    background: var(--theme-border, $border-color);
+  }
+
+  .timeline-dot-ring {
+    border-color: var(--theme-accent, $color-primary);
+  }
+
+  .timeline-line {
+    background: var(--theme-border, $border-color);
+  }
+
+  .timeline-line.dashed {
+    background: repeating-linear-gradient(
+      to bottom,
+      var(--theme-border, #F0F0F0) 0rpx,
+      var(--theme-border, #F0F0F0) 8rpx,
+      transparent 8rpx,
+      transparent 16rpx
+    );
+  }
+
+  .footer-line {
+    background: var(--theme-border, $border-color);
   }
 }
 </style>

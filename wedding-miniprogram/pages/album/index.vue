@@ -27,7 +27,7 @@
 
     <!-- 空状态 -->
     <view class="empty-state" v-if="photos.length === 0 && !loading">
-      <image class="empty-visual" src="/static/visuals/empty-album.png" mode="aspectFit" />
+      <image class="empty-visual" src="/static/visuals/empty-album.svg" mode="aspectFit" />
       <text class="empty-text">{{ emptyText }}</text>
       <text class="empty-sub" v-if="emptySub">{{ emptySub }}</text>
       <button class="empty-action" @click="goToGuide" v-if="userStore.weddingId">先看婚礼路书</button>
@@ -86,19 +86,20 @@ onShow(async () => {
 
 <style lang="scss" scoped>
 .page {
-  background-color: $bg-color;
+  background-color: var(--theme-page, $bg-color);
+  color: var(--theme-ink, $text-primary);
   min-height: 100vh;
-  padding: 0 24rpx 60rpx;
+  padding: 0 $page-gutter calc(60rpx + env(safe-area-inset-bottom));
 }
 
 .page-header {
-  padding: 60rpx 24rpx 36rpx;
+  padding: $page-header-top 0 $page-header-bottom;
 }
 .page-tag {
   display: block;
   font-size: 22rpx;
   color: $text-muted;
-  letter-spacing: 6rpx;
+  letter-spacing: 0;
   margin-bottom: 12rpx;
 }
 .page-title {
@@ -158,8 +159,8 @@ onShow(async () => {
 .empty-action {
   margin-top: 32rpx;
   width: 260rpx;
-  height: 76rpx;
-  line-height: 76rpx;
+  height: $control-height-sm;
+  line-height: $control-height-sm;
   border-radius: $radius-full;
   background: $text-primary;
   color: #fff;
@@ -175,13 +176,13 @@ onShow(async () => {
 }
 
 .tpl-rose .photo-item {
-  box-shadow: 0 10rpx 28rpx rgba(176,58,91,0.12);
+  box-shadow: $shadow-sm;
 }
 .tpl-champagne {
   background: #fbf7f1;
   .photo-item {
-    border-radius: $radius-xl;
-    box-shadow: 0 12rpx 32rpx rgba(164,120,59,0.10);
+    border-radius: $card-radius;
+    box-shadow: $shadow-sm;
   }
 }
 .tpl-noir {
@@ -194,14 +195,48 @@ onShow(async () => {
   }
   .photo-item {
     border: 1rpx solid rgba(201,169,110,0.18);
-    box-shadow: 0 14rpx 36rpx rgba(0,0,0,0.32);
+    box-shadow: $shadow-sm;
   }
 }
 .tpl-garden {
   background: #f5f6ef;
   .photo-item {
     border-radius: 8rpx;
-    box-shadow: 0 10rpx 26rpx rgba(80,98,71,0.12);
+    box-shadow: $shadow-sm;
+  }
+}
+
+.theme-rose,
+.theme-champagne,
+.theme-noir,
+.theme-garden,
+.theme-heritage,
+.theme-shandong,
+.theme-travel {
+  background: var(--theme-page, $bg-color);
+  color: var(--theme-ink, $text-primary);
+
+  .page-title {
+    color: var(--theme-ink, $text-primary);
+  }
+
+  .page-tag,
+  .page-desc,
+  .empty-text,
+  .empty-sub,
+  .loading-state {
+    color: var(--theme-muted, $text-muted);
+  }
+
+  .photo-item {
+    background: var(--theme-surface, $bg-surface);
+    border: 1rpx solid var(--theme-border, transparent);
+    box-shadow: $shadow-sm;
+  }
+
+  .empty-action {
+    background: var(--theme-accent, $text-primary);
+    color: var(--theme-on-accent, #fff);
   }
 }
 </style>

@@ -22,6 +22,22 @@ function writeIcon(name, body, options) {
   fs.writeFileSync(path.join(outDir, `icon-${name}.svg`), svg(body, options))
 }
 
+function emptySvg(body) {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<svg width="220" height="220" viewBox="0 0 220 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="110" cy="110" r="86" fill="#FFF8F1"/>
+  <circle cx="110" cy="110" r="84" stroke="#C9A96E" stroke-opacity="0.22" stroke-width="2"/>
+  <g stroke="${primary}" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round">
+${body}
+  </g>
+</svg>
+`
+}
+
+function writeEmpty(name, body) {
+  fs.writeFileSync(path.join(outDir, `empty-${name}.svg`), emptySvg(body))
+}
+
 const icons = {
   album: `
     <rect x="18" y="22" width="60" height="52" rx="10"/>
@@ -132,4 +148,60 @@ for (const [name, body] of Object.entries(icons)) {
   writeIcon(name, body)
 }
 
-console.log(`generated ${Object.keys(icons).length} vector icons`)
+const emptyAssets = {
+  album: `
+    <rect x="70" y="78" width="80" height="60" rx="12"/>
+    <path d="M82 124l18-18 14 14 10-10 14 14"/>
+    <circle cx="132" cy="94" r="6" stroke="${gold}"/>
+    <path d="M78 152h64" stroke="${rose}"/>`,
+  blessing: `
+    <path d="M110 146S76 128 76 99c0-15 10-25 24-25 7 0 11 3 10 9 1-6 5-9 12-9 14 0 24 10 24 25 0 29-36 47-36 47z" stroke="${rose}"/>
+    <path d="M92 104h36" stroke="${gold}"/>`,
+  guests: `
+    <circle cx="92" cy="90" r="14"/>
+    <circle cx="130" cy="90" r="14"/>
+    <path d="M68 146c5-22 18-34 34-34s29 12 34 34"/>
+    <path d="M112 146c4-17 15-27 30-27 13 0 25 10 30 27" stroke="${gold}"/>`,
+  guide: `
+    <path d="M70 154l28-88 24 54 38-20-28 60-26-54-36 48z"/>
+    <path d="M98 66l8 40M122 120l10 40" stroke="${gold}"/>`,
+  hotel: `
+    <path d="M74 154V72c0-7 5-12 12-12h48c7 0 12 5 12 12v82"/>
+    <path d="M62 154h96M92 86h12M116 86h12M92 110h12M116 110h12"/>
+    <path d="M102 154v-24h20v24" stroke="${gold}"/>`,
+  music: `
+    <path d="M90 136V76l54-14v58"/>
+    <circle cx="78" cy="138" r="14"/>
+    <circle cx="132" cy="126" r="14"/>
+    <path d="M90 92l54-14" stroke="${gold}"/>`,
+  poster: `
+    <rect x="78" y="52" width="64" height="112" rx="12"/>
+    <path d="M92 82h36M92 106h36M92 130h24"/>
+    <path d="M100 152h20" stroke="${gold}"/>`,
+  timeline: `
+    <path d="M110 54v112"/>
+    <circle cx="110" cy="76" r="10" stroke="${gold}"/>
+    <circle cx="110" cy="110" r="10"/>
+    <circle cx="110" cy="144" r="10" stroke="${rose}"/>
+    <path d="M78 76h18M124 110h18M78 144h18"/>`,
+  transport: `
+    <path d="M68 124V88c0-11 8-18 19-18h46c11 0 19 7 19 18v36"/>
+    <path d="M58 124h104M82 124v16M138 124v16M88 94h44"/>
+    <circle cx="84" cy="144" r="8" stroke="${gold}"/>
+    <circle cx="136" cy="144" r="8" stroke="${gold}"/>`,
+  venue: `
+    <path d="M62 154h96"/>
+    <path d="M76 154V96l34-26 34 26v58"/>
+    <path d="M98 154v-34h24v34"/>
+    <path d="M92 104h36" stroke="${gold}"/>`,
+  weather: `
+    <circle cx="98" cy="88" r="18" stroke="${gold}"/>
+    <path d="M82 130h58c11 0 20-8 20-19s-9-19-20-19c-5-15-18-24-34-24-19 0-34 14-37 33-10 3-17 10-17 18 0 9 8 11 30 11z"/>
+    <path d="M92 148l-7 14M118 148l-7 14M144 148l-7 14" stroke="${rose}"/>`
+}
+
+for (const [name, body] of Object.entries(emptyAssets)) {
+  writeEmpty(name, body)
+}
+
+console.log(`generated ${Object.keys(icons).length} vector icons and ${Object.keys(emptyAssets).length} empty illustrations`)

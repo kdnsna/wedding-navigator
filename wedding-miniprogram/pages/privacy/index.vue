@@ -21,7 +21,7 @@
         <text class="list-item">• RSVP 信息：宾客填写的出席状态、联系电话、饮食偏好等</text>
         <text class="list-item">• 祝福留言：宾客在祝福墙发表的文本内容</text>
         <text class="list-item">• 位置信息：仅在您使用地图导航功能时，经您授权后获取</text>
-        <text class="list-item">• 相册照片：您主动上传的婚礼相关图片</text>
+        <text class="list-item">• 照片或视频信息：仅在您主动从相册选择婚礼相关图片并上传到相册时使用</text>
       </view>
 
       <text class="section-title">三、信息的使用</text>
@@ -56,7 +56,7 @@
         如您对本隐私保护指引有任何疑问，可通过小程序内的客服功能与我们联系。
       </text>
 
-      <text class="update-time">更新日期：2026年5月6日</text>
+      <text class="update-time">更新日期：2026年5月19日</text>
     </view>
   </view>
 </template>
@@ -74,17 +74,17 @@ onShareAppMessage(() => ({
 .page {
   background-color: $bg-color;
   min-height: 100vh;
-  padding-bottom: 60rpx;
+  padding-bottom: calc(80rpx + env(safe-area-inset-bottom));
 }
 
 .page-header {
-  padding: 60rpx 48rpx 36rpx;
+  padding: $page-header-top $page-gutter $page-header-bottom;
 }
 .page-tag {
   display: block;
   font-size: 22rpx;
   color: $text-muted;
-  letter-spacing: 6rpx;
+  letter-spacing: 0;
   margin-bottom: 12rpx;
 }
 .page-title {
@@ -95,7 +95,7 @@ onShareAppMessage(() => ({
 }
 
 .content {
-  padding: 0 48rpx 48rpx;
+  padding: 0 $page-gutter 48rpx;
 }
 
 .section-title {

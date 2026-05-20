@@ -18,8 +18,11 @@
           @click="selectTemplate(tpl)"
         >
           <view class="template-preview" :style="{ background: tpl.preview }">
+            <image class="template-hero-thumb" :src="tpl.defaultHero" mode="aspectFill" />
+            <view class="template-preview-shade" />
             <text class="template-kicker">{{ tpl.kicker }}</text>
             <text class="template-text">{{ tpl.shortName }}</text>
+            <text class="template-tier" :class="{ premium: isTemplatePremium(tpl) }">{{ getTemplateTierLabel(tpl) }}</text>
           </view>
           <text class="template-desc">{{ tpl.copy }}</text>
         </view>
@@ -30,9 +33,13 @@
             <text class="template-panel-kicker">{{ activeTemplate.kicker }}</text>
             <text class="template-panel-title">{{ activeTemplate.name }}</text>
           </view>
-          <text class="template-panel-status">当前选择</text>
+          <view class="template-panel-badges">
+            <text class="template-panel-tier" :class="{ premium: isTemplatePremium(activeTemplate) }">{{ getTemplateTierLabel(activeTemplate) }}</text>
+            <text class="template-panel-status">当前选择</text>
+          </view>
         </view>
         <text class="template-panel-copy">{{ activeTemplate.photoMood }}</text>
+        <text class="template-panel-hint">{{ activeTemplateHint }}</text>
         <view class="template-panel-actions">
           <button class="template-panel-btn primary" @click="previewTemplate">预览此模板</button>
           <button class="template-panel-btn" @click="applyTemplatePreset">套用预设文案</button>
@@ -99,9 +106,25 @@
           <text class="switch-label">显示RSVP</text>
           <switch :checked="form.showRsvp" @change="form.showRsvp = $event.detail.value" color="#1A1A1A" />
         </view>
+        <view class="switch-item sub" v-if="form.showRsvp">
+          <text class="switch-label">RSVP联系电话必填</text>
+          <switch :checked="form.rsvpPhoneRequired" @change="form.rsvpPhoneRequired = $event.detail.value" color="#1A1A1A" />
+        </view>
+        <view class="switch-item sub" v-if="form.showRsvp">
+          <text class="switch-label">允许宾客修改回执</text>
+          <switch :checked="form.allowRsvpUpdate" @change="form.allowRsvpUpdate = $event.detail.value" color="#1A1A1A" />
+        </view>
         <view class="switch-item">
           <text class="switch-label">显示祝福墙</text>
           <switch :checked="form.showBlessing" @change="form.showBlessing = $event.detail.value" color="#1A1A1A" />
+        </view>
+        <view class="switch-item sub" v-if="form.showBlessing">
+          <text class="switch-label">祝福公开展示</text>
+          <switch :checked="form.blessingPublic" @change="form.blessingPublic = $event.detail.value" color="#1A1A1A" />
+        </view>
+        <view class="switch-item sub" v-if="form.showBlessing">
+          <text class="switch-label">允许匿名祝福</text>
+          <switch :checked="form.allowAnonymousBlessing" @change="form.allowAnonymousBlessing = $event.detail.value" color="#1A1A1A" />
         </view>
         <view class="switch-item">
           <text class="switch-label">显示流程</text>
@@ -155,12 +178,14 @@ import { showSuccess, showError } from '@/utils/index.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
 import { updateWedding } from '@/composables/useCloud.js'
 import { WEDDING_TEMPLATES, getWeddingTemplate, normalizeTemplateId } from '@/utils/templates.js'
+import { buildTemplateCommercialState, getCommercialHint, getTemplateTierLabel, isTemplatePremium } from '@/utils/commercial.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
 
 const templates = WEDDING_TEMPLATES
 const activeTemplate = computed(() => getWeddingTemplate(form.value.template))
+const activeTemplateHint = computed(() => getCommercialHint(activeTemplate.value, userStore.entitlements))
 
 const musicPresets = [
   { id: 'piano-dream', name: '梦中的钢琴', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
@@ -178,7 +203,11 @@ const form = ref({
   venueName: '',
   showCountdown: true,
   showRsvp: true,
+  rsvpPhoneRequired: false,
+  allowRsvpUpdate: true,
   showBlessing: true,
+  blessingPublic: true,
+  allowAnonymousBlessing: true,
   showTimeline: true,
   bgMusicEnabled: false,
   bgMusicId: '',
@@ -198,7 +227,11 @@ function loadFromStore() {
     venueName: inv.wedding?.venue_name || '',
     showCountdown: inv.features?.show_countdown !== false,
     showRsvp: inv.features?.show_rsvp !== false,
+    rsvpPhoneRequired: inv.features?.rsvp_phone_required === true,
+    allowRsvpUpdate: inv.features?.allow_rsvp_update !== false,
     showBlessing: inv.features?.show_blessing !== false,
+    blessingPublic: inv.features?.blessing_public !== false,
+    allowAnonymousBlessing: inv.features?.allow_anonymous_blessing !== false,
     showTimeline: inv.features?.show_timeline !== false,
     bgMusicEnabled: inv.features?.bg_music_enabled || false,
     bgMusicId: inv.features?.bg_music_id || '',
@@ -219,8 +252,10 @@ function onDateChange(e) { form.value.date = e.detail.value }
 function onTimeChange(e) { form.value.time = e.detail.value }
 
 function buildInvitationData() {
+  const commercial = buildTemplateCommercialState(activeTemplate.value, userStore.entitlements)
   return {
     template: form.value.template,
+    commercial,
     content: {
       title: '婚礼请柬',
       main_text: form.value.content,
@@ -240,7 +275,11 @@ function buildInvitationData() {
     features: {
       show_countdown: form.value.showCountdown,
       show_rsvp: form.value.showRsvp,
+      rsvp_phone_required: form.value.rsvpPhoneRequired,
+      allow_rsvp_update: form.value.allowRsvpUpdate,
       show_blessing: form.value.showBlessing,
+      blessing_public: form.value.blessingPublic,
+      allow_anonymous_blessing: form.value.allowAnonymousBlessing,
       show_timeline: form.value.showTimeline,
       bg_music_enabled: form.value.bgMusicEnabled,
       bg_music_id: form.value.bgMusicId,
@@ -255,13 +294,21 @@ function buildWeddingData() {
       ...(store.wedding?.basic_info || {}),
       date: form.value.date,
       time: form.value.time
+    },
+    commercial: {
+      ...(store.wedding?.commercial || {}),
+      plan: userStore.plan || store.wedding?.commercial?.plan || 'free',
+      template_id: form.value.template,
+      ...buildTemplateCommercialState(activeTemplate.value, userStore.entitlements)
     }
   }
 }
 
 function applyLocalPreviewData() {
+  const weddingData = buildWeddingData()
   store.updateInvitation(buildInvitationData())
-  store.updateWeddingField('basic_info', buildWeddingData().basic_info)
+  store.updateWeddingField('basic_info', weddingData.basic_info)
+  store.updateWeddingField('commercial', weddingData.commercial)
 }
 
 function applyTemplatePreset() {
@@ -311,9 +358,9 @@ async function saveInvitation() {
       weddings[userStore.weddingId] = { ...weddings[userStore.weddingId], ...weddingData }
       uni.setStorageSync('weddings', weddings)
     }
-    showSuccess(invitationOk && weddingOk ? '保存成功'
-      : invitationOk ? '请柬已保存，日期信息保存失败请重试'
-      : '日期已保存，请柬样式保存失败请重试')
+    showSuccess(invitationOk && weddingOk ? '已同步云端'
+      : invitationOk ? '请柬已同步，日期信息保存失败请重试'
+      : '日期已同步，请柬样式保存失败请重试')
   } catch (err) {
     console.error('保存请柬失败:', err)
     showError(err.message || '保存失败')
@@ -328,28 +375,47 @@ function previewInvitation() {
 }
 
 function previewTemplate() {
-  previewInvitation()
+  uni.navigateTo({ url: `/pages-owner/template/preview?id=${encodeURIComponent(form.value.template)}` })
 }
 
-onShow(() => { useOwnerGuard(); loadFromStore() })
+function applyPendingTemplate() {
+  const pendingTemplateId = uni.getStorageSync('pending_template_id')
+  if (!pendingTemplateId) return
+  uni.removeStorageSync('pending_template_id')
+  const tpl = getWeddingTemplate(pendingTemplateId)
+  form.value.template = normalizeTemplateId(tpl.id)
+  if (!form.value.content) {
+    form.value.content = tpl.preset?.mainText || ''
+  }
+  if (!form.value.venueName) {
+    form.value.venueName = tpl.preset?.venueName || ''
+  }
+  applyLocalPreviewData()
+}
+
+onShow(() => {
+  useOwnerGuard()
+  loadFromStore()
+  applyPendingTemplate()
+})
 </script>
 
 <style lang="scss" scoped>
 .page {
   background-color: $bg-color;
   min-height: 100vh;
-  padding-bottom: 160rpx;
+  padding-bottom: calc(160rpx + env(safe-area-inset-bottom));
 }
 
 /* 顶部标题 */
 .page-header {
-  padding: 60rpx 48rpx 36rpx;
+  padding: $page-header-top $page-gutter $page-header-bottom;
 }
 .page-tag {
   display: block;
   font-size: 22rpx;
   color: $text-muted;
-  letter-spacing: 6rpx;
+  letter-spacing: 0;
   margin-bottom: 12rpx;
 }
 .page-title {
@@ -361,7 +427,7 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
 
 /* 区块 */
 .section {
-  padding: 0 48rpx;
+  padding: 0 $page-gutter;
   margin-bottom: 48rpx;
 }
 .section-label {
@@ -380,7 +446,7 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
   margin-right: 20rpx;
   width: 220rpx;
   vertical-align: top;
-  border-radius: $radius-lg;
+  border-radius: $card-radius;
   border: 3rpx solid transparent;
   padding: 10rpx;
   transition: all 0.2s ease;
@@ -388,7 +454,7 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
 .template-item.active {
   border-color: $text-primary;
   background: $bg-surface;
-  box-shadow: 0 12rpx 34rpx rgba(0,0,0,0.08);
+  box-shadow: $shadow-sm;
 }
 .template-preview {
   width: 200rpx;
@@ -397,25 +463,62 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  border-radius: $radius-lg;
+  border-radius: $card-radius;
   overflow: hidden;
   padding: 20rpx;
   box-sizing: border-box;
+  position: relative;
+}
+.template-hero-thumb,
+.template-preview-shade {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+}
+.template-hero-thumb {
+  z-index: 0;
+}
+.template-preview-shade {
+  z-index: 1;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.10), rgba(0,0,0,0.30) 50%, rgba(0,0,0,0.58));
 }
 .template-kicker {
+  position: relative;
+  z-index: 2;
   display: block;
   font-size: 16rpx;
   color: rgba(255,255,255,0.72);
-  letter-spacing: 3rpx;
+  letter-spacing: 0;
   text-align: center;
   margin-bottom: 18rpx;
   white-space: normal;
 }
 .template-text {
+  position: relative;
+  z-index: 2;
   font-size: 30rpx;
   font-weight: 600;
   color: #fff;
   text-align: center;
+}
+.template-tier {
+  position: absolute;
+  z-index: 2;
+  left: 18rpx;
+  bottom: 18rpx;
+  padding: 5rpx 12rpx;
+  border-radius: $radius-full;
+  background: rgba(255,255,255,0.86);
+  color: $color-success;
+  font-size: 18rpx;
+  line-height: 1.2;
+}
+.template-tier.premium {
+  color: #8F6B2E;
 }
 .template-desc {
   display: block;
@@ -428,10 +531,10 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
 .template-panel {
   margin-top: 24rpx;
   padding: 28rpx;
-  border-radius: $radius-xl;
+  border-radius: $card-radius;
   background: $text-primary;
   color: #fff;
-  box-shadow: 0 16rpx 42rpx rgba(0,0,0,0.12);
+  box-shadow: $shadow-sm;
 }
 .template-panel-head {
   display: flex;
@@ -444,7 +547,7 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
   display: block;
   font-size: 18rpx;
   color: rgba(255,255,255,0.52);
-  letter-spacing: 4rpx;
+  letter-spacing: 0;
   margin-bottom: 8rpx;
 }
 .template-panel-title {
@@ -452,6 +555,28 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
   font-size: 34rpx;
   color: #fff;
   font-weight: 600;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.template-panel-badges {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8rpx;
+  flex-shrink: 0;
+}
+.template-panel-tier {
+  padding: 8rpx 16rpx;
+  border-radius: $radius-full;
+  background: rgba(52,168,83,0.16);
+  color: #A6E2B9;
+  font-size: 22rpx;
+  line-height: 1.2;
+}
+.template-panel-tier.premium {
+  background: rgba(201,169,110,0.18);
+  color: #F0D49A;
 }
 .template-panel-status {
   padding: 8rpx 16rpx;
@@ -459,14 +584,23 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
   background: rgba(255,255,255,0.1);
   color: rgba(255,255,255,0.72);
   font-size: 22rpx;
-  flex-shrink: 0;
 }
 .template-panel-copy {
   display: block;
   font-size: 24rpx;
   line-height: 1.55;
   color: rgba(255,255,255,0.72);
+  margin-bottom: 14rpx;
+}
+.template-panel-hint {
+  display: block;
+  padding: 18rpx 20rpx;
   margin-bottom: 24rpx;
+  border-radius: $radius-md;
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.72);
+  font-size: 23rpx;
+  line-height: 1.45;
 }
 .template-panel-actions {
   display: flex;
@@ -474,8 +608,8 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
 }
 .template-panel-btn {
   flex: 1;
-  height: 76rpx;
-  line-height: 76rpx;
+  height: $control-height-sm;
+  line-height: $control-height-sm;
   border-radius: $radius-full;
   background: rgba(255,255,255,0.1);
   color: #fff;
@@ -516,7 +650,7 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
 }
 .form-input {
   width: 100%;
-  height: 80rpx;
+  height: $control-height;
   padding: 0 4rpx;
   border-bottom: 2rpx solid $border-color;
   font-size: 30rpx;
@@ -525,8 +659,8 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
 }
 .picker-value {
   width: 100%;
-  height: 80rpx;
-  line-height: 80rpx;
+  height: $control-height;
+  line-height: $control-height;
   font-size: 30rpx;
   color: $text-primary;
   border-bottom: 2rpx solid $border-color;
@@ -542,7 +676,7 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
 /* 开关列表 */
 .switch-list {
   background: $bg-surface;
-  border-radius: $radius-lg;
+  border-radius: $card-radius;
   overflow: hidden;
 }
 .switch-item {
@@ -551,8 +685,16 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
   justify-content: space-between;
   padding: 28rpx;
 }
+.switch-item.sub {
+  padding-left: 56rpx;
+  background: $bg-muted;
+}
 .switch-item + .switch-item {
   border-top: 1rpx solid $border-color;
+}
+.switch-item.sub .switch-label {
+  color: $text-secondary;
+  font-size: 26rpx;
 }
 .switch-label {
   font-size: 28rpx;
@@ -564,15 +706,15 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
   position: fixed;
   bottom: calc(40rpx + constant(safe-area-inset-bottom));
   bottom: calc(40rpx + env(safe-area-inset-bottom));
-  left: 48rpx;
-  right: 48rpx;
+  left: $page-gutter;
+  right: $page-gutter;
   display: flex;
   gap: 16rpx;
 }
 .action-btn {
   flex: 1;
-  height: 88rpx;
-  line-height: 88rpx;
+  height: $control-height;
+  line-height: $control-height;
   text-align: center;
   border-radius: $radius-full;
   background: $bg-muted;
@@ -601,7 +743,7 @@ onShow(() => { useOwnerGuard(); loadFromStore() })
   gap: 16rpx;
   padding: 24rpx 28rpx;
   background: $bg-surface;
-  border-radius: $radius-lg;
+  border-radius: $card-radius;
   border: 2rpx solid $border-color;
   transition: all 0.2s ease;
 }

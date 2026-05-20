@@ -2,21 +2,64 @@ import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { CLOUD_ENV } from '@/config/cloud.js'
 
+let cloudInitialized = false
+
 // 初始化云开发
 function initCloud() {
   const options = CLOUD_ENV ? { env: CLOUD_ENV, traceUser: true } : { traceUser: true }
+  const targets = []
+  const wxCloud = typeof wx !== 'undefined' ? wx.cloud : null
+  const uniCloud = typeof uni !== 'undefined' ? uni.cloud : null
 
-  if (typeof uni !== 'undefined' && uni.cloud?.init) {
-    uni.cloud.init(options)
-  } else if (typeof wx !== 'undefined' && wx.cloud?.init) {
-    wx.cloud.init(options)
+  if (wxCloud?.init) {
+    targets.push({ name: 'wx.cloud', api: wxCloud })
+  }
+  if (uniCloud?.init && uniCloud !== wxCloud) {
+    targets.push({ name: 'uni.cloud', api: uniCloud })
+  }
+
+  if (!targets.length) return false
+
+  for (const target of targets) {
+    try {
+      target.api.init(options)
+      cloudInitialized = true
+    } catch (err) {
+      const message = err?.errMsg || err?.message || ''
+      if (!message.includes('already') && !message.includes('重复')) {
+        console.warn(`[cloud] ${target.name} init failed:`, err)
+      }
+    }
+  }
+
+  return cloudInitialized
+}
+
+function ensureCloudInitialized() {
+  if (!cloudInitialized) {
+    initCloud()
   }
 }
 
-function getCloudApi() {
-  if (typeof uni !== 'undefined' && uni.cloud?.callFunction) return uni.cloud
-  if (typeof wx !== 'undefined' && wx.cloud?.callFunction) return wx.cloud
+function getCloudApi(method = 'callFunction') {
+  ensureCloudInitialized()
+  if (typeof wx !== 'undefined' && wx.cloud?.[method]) return wx.cloud
+  if (typeof uni !== 'undefined' && uni.cloud?.[method]) return uni.cloud
   return null
+}
+
+function normalizeCloudError(err, fallback = '云开发请求失败') {
+  const raw = err?.errMsg || err?.message || String(err || '')
+  if (raw.includes('未初始化') || raw.includes('not init') || raw.includes('init') || raw.includes('env')) {
+    return '云开发环境未就绪，请重新进入小程序后再试'
+  }
+  if (raw.includes('permission') || raw.includes('denied') || raw.includes('auth')) {
+    return '云存储权限不足，请确认当前微信号是婚礼主人'
+  }
+  if (raw.includes('timeout') || raw.includes('超时')) {
+    return '云端响应超时，请检查网络后重试'
+  }
+  return raw || fallback
 }
 
 // 云函数调用封装
@@ -36,7 +79,7 @@ async function callFunction(name, data = {}, options = {}) {
       finish(reject, new Error(`${name} 请求超时`))
     }, timeoutMs)
 
-    const cloudApi = getCloudApi()
+    const cloudApi = getCloudApi('callFunction')
     if (!cloudApi) {
       finish(reject, new Error('云开发环境未初始化，请检查 appid 和云开发配置'))
       return
@@ -48,14 +91,18 @@ async function callFunction(name, data = {}, options = {}) {
       success: (res) => {
         console.log(`[cloud] ${name} success:`, res)
         if (res.result?.success === false) {
-          finish(reject, new Error(res.result.message || `${name} 调用失败`))
+          const error = new Error(res.result.message || `${name} 调用失败`)
+          error.code = res.result.code || ''
+          error.needConfig = Boolean(res.result.needConfig)
+          error.result = res.result
+          finish(reject, error)
           return
         }
         finish(resolve, res.result)
       },
       fail: (err) => {
         console.error(`[cloud] ${name} fail:`, err)
-        const message = err?.message || err?.errMsg || `${name} 调用失败`
+        const message = normalizeCloudError(err, `${name} 调用失败`)
         finish(reject, new Error(message.includes(name) ? message : `${name}: ${message}`))
       }
     })
@@ -96,7 +143,7 @@ async function createWedding(data) {
 async function updateWedding(weddingId, collection, data) {
   // 过滤云数据库系统字段，避免 update 报错
   const { _id, created_at, updated_at, owner_openid, ...cleanData } = data || {}
-  return callFunction('updateWedding', { weddingId, collection, data: cleanData })
+  return callFunction('updateWedding', { weddingId, collection, data: cleanData }, { timeoutMs: 12000 })
 }
 
 // 删除婚礼邀请及关联数据
@@ -145,6 +192,11 @@ async function checkOwnership(weddingId) {
   return callFunction('checkOwnership', { weddingId }, { timeoutMs: 5000 })
 }
 
+// 同步主人账号、权益和婚礼工作区
+async function syncOwnerProfile(profile = {}) {
+  return callFunction('syncOwnerProfile', { profile }, { timeoutMs: 10000 })
+}
+
 // 生成小程序码海报
 async function generatePoster(page, scene, width = 430) {
   return callFunction('generatePoster', { page, scene, width }, { timeoutMs: 15000 })
@@ -152,15 +204,18 @@ async function generatePoster(page, scene, width = 430) {
 
 // 获取婚礼当天天气
 async function getWeather(weddingId) {
-  return callFunction('getWeather', { weddingId }, { timeoutMs: 7000 })
+  return callFunction('getWeather', { weddingId }, { timeoutMs: 12000 })
+}
+
+// 根据场地名称/地址匹配地图坐标
+async function geocodeVenue(data) {
+  return callFunction('geocodeVenue', data, { timeoutMs: 12000 })
 }
 
 // 上传文件到云存储
 async function uploadFile(filePath, cloudPath) {
   return new Promise((resolve, reject) => {
-    const cloudApi = (typeof wx !== 'undefined' && wx.cloud?.uploadFile)
-      ? wx.cloud
-      : (typeof uni !== 'undefined' && uni.cloud?.uploadFile ? uni.cloud : null)
+    const cloudApi = getCloudApi('uploadFile')
 
     if (!cloudApi) {
       reject(new Error('云存储能力不可用，请在微信小程序环境中打开'))
@@ -177,7 +232,31 @@ async function uploadFile(filePath, cloudPath) {
       cloudPath: cloudPath || `uploads/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`,
       filePath,
       success: (res) => resolve(res),
-      fail: (err) => reject(new Error(err?.errMsg || err?.message || '云存储上传失败'))
+      fail: (err) => reject(new Error(normalizeCloudError(err, '云存储上传失败')))
+    })
+  })
+}
+
+// 删除云存储文件。用于相册保存失败或删除照片后的清理；清理失败不阻断主流程。
+async function deleteFiles(fileList = []) {
+  const files = fileList.filter(Boolean)
+  if (!files.length) return { fileList: [] }
+
+  return new Promise((resolve) => {
+    const cloudApi = getCloudApi('deleteFile')
+
+    if (!cloudApi) {
+      resolve({ fileList: files, skipped: true })
+      return
+    }
+
+    cloudApi.deleteFile({
+      fileList: files,
+      success: (res) => resolve(res),
+      fail: (err) => {
+        console.warn('[cloud] deleteFile failed:', err)
+        resolve({ fileList: files, failed: true, err })
+      }
     })
   })
 }
@@ -206,8 +285,11 @@ export {
   getStats,
   getRSVPStats,
   checkOwnership,
+  syncOwnerProfile,
   generatePoster,
   getWeather,
+  geocodeVenue,
   uploadFile,
+  deleteFiles,
   uploadBase64
 }

@@ -12,9 +12,30 @@ exports.main = async (event, context) => {
   }
 
   try {
+    const normalized = normalizeBlessing(blessing)
+    if (!normalized.content) {
+      return { success: false, message: '请填写祝福内容' }
+    }
+    if (normalized.content.length > 200) {
+      return { success: false, message: '祝福内容不能超过200个字' }
+    }
+    if (normalized.sender.name.length > 30) {
+      return { success: false, message: '称呼不能超过30个字' }
+    }
+
+    const invitationRes = await db.collection('invitations').doc(weddingId).get().catch(() => ({ data: null }))
+    const features = invitationRes.data?.features || {}
+    if (features.show_blessing === false) {
+      return { success: false, message: '新人暂未开放祝福墙' }
+    }
+    if (features.allow_anonymous_blessing === false && !normalized.sender.name) {
+      return { success: false, message: '请填写您的称呼' }
+    }
+
     // 内容安全检测
-    if (blessing.content) {
-      const secRes = await checkContentSafety(blessing.content)
+    const safetyContent = [normalized.sender.name, normalized.content].filter(Boolean).join('\n')
+    if (safetyContent) {
+      const secRes = await checkContentSafety(safetyContent)
       if (!secRes.safe) {
         return { success: false, message: secRes.message || '祝福内容包含敏感信息，请修改后重试' }
       }
@@ -22,7 +43,7 @@ exports.main = async (event, context) => {
 
     const newBlessing = {
       id: Date.now().toString(),
-      ...blessing,
+      ...normalized,
       openid: OPENID,
       is_pinned: false,
       created_at: Date.now()
@@ -35,11 +56,11 @@ exports.main = async (event, context) => {
       }
     }).catch(async (err) => {
       // 文档不存在则创建
-      if (err.errCode === -502005) {
-        await db.collection('blessings').add({
+      if (isDocNotExistError(err)) {
+        await db.collection('blessings').doc(weddingId).set({
           data: {
-            _id: weddingId,
             blessings: [newBlessing],
+            created_at: Date.now(),
             updated_at: Date.now()
           }
         })
@@ -52,6 +73,24 @@ exports.main = async (event, context) => {
   } catch (err) {
     console.error(err)
     return { success: false, message: err.message }
+  }
+}
+
+function isDocNotExistError(err) {
+  if (!err) return false
+  if (err.errCode === -1 || err.errCode === -502005 || err.errCode === 'DATABASE_COLLECTION_NOT_EXIST') return true
+  const msg = String(err.errMsg || err.message || '').toLowerCase()
+  return msg.includes('not exist') || msg.includes('does not exist') || msg.includes('not found')
+}
+
+function normalizeBlessing(blessing) {
+  return {
+    ...blessing,
+    content: String(blessing?.content || '').trim(),
+    sender: {
+      ...(blessing?.sender || {}),
+      name: String(blessing?.sender?.name || '').trim()
+    }
   }
 }
 

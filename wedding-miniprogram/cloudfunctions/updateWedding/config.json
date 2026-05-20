@@ -1,5 +1,7 @@
 {
   "permissions": {
     "openapi": []
-  }
+  },
+  "timeout": 20,
+  "desc": "更新婚礼业务数据"
 }

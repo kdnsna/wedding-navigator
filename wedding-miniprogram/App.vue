@@ -6,6 +6,7 @@ import { useUserStore } from '@/stores/user.js'
 onLaunch(() => {
   useUserStore().loadFromStorage()
   initCloud()
+  setupPrivacyAuthorization()
   checkPrivacySetting()
   checkUpdate()
 })
@@ -57,6 +58,32 @@ function checkUpdate() {
 }
 
 // 隐私保护指引检查
+let privacyAuthorizationReady = false
+
+function setupPrivacyAuthorization() {
+  if (privacyAuthorizationReady) return
+  if (typeof wx === 'undefined' || typeof wx.onNeedPrivacyAuthorization !== 'function') return
+  privacyAuthorizationReady = true
+
+  wx.onNeedPrivacyAuthorization((resolve) => {
+    uni.showModal({
+      title: '隐私保护指引',
+      content: '上传照片、地图导航和婚礼邀请功能需要使用相册照片和位置信息。请同意《隐私保护指引》后继续。',
+      confirmText: '同意并继续',
+      cancelText: '暂不同意',
+      success: (modalRes) => {
+        resolve({
+          event: modalRes.confirm ? 'agree' : 'disagree',
+          buttonId: modalRes.confirm ? 'agree-btn' : 'disagree-btn'
+        })
+      },
+      fail: () => {
+        resolve({ event: 'disagree', buttonId: 'modal-fail' })
+      }
+    })
+  })
+}
+
 function checkPrivacySetting() {
   if (typeof wx !== 'undefined' && wx.getPrivacySetting) {
     wx.getPrivacySetting({
@@ -96,6 +123,46 @@ page {
   -moz-osx-font-smoothing: grayscale;
 }
 
+view,
+text,
+button,
+input,
+textarea,
+scroll-view,
+image,
+uni-view,
+uni-text,
+uni-button,
+uni-input,
+uni-textarea,
+uni-scroll-view,
+uni-image {
+  box-sizing: border-box;
+}
+
+button,
+uni-button {
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: inherit;
+}
+
+input,
+textarea,
+uni-input,
+uni-textarea {
+  width: 100%;
+  font-family: inherit;
+}
+
+image,
+uni-image {
+  max-width: 100%;
+}
+
 /* ========== 通用容器 ========== */
 .container {
   padding: 32rpx;
@@ -124,6 +191,13 @@ page {
 .ellipsis-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ellipsis-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -276,8 +350,8 @@ page {
 
 /* 主按钮：胶囊形状 */
 .btn-primary {
-  height: 96rpx;
-  line-height: 96rpx;
+  height: $control-height;
+  line-height: $control-height;
   text-align: center;
   border-radius: $radius-full;
   background: $color-primary;
@@ -291,8 +365,8 @@ page {
 
 /* 次要按钮：无边框文字 */
 .btn-text {
-  height: 96rpx;
-  line-height: 96rpx;
+  height: $control-height;
+  line-height: $control-height;
   text-align: center;
   background: transparent;
   color: $color-primary;
@@ -339,13 +413,13 @@ page {
   font-size: $font-h1;
   font-weight: 600;
   color: $text-primary;
-  letter-spacing: 2rpx;
+  letter-spacing: 0;
 }
 
 .page-subtitle {
   font-size: $font-caption;
   color: $text-muted;
-  letter-spacing: 4rpx;
+  letter-spacing: $ui-letter-spacing;
   text-transform: uppercase;
 }
 

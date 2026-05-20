@@ -1,14 +1,14 @@
 <template>
   <view class="page" :class="templateClass">
     <!-- 顶部标题 -->
-    <view class="page-header" v-if="!submitted">
+    <view class="page-header" v-if="!submitted && isRsvpEnabled">
       <text class="page-tag">RSVP</text>
       <text class="page-title">确认出席</text>
       <view class="page-divider" />
       <text class="page-desc">请告诉我们是否能见证这美好时刻</text>
     </view>
 
-    <view class="rsvp-brief" v-if="!submitted">
+    <view class="rsvp-brief" v-if="!submitted && isRsvpEnabled">
       <view>
         <text class="brief-kicker">{{ activeTemplate.shortName }} RSVP CARD</text>
         <text class="brief-title">{{ store.coupleName || '新人婚礼' }}</text>
@@ -30,7 +30,14 @@
     </view>
 
     <!-- 表单 -->
-    <view class="form" v-if="!submitted">
+    <view class="feature-closed" v-if="!submitted && !isRsvpEnabled">
+      <image class="empty-visual" src="/static/visuals/icon-rsvp.svg" mode="aspectFit" />
+      <text class="feature-title">新人暂未开放在线回执</text>
+      <text class="feature-desc">您仍可查看婚礼时间、地点和到场路线。</text>
+      <button class="feature-action" @click="goToGuide">查看路线</button>
+    </view>
+
+    <view class="form" v-if="!submitted && isRsvpEnabled">
       <!-- 姓名 -->
       <view class="form-group">
         <view class="form-label">
@@ -119,13 +126,14 @@
       <view class="form-group" v-if="form.status !== 'declined'">
         <view class="form-label">
           <text class="label-text">联系电话</text>
+          <text class="required-tip" v-if="!phoneRequired">选填</text>
           <text class="label-en">PHONE</text>
         </view>
         <input
           class="form-input"
           v-model="form.phone"
           type="number"
-          placeholder="用于接收通知"
+          :placeholder="phoneRequired ? '用于接收通知' : '选填，方便新人联系'"
           placeholder-class="placeholder"
         />
       </view>
@@ -278,6 +286,9 @@ const submitted = ref(false)
 const submitting = ref(false)
 const activeTemplate = computed(() => store.activeTemplate)
 const templateClass = computed(() => store.templateClass)
+const isRsvpEnabled = computed(() => store.isRsvpEnabled)
+const phoneRequired = computed(() => store.rsvpPhoneRequired)
+const allowRsvpUpdate = computed(() => store.allowRsvpUpdate)
 
 const form = reactive({
   name: '',
@@ -330,9 +341,20 @@ async function handleSubmit() {
     uni.showToast({ title: '请输入姓名', icon: 'none' })
     return
   }
-  if (form.status !== 'declined' && !form.phone.trim()) {
+  if (form.status !== 'declined' && phoneRequired.value && !form.phone.trim()) {
     uni.showToast({ title: '请输入联系电话', icon: 'none' })
     return
+  }
+  if (!allowRsvpUpdate.value) {
+    const existing = (store.guests?.guests || []).find(item => {
+      if (item.is_current_user === true) return true
+      if (form.phone && item.phone === form.phone) return true
+      return userStore.openid && item.openid === userStore.openid
+    })
+    if (existing) {
+      uni.showToast({ title: '回执已提交，如需修改请联系新人', icon: 'none' })
+      return
+    }
   }
 
   submitting.value = true
@@ -426,6 +448,7 @@ onLoad(async (options) => {
     try { await fetchWedding(userStore.weddingId) } catch (err) {}
   }
   const rsvp = (store.guests?.guests || []).find(item => {
+    if (item.is_current_user === true) return true
     return (form.phone && item.phone === form.phone) || (userStore.openid && item.openid === userStore.openid)
   })
   if (rsvp) {
@@ -445,20 +468,21 @@ onLoad(async (options) => {
 
 <style lang="scss" scoped>
 .page {
-  background-color: $bg-color;
+  background-color: var(--theme-page, $bg-color);
+  color: var(--theme-ink, $text-primary);
   min-height: 100vh;
-  padding-bottom: 80rpx;
+  padding-bottom: calc(80rpx + env(safe-area-inset-bottom));
 }
 
 /* 顶部标题 */
 .page-header {
-  padding: 60rpx 48rpx 36rpx;
+  padding: $page-header-top $page-gutter $page-header-bottom;
 }
 .page-tag {
   display: block;
   font-size: 22rpx;
   color: $text-muted;
-  letter-spacing: 6rpx;
+  letter-spacing: 0;
   margin-bottom: 12rpx;
 }
 .page-title {
@@ -481,12 +505,13 @@ onLoad(async (options) => {
 }
 
 .rsvp-brief {
-  margin: 0 48rpx 44rpx;
+  width: calc(100vw - 96rpx);
+  margin: 0 auto 44rpx;
   padding: 32rpx;
-  border-radius: $radius-xl;
+  border-radius: $card-radius;
   background: $text-primary;
   color: #fff;
-  box-shadow: 0 18rpx 48rpx rgba(0,0,0,0.14);
+  box-shadow: $shadow-sm;
   position: relative;
   overflow: hidden;
 }
@@ -503,7 +528,7 @@ onLoad(async (options) => {
   display: block;
   font-size: 18rpx;
   color: rgba(255,255,255,0.56);
-  letter-spacing: 4rpx;
+  letter-spacing: 0;
   margin-bottom: 10rpx;
 }
 .brief-title {
@@ -511,6 +536,9 @@ onLoad(async (options) => {
   font-size: 34rpx;
   font-weight: 600;
   line-height: 1.3;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .brief-grid {
   display: grid;
@@ -528,7 +556,7 @@ onLoad(async (options) => {
 .brief-label {
   display: block;
   font-size: 18rpx;
-  letter-spacing: 3rpx;
+  letter-spacing: 0;
   color: rgba(255,255,255,0.45);
   margin-bottom: 6rpx;
 }
@@ -537,14 +565,20 @@ onLoad(async (options) => {
   font-size: 26rpx;
   color: rgba(255,255,255,0.92);
   line-height: 1.4;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 /* 表单 */
 .form {
-  padding: 0 48rpx;
+  width: calc(100vw - 96rpx);
+  margin: 0 auto;
+  padding: 0;
+  box-sizing: border-box;
 }
 .form-group {
-  margin-bottom: 48rpx;
+  margin-bottom: 40rpx;
 }
 .form-label {
   display: flex;
@@ -557,14 +591,21 @@ onLoad(async (options) => {
   font-weight: 500;
   color: $text-primary;
 }
+.required-tip {
+  padding: 4rpx 10rpx;
+  border-radius: 6rpx;
+  background: $bg-muted;
+  color: $text-muted;
+  font-size: 20rpx;
+}
 .label-en {
   font-size: 20rpx;
   color: $text-muted;
-  letter-spacing: 3rpx;
+  letter-spacing: 0;
 }
 
 .form-input {
-  height: 96rpx;
+  height: $control-height;
   font-size: 30rpx;
   color: $text-primary;
   border-bottom: 2rpx solid $border-color;
@@ -575,8 +616,8 @@ onLoad(async (options) => {
   border-color: $text-primary;
 }
 .picker-value {
-  height: 88rpx;
-  line-height: 88rpx;
+  height: $control-height;
+  line-height: $control-height;
   border-bottom: 2rpx solid $border-color;
   font-size: 30rpx;
   color: $text-primary;
@@ -586,20 +627,49 @@ onLoad(async (options) => {
   font-size: 30rpx;
 }
 
+.feature-closed {
+  text-align: center;
+  padding: 180rpx 64rpx;
+}
+.feature-title {
+  display: block;
+  font-size: 34rpx;
+  color: $text-primary;
+  font-weight: 600;
+  margin-bottom: 14rpx;
+}
+.feature-desc {
+  display: block;
+  font-size: 26rpx;
+  color: $text-secondary;
+  line-height: 1.6;
+  margin-bottom: 36rpx;
+}
+.feature-action {
+  width: 260rpx;
+  height: $control-height-sm;
+  line-height: $control-height-sm;
+  border-radius: $radius-full;
+  background: $text-primary;
+  color: #fff;
+  font-size: 26rpx;
+}
+.feature-action::after { border: none; }
+
 /* 单选 */
 .radio-group {
-  display: flex;
-  gap: 16rpx;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12rpx;
 }
 .radio-item {
-  flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12rpx;
-  padding: 28rpx 16rpx;
-  border-radius: $radius-lg;
+  padding: 24rpx 8rpx;
+  border-radius: $card-radius;
   border: 2rpx solid $border-color;
   background: $bg-surface;
   transition: all 0.25s ease;
@@ -624,10 +694,13 @@ onLoad(async (options) => {
   background: #fff;
 }
 .radio-label {
-  font-size: 26rpx;
+  max-width: 100%;
+  font-size: 24rpx;
   color: $text-primary;
   transition: color 0.25s ease;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .radio-item.active .radio-label {
   color: #fff;
@@ -640,8 +713,8 @@ onLoad(async (options) => {
   gap: 32rpx;
 }
 .step-btn {
-  width: 72rpx;
-  height: 72rpx;
+  width: $tap-min-height;
+  height: $tap-min-height;
   border-radius: 50%;
   border: 2rpx solid $border-color;
   display: flex;
@@ -680,6 +753,9 @@ onLoad(async (options) => {
   font-size: 26rpx;
   color: $text-primary;
   transition: all 0.25s ease;
+  min-height: $control-height-sm;
+  display: flex;
+  align-items: center;
 }
 .tag-item:active {
   transform: scale(0.95);
@@ -713,8 +789,8 @@ onLoad(async (options) => {
   padding-top: 24rpx;
 }
 .submit-btn {
-  height: 96rpx;
-  line-height: 96rpx;
+  height: $control-height;
+  line-height: $control-height;
   text-align: center;
   border-radius: $radius-full;
   background: $text-primary;
@@ -722,12 +798,12 @@ onLoad(async (options) => {
   font-size: 30rpx;
   font-weight: 500;
   transition: all 0.2s ease;
-  box-shadow: 0 8rpx 24rpx rgba(0,0,0,0.12);
+  box-shadow: $shadow-sm;
 }
 .submit-btn::after { border: none; }
 .submit-btn:active {
   transform: scale(0.97);
-  box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.1);
+  box-shadow: $shadow-xs;
 }
 .submit-btn[disabled] {
   opacity: 0.5;
@@ -742,7 +818,7 @@ onLoad(async (options) => {
     background: #fff;
     color: #1a1a1a;
     border: 1rpx solid rgba(164,120,59,0.16);
-    box-shadow: 0 18rpx 48rpx rgba(164,120,59,0.10);
+    box-shadow: $shadow-sm;
   }
   .rsvp-brief::before {
     background: #A4783B;
@@ -758,6 +834,7 @@ onLoad(async (options) => {
   .brief-item {
     border-top-color: rgba(164,120,59,0.16);
   }
+  .feature-action,
   .submit-btn,
   .radio-item.active,
   .tag-item.active {
@@ -768,6 +845,7 @@ onLoad(async (options) => {
 .tpl-noir {
   background: #111;
   .page-title,
+  .feature-title,
   .label-text,
   .radio-label,
   .step-icon,
@@ -775,6 +853,7 @@ onLoad(async (options) => {
     color: #fff;
   }
   .page-desc,
+  .feature-desc,
   .label-en,
   .tag-item,
   .form-input,
@@ -789,6 +868,7 @@ onLoad(async (options) => {
     border-color: rgba(201,169,110,0.18);
   }
   .rsvp-brief::before,
+  .feature-action,
   .submit-btn,
   .radio-item.active,
   .tag-item.active {
@@ -803,6 +883,7 @@ onLoad(async (options) => {
     background: #506247;
   }
   .rsvp-brief::before,
+  .feature-action,
   .submit-btn,
   .radio-item.active,
   .tag-item.active {
@@ -816,7 +897,7 @@ onLoad(async (options) => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 80rpx 48rpx;
+  padding: 80rpx $page-gutter;
   min-height: 100vh;
 }
 
@@ -866,7 +947,7 @@ onLoad(async (options) => {
   font-weight: 600;
   color: $text-primary;
   margin-bottom: 16rpx;
-  letter-spacing: 4rpx;
+  letter-spacing: 0;
   animation: fadeInUp 0.6s $ease-out 0.3s both;
 }
 .success-desc {
@@ -881,7 +962,7 @@ onLoad(async (options) => {
   width: 100%;
   max-width: 560rpx;
   background: $bg-surface;
-  border-radius: $radius-lg;
+  border-radius: $card-radius;
   border: 1rpx solid $border-color;
   padding: 32rpx;
   margin-bottom: 48rpx;
@@ -934,8 +1015,8 @@ onLoad(async (options) => {
 }
 .success-action {
   flex: 1;
-  height: 72rpx;
-  line-height: 72rpx;
+  height: $control-height-sm;
+  line-height: $control-height-sm;
   border-radius: $radius-full;
   background: $bg-muted;
   color: $text-primary;
@@ -946,5 +1027,105 @@ onLoad(async (options) => {
 .success-action:active {
   background: $text-primary;
   color: #fff;
+}
+
+.theme-rose,
+.theme-champagne,
+.theme-noir,
+.theme-garden,
+.theme-heritage,
+.theme-shandong,
+.theme-travel {
+  background: var(--theme-page, $bg-color);
+  color: var(--theme-ink, $text-primary);
+
+  .page-title,
+  .feature-title,
+  .label-text,
+  .radio-label,
+  .tag-item,
+  .step-icon,
+  .step-value,
+  .form-input,
+  .picker-value,
+  .form-textarea,
+  .success-title,
+  .info-value,
+  .back-btn,
+  .success-action {
+    color: var(--theme-ink, $text-primary);
+  }
+
+  .page-tag,
+  .page-desc,
+  .feature-desc,
+  .label-en,
+  .char-count,
+  .info-label,
+  .success-desc {
+    color: var(--theme-muted, $text-muted);
+  }
+
+  .page-divider {
+    background: var(--theme-accent, $color-primary);
+  }
+
+  .rsvp-brief {
+    background: var(--theme-strong-bg, $text-primary);
+    border: 1rpx solid var(--theme-strong-border, transparent);
+    color: var(--theme-strong-ink, #fff);
+  }
+
+  .rsvp-brief::before {
+    background: var(--theme-accent, $color-primary);
+  }
+
+  .brief-title,
+  .brief-value {
+    color: var(--theme-strong-ink, #fff);
+  }
+
+  .brief-kicker,
+  .brief-label {
+    color: var(--theme-strong-muted, rgba(255,255,255,0.56));
+  }
+
+  .brief-item {
+    border-top-color: var(--theme-strong-border, rgba(255,255,255,0.12));
+  }
+
+  .radio-item,
+  .tag-item,
+  .success-card,
+  .back-btn {
+    background: var(--theme-surface, $bg-surface);
+    border-color: var(--theme-border, $border-color);
+  }
+
+  .radio-item.active,
+  .tag-item.active,
+  .feature-action,
+  .submit-btn {
+    background: var(--theme-accent, $text-primary);
+    border-color: var(--theme-accent, $text-primary);
+    color: var(--theme-on-accent, #fff);
+  }
+
+  .form-input,
+  .picker-value,
+  .form-textarea,
+  .success-divider {
+    border-color: var(--theme-border, $border-color);
+  }
+
+  .success-divider {
+    background: var(--theme-border, $border-color);
+  }
+
+  .required-tip,
+  .success-action {
+    background: var(--theme-elevated, $bg-muted);
+    color: var(--theme-muted, $text-muted);
+  }
 }
 </style>

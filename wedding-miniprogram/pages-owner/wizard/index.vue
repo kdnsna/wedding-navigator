@@ -28,6 +28,8 @@
           @click="selectTemplate(tpl)"
         >
           <view class="template-visual" :style="{ background: tpl.preview }">
+            <image class="template-hero-thumb" :src="tpl.defaultHero" mode="aspectFill" />
+            <view class="template-visual-shade" />
             <text class="template-kicker">{{ tpl.kicker }}</text>
             <text class="template-monogram">{{ tpl.shortName }}</text>
             <view class="template-line" />
@@ -36,17 +38,25 @@
           <view class="template-meta">
             <view class="template-head">
               <text class="template-name">{{ tpl.name }}</text>
-              <text class="template-status">{{ form.template === tpl.id ? '已选择' : '选择' }}</text>
+              <view class="template-badges">
+                <text class="template-tier" :class="{ premium: isTemplatePremium(tpl) }">{{ getTemplateTierLabel(tpl) }}</text>
+                <text class="template-status">{{ form.template === tpl.id ? '已选择' : '选择' }}</text>
+              </view>
             </view>
             <text class="template-desc">{{ tpl.desc }}</text>
             <text class="template-copy">{{ tpl.copy }}</text>
             <text class="template-photo">{{ tpl.photoMood }}</text>
+            <view class="template-actions">
+              <button class="template-action primary" @click.stop="selectTemplate(tpl)">{{ form.template === tpl.id ? '已选择' : '选择模板' }}</button>
+              <button class="template-action" @click.stop="previewTemplate(tpl)">完整预览</button>
+            </view>
           </view>
         </view>
       </view>
       <view class="template-note" v-if="selectedTemplate">
         <text class="template-note-title">预设文案</text>
         <text class="template-note-copy">{{ selectedTemplate.preset?.mainText }}</text>
+        <text class="template-note-hint">{{ selectedTemplateHint }}</text>
       </view>
     </view>
 
@@ -121,11 +131,13 @@
 
 <script setup>
 import { computed, ref } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { useUserStore } from '@/stores/user.js'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { createWedding } from '@/composables/useCloud.js'
 import { showSuccess, showError, getWeekDay } from '@/utils/index.js'
-import { WEDDING_TEMPLATES, getWeddingTemplate } from '@/utils/templates.js'
+import { WEDDING_TEMPLATES, buildTemplateGuide, buildTemplateTimeline, getWeddingTemplate } from '@/utils/templates.js'
+import { buildTemplateCommercialState, getCommercialHint, getTemplateTierLabel, isTemplatePremium } from '@/utils/commercial.js'
 
 const userStore = useUserStore()
 const weddingStore = useWeddingStore()
@@ -146,6 +158,7 @@ const form = ref({
 
 const templates = WEDDING_TEMPLATES
 const selectedTemplate = computed(() => getWeddingTemplate(form.value.template))
+const selectedTemplateHint = computed(() => getCommercialHint(selectedTemplate.value, userStore.entitlements))
 
 function onDateChange(e) { form.value.date = e.detail.value }
 function onTimeChange(e) { form.value.time = e.detail.value }
@@ -155,6 +168,18 @@ function selectTemplate(tpl) {
   if (!form.value.venueName.trim()) {
     form.value.venueName = tpl.preset?.venueName || ''
   }
+}
+
+function previewTemplate(tpl) {
+  uni.navigateTo({ url: `/pages-owner/template/preview?id=${encodeURIComponent(tpl.id)}` })
+}
+
+function applyPendingTemplate() {
+  const pendingTemplateId = uni.getStorageSync('pending_template_id')
+  if (!pendingTemplateId) return
+  uni.removeStorageSync('pending_template_id')
+  const tpl = getWeddingTemplate(pendingTemplateId)
+  selectTemplate(tpl)
 }
 
 function nextStep() {
@@ -194,6 +219,16 @@ async function createWeddingAction() {
       basic_info: { date: form.value.date, time: form.value.time, week_day: getWeekDay(form.value.date) },
       status: 'published',
       stats: { views: 0, shares: 0, rsvp_count: 0, blessing_count: 0, unique_viewers: 0 },
+      commercial: {
+        plan: userStore.plan || 'free',
+        template_id: form.value.template,
+        ...buildTemplateCommercialState(tpl, userStore.entitlements)
+      },
+      workspace: {
+        plan: userStore.plan || 'free',
+        template_id: form.value.template,
+        commercial_status: 'trial'
+      },
       share_config: {
         title: `${form.value.groomName} & ${form.value.brideName}的婚礼邀请`,
         description: `${form.value.date}，我们结婚啦！诚邀您的见证`,
@@ -202,6 +237,7 @@ async function createWeddingAction() {
     }
     const invitationPayload = {
       template: form.value.template,
+      commercial: buildTemplateCommercialState(tpl, userStore.entitlements),
       content: {
         title: '婚礼请柬',
         main_text: tpl?.preset?.mainText || '诚挚邀请您参加我们的婚礼，见证我们的幸福时刻。',
@@ -218,13 +254,32 @@ async function createWeddingAction() {
         venue_name: form.value.venueName || tpl?.preset?.venueName || '',
         venue_address: form.value.venueAddress
       },
-      features: { show_countdown: true, show_rsvp: true, show_blessing: true, show_timeline: true }
+      features: {
+        show_countdown: true,
+        show_rsvp: true,
+        show_blessing: true,
+        show_timeline: true,
+        rsvp_phone_required: false,
+        allow_rsvp_update: true,
+        blessing_public: true,
+        allow_anonymous_blessing: true
+      }
     }
+    const mainVenueId = 'main-venue'
+    const venuesPayload = buildTemplateGuide(form.value.template, {
+      mainVenueId,
+      venueName: form.value.venueName || tpl?.preset?.venueName || '',
+      venueAddress: form.value.venueAddress,
+      time: form.value.time
+    })
+    const timelinePayload = buildTemplateTimeline(form.value.template, mainVenueId)
 
     // 先写云端
     const res = await createWedding({
       wedding: weddingPayload,
-      invitation: invitationPayload
+      invitation: invitationPayload,
+      venues: venuesPayload,
+      timeline: timelinePayload
     })
 
     if (!res?.success) {
@@ -243,8 +298,8 @@ async function createWeddingAction() {
       wedding: { wedding_id: weddingId, ...weddingPayload },
       invitation: { wedding_id: weddingId, ...invitationPayload },
       album: { photos: [] },
-      venues: { venues: [] },
-      timeline: { events: [] },
+      venues: venuesPayload,
+      timeline: timelinePayload,
       guests: { guests: [] },
       blessings: { blessings: [] }
     })
@@ -260,18 +315,24 @@ async function createWeddingAction() {
     uni.hideLoading()
   }
 }
+
+onShow(() => {
+  applyPendingTemplate()
+})
 </script>
 
 <style lang="scss" scoped>
 .page {
   background-color: $bg-color;
   min-height: 100vh;
-  padding-bottom: 60rpx;
+  padding-bottom: calc(80rpx + env(safe-area-inset-bottom));
 }
 
 /* 步骤条 */
 .step-bar {
-  padding: 40rpx 48rpx 0;
+  width: calc(100vw - 96rpx);
+  margin: 0 auto;
+  padding: 40rpx 0 0;
 }
 .step-track {
   height: 4rpx;
@@ -301,7 +362,9 @@ async function createWeddingAction() {
 
 /* 步骤内容 */
 .step-content {
-  padding: 48rpx 48rpx 0;
+  width: calc(100vw - 96rpx);
+  margin: 0 auto;
+  padding: 48rpx 0 0;
 }
 .step-header {
   margin-bottom: 48rpx;
@@ -331,7 +394,7 @@ async function createWeddingAction() {
 }
 .form-input {
   width: 100%;
-  height: 96rpx;
+  height: $control-height;
   padding: 0 4rpx;
   border-bottom: 2rpx solid $border-color;
   font-size: 32rpx;
@@ -340,8 +403,8 @@ async function createWeddingAction() {
 }
 .picker-value {
   width: 100%;
-  height: 96rpx;
-  line-height: 96rpx;
+  height: $control-height;
+  line-height: $control-height;
   font-size: 32rpx;
   color: $text-primary;
   border-bottom: 2rpx solid $border-color;
@@ -358,14 +421,17 @@ async function createWeddingAction() {
   align-items: stretch;
   gap: 22rpx;
   padding: 22rpx;
-  border-radius: $radius-lg;
+  border-radius: $card-radius;
   border: 2rpx solid $border-color;
   background: $bg-surface;
   transition: all 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 .template-item.active {
   border-color: $text-primary;
-  box-shadow: 0 12rpx 34rpx rgba(0,0,0,0.08);
+  box-shadow: $shadow-sm;
 }
 .template-item:active {
   background: $bg-muted;
@@ -373,7 +439,9 @@ async function createWeddingAction() {
 .template-visual {
   width: 180rpx;
   min-height: 232rpx;
-  border-radius: $radius-lg;
+  border-radius: $card-radius;
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -382,25 +450,50 @@ async function createWeddingAction() {
   box-shadow: inset 0 0 0 1rpx rgba(255,255,255,0.34);
   box-sizing: border-box;
 }
+.template-hero-thumb,
+.template-visual-shade {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+}
+.template-hero-thumb {
+  z-index: 0;
+}
+.template-visual-shade {
+  z-index: 1;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.12), rgba(0,0,0,0.36) 54%, rgba(0,0,0,0.62));
+}
 .template-kicker {
+  position: relative;
+  z-index: 2;
   color: #fff;
   font-size: 15rpx;
-  letter-spacing: 2rpx;
+  letter-spacing: 0;
   line-height: 1.25;
   opacity: 0.76;
 }
 .template-monogram {
+  position: relative;
+  z-index: 2;
   color: #fff;
   font-size: 34rpx;
   font-weight: 600;
   line-height: 1.2;
 }
 .template-line {
+  position: relative;
+  z-index: 2;
   width: 56rpx;
   height: 2rpx;
   background: rgba(255,255,255,0.72);
 }
 .template-venue {
+  position: relative;
+  z-index: 2;
   color: rgba(255,255,255,0.82);
   font-size: 18rpx;
   line-height: 1.3;
@@ -408,13 +501,14 @@ async function createWeddingAction() {
 .template-meta {
   flex: 1;
   min-width: 0;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
 .template-head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 16rpx;
   margin-bottom: 8rpx;
 }
@@ -425,6 +519,28 @@ async function createWeddingAction() {
   font-size: 30rpx;
   font-weight: 500;
   color: $text-primary;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.template-badges {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8rpx;
+  flex-shrink: 0;
+}
+.template-tier {
+  padding: 5rpx 12rpx;
+  border-radius: $radius-full;
+  background: rgba(52,168,83,0.1);
+  color: $color-success;
+  font-size: 19rpx;
+  line-height: 1.2;
+}
+.template-tier.premium {
+  background: rgba(201,169,110,0.14);
+  color: #8F6B2E;
 }
 .template-status {
   flex-shrink: 0;
@@ -443,6 +559,10 @@ async function createWeddingAction() {
   font-size: 24rpx;
   color: $text-secondary;
   line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .template-copy {
   display: block;
@@ -450,6 +570,10 @@ async function createWeddingAction() {
   font-size: 22rpx;
   color: $text-primary;
   line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .template-photo {
   display: block;
@@ -457,11 +581,35 @@ async function createWeddingAction() {
   font-size: 22rpx;
   color: $text-muted;
   line-height: 1.45;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
+.template-actions {
+  display: flex;
+  gap: 12rpx;
+  margin-top: 18rpx;
+}
+.template-action {
+  flex: 1;
+  min-width: 0;
+  height: $control-height-sm;
+  line-height: $control-height-sm;
+  border-radius: $radius-full;
+  background: $bg-muted;
+  color: $text-primary;
+  font-size: 24rpx;
+  padding: 0;
+}
+.template-action.primary {
+  background: $text-primary;
+  color: #fff;
+}
+.template-action::after { border: none; }
 .template-note {
   margin-top: 28rpx;
   padding: 28rpx;
-  border-radius: $radius-lg;
+  border-radius: $card-radius;
   background: #fff8f1;
   border: 1rpx solid rgba(201,169,110,0.32);
 }
@@ -469,7 +617,7 @@ async function createWeddingAction() {
   display: block;
   font-size: 22rpx;
   color: $text-muted;
-  letter-spacing: 4rpx;
+  letter-spacing: 0;
   margin-bottom: 12rpx;
 }
 .template-note-copy {
@@ -478,17 +626,28 @@ async function createWeddingAction() {
   color: $text-primary;
   line-height: 1.65;
 }
+.template-note-hint {
+  display: block;
+  margin-top: 18rpx;
+  padding-top: 18rpx;
+  border-top: 1rpx solid rgba(201,169,110,0.22);
+  font-size: 23rpx;
+  color: $text-secondary;
+  line-height: 1.5;
+}
 
 /* 底部按钮 */
 .step-actions {
-  padding: 48rpx;
+  width: calc(100vw - 96rpx);
+  margin: 0 auto;
+  padding: $page-gutter 0;
   display: flex;
   gap: 16rpx;
 }
 .step-btn {
   flex: 1;
-  height: 96rpx;
-  line-height: 96rpx;
+  height: $control-height;
+  line-height: $control-height;
   text-align: center;
   border-radius: $radius-full;
   font-size: 30rpx;

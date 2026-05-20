@@ -108,6 +108,18 @@
         <text class="menu-title">数据统计</text>
         <text class="menu-arrow">›</text>
       </view>
+      <view class="divider" />
+      <view class="menu-item" @click="goTo('diagnostics/index')">
+        <text class="menu-title">发布诊断</text>
+        <text class="menu-badge" :class="{ danger: !checklist.ready }">{{ checklist.ready ? '可发布' : '需补齐' }}</text>
+        <text class="menu-arrow">›</text>
+      </view>
+      <view class="divider" />
+      <view class="menu-item" @click="goTo('profile/index')">
+        <text class="menu-title">账号与权益</text>
+        <text class="menu-badge">{{ userStore.planTier.label }}</text>
+        <text class="menu-arrow">›</text>
+      </view>
     </view>
 
     <!-- 底部操作 -->
@@ -132,7 +144,7 @@ import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { formatDate, showError, showSuccess } from '@/utils/index.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
-import { deleteWedding, fetchWedding, getStats } from '@/composables/useCloud.js'
+import { deleteWedding, fetchWedding, getStats, syncOwnerProfile } from '@/composables/useCloud.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
@@ -243,6 +255,13 @@ onShow(async () => {
   if (!useOwnerGuard()) return
   try {
     await fetchWedding(userStore.weddingId)
+    const profileRes = await syncOwnerProfile().catch((err) => {
+      console.warn('主人账号同步失败:', err)
+      return null
+    })
+    if (profileRes?.success) {
+      userStore.setOwnerProfile(profileRes)
+    }
     const res = await getStats(userStore.weddingId)
     if (res?.stats) {
       store.wedding.stats = {
@@ -263,18 +282,18 @@ onShow(async () => {
 .page {
   background-color: $bg-color;
   min-height: 100vh;
-  padding-bottom: 60rpx;
+  padding-bottom: calc(80rpx + env(safe-area-inset-bottom));
 }
 
 /* 顶部标题 */
 .page-header {
-  padding: 60rpx 48rpx 24rpx;
+  padding: $page-header-top $page-gutter 24rpx;
 }
 .page-tag {
   display: block;
   font-size: 22rpx;
   color: $text-muted;
-  letter-spacing: 6rpx;
+  letter-spacing: 0;
   margin-bottom: 12rpx;
 }
 .page-title {
@@ -289,14 +308,19 @@ onShow(async () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 24rpx 48rpx 40rpx;
+  padding: 24rpx $page-gutter 40rpx;
+  gap: 24rpx;
 }
+.couple-bar > view { min-width: 0; }
 .couple-name {
   display: block;
   font-size: $font-h2;
   font-weight: 600;
   color: $text-primary;
   margin-bottom: 8rpx;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .couple-date {
   display: block;
@@ -318,9 +342,9 @@ onShow(async () => {
 
 /* 发布准备 */
 .readiness-card {
-  margin: 0 48rpx 40rpx;
+  margin: 0 $page-gutter 40rpx;
   padding: 32rpx;
-  border-radius: $radius-lg;
+  border-radius: $card-radius;
   background: $text-primary;
   color: #fff;
 }
@@ -335,7 +359,7 @@ onShow(async () => {
   display: block;
   font-size: 18rpx;
   color: rgba(255,255,255,0.55);
-  letter-spacing: 5rpx;
+  letter-spacing: 0;
   margin-bottom: 8rpx;
 }
 .readiness-title {
@@ -364,7 +388,7 @@ onShow(async () => {
 .readiness-summary {
   padding: 18rpx 22rpx;
   margin-bottom: 14rpx;
-  border-radius: $radius-lg;
+  border-radius: $card-radius;
   background: rgba(255,255,255,0.08);
   color: rgba(255,255,255,0.78);
   font-size: 24rpx;
@@ -402,6 +426,9 @@ onShow(async () => {
   color: #fff;
   font-weight: 500;
   margin-bottom: 4rpx;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .readiness-item-desc {
   display: block;
@@ -417,7 +444,7 @@ onShow(async () => {
 /* 数据概览 */
 .stats-row {
   display: flex;
-  padding: 0 48rpx;
+  padding: 0 $page-gutter;
   margin-bottom: 48rpx;
 }
 .stat-item {
@@ -436,29 +463,48 @@ onShow(async () => {
 .stat-label {
   font-size: 22rpx;
   color: $text-muted;
-  letter-spacing: 2rpx;
+  letter-spacing: 0;
 }
 
 /* 功能菜单 */
 .menu-group {
-  margin: 0 48rpx;
+  margin: 0 $page-gutter;
   background: $bg-surface;
-  border-radius: $radius-lg;
+  border-radius: $card-radius;
   overflow: hidden;
 }
 .menu-item {
   display: flex;
   align-items: center;
-  padding: 32rpx 28rpx;
+  min-height: $tap-min-height;
+  padding: 28rpx;
 }
 .menu-item:active {
   background: $bg-muted;
 }
 .menu-title {
   flex: 1;
+  min-width: 0;
   font-size: 30rpx;
   color: $text-primary;
   font-weight: 500;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.menu-badge {
+  flex-shrink: 0;
+  margin-right: 12rpx;
+  padding: 7rpx 14rpx;
+  border-radius: $radius-full;
+  background: $bg-muted;
+  color: $text-secondary;
+  font-size: 22rpx;
+  line-height: 1.2;
+}
+.menu-badge.danger {
+  background: rgba(234,67,53,0.1);
+  color: $color-error;
 }
 .menu-arrow {
   font-size: 28rpx;
@@ -473,14 +519,14 @@ onShow(async () => {
 
 /* 底部操作 */
 .bottom-actions {
-  padding: 48rpx;
+  padding: 40rpx $page-gutter calc(40rpx + env(safe-area-inset-bottom));
   display: flex;
   gap: 16rpx;
 }
 .action-btn {
   flex: 1;
-  height: 88rpx;
-  line-height: 88rpx;
+  height: $control-height;
+  line-height: $control-height;
   text-align: center;
   border-radius: $radius-full;
   background: $bg-muted;
@@ -497,9 +543,9 @@ onShow(async () => {
 }
 
 .danger-zone {
-  margin: 0 48rpx 48rpx;
+  margin: 0 $page-gutter 48rpx;
   padding: 30rpx;
-  border-radius: $radius-lg;
+  border-radius: $card-radius;
   border: 1rpx solid rgba(234,67,53,0.24);
   background: rgba(234,67,53,0.045);
 }
@@ -507,7 +553,7 @@ onShow(async () => {
   display: block;
   font-size: 18rpx;
   color: rgba(234,67,53,0.72);
-  letter-spacing: 5rpx;
+  letter-spacing: 0;
   margin-bottom: 10rpx;
 }
 .danger-title {
