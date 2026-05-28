@@ -8,7 +8,7 @@ export const TEMPLATE_HERO_IMAGES = {
   'travel-friendly': '/static/visuals/hero/hero-travel-friendly.jpg'
 }
 
-export const WEDDING_TEMPLATES = [
+const BASE_WEDDING_TEMPLATES = [
   {
     id: 'rose-couture',
     legacyIds: ['classic'],
@@ -365,6 +365,34 @@ export const WEDDING_TEMPLATES = [
   }
 ]
 
+function buildTemplatePublishingMeta(template) {
+  const scenario = template.plan?.scenario || template.shortName || template.name
+  const venue = template.preset?.venueName || '婚礼场地'
+  return {
+    audienceTags: [
+      template.shortName,
+      scenario,
+      template.tier === 'premium' ? '高级视觉' : '免费可发'
+    ].filter(Boolean),
+    coverGuidance: template.plan?.coverLayout || template.photoMood || '优先使用竖版主封面，底部保留姓名、日期和场地信息。',
+    posterVariants: [
+      { id: 'classic', name: '请柬海报', desc: '适合朋友圈和好友转发，突出新人、婚期和小程序码' },
+      { id: 'cover', name: '封面海报', desc: '适合婚纱照足够好看的场景，照片占比更高' },
+      { id: 'route', name: '路书海报', desc: '适合外地宾客较多的婚礼，强调地点和到达提示' }
+    ],
+    shareCopyPresets: {
+      moments: `我们把婚礼邀请放进了这本甜囍手册里。${scenario}，期待在${venue}见到你。`,
+      group: `我们的婚礼邀请来啦，时间、地点、路线和回执都在小程序里，麻烦大家点开看一下，也欢迎提前填写回执。`,
+      formal: `诚邀您出席我们的婚礼。婚期、场地、路线和出席回执已整理在甜囍手册中，期待您的到来。`
+    }
+  }
+}
+
+export const WEDDING_TEMPLATES = BASE_WEDDING_TEMPLATES.map(template => ({
+  ...buildTemplatePublishingMeta(template),
+  ...template
+}))
+
 const DEFAULT_TEMPLATE_ID = 'rose-couture'
 
 export const DEFAULT_TIMELINE_ROLES = [
@@ -392,6 +420,29 @@ export function getTemplateClass(id) {
 export function getTemplateHeroImage(id) {
   const template = getWeddingTemplate(id)
   return template.defaultHero || TEMPLATE_HERO_IMAGES[DEFAULT_TEMPLATE_ID]
+}
+
+export function buildDefaultShareConfig(templateId, options = {}) {
+  const template = getWeddingTemplate(templateId)
+  const groom = options.groomName || '新郎'
+  const bride = options.brideName || '新娘'
+  const date = options.date || ''
+  const venue = options.venueName || template.preset?.venueName || '婚礼场地'
+  const couple = `${groom} & ${bride}`
+  const datePrefix = date ? `${date}，` : ''
+  const venueSuffix = venue ? `，地点在${venue}` : ''
+  return {
+    title: `${couple}的婚礼邀请`,
+    description: `${datePrefix}我们结婚啦！诚邀您的见证`,
+    cover_image: '',
+    moments_text: `${couple}的婚礼邀请来啦。${datePrefix}期待在甜囍手册里和你分享这一天${venueSuffix}。`,
+    group_text: `各位亲友，我们的婚礼邀请来啦。${datePrefix}时间、地点、路线和回执都在小程序里，麻烦大家点开看一下。`,
+    formal_text: `诚邀您出席${couple}的婚礼。${datePrefix}婚期、场地、路线和出席回执已整理在甜囍手册中，期待您的到来。`,
+    poster_variant: template.posterVariants?.[0]?.id || 'classic',
+    poster_image: '',
+    share_cover_mode: 'auto',
+    venue_hint: venue
+  }
 }
 
 const POSTER_THEME_MAP = {

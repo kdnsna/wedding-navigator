@@ -136,7 +136,7 @@ import { useUserStore } from '@/stores/user.js'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { createWedding } from '@/composables/useCloud.js'
 import { showSuccess, showError, getWeekDay } from '@/utils/index.js'
-import { WEDDING_TEMPLATES, buildTemplateGuide, buildTemplateTimeline, getWeddingTemplate } from '@/utils/templates.js'
+import { WEDDING_TEMPLATES, buildDefaultShareConfig, buildTemplateGuide, buildTemplateTimeline, getWeddingTemplate } from '@/utils/templates.js'
 import { buildTemplateCommercialState, getCommercialHint, getTemplateTierLabel, isTemplatePremium } from '@/utils/commercial.js'
 
 const userStore = useUserStore()
@@ -214,11 +214,25 @@ async function createWeddingAction() {
   try {
     uni.showLoading({ title: '创建中...', mask: true })
     const tpl = selectedTemplate.value
+    const defaultShareConfig = buildDefaultShareConfig(form.value.template, {
+      groomName: form.value.groomName,
+      brideName: form.value.brideName,
+      date: form.value.date,
+      venueName: form.value.venueName || tpl?.preset?.venueName || ''
+    })
 
     const weddingPayload = {
       basic_info: { date: form.value.date, time: form.value.time, week_day: getWeekDay(form.value.date) },
       status: 'published',
-      stats: { views: 0, shares: 0, rsvp_count: 0, blessing_count: 0, unique_viewers: 0 },
+      stats: {
+        views: 0,
+        shares: 0,
+        poster_saves: 0,
+        rsvp_count: 0,
+        blessing_count: 0,
+        unique_viewers: 0,
+        share_channels: { friend: 0, timeline: 0, poster: 0 }
+      },
       commercial: {
         plan: userStore.plan || 'free',
         template_id: form.value.template,
@@ -230,9 +244,13 @@ async function createWeddingAction() {
         commercial_status: 'trial'
       },
       share_config: {
-        title: `${form.value.groomName} & ${form.value.brideName}的婚礼邀请`,
-        description: `${form.value.date}，我们结婚啦！诚邀您的见证`,
-        cover_image: ''
+        ...defaultShareConfig,
+        moments_text: defaultShareConfig.moments_text,
+        group_text: defaultShareConfig.group_text,
+        formal_text: defaultShareConfig.formal_text,
+        poster_variant: defaultShareConfig.poster_variant,
+        poster_image: defaultShareConfig.poster_image,
+        share_cover_mode: defaultShareConfig.share_cover_mode
       }
     }
     const invitationPayload = {

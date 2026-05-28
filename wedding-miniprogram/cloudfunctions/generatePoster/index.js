@@ -18,7 +18,8 @@ exports.main = async (event, context) => {
       scene: scene || '',
       page,
       width: parseInt(width),
-      env_version: envVersion
+      envVersion,
+      checkPath: false
     })
 
     // 返回临时文件流

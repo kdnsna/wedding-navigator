@@ -18,7 +18,7 @@ exports.main = async (event, context) => {
     }
 
     const [statsRes, guestsRes, blessingsRes] = await Promise.all([
-      db.collection('share_stats').doc(weddingId).get().catch(() => ({ data: { views: 0, shares: 0, unique_viewers: 0 } })),
+      db.collection('share_stats').doc(weddingId).get().catch(() => ({ data: { views: 0, shares: 0, poster_saves: 0, share_channels: {}, unique_viewers: 0 } })),
       db.collection('guests').doc(weddingId).get().catch(() => ({ data: { guests: [] } })),
       db.collection('blessings').doc(weddingId).get().catch(() => ({ data: { blessings: [] } }))
     ])
@@ -31,6 +31,8 @@ exports.main = async (event, context) => {
       stats: {
         views: statsRes.data.views || 0,
         shares: statsRes.data.shares || 0,
+        poster_saves: statsRes.data.poster_saves || 0,
+        share_channels: normalizeShareChannels(statsRes.data.share_channels),
         unique_viewers: statsRes.data.unique_viewers || 0,
         rsvp: {
           total: guests.length,
@@ -57,6 +59,14 @@ function getGuestStatus(guest) {
 
 function getGuestCount(guest) {
   return Number(guest.attending_count ?? guest.guestCount ?? guest.guest_count ?? 1)
+}
+
+function normalizeShareChannels(channels = {}) {
+  return {
+    friend: Number(channels.friend || 0),
+    timeline: Number(channels.timeline || 0),
+    poster: Number(channels.poster || 0)
+  }
 }
 
 function normalizeListDocument(doc, key) {

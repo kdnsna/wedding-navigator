@@ -44,9 +44,11 @@ export async function drawWeddingPoster({ instance, store, qrCodePath = '' }) {
   const W = POSTER_CANVAS_WIDTH
   const H = POSTER_CANVAS_HEIGHT
   const theme = getTemplatePosterTheme(store.invitation?.template)
+  const shareConfig = store.wedding?.share_config || {}
+  const posterVariant = shareConfig.poster_variant || 'classic'
 
   const bgPath = await resolveImagePath(
-    store.album?.photos?.[0]?.url || getTemplateHeroImage(store.invitation?.template),
+    shareConfig.poster_image || store.album?.photos?.[0]?.url || getTemplateHeroImage(store.invitation?.template),
     'poster_bg'
   )
 
@@ -73,7 +75,8 @@ export async function drawWeddingPoster({ instance, store, qrCodePath = '' }) {
   ctx.setFillStyle(theme.muted)
   ctx.setFontSize(9)
   ctx.setTextAlign('center')
-  ctx.fillText('WEDDING INVITATION', W / 2, 52)
+  const posterTitle = posterVariant === 'route' ? 'WEDDING GUIDE' : posterVariant === 'cover' ? 'SAVE THE DATE' : 'WEDDING INVITATION'
+  ctx.fillText(posterTitle, W / 2, 52)
 
   const groom = store.invitation?.couple?.groom?.name || '新郎'
   const bride = store.invitation?.couple?.bride?.name || '新娘'
@@ -145,6 +148,12 @@ export async function drawWeddingPoster({ instance, store, qrCodePath = '' }) {
     ctx.setFillStyle(theme.muted)
     ctx.setFontSize(9)
     ctx.fillText(venueAddress, W / 2, 400)
+  }
+
+  if (posterVariant === 'route') {
+    ctx.setFillStyle(theme.accent)
+    ctx.setFontSize(10)
+    ctx.fillText('路线、时间、回执都在甜囍手册中', W / 2, 424)
   }
 
   const qrPath = await resolveImagePath(qrCodePath, 'poster_qr')

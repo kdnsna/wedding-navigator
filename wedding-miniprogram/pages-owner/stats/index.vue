@@ -17,8 +17,25 @@
         <text class="overview-label">分享次数</text>
       </view>
       <view class="overview-item">
+        <text class="overview-num">{{ stats.poster_saves || 0 }}</text>
+        <text class="overview-label">海报保存</text>
+      </view>
+      <view class="overview-item">
         <text class="overview-num">{{ stats.unique_viewers || 0 }}</text>
         <text class="overview-label">独立访客</text>
+      </view>
+    </view>
+
+    <!-- 分享渠道 -->
+    <view class="section">
+      <view class="section-header">
+        <text class="section-title">分享渠道</text>
+      </view>
+      <view class="diet-list">
+        <view class="diet-item" v-for="item in shareChannelStats" :key="item.label">
+          <text class="diet-label">{{ item.label }}</text>
+          <text class="diet-value">{{ item.count }} 次</text>
+        </view>
       </view>
     </view>
 
@@ -168,6 +185,14 @@ function groupGuestsBy(field, fallback = '未填写') {
 
 const transportStats = computed(() => groupGuestsBy('transport_mode'))
 const relationshipStats = computed(() => groupGuestsBy('relationship'))
+const shareChannelStats = computed(() => {
+  const channels = stats.value.share_channels || {}
+  return [
+    { label: '微信好友/群', count: channels.friend || 0 },
+    { label: '朋友圈', count: channels.timeline || 0 },
+    { label: '海报保存', count: channels.poster || 0 }
+  ]
+})
 
 onShow(async () => {
   if (!useOwnerGuard()) return
@@ -178,6 +203,8 @@ onShow(async () => {
       store.wedding.stats = {
         views: res.stats.views || 0,
         shares: res.stats.shares || 0,
+        poster_saves: res.stats.poster_saves || 0,
+        share_channels: res.stats.share_channels || { friend: 0, timeline: 0, poster: 0 },
         rsvp_count: res.stats.rsvp?.total || 0,
         blessing_count: res.stats.blessings || 0,
         unique_viewers: res.stats.unique_viewers || 0

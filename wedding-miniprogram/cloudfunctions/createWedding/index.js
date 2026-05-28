@@ -86,7 +86,16 @@ exports.main = async (event, context) => {
         data: { _id: weddingId, blessings: [], created_at: now, updated_at: now }
       }),
       db.collection('share_stats').add({
-        data: { _id: weddingId, views: 0, shares: 0, unique_viewers: 0, created_at: now, updated_at: now }
+        data: {
+          _id: weddingId,
+          views: 0,
+          shares: 0,
+          poster_saves: 0,
+          share_channels: { friend: 0, timeline: 0, poster: 0 },
+          unique_viewers: 0,
+          created_at: now,
+          updated_at: now
+        }
       })
     ])
 

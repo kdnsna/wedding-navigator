@@ -197,6 +197,8 @@ function checkDataContracts() {
   assertIncludes('cloudfunctions/getStats/index.js', 'normalizeListDocument', 'getStats must normalize legacy nested list documents')
   assertIncludes('cloudfunctions/getRSVPStats/index.js', 'normalizeListDocument', 'getRSVPStats must normalize legacy nested guest documents')
   assertIncludes('cloudfunctions/generatePoster/index.js', 'WXACODE_ENV_VERSION', 'generatePoster must support configurable wxacode env version')
+  assertIncludes('cloudfunctions/generatePoster/index.js', 'envVersion', 'generatePoster must pass camelCase envVersion to cloud.openapi.wxacode')
+  assertIncludes('cloudfunctions/generatePoster/index.js', 'checkPath: false', 'generatePoster must disable path check for preview and trial smoke tests')
   assertIncludes('pages/index/index.vue', 'parseWeddingIdFromOptions', 'home page must read ids opened from wxacode scene')
   assert(fs.existsSync(path.join(root, 'cloudfunctions/deleteWedding/index.js')), 'deleteWedding cloud function must exist')
   assertIncludes('cloudfunctions/deleteWedding/index.js', 'owner_openid', 'deleteWedding must verify owner before deleting data')
@@ -350,6 +352,84 @@ function checkReleaseDocs() {
   assert(readme.includes('syncOwnerProfile'), 'README must document owner profile sync deployment')
 }
 
+function checkFriendsInvitationIteration() {
+  const researchPath = 'docs/product/2026-05-28-friends-invitation-research.md'
+  assert(fs.existsSync(path.join(root, researchPath)), 'friends invitation research and evaluation doc must exist')
+  const research = read(researchPath)
+  for (const text of [
+    '年轻人需求仿真',
+    '竞品功能矩阵',
+    '甜囍手册现状评分',
+    '隐私边界',
+    '迭代路线',
+    'https://www.hunbei.com/article_detail/208.html',
+    'https://www.chinanews.com.cn/sh/2026/01-12/10550047.shtml'
+  ]) {
+    assert(research.includes(text), `${researchPath}: missing ${text}`)
+  }
+
+  const pkg = readJson('package.json')
+  const manifest = readJson('manifest.json')
+  assert(pkg.version === manifest.versionName, 'package.json version must match manifest.versionName')
+  assert(
+    pkg.scripts?.['postbuild:mp-weixin']?.includes('normalize-wechat-project-config.js'),
+    'mp-weixin postbuild must normalize project.config.json for real-device preview'
+  )
+  assert(
+    pkg.scripts?.['smoke:cloud-e2e']?.includes('smoke-cloud-e2e.mjs'),
+    'package.json must expose repeatable CloudBase E2E smoke'
+  )
+  assertIncludes('scripts/normalize-wechat-project-config.js', 'miniprogramRoot', 'WeChat config normalizer must set miniprogramRoot')
+  assertIncludes('scripts/normalize-wechat-project-config.js', 'libVersion', 'WeChat config normalizer must set a stable base library version')
+  assertIncludes('scripts/normalize-wechat-project-config.js', 'encodeURIComponent', 'WeChat config normalizer must encode projectname for DevTools CLI')
+  assertIncludes('scripts/smoke-cloud-e2e.mjs', 'generatePoster.develop', 'CloudBase E2E smoke must test wxacode generation in mini program context')
+  assertIncludes('scripts/smoke-cloud-e2e.mjs', 'recordView.poster', 'CloudBase E2E smoke must test poster save aggregate tracking')
+  if (fs.existsSync(path.join(root, '.npmrc'))) {
+    assert(!read('.npmrc').includes('shamefully-hoist'), '.npmrc must not use npm-unsupported shamefully-hoist')
+  }
+
+  for (const text of ['audienceTags', 'shareCopyPresets', 'posterVariants', 'coverGuidance']) {
+    assertIncludes('utils/templates.js', text, `templates must expose ${text} for friends invitation publishing`)
+  }
+  assertIncludes('utils/templates.js', 'buildDefaultShareConfig', 'templates must build default friends invitation share config')
+
+  for (const text of ['moments_text', 'group_text', 'formal_text', 'poster_variant', 'poster_image', 'share_cover_mode']) {
+    assertIncludes('pages-owner/wizard/index.vue', text, `wizard must initialize share_config.${text}`)
+    assertIncludes('pages-owner/share/index.vue', text, `publishing center must edit share_config.${text}`)
+  }
+  assertIncludes('pages-owner/share/index.vue', '发布中心', 'share page must be positioned as a publishing center')
+  assertIncludes('pages-owner/share/index.vue', '发布前检查', 'publishing center must show a pre-publish checklist')
+  assertIncludes('pages-owner/share/index.vue', 'copyShareText', 'publishing center must copy ready-to-send share copy')
+  assertIncludes('pages-owner/share/index.vue', 'privacy-note', 'publishing center must explain privacy-friendly aggregate stats')
+  assertIncludes('pages-owner/share/index.vue', 'coverGuidance', 'publishing center must surface template cover guidance')
+  assertIncludes('pages-owner/share/index.vue', 'audienceTags', 'publishing center must surface template audience tags')
+
+  assertIncludes('pages/index/index.vue', '朋友圈打开即懂', 'home first screen must be optimized for social entry')
+  assertIncludes('pages/index/index.vue', 'goToPoster', 'home first screen must expose poster saving')
+  assertIncludes('pages/index/index.vue', 'sharePreviewText', 'home first screen must show social share copy')
+  assertIncludes('pages/index/index.vue', 'shareImageUrl', 'home sharing must honor share_cover_mode')
+  assertIncludes('pages/index/index.vue', "recordShare(userStore.weddingId, 'timeline')", 'timeline sharing must track aggregate channel only')
+
+  assertIncludes('pages/rsvp/index.vue', '快速回执', 'RSVP must present a quick reply path')
+  assertIncludes('pages/rsvp/index.vue', 'detailsExpanded', 'RSVP details must be collapsed by default')
+  assertIncludes('pages/rsvp/index.vue', 'toggleDetails', 'RSVP must let guests expand optional planning details')
+
+  assertIncludes('composables/useCloud.js', 'recordPosterSave', 'useCloud must expose poster save aggregate tracking')
+  assertIncludes('cloudfunctions/recordView/index.js', 'poster_save', 'recordView must support poster_save aggregate events')
+  assertIncludes('cloudfunctions/recordView/index.js', 'share_channels', 'recordView must store aggregate share channels')
+  assertIncludes('cloudfunctions/recordView/index.js', 'poster_saves', 'recordView must store aggregate poster save count')
+  assertIncludes('cloudfunctions/getStats/index.js', 'poster_saves', 'getStats must return poster save count')
+  assertIncludes('cloudfunctions/getStats/index.js', 'share_channels', 'getStats must return aggregate share channels')
+  assertIncludes('pages-owner/stats/index.vue', '海报保存', 'owner stats page must show poster save count')
+  assertIncludes('pages-owner/stats/index.vue', '分享渠道', 'owner stats page must show share channels')
+  assertIncludes('cloudfunctions/createWedding/index.js', 'share_channels', 'createWedding must initialize aggregate share channels')
+  assertIncludes('cloudfunctions/createWedding/index.js', 'poster_saves', 'createWedding must initialize poster save count')
+  const recordView = read('cloudfunctions/recordView/index.js')
+  for (const forbidden of ['visitor_profiles', 'last_viewers', 'viewer_list', 'visited_at_list']) {
+    assert(!recordView.includes(forbidden), `recordView must not introduce identifiable visitor tracking: ${forbidden}`)
+  }
+}
+
 function readPngSize(file) {
   const abs = path.join(root, file)
   assert(fs.existsSync(abs), `visual asset is missing: ${file}`)
@@ -469,6 +549,7 @@ checkTemplateSystem()
 checkCommercializationFoundations()
 checkUploadScript()
 checkReleaseDocs()
+checkFriendsInvitationIteration()
 checkVisualAssets()
 
 console.log('release readiness checks passed')

@@ -55,7 +55,7 @@ import { computed, ref, nextTick, getCurrentInstance } from 'vue'
 import { onLoad, onShareAppMessage } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
-import { fetchWedding, generatePoster } from '@/composables/useCloud.js'
+import { fetchWedding, generatePoster, recordPosterSave } from '@/composables/useCloud.js'
 import { drawWeddingPoster, POSTER_CANVAS_STYLE } from '@/utils/posterCanvas.js'
 
 const store = useWeddingStore()
@@ -144,6 +144,7 @@ async function saveToAlbum() {
         filePath: tempRes.tempFilePath,
         success: () => {
           uni.showToast({ title: '已保存到相册', icon: 'success' })
+          recordPosterSave(userStore.weddingId).catch(() => {})
           resolve()
         },
         fail: (err) => {

@@ -3,7 +3,7 @@
     <!-- 顶部标题 -->
     <view class="page-header" v-if="!submitted && isRsvpEnabled">
       <text class="page-tag">RSVP</text>
-      <text class="page-title">确认出席</text>
+      <text class="page-title">快速回执</text>
       <view class="page-divider" />
       <text class="page-desc">请告诉我们是否能见证这美好时刻</text>
     </view>
@@ -86,6 +86,15 @@
         </view>
       </view>
 
+      <view class="details-toggle" @click="toggleDetails">
+        <view>
+          <text class="details-title">{{ detailsExpanded || phoneRequired ? '补充到场信息' : '补充交通、饮食和留言' }}</text>
+          <text class="details-desc">{{ detailsExpanded || phoneRequired ? '这些信息能帮助新人安排座位和接待' : '选填，赶时间可以先直接提交' }}</text>
+        </view>
+        <text class="details-arrow">{{ detailsExpanded || phoneRequired ? '收起' : '展开' }}</text>
+      </view>
+
+      <view class="optional-details" v-if="detailsExpanded || phoneRequired">
       <!-- 与新人关系 -->
       <view class="form-group">
         <view class="form-label">
@@ -216,6 +225,7 @@
         />
         <text class="char-count">{{ (form.message || '').length }}/200</text>
       </view>
+      </view>
 
       <!-- 提交 -->
       <view class="form-actions">
@@ -284,6 +294,7 @@ const userStore = useUserStore()
 
 const submitted = ref(false)
 const submitting = ref(false)
+const detailsExpanded = ref(false)
 const activeTemplate = computed(() => store.activeTemplate)
 const templateClass = computed(() => store.templateClass)
 const isRsvpEnabled = computed(() => store.isRsvpEnabled)
@@ -330,6 +341,14 @@ function toggleDiet(diet) {
 
 function onArrivalTimeChange(e) {
   form.arrivalTime = e.detail.value
+}
+
+function toggleDetails() {
+  if (phoneRequired.value) {
+    detailsExpanded.value = true
+    return
+  }
+  detailsExpanded.value = !detailsExpanded.value
 }
 
 async function handleSubmit() {
@@ -408,6 +427,7 @@ function resetForm() {
   form.companionNote = ''
   form.dietary = []
   form.message = ''
+  detailsExpanded.value = false
   uni.reLaunch({ url: '/pages/index/index' })
 }
 
@@ -462,7 +482,9 @@ onLoad(async (options) => {
     form.companionNote = rsvp.companion_note || ''
     form.dietary = rsvp.dietary ? rsvp.dietary.split('、') : []
     form.message = rsvp.message || ''
+    detailsExpanded.value = true
   }
+  if (phoneRequired.value) detailsExpanded.value = true
 })
 </script>
 
@@ -738,6 +760,41 @@ onLoad(async (options) => {
   min-width: 48rpx;
   text-align: center;
   font-variant-numeric: tabular-nums;
+}
+
+.details-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+  margin: 4rpx 0 32rpx;
+  padding: 24rpx;
+  border-radius: $card-radius;
+  background: $bg-surface;
+  border: 1rpx solid $border-light;
+  box-shadow: $shadow-xs;
+}
+.details-title {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: $text-primary;
+  line-height: 1.35;
+}
+.details-desc {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 23rpx;
+  color: $text-muted;
+  line-height: 1.4;
+}
+.details-arrow {
+  flex-shrink: 0;
+  font-size: 24rpx;
+  color: $text-primary;
+}
+.optional-details {
+  padding-top: 4rpx;
 }
 
 /* 标签选择 */

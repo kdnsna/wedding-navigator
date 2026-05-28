@@ -172,9 +172,15 @@ async function recordView(weddingId, openid) {
 }
 
 // 记录分享
-async function recordShare(weddingId) {
+async function recordShare(weddingId, channel = 'friend') {
   if (!weddingId) return null
-  return callFunction('recordView', { weddingId, type: 'share' }, { timeoutMs: 4000 })
+  return callFunction('recordView', { weddingId, type: 'share', channel }, { timeoutMs: 4000 })
+}
+
+// 记录海报保存。只写聚合计数，不记录可识别访客足迹。
+async function recordPosterSave(weddingId) {
+  if (!weddingId) return null
+  return callFunction('recordView', { weddingId, type: 'poster_save', channel: 'poster' }, { timeoutMs: 4000 })
 }
 
 // 获取统计数据
@@ -282,6 +288,7 @@ export {
   pinBlessing,
   recordView,
   recordShare,
+  recordPosterSave,
   getStats,
   getRSVPStats,
   checkOwnership,

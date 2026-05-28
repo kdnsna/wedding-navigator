@@ -1,6 +1,6 @@
 {
   "name": "wedding-miniprogram",
-  "version": "2.0.0",
+  "version": "2.0.14",
   "description": "婚礼全流程导航小程序",
   "main": "main.js",
   "engines": {
@@ -23,7 +23,8 @@
     "build:mp-alipay": "uni build -p mp-alipay",
     "build:mp-baidu": "uni build -p mp-baidu",
     "build:mp-weixin": "UNI_INPUT_DIR=. npm exec --yes --package=node@20.19.6 -- node node_modules/.bin/uni build -p mp-weixin",
-    "postbuild:mp-weixin": "node scripts/copy-cloudfunctions-to-dist.js dist/build/mp-weixin",
+    "postbuild:mp-weixin": "node scripts/copy-cloudfunctions-to-dist.js dist/build/mp-weixin && node scripts/normalize-wechat-project-config.js dist/build/mp-weixin",
+    "smoke:cloud-e2e": "node scripts/smoke-cloud-e2e.mjs",
     "build:quickapp": "uni build -p quickapp",
     "upload:mp-weixin": "node upload.mjs"
   },

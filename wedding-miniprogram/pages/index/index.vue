@@ -1,44 +1,26 @@
 <template>
   <view class="page" :class="templateClass" @touchstart="onPageTap">
-    <!-- 封面大图 -->
-    <view class="hero">
-      <image
-        class="hero-image hero-image-main"
-        :class="{ default: isDefaultCover }"
-        :src="coverImage"
-        :mode="coverImageMode"
-      />
-      <view class="hero-gradient" :class="{ default: isLegacyDefaultCover }" />
-      <text class="xi-watermark">囍</text>
-      <view class="hero-content">
-        <text class="hero-tag animate-fade-in delay-2">{{ activeTemplate.kicker }}</text>
-        <view class="hero-divider animate-draw-line delay-3" />
-        <text class="hero-names animate-fade-up delay-4">{{ groomName }} & {{ brideName }}</text>
-        <text class="hero-sub animate-fade-up delay-5">We're getting married</text>
-        <text class="hero-date animate-fade-up delay-6">{{ formatDate(weddingDate) }}</text>
-        <view class="hero-meta-line animate-fade-up delay-7">
-          <text>{{ weddingTime || '12:00' }}</text>
-          <view class="hero-meta-dot" />
-          <text>{{ venueName || '婚礼场地' }}</text>
-        </view>
-        <view class="hero-countdown animate-fade-up delay-8" v-if="showCountdown && countdown && !countdown.isToday">
-          <text class="countdown-num">{{ countdown.days }}</text>
-          <view class="countdown-divider" />
-          <view class="countdown-info">
-            <text class="countdown-label">DAYS</text>
-            <text class="countdown-desc">距离我们结婚</text>
-          </view>
-        </view>
-        <view class="hero-today animate-fade-up delay-8" v-if="showCountdown && countdown?.isToday">
-          <text class="today-label">TODAY</text>
-          <text class="today-desc">就是今天</text>
-        </view>
-        <view class="scroll-hint animate-fade-in delay-10">
-          <view class="scroll-line" />
-          <text class="scroll-text">滑动探索</text>
-        </view>
-      </view>
-    </view>
+    <invitation-social-hero
+      social-entry-label="朋友圈打开即懂"
+      :cover-image="coverImage"
+      :cover-image-mode="coverImageMode"
+      :is-default-cover="isDefaultCover"
+      :is-legacy-default-cover="isLegacyDefaultCover"
+      :active-template="activeTemplate"
+      :groom-name="groomName"
+      :bride-name="brideName"
+      :formatted-date="formattedWeddingDate"
+      :wedding-time="weddingTime"
+      :venue-name="venueName"
+      :countdown="countdown"
+      :show-countdown="showCountdown"
+      :is-rsvp-enabled="isRsvpEnabled"
+      :has-submitted-rsvp="hasSubmittedRsvp"
+      :share-preview-text="sharePreviewText"
+      @rsvp="goToRSVP"
+      @poster="goToPoster"
+      @navigate="goToGuide"
+    />
 
     <!-- 婚礼当天行动台 -->
     <view class="section daypack-section">
@@ -264,6 +246,7 @@ import { useUserStore } from '@/stores/user.js'
 import { fetchWedding, recordShare, recordView } from '@/composables/useCloud.js'
 import { formatDate, getWeekDay } from '@/utils/index.js'
 import { getTemplateHeroImage } from '@/utils/templates.js'
+import InvitationSocialHero from '@/components/invitation-social-hero/invitation-social-hero.vue'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
@@ -315,10 +298,18 @@ function onPageTap() {
   }
 }
 
-const coverImage = computed(() => {
+const albumCoverImage = computed(() => {
   const photos = store.album?.photos || []
   const cover = photos.find(p => p.type === 'cover')
-  return cover?.url || photos[0]?.url || getTemplateHeroImage(store.invitation?.template) || '/static/visuals/default-cover.png'
+  return cover?.url || photos[0]?.url || ''
+})
+const templateCoverImage = computed(() => getTemplateHeroImage(store.invitation?.template) || '/static/visuals/default-cover.png')
+const coverImage = computed(() => {
+  const cfg = store.wedding?.share_config || {}
+  if (cfg.cover_image) return cfg.cover_image
+  if (cfg.share_cover_mode === 'template') return templateCoverImage.value
+  if (cfg.share_cover_mode === 'album') return albumCoverImage.value || templateCoverImage.value
+  return albumCoverImage.value || templateCoverImage.value
 })
 const isGeneratedTemplateCover = computed(() => String(coverImage.value || '').startsWith('/static/visuals/hero/'))
 const isLegacyDefaultCover = computed(() => coverImage.value === '/static/visuals/default-cover.png')
@@ -331,6 +322,7 @@ const weddingDate = computed(() => store.weddingDate)
 const weddingTime = computed(() => store.weddingTime)
 const venueName = computed(() => store.venueName)
 const venueAddress = computed(() => store.invitation?.wedding?.venue_address || '')
+const formattedWeddingDate = computed(() => formatDate(weddingDate.value))
 const activeTemplate = computed(() => store.activeTemplate)
 const templateClass = computed(() => store.templateClass)
 const showCountdown = computed(() => store.showCountdown)
@@ -355,6 +347,17 @@ const nextEventText = computed(() => {
 })
 const invitationText = computed(() => {
   return store.invitation?.content?.main_text || '诚挚邀请您参加我们的婚礼，见证我们的幸福时刻。'
+})
+const sharePreviewText = computed(() => {
+  const cfg = store.wedding?.share_config || {}
+  return cfg.moments_text || activeTemplate.value?.shareCopyPresets?.moments || invitationText.value
+})
+const shareImageUrl = computed(() => {
+  const cfg = store.wedding?.share_config || {}
+  if (cfg.cover_image) return cfg.cover_image
+  if (cfg.share_cover_mode === 'template') return templateCoverImage.value
+  if (cfg.share_cover_mode === 'album') return albumCoverImage.value || templateCoverImage.value
+  return coverImage.value
 })
 
 function updateCountdown() {
@@ -391,6 +394,9 @@ function goToBlessing() {
     return
   }
   uni.navigateTo({ url: '/pages/blessing/index' })
+}
+function goToPoster() {
+  uni.navigateTo({ url: '/pages/poster/index' })
 }
 
 function openNavigation() {
@@ -468,29 +474,29 @@ function parseWeddingIdFromOptions(options = {}) {
   return idPair?.[1] || ''
 }
 
-function trackShare() {
+function trackShare(channel = 'friend') {
   if (userStore.weddingId) {
-    recordShare(userStore.weddingId).catch(() => {})
+    recordShare(userStore.weddingId, channel).catch(() => {})
   }
 }
 
 onShareAppMessage(() => {
-  trackShare()
+  trackShare('friend')
   const title = store.wedding?.share_config?.title || `${groomName.value} & ${brideName.value} 的婚礼邀请`
   return {
     title,
     path: getSharePath(),
-    imageUrl: coverImage.value
+    imageUrl: shareImageUrl.value
   }
 })
 
 onShareTimeline(() => {
-  trackShare()
+  recordShare(userStore.weddingId, 'timeline').catch(() => {})
   const title = store.wedding?.share_config?.title || `${groomName.value} & ${brideName.value} 的婚礼邀请`
   return {
     title,
     query: userStore.weddingId ? `id=${userStore.weddingId}` : '',
-    imageUrl: coverImage.value
+    imageUrl: shareImageUrl.value
   }
 })
 
