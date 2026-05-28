@@ -67,6 +67,7 @@ import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
 import { generatePoster } from '@/composables/useCloud.js'
 import { showSuccess, showError } from '@/utils/index.js'
 import { drawWeddingPoster, POSTER_CANVAS_STYLE } from '@/utils/posterCanvas.js'
+import { savePosterCanvasToAlbum, showSaveImageError } from '@/utils/photoAlbum.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
@@ -139,37 +140,11 @@ async function saveToAlbum() {
 
   saving.value = true
   try {
-    const tempRes = await uni.canvasToTempFilePath({
-      canvasId: 'posterCanvas',
-      quality: 0.95
-    })
-
-    await new Promise((resolve, reject) => {
-      uni.saveImageToPhotosAlbum({
-        filePath: tempRes.tempFilePath,
-        success: () => {
-          showSuccess('已保存到相册')
-          resolve()
-        },
-        fail: (err) => {
-          if (err.errMsg?.includes('auth deny')) {
-            uni.showModal({
-              title: '需要授权',
-              content: '请允许保存图片到相册',
-              confirmText: '去设置',
-              success: (res) => {
-                if (res.confirm) uni.openSetting()
-              }
-            })
-          } else {
-            showError('保存失败')
-          }
-          reject(err)
-        }
-      })
-    })
+    await savePosterCanvasToAlbum({ canvasId: 'posterCanvas', instance })
+    showSuccess('已保存到相册')
   } catch (err) {
     console.error('saveToAlbum error:', err)
+    showSaveImageError(err)
   } finally {
     saving.value = false
   }
@@ -192,7 +167,8 @@ onShow(async () => {
 }
 
 .page-header {
-  padding: $page-header-top $page-gutter 24rpx;
+  padding: calc(24rpx + constant(safe-area-inset-top)) $page-gutter 24rpx;
+  padding-top: calc(24rpx + env(safe-area-inset-top));
 }
 .page-tag {
   display: block;
@@ -224,19 +200,24 @@ onShow(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24rpx $page-gutter;
+  padding: 12rpx $page-gutter 20rpx;
 }
 .poster-container {
-  width: 375px;
-  height: 667px;
+  width: 232px;
+  height: 414px;
   border-radius: $card-radius;
   overflow: hidden;
   box-shadow: $shadow-md;
+  background: $bg-muted;
 }
 .poster-wrapper {
+  width: 375px;
+  height: 667px;
   display: flex;
   align-items: center;
   justify-content: center;
+  transform: scale(0.62);
+  transform-origin: left top;
 }
 .poster-canvas {
   border-radius: 16rpx;
@@ -336,5 +317,31 @@ onShow(async () => {
 .loading-text {
   font-size: 26rpx;
   color: $text-primary;
+}
+
+@media (min-height: 760px) {
+  .poster-preview {
+    padding-top: 18rpx;
+  }
+
+  .poster-container {
+    width: 270px;
+    height: 480px;
+  }
+
+  .poster-wrapper {
+    transform: scale(0.72);
+  }
+}
+
+@media (min-height: 860px) {
+  .poster-container {
+    width: 292px;
+    height: 520px;
+  }
+
+  .poster-wrapper {
+    transform: scale(0.78);
+  }
 }
 </style>

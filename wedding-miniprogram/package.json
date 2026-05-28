@@ -1,6 +1,6 @@
 {
   "name": "wedding-miniprogram",
-  "version": "2.0.14",
+  "version": "2.0.15",
   "description": "婚礼全流程导航小程序",
   "main": "main.js",
   "engines": {

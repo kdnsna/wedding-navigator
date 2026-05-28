@@ -57,6 +57,7 @@ import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { fetchWedding, generatePoster, recordPosterSave } from '@/composables/useCloud.js'
 import { drawWeddingPoster, POSTER_CANVAS_STYLE } from '@/utils/posterCanvas.js'
+import { savePosterCanvasToAlbum, showSaveImageError } from '@/utils/photoAlbum.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
@@ -138,51 +139,15 @@ async function saveToAlbum() {
   loadingText.value = '保存到相册...'
 
   try {
-    const tempRes = await canvasToTempFilePath()
-    await new Promise((resolve, reject) => {
-      uni.saveImageToPhotosAlbum({
-        filePath: tempRes.tempFilePath,
-        success: () => {
-          uni.showToast({ title: '已保存到相册', icon: 'success' })
-          recordPosterSave(userStore.weddingId).catch(() => {})
-          resolve()
-        },
-        fail: (err) => {
-          if (err.errMsg?.includes('auth deny')) {
-            uni.showModal({
-              title: '需要授权',
-              content: '请允许保存图片到相册',
-              confirmText: '去设置',
-              success: (res) => {
-                if (res.confirm) {
-                  uni.openSetting()
-                }
-              }
-            })
-          } else {
-            uni.showToast({ title: '保存失败', icon: 'none' })
-          }
-          reject(err)
-        }
-      })
-    })
+    await savePosterCanvasToAlbum({ canvasId: 'posterCanvas', instance })
+    uni.showToast({ title: '已保存到相册', icon: 'success' })
+    recordPosterSave(userStore.weddingId).catch(() => {})
   } catch (err) {
     console.error('saveToAlbum error:', err)
-    uni.showToast({ title: '保存失败', icon: 'none' })
+    showSaveImageError(err)
   } finally {
     loading.value = false
   }
-}
-
-function canvasToTempFilePath() {
-  return new Promise((resolve, reject) => {
-    uni.canvasToTempFilePath({
-      canvasId: 'posterCanvas',
-      quality: 0.95,
-      success: resolve,
-      fail: reject
-    }, instance)
-  })
 }
 
 function sharePoster() {
@@ -244,14 +209,17 @@ onLoad(async (options) => {
 }
 
 .page-header {
-  padding: $page-gutter $page-gutter 24rpx;
+  padding: calc(24rpx + constant(safe-area-inset-top)) $page-gutter 18rpx;
+  padding-top: calc(24rpx + env(safe-area-inset-top));
   flex-shrink: 0;
 }
 .header-top {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12rpx;
+  min-height: 72rpx;
+  margin-bottom: 6rpx;
 }
 .back-btn {
   font-size: 48rpx;
@@ -266,6 +234,10 @@ onLoad(async (options) => {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
+  max-width: 320rpx;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
 }
 .share-btn {
   font-size: 28rpx;
@@ -284,20 +256,25 @@ onLoad(async (options) => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 20rpx;
-  padding: 24rpx $page-gutter;
+  gap: 16rpx;
+  padding: 12rpx $page-gutter 16rpx;
 }
 .poster-container {
-  width: 375px;
-  height: 667px;
+  width: 232px;
+  height: 414px;
   border-radius: $card-radius;
   overflow: hidden;
   box-shadow: $shadow-md;
+  background: $bg-muted;
 }
 .poster-wrapper {
+  width: 375px;
+  height: 667px;
   display: flex;
   align-items: center;
   justify-content: center;
+  transform: scale(0.62);
+  transform-origin: left top;
 }
 .poster-canvas {
   border-radius: 16rpx;
@@ -326,8 +303,8 @@ onLoad(async (options) => {
 .actions {
   display: flex;
   gap: 20rpx;
-  padding: 24rpx $page-gutter calc(48rpx + constant(safe-area-inset-bottom));
-  padding-bottom: calc(48rpx + env(safe-area-inset-bottom));
+  padding: 18rpx $page-gutter calc(32rpx + constant(safe-area-inset-bottom));
+  padding-bottom: calc(32rpx + env(safe-area-inset-bottom));
   flex-shrink: 0;
 }
 .action-btn {
@@ -443,6 +420,37 @@ onLoad(async (options) => {
   .loading-spinner {
     border-color: var(--theme-border, $border-color);
     border-top-color: var(--theme-accent, $text-primary);
+  }
+}
+
+@media (min-height: 760px) {
+  .page-header {
+    padding-bottom: 22rpx;
+  }
+
+  .poster-preview {
+    padding-top: 18rpx;
+    padding-bottom: 18rpx;
+  }
+
+  .poster-container {
+    width: 270px;
+    height: 480px;
+  }
+
+  .poster-wrapper {
+    transform: scale(0.72);
+  }
+}
+
+@media (min-height: 860px) {
+  .poster-container {
+    width: 292px;
+    height: 520px;
+  }
+
+  .poster-wrapper {
+    transform: scale(0.78);
   }
 }
 </style>

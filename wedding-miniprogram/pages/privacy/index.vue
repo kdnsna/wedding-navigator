@@ -22,6 +22,7 @@
         <text class="list-item">• 祝福留言：宾客在祝福墙发表的文本内容</text>
         <text class="list-item">• 位置信息：仅在您使用地图导航功能时，经您授权后获取</text>
         <text class="list-item">• 照片或视频信息：仅在您主动从相册选择婚礼相关图片并上传到相册时使用</text>
+        <text class="list-item">• 保存图片到相册：仅在您主动点击保存婚礼海报时使用，不会读取您的相册内容</text>
       </view>
 
       <text class="section-title">三、信息的使用</text>

@@ -271,7 +271,8 @@ onLoad((options = {}) => {
   display: flex;
   align-items: flex-start;
   gap: 20rpx;
-  padding: $page-header-top $page-gutter 24rpx;
+  padding: calc(24rpx + constant(safe-area-inset-top)) $page-gutter 24rpx;
+  padding-top: calc(24rpx + env(safe-area-inset-top));
 }
 .back-btn {
   width: 56rpx;
