@@ -59,7 +59,7 @@ function ensureWritePhotosAlbumAuthorized() {
   })
 }
 
-function canvasToPosterFile({ canvasId, instance }) {
+export function exportPosterCanvasTempFile({ canvasId = 'posterCanvas', instance } = {}) {
   return new Promise((resolve, reject) => {
     uni.canvasToTempFilePath({
       canvasId,
@@ -93,12 +93,19 @@ function saveImageFile(filePath) {
   })
 }
 
-export async function savePosterCanvasToAlbum({ canvasId = 'posterCanvas', instance } = {}) {
+export async function savePosterFileToAlbum(filePath) {
+  if (!filePath) {
+    throw makeSaveError('海报图片生成失败，请重新生成后再保存', 'empty poster file')
+  }
   await ensurePrivacyAuthorized()
   await ensureWritePhotosAlbumAuthorized()
-  const filePath = await canvasToPosterFile({ canvasId, instance })
   await saveImageFile(filePath)
   return filePath
+}
+
+export async function savePosterCanvasToAlbum({ canvasId = 'posterCanvas', instance } = {}) {
+  const filePath = await exportPosterCanvasTempFile({ canvasId, instance })
+  return savePosterFileToAlbum(filePath)
 }
 
 export function normalizeSaveImageError(err) {

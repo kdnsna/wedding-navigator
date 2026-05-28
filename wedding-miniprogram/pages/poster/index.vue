@@ -13,13 +13,14 @@
     <!-- 海报预览 -->
     <view class="poster-preview">
       <view class="poster-container">
-        <view class="poster-wrapper">
-          <canvas
-            canvas-id="posterCanvas"
-            id="posterCanvas"
-            class="poster-canvas"
-            :style="{ width: canvasStyle.width, height: canvasStyle.height }"
-          />
+        <image
+          v-if="posterPreviewPath"
+          class="poster-image"
+          :src="posterPreviewPath"
+          mode="aspectFit"
+        />
+        <view v-else class="poster-placeholder">
+          <text>{{ loading ? loadingText : '海报生成中...' }}</text>
         </view>
       </view>
       <view class="poster-status" v-if="posterNotice">
@@ -40,6 +41,13 @@
       </button>
     </view>
 
+    <canvas
+      canvas-id="posterCanvas"
+      id="posterCanvas"
+      class="poster-canvas-export"
+      :style="{ width: canvasStyle.width, height: canvasStyle.height }"
+    />
+
     <!-- 加载提示 -->
     <view class="loading-overlay" v-if="loading">
       <view class="loading-content">
@@ -57,7 +65,7 @@ import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { fetchWedding, generatePoster, recordPosterSave } from '@/composables/useCloud.js'
 import { drawWeddingPoster, POSTER_CANVAS_STYLE } from '@/utils/posterCanvas.js'
-import { savePosterCanvasToAlbum, showSaveImageError } from '@/utils/photoAlbum.js'
+import { exportPosterCanvasTempFile, savePosterCanvasToAlbum, savePosterFileToAlbum, showSaveImageError } from '@/utils/photoAlbum.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
@@ -68,6 +76,7 @@ const posterReady = ref(false)
 const loading = ref(false)
 const loadingText = ref('生成海报中...')
 const posterNotice = ref('')
+const posterPreviewPath = ref('')
 const canvasStyle = POSTER_CANVAS_STYLE
 const templateClass = computed(() => store.templateClass)
 
@@ -120,9 +129,12 @@ function onPosterFail(err) {
 
 async function redrawPoster() {
   try {
+    posterReady.value = false
+    posterPreviewPath.value = ''
     await nextTick()
     await new Promise(r => setTimeout(r, 300))
     await drawWeddingPoster({ instance, store, qrCodePath: qrCodePath.value })
+    posterPreviewPath.value = await exportPosterCanvasTempFile({ canvasId: 'posterCanvas', instance })
     onPosterReady()
   } catch (err) {
     onPosterFail(err)
@@ -139,7 +151,11 @@ async function saveToAlbum() {
   loadingText.value = '保存到相册...'
 
   try {
-    await savePosterCanvasToAlbum({ canvasId: 'posterCanvas', instance })
+    if (posterPreviewPath.value) {
+      await savePosterFileToAlbum(posterPreviewPath.value)
+    } else {
+      await savePosterCanvasToAlbum({ canvasId: 'posterCanvas', instance })
+    }
     uni.showToast({ title: '已保存到相册', icon: 'success' })
     recordPosterSave(userStore.weddingId).catch(() => {})
   } catch (err) {
@@ -260,28 +276,39 @@ onLoad(async (options) => {
   padding: 12rpx $page-gutter 16rpx;
 }
 .poster-container {
-  width: 232px;
-  height: 414px;
+  width: 440rpx;
+  height: 782rpx;
   border-radius: $card-radius;
   overflow: hidden;
   box-shadow: $shadow-md;
   background: $bg-muted;
 }
-.poster-wrapper {
-  width: 375px;
-  height: 667px;
+.poster-image {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.poster-placeholder {
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  transform: scale(0.62);
-  transform-origin: left top;
+  padding: 32rpx;
+  color: $text-muted;
+  font-size: 24rpx;
+  text-align: center;
 }
-.poster-canvas {
-  border-radius: 16rpx;
-  box-shadow: $shadow-sm;
+.poster-canvas-export {
+  position: fixed;
+  left: -9999px;
+  top: -9999px;
+  opacity: 0.01;
+  pointer-events: none;
+  z-index: -1;
 }
 .poster-status {
-  max-width: 375px;
+  width: 440rpx;
   display: flex;
   align-items: flex-start;
   gap: 10rpx;
@@ -433,24 +460,24 @@ onLoad(async (options) => {
     padding-bottom: 18rpx;
   }
 
-  .poster-container {
-    width: 270px;
-    height: 480px;
+  .poster-container,
+  .poster-status {
+    width: 500rpx;
   }
 
-  .poster-wrapper {
-    transform: scale(0.72);
+  .poster-container {
+    height: 889rpx;
   }
 }
 
 @media (min-height: 860px) {
-  .poster-container {
-    width: 292px;
-    height: 520px;
+  .poster-container,
+  .poster-status {
+    width: 540rpx;
   }
 
-  .poster-wrapper {
-    transform: scale(0.78);
+  .poster-container {
+    height: 960rpx;
   }
 }
 </style>
