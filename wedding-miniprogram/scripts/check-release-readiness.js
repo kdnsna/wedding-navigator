@@ -385,9 +385,16 @@ function checkFriendsInvitationIteration() {
     pkg.scripts?.['smoke:cloud-functions']?.includes('smoke-cloud-functions-full.mjs'),
     'package.json must expose repeatable all-functions CloudBase smoke'
   )
+  assert(
+    pkg.scripts?.['smoke:save-album']?.includes('smoke-save-image-devtools.mjs'),
+    'package.json must expose repeatable save-to-album privacy smoke'
+  )
   assertIncludes('scripts/smoke-cloud-functions-full.mjs', 'syncOwnerProfile', 'all-functions smoke must cover owner profile sync')
   assertIncludes('scripts/smoke-cloud-functions-full.mjs', 'geocodeVenue.realAddress', 'all-functions smoke must cover configured geocoding')
   assertIncludes('scripts/smoke-cloud-functions-full.mjs', 'expectedStats', 'all-functions smoke must assert aggregate stats')
+  assertIncludes('scripts/smoke-save-image-devtools.mjs', 'saveImageToPhotosAlbum', 'save-album smoke must call the real WeChat album API')
+  assertIncludes('scripts/smoke-save-image-devtools.mjs', 'api scope is not declared', 'save-album smoke must report privacy declaration blockers')
+  assertIncludes('scripts/smoke-save-image-devtools.mjs', 'posterReady', 'save-album smoke must prove the poster file is ready before saving')
   assertIncludes('scripts/normalize-wechat-project-config.js', 'miniprogramRoot', 'WeChat config normalizer must set miniprogramRoot')
   assertIncludes('scripts/normalize-wechat-project-config.js', 'libVersion', 'WeChat config normalizer must set a stable base library version')
   assertIncludes('scripts/normalize-wechat-project-config.js', 'encodeURIComponent', 'WeChat config normalizer must encode projectname for DevTools CLI')
