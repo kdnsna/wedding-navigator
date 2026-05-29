@@ -1,7 +1,7 @@
 <template>
   <view class="page" :class="templateClass">
     <!-- 顶部标题 -->
-    <view class="page-header">
+    <view class="page-header" :style="headerStyle">
       <view class="header-top">
         <text class="back-btn" @click="goBack">‹</text>
         <text class="page-title">婚礼海报</text>
@@ -31,7 +31,13 @@
 
     <!-- 操作按钮 -->
     <view class="actions">
-      <button class="action-btn primary" @click="saveToAlbum" :disabled="!posterReady">
+      <button
+        class="action-btn primary"
+        @click="saveToAlbum"
+        :disabled="!posterReady"
+        :data-ready="posterReady ? '1' : '0'"
+        :data-preview="posterPreviewPath ? '1' : '0'"
+      >
         <image class="action-visual-icon" src="/static/visuals/icon-save.svg" mode="aspectFit" />
         <text class="action-text">保存到相册</text>
       </button>
@@ -79,7 +85,12 @@ const loadingText = ref('生成海报中...')
 const posterNotice = ref('')
 const posterPreviewPath = ref('')
 const canvasStyle = POSTER_CANVAS_STYLE
+const statusBarHeight = ref(0)
 const templateClass = computed(() => store.templateClass)
+const headerStyle = computed(() => {
+  if (!statusBarHeight.value) return {}
+  return { paddingTop: `${statusBarHeight.value + 8}px` }
+})
 
 async function generateQRCode() {
   loading.value = true
@@ -209,6 +220,11 @@ function parseWeddingId(options = {}) {
 }
 
 onLoad(async (options) => {
+  try {
+    statusBarHeight.value = Number(uni.getSystemInfoSync?.().statusBarHeight) || 0
+  } catch (err) {
+    statusBarHeight.value = 0
+  }
   await ensureWeddingLoaded(options)
   await generateQRCode()
   await redrawPoster()
@@ -301,10 +317,8 @@ onLoad(async (options) => {
 }
 .poster-canvas-export {
   position: fixed;
-  left: 0;
-  top: 0;
-  transform: scale(0.01);
-  transform-origin: left top;
+  left: -9999px;
+  top: -9999px;
   opacity: 0.01;
   pointer-events: none;
   z-index: -1;

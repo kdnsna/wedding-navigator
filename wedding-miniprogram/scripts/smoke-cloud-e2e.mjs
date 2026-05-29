@@ -174,6 +174,7 @@ async function queryPosterRuntime(connection) {
         '.poster-placeholder',
         '.poster-canvas-export',
         '.actions',
+        '.action-btn.primary',
         '.loading-overlay',
         '.poster-status'
       ]
@@ -231,18 +232,12 @@ async function smokePosterRuntime(connection, weddingId) {
     canvasOffscreen: Boolean(rects['.poster-canvas-export']) &&
       (
         rects['.poster-canvas-export'].left < -1000 ||
-        rects['.poster-canvas-export'].top < -1000 ||
-        rects['.poster-canvas-export'].left >= rects['.actions']?.right ||
-        rects['.poster-canvas-export'].top >= rects['.actions']?.bottom ||
-        (
-          rects['.poster-canvas-export'].width <= 8 &&
-          rects['.poster-canvas-export'].height <= 12
-        )
+        rects['.poster-canvas-export'].top < -1000
       ),
     actionsNotCovered: Boolean(rects['.poster-container']) &&
       Boolean(rects['.actions']) &&
       rects['.poster-container'].bottom < rects['.actions'].top,
-    saveEnabled: latest?.data?.saveDisabled === false
+    saveEnabled: latest?.rects?.['.action-btn.primary']?.dataset?.ready === '1'
   }
 
   if (!checks.imageRendered) throw new Error('Poster preview image did not render')

@@ -37,9 +37,20 @@ const args = [
 ]
 
 console.log(`开始使用微信开发者工具 CLI 上传 v${version}...`)
-const result = spawnSync(cliPath, args, { stdio: 'inherit' })
+const result = spawnSync(cliPath, args, { encoding: 'utf8' })
+const stdout = result.stdout || ''
+const stderr = result.stderr || ''
+if (stdout) process.stdout.write(stdout)
+if (stderr) process.stderr.write(stderr)
+const combinedOutput = `${stdout}\n${stderr}`
 
-if (result.status !== 0) {
+if (
+  result.status !== 0 ||
+  combinedOutput.includes('[error]') ||
+  combinedOutput.includes('✖ 上传') ||
+  !fs.existsSync(infoOutput) ||
+  fs.statSync(infoOutput).size === 0
+) {
   console.error(`上传失败，退出码：${result.status}`)
   process.exit(result.status || 1)
 }

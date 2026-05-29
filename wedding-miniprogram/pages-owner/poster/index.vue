@@ -245,10 +245,8 @@ onShow(async () => {
 }
 .poster-canvas-export {
   position: fixed;
-  left: 0;
-  top: 0;
-  transform: scale(0.01);
-  transform-origin: left top;
+  left: -9999px;
+  top: -9999px;
   opacity: 0.01;
   pointer-events: none;
   z-index: -1;
