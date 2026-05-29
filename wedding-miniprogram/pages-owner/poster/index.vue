@@ -58,6 +58,7 @@
     </view>
 
     <canvas
+      type="2d"
       canvas-id="posterCanvas"
       id="posterCanvas"
       class="poster-canvas-export"
@@ -74,12 +75,12 @@ import { useUserStore } from '@/stores/user.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
 import { generatePoster } from '@/composables/useCloud.js'
 import { showSuccess, showError } from '@/utils/index.js'
-import { drawWeddingPoster, POSTER_CANVAS_STYLE } from '@/utils/posterCanvas.js'
-import { exportPosterCanvasTempFile, savePosterCanvasToAlbum, savePosterFileToAlbum, showSaveImageError } from '@/utils/photoAlbum.js'
+import { renderWeddingPosterTempFile, POSTER_CANVAS_STYLE } from '@/utils/posterCanvas.js'
+import { savePosterCanvasToAlbum, savePosterFileToAlbum, showSaveImageError } from '@/utils/photoAlbum.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
-const instance = getCurrentInstance()
+const instance = getCurrentInstance()?.proxy
 
 const qrCodePath = ref('')
 const posterReady = ref(false)
@@ -129,8 +130,7 @@ async function redrawPoster() {
     posterPreviewPath.value = ''
     await nextTick()
     await new Promise(r => setTimeout(r, 300))
-    await drawWeddingPoster({ instance, store, qrCodePath: qrCodePath.value })
-    posterPreviewPath.value = await exportPosterCanvasTempFile({ canvasId: 'posterCanvas', instance })
+    posterPreviewPath.value = await renderWeddingPosterTempFile({ instance, store, qrCodePath: qrCodePath.value })
     onPosterReady()
   } catch (err) {
     console.error('poster draw fail:', err)
@@ -245,8 +245,10 @@ onShow(async () => {
 }
 .poster-canvas-export {
   position: fixed;
-  left: -9999px;
-  top: -9999px;
+  left: 0;
+  top: 0;
+  transform: scale(0.01);
+  transform-origin: left top;
   opacity: 0.01;
   pointer-events: none;
   z-index: -1;

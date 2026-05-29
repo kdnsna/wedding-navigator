@@ -126,6 +126,14 @@ class DevtoolsConnection {
   }
 }
 
+async function callAppFunction(connection, fn, args = [], timeoutMs = 60000) {
+  const response = await connection.send('App.callFunction', {
+    functionDeclaration: fn.toString(),
+    args
+  }, timeoutMs)
+  return response.result
+}
+
 async function callCloudFunction(connection, name, data = {}) {
   const fn = function (name, data, envId) {
     return new Promise(function (resolve) {
@@ -139,11 +147,110 @@ async function callCloudFunction(connection, name, data = {}) {
       })
     })
   }
-  const response = await connection.send('App.callFunction', {
-    functionDeclaration: fn.toString(),
-    args: [name, data, envId]
-  }, 60000)
-  return response.result
+  return callAppFunction(connection, fn, [name, data, envId])
+}
+
+async function openPosterPage(connection, weddingId) {
+  const fn = function (weddingId) {
+    return new Promise(function (resolve) {
+      wx.reLaunch({
+        url: '/pages/poster/index?id=' + weddingId,
+        success: function () { resolve({ ok: true }) },
+        fail: function (err) { resolve({ ok: false, error: err && (err.errMsg || err.message || String(err)) }) }
+      })
+    })
+  }
+  return callAppFunction(connection, fn, [weddingId], 30000)
+}
+
+async function queryPosterRuntime(connection) {
+  const fn = function () {
+    return new Promise(function (resolve) {
+      const pages = getCurrentPages()
+      const page = pages[pages.length - 1]
+      const selectors = [
+        '.poster-container',
+        '.poster-image',
+        '.poster-placeholder',
+        '.poster-canvas-export',
+        '.actions',
+        '.loading-overlay',
+        '.poster-status'
+      ]
+      const result = {
+        routes: pages.map(function (item) { return item.route }),
+        rects: {},
+        data: {}
+      }
+      if (!page) return resolve(result)
+      const query = wx.createSelectorQuery().in(page)
+      selectors.forEach(function (selector) {
+        query.select(selector).boundingClientRect(function (rect) {
+          result.rects[selector] = rect || null
+        })
+      })
+      query.exec(function () {
+        result.data = {
+          hasPreview: Boolean(page.data && page.data.c),
+          previewPath: page.data && page.data.d ? String(page.data.d).slice(0, 80) : '',
+          saveDisabled: Boolean(page.data && page.data.i),
+          loading: Boolean(page.data && page.data.m)
+        }
+        resolve(result)
+      })
+    })
+  }
+  return callAppFunction(connection, fn, [], 30000)
+}
+
+async function smokePosterRuntime(connection, weddingId) {
+  const opened = await openPosterPage(connection, weddingId)
+  if (!opened?.ok) {
+    throw new Error(`Failed to open poster page: ${opened?.error || 'unknown error'}`)
+  }
+
+  const samples = []
+  let latest = null
+  for (let attempt = 0; attempt < 30; attempt += 1) {
+    await sleep(1000)
+    latest = await queryPosterRuntime(connection)
+    samples.push({
+      second: attempt + 1,
+      routes: latest.routes,
+      hasImage: Boolean(latest.rects?.['.poster-image']),
+      hasPlaceholder: Boolean(latest.rects?.['.poster-placeholder']),
+      hasLoading: Boolean(latest.rects?.['.loading-overlay']),
+      data: latest.data
+    })
+    if (latest.rects?.['.poster-image']) break
+  }
+
+  const rects = latest?.rects || {}
+  const checks = {
+    imageRendered: Boolean(rects['.poster-image']),
+    canvasOffscreen: Boolean(rects['.poster-canvas-export']) &&
+      (
+        rects['.poster-canvas-export'].left < -1000 ||
+        rects['.poster-canvas-export'].top < -1000 ||
+        rects['.poster-canvas-export'].left >= rects['.actions']?.right ||
+        rects['.poster-canvas-export'].top >= rects['.actions']?.bottom ||
+        (
+          rects['.poster-canvas-export'].width <= 8 &&
+          rects['.poster-canvas-export'].height <= 12
+        )
+      ),
+    actionsNotCovered: Boolean(rects['.poster-container']) &&
+      Boolean(rects['.actions']) &&
+      rects['.poster-container'].bottom < rects['.actions'].top,
+    saveEnabled: latest?.data?.saveDisabled === false
+  }
+
+  if (!checks.imageRendered) throw new Error('Poster preview image did not render')
+  if (!checks.canvasOffscreen) throw new Error('Poster export canvas is not safely offscreen')
+  if (!checks.actionsNotCovered) throw new Error('Poster preview overlaps action buttons')
+  if (!checks.saveEnabled) throw new Error('Poster save button did not become enabled')
+
+  return { checks, latest, samples }
 }
 
 function buildSmokeWedding() {
@@ -274,6 +381,8 @@ async function main() {
     if (!posterStep || posterStep.dataLength < 1000) {
       throw new Error('generatePoster did not return a base64 image')
     }
+
+    report.posterRuntime = await smokePosterRuntime(connection, weddingId)
   } finally {
     if (weddingId) {
       const result = await callCloudFunction(connection, 'deleteWedding', { weddingId, confirmText: 'DELETE' })
