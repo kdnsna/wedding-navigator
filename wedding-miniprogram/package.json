@@ -25,6 +25,7 @@
     "build:mp-weixin": "UNI_INPUT_DIR=. npm exec --yes --package=node@20.19.6 -- node node_modules/.bin/uni build -p mp-weixin",
     "postbuild:mp-weixin": "node scripts/copy-cloudfunctions-to-dist.js dist/build/mp-weixin && node scripts/normalize-wechat-project-config.js dist/build/mp-weixin",
     "smoke:cloud-e2e": "node scripts/smoke-cloud-e2e.mjs",
+    "smoke:cloud-functions": "node scripts/smoke-cloud-functions-full.mjs",
     "build:quickapp": "uni build -p quickapp",
     "upload:mp-weixin": "node upload.mjs"
   },

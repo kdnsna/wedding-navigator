@@ -381,6 +381,13 @@ function checkFriendsInvitationIteration() {
     pkg.scripts?.['smoke:cloud-e2e']?.includes('smoke-cloud-e2e.mjs'),
     'package.json must expose repeatable CloudBase E2E smoke'
   )
+  assert(
+    pkg.scripts?.['smoke:cloud-functions']?.includes('smoke-cloud-functions-full.mjs'),
+    'package.json must expose repeatable all-functions CloudBase smoke'
+  )
+  assertIncludes('scripts/smoke-cloud-functions-full.mjs', 'syncOwnerProfile', 'all-functions smoke must cover owner profile sync')
+  assertIncludes('scripts/smoke-cloud-functions-full.mjs', 'geocodeVenue.realAddress', 'all-functions smoke must cover configured geocoding')
+  assertIncludes('scripts/smoke-cloud-functions-full.mjs', 'expectedStats', 'all-functions smoke must assert aggregate stats')
   assertIncludes('scripts/normalize-wechat-project-config.js', 'miniprogramRoot', 'WeChat config normalizer must set miniprogramRoot')
   assertIncludes('scripts/normalize-wechat-project-config.js', 'libVersion', 'WeChat config normalizer must set a stable base library version')
   assertIncludes('scripts/normalize-wechat-project-config.js', 'encodeURIComponent', 'WeChat config normalizer must encode projectname for DevTools CLI')
