@@ -1,215 +1,131 @@
 <template>
-  <view class="page" :class="templateClass" @touchstart="onPageTap">
-    <!-- 封面大图 -->
-    <view class="hero">
+  <view class="page lux-home" :class="templateClass" @touchstart="onPageTap">
+    <view class="lux-hero-stage">
       <image
-        class="hero-image hero-image-main"
+        class="lux-hero-image"
         :class="{ default: isDefaultCover }"
         :src="coverImage"
         :mode="coverImageMode"
       />
-      <view class="hero-gradient" :class="{ default: isLegacyDefaultCover }" />
-      <text class="xi-watermark">囍</text>
-      <view class="hero-content">
-        <text class="hero-tag animate-fade-in delay-2">{{ activeTemplate.kicker }}</text>
-        <view class="hero-divider animate-draw-line delay-3" />
-        <text class="hero-names animate-fade-up delay-4">{{ groomName }} & {{ brideName }}</text>
-        <text class="hero-sub animate-fade-up delay-5">We're getting married</text>
-        <text class="hero-date animate-fade-up delay-6">{{ formatDate(weddingDate) }}</text>
-        <view class="hero-meta-line animate-fade-up delay-7">
-          <text>{{ weddingTime || '12:00' }}</text>
-          <view class="hero-meta-dot" />
-          <text>{{ venueName || '婚礼场地' }}</text>
-        </view>
-        <view class="hero-countdown animate-fade-up delay-8" v-if="showCountdown && countdown && !countdown.isToday">
-          <text class="countdown-num">{{ countdown.days }}</text>
-          <view class="countdown-divider" />
-          <view class="countdown-info">
-            <text class="countdown-label">DAYS</text>
-            <text class="countdown-desc">距离我们结婚</text>
+      <view class="lux-hero-overlay" :class="{ default: isLegacyDefaultCover }" />
+      <text class="lux-xi-watermark">囍</text>
+
+      <view class="lux-hero-copy">
+        <text class="lux-hero-kicker">{{ activeTemplate.kicker }}</text>
+        <text class="lux-hero-names">{{ groomName }} & {{ brideName }}</text>
+        <text class="lux-hero-sub">诚邀您见证我们的婚礼</text>
+      </view>
+
+      <view class="lux-action-panel">
+        <view class="lux-countdown" v-if="showCountdown && countdown">
+          <text class="lux-count-num">{{ countdown.isToday ? 'TODAY' : countdown.days }}</text>
+          <view class="lux-count-copy">
+            <text class="lux-count-label">{{ countdown.isToday ? '就是今天' : 'DAYS TO GO' }}</text>
+            <text class="lux-count-desc">{{ formatDate(weddingDate) }} {{ weddingTime || '12:00' }}</text>
+          </view>
+          <view class="lux-rsvp-chip" v-if="isRsvpEnabled" :class="{ done: hasSubmittedRsvp }" @click="goToRSVP">
+            <text>{{ hasSubmittedRsvp ? '已回执' : '待回执' }}</text>
           </view>
         </view>
-        <view class="hero-today animate-fade-up delay-8" v-if="showCountdown && countdown?.isToday">
-          <text class="today-label">TODAY</text>
-          <text class="today-desc">就是今天</text>
+
+        <view class="lux-venue-card" @click="goToGuide">
+          <view class="lux-venue-main">
+            <text class="lux-label">主场地</text>
+            <text class="lux-venue-name">{{ primaryVenue.name }}</text>
+            <text class="lux-venue-address">{{ primaryVenue.address || venueAddress || '主人正在补充详细地址' }}</text>
+          </view>
+          <button class="lux-nav-btn" @click.stop="openNavigation">导航</button>
         </view>
-        <view class="scroll-hint animate-fade-in delay-10">
-          <view class="scroll-line" />
-          <text class="scroll-text">滑动探索</text>
+
+        <view class="lux-mini-grid">
+          <view class="lux-mini-cell" @click="openCalendar">
+            <text class="lux-mini-label">日期</text>
+            <text class="lux-mini-value">{{ formatDate(weddingDate) || '待公布' }}</text>
+          </view>
+          <view class="lux-mini-cell" v-if="isTimelineEnabled" @click="goToTimeline">
+            <text class="lux-mini-label">最近流程</text>
+            <text class="lux-mini-value">{{ nextEventText }}</text>
+          </view>
+        </view>
+
+        <view class="lux-panel-actions">
+          <button class="lux-panel-btn primary" v-if="isRsvpEnabled" @click="goToRSVP">{{ hasSubmittedRsvp ? '修改回执' : '确认出席' }}</button>
+          <button class="lux-panel-btn" v-if="isBlessingEnabled" @click="goToBlessing">写祝福</button>
+          <button class="lux-panel-btn" open-type="share">分享请柬</button>
         </view>
       </view>
     </view>
 
-    <!-- 婚礼当天行动台 -->
-    <view class="section daypack-section">
-      <view class="daypack-head">
-        <view>
-          <text class="daypack-kicker">{{ countdown?.isToday ? 'TODAY PACK' : 'GUEST PACK' }}</text>
-          <text class="daypack-title">{{ countdown?.isToday ? '婚礼当天助手' : '宾客行动台' }}</text>
-          <text class="daypack-template">{{ activeTemplate.shortName }} · {{ activeTemplate.albumMood }}</text>
-        </view>
-        <view class="daypack-status" v-if="isRsvpEnabled" :class="{ done: hasSubmittedRsvp }" @click="goToRSVP">
-          <text>{{ hasSubmittedRsvp ? '已回执' : '待回执' }}</text>
-        </view>
-      </view>
-      <view class="daypack-card primary" @click="goToGuide">
-        <view class="daypack-card-main">
-          <text class="daypack-label">主场地</text>
-          <text class="daypack-value">{{ primaryVenue.name }}</text>
-          <text class="daypack-sub">{{ primaryVenue.address || venueAddress || '主人正在补充详细地址' }}</text>
-        </view>
-        <button class="daypack-action" @click.stop="openNavigation">导航</button>
-      </view>
-      <view class="daypack-grid">
-        <view class="daypack-mini" v-if="isTimelineEnabled" @click="goToTimeline">
-          <text class="mini-label">最近流程</text>
-          <text class="mini-value">{{ nextEventText }}</text>
-        </view>
-        <view class="daypack-mini" @click="openCalendar">
-          <text class="mini-label">婚礼时间</text>
-          <text class="mini-value">{{ weddingTime || '12:00' }}</text>
-        </view>
-      </view>
-      <view class="daypack-actions">
-        <button class="daypack-pill primary" v-if="isRsvpEnabled" @click="goToRSVP">{{ hasSubmittedRsvp ? '修改回执' : '确认出席' }}</button>
-        <button class="daypack-pill" v-if="isBlessingEnabled" @click="goToBlessing">写祝福</button>
-        <button class="daypack-pill primary" v-if="!isRsvpEnabled && !isBlessingEnabled" @click="goToGuide">查看路线</button>
-      </view>
-    </view>
-
-    <!-- 婚书正文 -->
-    <view class="section invitation-section">
-      <view class="quote-top">
-        <text class="quote-mark">"</text>
-      </view>
-      <view class="invitation-body">
-        <text class="invitation-text stagger-1">{{ invitationText }}</text>
-      </view>
-      <view class="invitation-couple stagger-3">
-        <view class="couple-side">
-          <text class="couple-label">GROOM</text>
-          <text class="couple-name">{{ groomName }}</text>
-        </view>
-        <view class="couple-divider">
-          <view class="couple-line" />
-          <view class="couple-heart" />
-          <view class="couple-line" />
-        </view>
-        <view class="couple-side">
-          <text class="couple-label">BRIDE</text>
-          <text class="couple-name">{{ brideName }}</text>
-        </view>
-      </view>
-      <view class="quote-bottom">
-        <text class="quote-mark">"</text>
-      </view>
-    </view>
-
-    <!-- 婚礼信息 -->
-    <view class="section info-section">
-      <view class="section-header stagger-1">
-        <view class="header-line" />
-        <view class="header-text">
-          <text class="info-title">婚礼信息</text>
-          <text class="info-sub">INFORMATION</text>
-        </view>
-        <view class="header-line" />
-      </view>
-      <view class="info-list stagger-2">
-        <view class="info-row" @click="openCalendar">
-          <view class="info-icon-wrap">
-            <image class="visual-icon info-icon" src="/static/visuals/icon-date.svg" mode="aspectFit" />
+    <view class="lux-invite-section">
+      <SectionHeader
+        title="婚书请柬"
+        :kicker="activeTemplate.shortName + ' INVITATION'"
+        desc="愿这一天，被您和我们一起记住"
+      />
+      <view class="lux-invite-card">
+        <text class="lux-invite-mark">"</text>
+        <text class="lux-invite-text">{{ invitationText }}</text>
+        <view class="lux-couple-row">
+          <view class="lux-couple-side">
+            <text class="lux-couple-label">GROOM</text>
+            <text class="lux-couple-name">{{ groomName }}</text>
           </view>
-          <view class="info-meta">
-            <text class="info-label">日期 DATE</text>
-            <text class="info-value">{{ formatDate(weddingDate) }} {{ getWeekDay(weddingDate) }}</text>
+          <view class="lux-couple-line" />
+          <view class="lux-couple-side">
+            <text class="lux-couple-label">BRIDE</text>
+            <text class="lux-couple-name">{{ brideName }}</text>
           </view>
-          <text class="info-action">›</text>
-        </view>
-        <view class="info-divider" />
-        <view class="info-row">
-          <view class="info-icon-wrap">
-            <image class="visual-icon info-icon" src="/static/visuals/icon-time.svg" mode="aspectFit" />
-          </view>
-          <view class="info-meta">
-            <text class="info-label">时间 TIME</text>
-            <text class="info-value">{{ weddingTime || '12:00' }}</text>
-          </view>
-        </view>
-        <view class="info-divider" />
-        <view class="info-row" @click="openNavigation">
-          <view class="info-icon-wrap">
-            <image class="visual-icon info-icon" src="/static/visuals/icon-location.svg" mode="aspectFit" />
-          </view>
-          <view class="info-meta">
-            <text class="info-label">地点 VENUE</text>
-            <text class="info-value">{{ venueName }}</text>
-            <text class="info-address" v-if="venueAddress">{{ venueAddress }}</text>
-          </view>
-          <text class="info-action">›</text>
         </view>
       </view>
     </view>
 
-    <!-- 快速入口 -->
-    <view class="section quick-section">
-      <view class="section-header stagger-1">
-        <view class="header-line" />
-        <view class="header-text">
-          <text class="quick-title">接下来做什么</text>
-          <text class="quick-sub">NEXT STEPS</text>
-        </view>
-        <view class="header-line" />
-      </view>
-      <view class="quick-grid">
-        <view class="quick-item stagger-1" @click="goToAlbum">
-          <image class="visual-icon quick-icon" src="/static/visuals/icon-album.svg" mode="aspectFit" />
-          <view class="quick-meta">
-            <text class="quick-label">婚纱相册</text>
-            <text class="quick-en">ALBUM</text>
-          </view>
-          <text class="quick-arrow">›</text>
-        </view>
-        <view class="quick-item stagger-2" @click="goToGuide">
-          <image class="visual-icon quick-icon" src="/static/visuals/icon-guide.svg" mode="aspectFit" />
-          <view class="quick-meta">
-            <text class="quick-label">婚礼路书</text>
-            <text class="quick-en">GUIDE</text>
-          </view>
-          <text class="quick-arrow">›</text>
-        </view>
-        <view class="quick-item stagger-3" v-if="isTimelineEnabled" @click="goToTimeline">
-          <image class="visual-icon quick-icon" src="/static/visuals/icon-timeline.svg" mode="aspectFit" />
-          <view class="quick-meta">
-            <text class="quick-label">婚礼流程</text>
-            <text class="quick-en">TIMELINE</text>
-          </view>
-          <text class="quick-arrow">›</text>
-        </view>
-        <view class="quick-item stagger-4" v-if="isBlessingEnabled" @click="goToBlessing">
-          <image class="visual-icon quick-icon" src="/static/visuals/icon-blessing.svg" mode="aspectFit" />
-          <view class="quick-meta">
-            <text class="quick-label">祝福留言</text>
-            <text class="quick-en">BLESSING</text>
-          </view>
-          <text class="quick-arrow">›</text>
-        </view>
+    <view class="lux-section">
+      <SectionHeader title="宾客行动" kicker="GUEST ACTIONS" desc="到场、回执、流程和祝福都在这里" />
+      <view class="lux-action-list">
+        <ActionCard
+          title="婚礼路书"
+          :desc="primaryVenue.address || venueAddress || '查看主场地、停车、住宿与天气提醒'"
+          icon="/static/visuals/icon-guide.svg"
+          tone="primary"
+          status="必看"
+          @click="goToGuide"
+        />
+        <ActionCard
+          v-if="isTimelineEnabled"
+          title="婚礼流程"
+          :desc="nextEventText"
+          icon="/static/visuals/icon-timeline.svg"
+          status="当天安排"
+          @click="goToTimeline"
+        />
+        <ActionCard
+          v-if="isRsvpEnabled"
+          title="出席回执"
+          :desc="hasSubmittedRsvp ? '已收到您的回执，可随时修改' : '请帮新人确认人数与到达信息'"
+          icon="/static/visuals/icon-rsvp.svg"
+          :status="hasSubmittedRsvp ? '已完成' : '待确认'"
+          @click="goToRSVP"
+        />
+        <ActionCard
+          v-if="isBlessingEnabled"
+          title="祝福墙"
+          desc="写一句会被新人第一眼看到的祝福"
+          icon="/static/visuals/icon-blessing.svg"
+          @click="goToBlessing"
+        />
       </view>
     </view>
 
-    <!-- 精选预览 -->
-    <view class="section preview-section">
-      <view class="preview-block" v-if="featuredPhotos.length > 0" @click="goToAlbum">
+    <view class="lux-section" v-if="featuredPhotos.length > 0 || latestBlessings.length > 0">
+      <SectionHeader title="婚礼预览" kicker="MEMORIES" :desc="activeTemplate.albumMood + ' · ' + activeTemplate.photoMood" />
+      <view class="lux-preview-block" v-if="featuredPhotos.length > 0" @click="goToAlbum">
         <view class="preview-header">
-          <view>
-            <text class="preview-title">{{ activeTemplate.albumMood }}</text>
-            <text class="preview-sub">{{ activeTemplate.photoMood }}</text>
-          </view>
-          <text class="preview-more">查看全部</text>
+          <text class="lux-preview-title">{{ activeTemplate.albumMood }}</text>
+          <text class="lux-preview-more">查看全部</text>
         </view>
-        <view class="photo-strip">
+        <view class="lux-photo-strip">
           <image
-            class="photo-thumb"
+            class="lux-photo-thumb"
             v-for="photo in featuredPhotos"
             :key="photo.id || photo.url"
             :src="photo.url"
@@ -217,35 +133,30 @@
           />
         </view>
       </view>
-      <view class="preview-block" v-if="isBlessingEnabled && latestBlessings.length > 0" @click="goToBlessing">
+      <view class="lux-preview-block" v-if="isBlessingEnabled && latestBlessings.length > 0" @click="goToBlessing">
         <view class="preview-header">
-          <text class="preview-title">最近祝福</text>
-          <text class="preview-more">去祝福墙</text>
+          <text class="lux-preview-title">最近祝福</text>
+          <text class="lux-preview-more">去祝福墙</text>
         </view>
-        <view class="blessing-preview" v-for="item in latestBlessings" :key="item.id">
-          <text class="blessing-name">{{ item.sender?.name || '宾客' }}</text>
-          <text class="blessing-text">{{ item.content }}</text>
+        <view class="lux-blessing-row" v-for="item in latestBlessings" :key="item.id">
+          <text class="lux-blessing-name">{{ item.sender?.name || '宾客' }}</text>
+          <text class="lux-blessing-text">{{ item.content }}</text>
         </view>
       </view>
     </view>
 
-    <!-- 底部留白 -->
-    <view class="section footer-section">
-      <view class="footer-line" />
-      <text class="footer-text stagger-1">期待与您相见</text>
-      <text class="footer-sub stagger-2">Looking forward to seeing you</text>
+    <view class="lux-footer-section">
+      <view class="lux-footer-line" />
+      <text class="lux-footer-title">期待与您相见</text>
+      <text class="lux-footer-sub">Looking forward to seeing you</text>
     </view>
 
-    <!-- 悬浮操作 -->
-    <view class="float-actions">
-      <button class="float-btn rsvp" v-if="isRsvpEnabled" @click="goToRSVP">确认出席</button>
-      <button class="float-btn share" open-type="share">
-        <text class="share-icon">↗</text>
-      </button>
+    <view class="lux-float-actions">
+      <button class="lux-float-btn rsvp" v-if="isRsvpEnabled" @click="goToRSVP">回执</button>
+      <button class="lux-float-btn share" open-type="share">分享</button>
     </view>
 
-    <!-- 背景音乐控制 -->
-    <view class="music-control" v-if="bgMusicEnabled" @click="toggleMusic">
+    <view class="music-control lux-music-control" v-if="bgMusicEnabled" @click="toggleMusic">
       <image
         class="music-icon"
         :class="{ playing: isMusicPlaying }"
@@ -264,6 +175,8 @@ import { useUserStore } from '@/stores/user.js'
 import { fetchWedding, recordShare, recordView } from '@/composables/useCloud.js'
 import { formatDate, getWeekDay } from '@/utils/index.js'
 import { getTemplateHeroImage } from '@/utils/templates.js'
+import SectionHeader from '@/components/ui/SectionHeader.vue'
+import ActionCard from '@/components/ui/ActionCard.vue'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
@@ -369,39 +282,68 @@ function updateCountdown() {
   }
 }
 
-function goToAlbum() { uni.switchTab({ url: '/pages/album/index' }) }
-function goToGuide() { uni.switchTab({ url: '/pages/guide/index' }) }
+function routeFail(label, err) {
+  console.warn(`${label}失败:`, err)
+  uni.showToast({ title: `${label}失败，请稍后重试`, icon: 'none' })
+}
+
+function switchTabOrToast(url, label) {
+  uni.switchTab({
+    url,
+    fail: (err) => routeFail(label, err)
+  })
+}
+
+function navigateOrToast(url, label) {
+  uni.navigateTo({
+    url,
+    fail: (err) => routeFail(label, err)
+  })
+}
+
+function goToAlbum() { switchTabOrToast('/pages/album/index', '打开相册') }
+function goToGuide() { switchTabOrToast('/pages/guide/index', '打开路书') }
 function goToTimeline() {
   if (!isTimelineEnabled.value) {
     uni.showToast({ title: '新人暂未开放婚礼流程', icon: 'none' })
     return
   }
-  uni.switchTab({ url: '/pages/timeline/index' })
+  switchTabOrToast('/pages/timeline/index', '打开流程')
 }
 function goToRSVP() {
   if (!isRsvpEnabled.value) {
     uni.showToast({ title: '新人暂未开放在线回执', icon: 'none' })
     return
   }
-  uni.navigateTo({ url: '/pages/rsvp/index' })
+  navigateOrToast('/pages/rsvp/index', '打开回执')
 }
 function goToBlessing() {
   if (!isBlessingEnabled.value) {
     uni.showToast({ title: '新人暂未开放祝福墙', icon: 'none' })
     return
   }
-  uni.navigateTo({ url: '/pages/blessing/index' })
+  navigateOrToast('/pages/blessing/index', '打开祝福墙')
 }
 
 function openNavigation() {
   const venueList = store.venues?.venues || []
   const venue = venueList.find(v => v.type === 'venue' || v.type === 'home') || venueList[0]
   if (venue?.coordinate?.latitude && venue?.coordinate?.longitude) {
+    const latitude = Number(venue.coordinate.latitude)
+    const longitude = Number(venue.coordinate.longitude)
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      uni.showToast({ title: '地图坐标格式有误', icon: 'none' })
+      return
+    }
     uni.openLocation({
-      latitude: venue.coordinate.latitude,
-      longitude: venue.coordinate.longitude,
+      latitude,
+      longitude,
       name: venue.name,
-      address: venue.address
+      address: venue.address,
+      fail: (err) => {
+        console.warn('首页打开导航失败:', err)
+        uni.showToast({ title: '打开导航失败', icon: 'none' })
+      }
     })
   } else {
     uni.showToast({ title: '暂无地址信息', icon: 'none' })
@@ -417,8 +359,11 @@ function openCalendar() {
     return
   }
 
-  const [h, m] = time.split(':')
   const startTime = Math.floor(new Date(`${date}T${time}`).getTime() / 1000)
+  if (!Number.isFinite(startTime)) {
+    uni.showToast({ title: '婚礼日期格式有误', icon: 'none' })
+    return
+  }
   const endTime = startTime + 4 * 3600 // 默认婚礼持续4小时
 
   if (typeof wx !== 'undefined' && wx.addPhoneCalendar) {
@@ -438,7 +383,14 @@ function openCalendar() {
             content: '请允许添加到日历权限',
             confirmText: '去设置',
             success: (res) => {
-              if (res.confirm) uni.openSetting()
+              if (res.confirm) {
+                uni.openSetting({
+                  fail: (settingErr) => {
+                    console.warn('打开设置失败:', settingErr)
+                    uni.showToast({ title: '打开设置失败', icon: 'none' })
+                  }
+                })
+              }
             }
           })
         } else {
@@ -453,24 +405,34 @@ function openCalendar() {
 
 function getSharePath() {
   return userStore.weddingId
-    ? `/pages/index/index?id=${userStore.weddingId}`
+    ? `/pages/index/index?id=${encodeURIComponent(userStore.weddingId)}`
     : '/pages/index/index'
 }
 
 function parseWeddingIdFromOptions(options = {}) {
-  if (options.id) return options.id
-  if (options.weddingId) return options.weddingId
-  const rawScene = options.scene ? decodeURIComponent(options.scene) : ''
+  if (options.id) return decodeSceneValue(options.id)
+  if (options.weddingId) return decodeSceneValue(options.weddingId)
+  const rawScene = options.scene ? decodeSceneValue(options.scene) : ''
   if (!rawScene) return ''
   if (!rawScene.includes('=')) return rawScene
   const pairs = rawScene.split('&').map(item => item.split('='))
   const idPair = pairs.find(([key]) => key === 'id' || key === 'weddingId')
-  return idPair?.[1] || ''
+  return idPair?.[1] ? decodeSceneValue(idPair[1]) : ''
+}
+
+function decodeSceneValue(value) {
+  try {
+    return decodeURIComponent(value)
+  } catch (err) {
+    return value
+  }
 }
 
 function trackShare() {
   if (userStore.weddingId) {
-    recordShare(userStore.weddingId).catch(() => {})
+    recordShare(userStore.weddingId).catch((err) => {
+      console.warn('首页分享记录失败:', err)
+    })
   }
 }
 
@@ -489,7 +451,7 @@ onShareTimeline(() => {
   const title = store.wedding?.share_config?.title || `${groomName.value} & ${brideName.value} 的婚礼邀请`
   return {
     title,
-    query: userStore.weddingId ? `id=${userStore.weddingId}` : '',
+    query: userStore.weddingId ? `id=${encodeURIComponent(userStore.weddingId)}` : '',
     imageUrl: coverImage.value
   }
 })
@@ -502,7 +464,9 @@ onLoad(async (options) => {
       await fetchWedding(weddingId)
       updateCountdown()
       startCountdownTimer()
-      recordView(weddingId).catch(() => {})
+      recordView(weddingId).catch((err) => {
+        console.warn('访问记录失败:', err)
+      })
     } catch (err) {
       if (err?.message === '婚礼不存在') {
         userStore.setWeddingId('')
@@ -871,19 +835,15 @@ onUnmounted(() => {
   color: var(--theme-strong-ink, #fff);
   font-weight: 600;
   margin-bottom: 8rpx;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  line-height: 1.35;
+  word-break: break-word;
 }
 .daypack-sub {
   display: block;
   font-size: 24rpx;
   color: var(--theme-strong-muted, rgba(255,255,255,0.7));
   line-height: 1.5;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  word-break: break-word;
 }
 .daypack-action {
   width: 116rpx;
@@ -1045,7 +1005,7 @@ onUnmounted(() => {
   font-size: 80rpx;
   line-height: 1;
   color: var(--theme-border, $border-color);
-  font-family: Georgia, serif;
+  font-family: $font-serif;
 }
 .invitation-body {
   max-width: 560rpx;
@@ -1202,10 +1162,8 @@ onUnmounted(() => {
   font-size: 24rpx;
   color: var(--theme-muted, $text-secondary);
   margin-top: 4rpx;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  line-height: 1.5;
+  word-break: break-word;
 }
 .info-action {
   font-size: 32rpx;
@@ -1640,5 +1598,410 @@ onUnmounted(() => {
   .blessing-preview {
     border-top-color: var(--theme-border, $border-color);
   }
+}
+
+/* ========== 高级礼宴首页 v4 ========== */
+.lux-home {
+  min-height: 100vh;
+  background:
+    linear-gradient(180deg, rgba(255,248,245,0.98) 0%, rgba(255,255,255,1) 36%, rgba(255,248,245,1) 100%);
+  color: var(--theme-ink, $text-primary);
+  padding-bottom: calc(118rpx + env(safe-area-inset-bottom));
+}
+.lux-hero-stage {
+  position: relative;
+  min-height: 1120rpx;
+  overflow: visible;
+  background: var(--theme-hero-bg, $color-primary-dark);
+}
+.lux-hero-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 930rpx;
+  filter: var(--theme-hero-filter, saturate(1.04) contrast(1.04));
+}
+.lux-hero-image.default {
+  opacity: var(--theme-default-cover-opacity, 1);
+}
+.lux-hero-overlay {
+  position: absolute;
+  inset: 0;
+  height: 930rpx;
+  background: var(--theme-hero-overlay, linear-gradient(180deg, rgba(16,5,8,0.06) 0%, rgba(16,5,8,0.22) 38%, rgba(16,5,8,0.74) 78%, rgba(255,248,245,0.98) 100%));
+}
+.lux-hero-overlay.default {
+  background:
+    linear-gradient(180deg, rgba(30,8,13,0.04) 0%, rgba(30,8,13,0.20) 44%, rgba(36,10,16,0.72) 78%, rgba(255,248,245,0.99) 100%);
+}
+.lux-xi-watermark {
+  position: absolute;
+  top: 220rpx;
+  right: -26rpx;
+  z-index: 2;
+  color: rgba(255,255,255,0.10);
+  font-family: $font-serif;
+  font-size: 360rpx;
+  font-weight: 900;
+  line-height: 1;
+}
+.lux-hero-copy {
+  position: relative;
+  z-index: 4;
+  padding: 188rpx $page-gutter 0;
+  color: #fff;
+}
+.lux-hero-kicker {
+  display: block;
+  margin-bottom: 22rpx;
+  color: rgba(255,255,255,0.74);
+  font-size: 20rpx;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.lux-hero-names {
+  display: block;
+  max-width: 620rpx;
+  color: #fff;
+  font-family: $font-serif;
+  font-size: 72rpx;
+  font-weight: 600;
+  line-height: 1.06;
+  letter-spacing: 0;
+  word-break: break-word;
+}
+.lux-hero-sub {
+  display: block;
+  margin-top: 26rpx;
+  color: rgba(255,255,255,0.84);
+  font-size: 28rpx;
+  line-height: 1.45;
+}
+.lux-action-panel {
+  position: absolute;
+  z-index: 6;
+  left: $page-gutter-sm;
+  right: $page-gutter-sm;
+  bottom: 0;
+  padding: 28rpx;
+  background: rgba(255,255,255,0.96);
+  border: 1rpx solid rgba(75,17,30,0.10);
+  border-radius: $card-radius;
+  box-shadow: $shadow-lg;
+}
+.lux-countdown {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  padding-bottom: 22rpx;
+  border-bottom: 1rpx solid $border-light;
+}
+.lux-count-num {
+  color: $color-primary-dark;
+  font-size: 54rpx;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.lux-count-copy {
+  flex: 1;
+  min-width: 0;
+}
+.lux-count-label,
+.lux-mini-label,
+.lux-label {
+  display: block;
+  color: $text-muted;
+  font-size: 20rpx;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.lux-count-desc {
+  display: block;
+  margin-top: 6rpx;
+  color: $text-primary;
+  font-size: 26rpx;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.lux-rsvp-chip {
+  flex-shrink: 0;
+  padding: 9rpx 16rpx;
+  border-radius: $radius-sm;
+  background: rgba(176,58,91,0.10);
+  color: $color-primary;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+.lux-rsvp-chip.done {
+  background: rgba(52,168,83,0.12);
+  color: $color-success;
+}
+.lux-venue-card {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  margin-top: 22rpx;
+  padding: 24rpx;
+  background: $text-primary;
+  border-radius: $card-radius;
+}
+.lux-venue-main {
+  flex: 1;
+  min-width: 0;
+}
+.lux-venue-name {
+  display: block;
+  margin-top: 8rpx;
+  color: #fff;
+  font-family: $font-serif;
+  font-size: 34rpx;
+  font-weight: 600;
+  line-height: 1.35;
+  word-break: break-word;
+}
+.lux-venue-address {
+  display: block;
+  margin-top: 8rpx;
+  color: rgba(255,255,255,0.68);
+  font-size: 24rpx;
+  line-height: 1.45;
+  word-break: break-word;
+}
+.lux-nav-btn {
+  width: 132rpx;
+  height: 76rpx;
+  line-height: 76rpx;
+  border-radius: $radius-sm;
+  background: $color-primary;
+  color: #fff;
+  font-size: 26rpx;
+  font-weight: 600;
+  padding: 0;
+}
+.lux-nav-btn::after {
+  border: none;
+}
+.lux-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16rpx;
+  margin-top: 16rpx;
+}
+.lux-mini-cell {
+  min-width: 0;
+  padding: 20rpx;
+  border: 1rpx solid $border-light;
+  border-radius: $radius-sm;
+  background: $bg-elevated;
+}
+.lux-mini-value {
+  display: block;
+  margin-top: 8rpx;
+  color: $text-primary;
+  font-size: 26rpx;
+  font-weight: 600;
+  line-height: 1.35;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.lux-panel-actions {
+  display: flex;
+  gap: 14rpx;
+  margin-top: 20rpx;
+}
+.lux-panel-btn {
+  flex: 1;
+  min-width: 0;
+  height: 78rpx;
+  line-height: 78rpx;
+  border-radius: $radius-sm;
+  background: $bg-muted;
+  color: $text-primary;
+  font-size: 26rpx;
+  font-weight: 600;
+  padding: 0 10rpx;
+}
+.lux-panel-btn.primary {
+  background: $color-primary;
+  color: #fff;
+}
+.lux-panel-btn::after {
+  border: none;
+}
+.lux-invite-section,
+.lux-section {
+  margin-top: 58rpx;
+}
+.lux-invite-card,
+.lux-preview-block {
+  margin: 0 $page-gutter 28rpx;
+  padding: 30rpx;
+  background: #fff;
+  border: 1rpx solid $border-light;
+  border-radius: $card-radius;
+  box-shadow: $shadow-sm;
+}
+.lux-invite-mark {
+  display: block;
+  color: rgba(176,58,91,0.18);
+  font-family: $font-serif;
+  font-size: 88rpx;
+  line-height: 0.8;
+}
+.lux-invite-text {
+  display: block;
+  margin-top: 4rpx;
+  color: $text-primary;
+  font-family: $font-serif;
+  font-size: 32rpx;
+  line-height: 1.85;
+}
+.lux-couple-row {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  margin-top: 34rpx;
+}
+.lux-couple-side {
+  flex: 1;
+  min-width: 0;
+}
+.lux-couple-label {
+  display: block;
+  color: $text-muted;
+  font-size: 18rpx;
+  font-weight: 600;
+}
+.lux-couple-name {
+  display: block;
+  margin-top: 8rpx;
+  color: $text-primary;
+  font-size: 34rpx;
+  font-weight: 600;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.lux-couple-line {
+  width: 52rpx;
+  height: 1rpx;
+  background: $border-gold;
+  flex-shrink: 0;
+}
+.lux-action-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  padding: 0 $page-gutter;
+}
+.lux-preview-block .preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18rpx;
+  margin-bottom: 20rpx;
+}
+.lux-preview-title {
+  color: $text-primary;
+  font-size: 30rpx;
+  font-weight: 600;
+}
+.lux-preview-more {
+  flex-shrink: 0;
+  color: $color-primary;
+  font-size: 24rpx;
+  font-weight: 600;
+}
+.lux-photo-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12rpx;
+}
+.lux-photo-thumb {
+  width: 100%;
+  height: 156rpx;
+  border-radius: $radius-sm;
+  background: $bg-muted;
+}
+.lux-blessing-row {
+  padding: 18rpx 0;
+  border-top: 1rpx solid $border-light;
+}
+.lux-blessing-row:first-of-type {
+  border-top: none;
+}
+.lux-blessing-name {
+  display: block;
+  color: $color-primary;
+  font-size: 24rpx;
+  font-weight: 600;
+}
+.lux-blessing-text {
+  display: block;
+  margin-top: 8rpx;
+  color: $text-secondary;
+  font-size: 26rpx;
+  line-height: 1.52;
+}
+.lux-footer-section {
+  padding: 70rpx $page-gutter 40rpx;
+  text-align: center;
+}
+.lux-footer-line {
+  width: 56rpx;
+  height: 2rpx;
+  margin: 0 auto 22rpx;
+  background: $border-gold;
+}
+.lux-footer-title {
+  display: block;
+  color: $text-primary;
+  font-family: $font-serif;
+  font-size: 34rpx;
+}
+.lux-footer-sub {
+  display: block;
+  margin-top: 10rpx;
+  color: $text-muted;
+  font-size: 22rpx;
+}
+.lux-float-actions {
+  position: fixed;
+  z-index: 50;
+  left: $page-gutter;
+  right: $page-gutter;
+  bottom: calc(18rpx + env(safe-area-inset-bottom));
+  display: flex;
+  gap: 14rpx;
+  pointer-events: none;
+}
+.lux-float-btn {
+  flex: 1;
+  height: 82rpx;
+  line-height: 82rpx;
+  border-radius: $radius-sm;
+  font-size: 26rpx;
+  font-weight: 600;
+  pointer-events: auto;
+  padding: 0;
+}
+.lux-float-btn::after {
+  border: none;
+}
+.lux-float-btn.rsvp {
+  background: $text-primary;
+  color: #fff;
+}
+.lux-float-btn.share {
+  background: rgba(255,255,255,0.94);
+  color: $text-primary;
+  border: 1rpx solid $border-color;
+}
+.lux-music-control {
+  right: $page-gutter;
+  bottom: calc(116rpx + env(safe-area-inset-bottom));
 }
 </style>

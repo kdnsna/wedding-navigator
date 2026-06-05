@@ -20,43 +20,22 @@
         <text class="step-sub">先决定第一眼的气质，再补充婚礼信息；后续仍可在婚书编辑中更换</text>
       </view>
       <view class="template-showcase">
-        <view
-          class="template-item"
+        <TemplateCard
           v-for="tpl in templates"
           :key="tpl.id"
-          :class="{ active: form.template === tpl.id }"
-          @click="selectTemplate(tpl)"
-        >
-          <view class="template-visual" :style="{ background: tpl.preview }">
-            <image class="template-hero-thumb" :src="tpl.defaultHero" mode="aspectFill" />
-            <view class="template-visual-shade" />
-            <text class="template-kicker">{{ tpl.kicker }}</text>
-            <text class="template-monogram">{{ tpl.shortName }}</text>
-            <view class="template-line" />
-            <text class="template-venue">{{ tpl.preset?.venueName }}</text>
-          </view>
-          <view class="template-meta">
-            <view class="template-head">
-              <text class="template-name">{{ tpl.name }}</text>
-              <view class="template-badges">
-                <text class="template-tier" :class="{ premium: isTemplatePremium(tpl) }">{{ getTemplateTierLabel(tpl) }}</text>
-                <text class="template-status">{{ form.template === tpl.id ? '已选择' : '选择' }}</text>
-              </view>
-            </view>
-            <text class="template-desc">{{ tpl.desc }}</text>
-            <text class="template-copy">{{ tpl.copy }}</text>
-            <text class="template-photo">{{ tpl.photoMood }}</text>
-            <view class="template-actions">
-              <button class="template-action primary" @click.stop="selectTemplate(tpl)">{{ form.template === tpl.id ? '已选择' : '选择模板' }}</button>
-              <button class="template-action" @click.stop="previewTemplate(tpl)">完整预览</button>
-            </view>
-          </view>
-        </view>
+          :template="tpl"
+          :selected="form.template === tpl.id"
+          :tier-label="getTemplateTierLabel(tpl)"
+          :premium="isTemplatePremium(tpl)"
+          @select="selectTemplate"
+          @preview="previewTemplate"
+        />
       </view>
       <view class="template-note" v-if="selectedTemplate">
         <text class="template-note-title">预设文案</text>
         <text class="template-note-copy">{{ selectedTemplate.preset?.mainText }}</text>
         <text class="template-note-hint">{{ selectedTemplateHint }}</text>
+        <button class="template-note-preview" @click="previewTemplate(selectedTemplate)">完整预览</button>
       </view>
     </view>
 
@@ -88,11 +67,11 @@
       </view>
       <view class="form-group">
         <text class="form-label">场地名称</text>
-        <input class="form-input" v-model="form.venueName" placeholder="例如：某某酒店" />
+        <input class="form-input" v-model="form.venueName" maxlength="40" placeholder="例如：某某酒店" />
       </view>
       <view class="form-group">
         <text class="form-label">详细地址</text>
-        <input class="form-input" v-model="form.venueAddress" placeholder="请输入详细地址" />
+        <input class="form-input" v-model="form.venueAddress" maxlength="80" placeholder="请输入详细地址" />
       </view>
     </view>
 
@@ -104,28 +83,31 @@
       </view>
       <view class="form-group">
         <text class="form-label">新郎姓名</text>
-        <input class="form-input" v-model="form.groomName" placeholder="新郎姓名" />
+        <input class="form-input" v-model="form.groomName" maxlength="20" placeholder="新郎姓名" />
       </view>
       <view class="form-group">
         <text class="form-label">新郎手机号</text>
-        <input class="form-input" v-model="form.groomPhone" placeholder="新郎手机号" type="number" />
+        <input class="form-input" v-model="form.groomPhone" placeholder="新郎手机号" type="number" maxlength="20" />
       </view>
       <view class="form-group">
         <text class="form-label">新娘姓名</text>
-        <input class="form-input" v-model="form.brideName" placeholder="新娘姓名" />
+        <input class="form-input" v-model="form.brideName" maxlength="20" placeholder="新娘姓名" />
       </view>
       <view class="form-group">
         <text class="form-label">新娘手机号</text>
-        <input class="form-input" v-model="form.bridePhone" placeholder="新娘手机号" type="number" />
+        <input class="form-input" v-model="form.bridePhone" placeholder="新娘手机号" type="number" maxlength="20" />
       </view>
     </view>
 
     <!-- 底部按钮 -->
-    <view class="step-actions">
-      <button class="step-btn secondary" v-if="currentStep > 1" @click="prevStep">上一步</button>
-      <button class="step-btn primary" v-if="currentStep < 4" @click="nextStep">下一步</button>
-      <button class="step-btn primary" v-if="currentStep === 4" @click="createWeddingAction">创建婚礼</button>
-    </view>
+    <BottomActionBar
+      :primary-text="currentStep < 4 ? '下一步' : '创建婚礼'"
+      :secondary-text="currentStep > 1 ? '上一步' : ''"
+      :loading="creating"
+      :disabled="creating"
+      @primary="handleStepPrimary"
+      @secondary="prevStep"
+    />
   </view>
 </template>
 
@@ -138,11 +120,14 @@ import { createWedding } from '@/composables/useCloud.js'
 import { showSuccess, showError, getWeekDay } from '@/utils/index.js'
 import { WEDDING_TEMPLATES, buildTemplateGuide, buildTemplateTimeline, getWeddingTemplate } from '@/utils/templates.js'
 import { buildTemplateCommercialState, getCommercialHint, getTemplateTierLabel, isTemplatePremium } from '@/utils/commercial.js'
+import TemplateCard from '@/components/ui/TemplateCard.vue'
+import BottomActionBar from '@/components/ui/BottomActionBar.vue'
 
 const userStore = useUserStore()
 const weddingStore = useWeddingStore()
 
 const currentStep = ref(1)
+const creating = ref(false)
 
 const form = ref({
   date: '2026-11-14',
@@ -171,7 +156,13 @@ function selectTemplate(tpl) {
 }
 
 function previewTemplate(tpl) {
-  uni.navigateTo({ url: `/pages-owner/template/preview?id=${encodeURIComponent(tpl.id)}` })
+  uni.navigateTo({
+    url: `/pages-owner/template/preview?id=${encodeURIComponent(tpl.id)}`,
+    fail: (err) => {
+      console.warn('创建向导打开模板预览失败:', err)
+      showError('模板预览打开失败，请稍后重试')
+    }
+  })
 }
 
 function applyPendingTemplate() {
@@ -190,6 +181,10 @@ function nextStep() {
   currentStep.value++
 }
 function prevStep() { currentStep.value-- }
+function handleStepPrimary() {
+  if (currentStep.value < 4) nextStep()
+  else createWeddingAction()
+}
 
 function validateStep() {
   if (currentStep.value === 1) {
@@ -200,18 +195,34 @@ function validateStep() {
   }
   if (currentStep.value === 3) {
     if (!form.value.venueName.trim()) { showError('请输入场地名称'); return false }
+    if (form.value.venueName.trim().length > 40) { showError('场地名称请控制在 40 字内'); return false }
+    if (form.value.venueAddress.trim().length > 80) { showError('详细地址请控制在 80 字内'); return false }
   }
   if (currentStep.value === 4) {
     if (!form.value.groomName.trim() || !form.value.brideName.trim()) {
       showError('请输入新人姓名'); return false
     }
+    if (form.value.groomName.trim().length > 20 || form.value.brideName.trim().length > 20) {
+      showError('新人姓名请控制在 20 字内'); return false
+    }
+    if (!isValidPhone(form.value.groomPhone) || !isValidPhone(form.value.bridePhone)) {
+      showError('请输入有效手机号')
+      return false
+    }
   }
   return true
 }
 
+function isValidPhone(phone) {
+  if (!phone) return true
+  return /^\d{6,20}$/.test(String(phone).trim())
+}
+
 async function createWeddingAction() {
+  if (creating.value) return
   if (!validateStep()) return
   try {
+    creating.value = true
     uni.showLoading({ title: '创建中...', mask: true })
     const tpl = selectedTemplate.value
 
@@ -306,12 +317,18 @@ async function createWeddingAction() {
     userStore.setWeddingId(weddingId)
     userStore.verifyOwner(true)
     showSuccess('婚礼创建成功')
-    uni.reLaunch({ url: '/pages-owner/manage/index' })
+    uni.reLaunch({
+      url: '/pages-owner/manage/index',
+      fail: (navErr) => {
+        console.warn('创建后打开管理后台失败:', navErr)
+        showError('婚礼已创建，但管理后台打开失败')
+      }
+    })
   } catch (err) {
     console.error('创建婚礼失败:', err)
-    uni.hideLoading()
     showError(err.message || '创建失败，请检查云开发环境')
   } finally {
+    creating.value = false
     uni.hideLoading()
   }
 }
@@ -323,9 +340,10 @@ onShow(() => {
 
 <style lang="scss" scoped>
 .page {
-  background-color: $bg-color;
+  background:
+    linear-gradient(180deg, rgba(255,248,245,0.98) 0%, #fff 46%, rgba(255,248,245,1) 100%);
   min-height: 100vh;
-  padding-bottom: calc(80rpx + env(safe-area-inset-bottom));
+  padding-bottom: calc(160rpx + env(safe-area-inset-bottom));
 }
 
 /* 步骤条 */
@@ -364,13 +382,14 @@ onShow(() => {
 .step-content {
   width: calc(100vw - 96rpx);
   margin: 0 auto;
-  padding: 48rpx 0 0;
+  padding: 48rpx 0 calc(132rpx + env(safe-area-inset-bottom));
 }
 .step-header {
   margin-bottom: 48rpx;
 }
 .step-title {
   display: block;
+  font-family: $font-serif;
   font-size: $font-h1;
   font-weight: 600;
   color: $text-primary;
@@ -634,6 +653,19 @@ onShow(() => {
   font-size: 23rpx;
   color: $text-secondary;
   line-height: 1.5;
+}
+.template-note-preview {
+  margin-top: 22rpx;
+  height: $control-height-sm;
+  line-height: $control-height-sm;
+  border-radius: $radius-sm;
+  background: $text-primary;
+  color: #fff;
+  font-size: 26rpx;
+  font-weight: 600;
+}
+.template-note-preview::after {
+  border: none;
 }
 
 /* 底部按钮 */

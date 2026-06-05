@@ -1,13 +1,10 @@
 <template>
-  <view class="page" :class="templateClass">
-    <!-- 顶部标题 -->
-    <view class="page-header">
-      <text class="page-tag">ALBUM</text>
-      <text class="page-title">婚纱相册</text>
-      <text class="page-desc">{{ activeTemplate.albumMood }} · {{ activeTemplate.photoMood }}</text>
-    </view>
-
-    <!-- 瀑布流相册 -->
+  <PageShell
+    title="婚纱相册"
+    kicker="ALBUM"
+    :desc="`${activeTemplate.albumMood} · ${activeTemplate.photoMood}`"
+    :theme-class="templateClass"
+  >
     <view class="album-container" v-if="photos.length > 0">
       <view
         class="photo-item"
@@ -25,19 +22,19 @@
       </view>
     </view>
 
-    <!-- 空状态 -->
-    <view class="empty-state" v-if="photos.length === 0 && !loading">
-      <image class="empty-visual" src="/static/visuals/empty-album.svg" mode="aspectFit" />
-      <text class="empty-text">{{ emptyText }}</text>
-      <text class="empty-sub" v-if="emptySub">{{ emptySub }}</text>
-      <button class="empty-action" @click="goToGuide" v-if="userStore.weddingId">先看婚礼路书</button>
-    </view>
+    <EmptyState
+      v-if="photos.length === 0 && !loading"
+      icon="/static/visuals/empty-album.svg"
+      :title="emptyText"
+      :desc="emptySub"
+      :action-text="albumActionText"
+      @action="handleEmptyAction"
+    />
 
-    <!-- 加载中 -->
     <view class="loading-state" v-if="loading">
-      <text>加载中...</text>
+      <text>相册加载中...</text>
     </view>
-  </view>
+  </PageShell>
 </template>
 
 <script setup>
@@ -46,6 +43,8 @@ import { onShow } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { fetchWedding } from '@/composables/useCloud.js'
+import PageShell from '@/components/ui/PageShell.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
@@ -62,26 +61,61 @@ const emptyText = computed(() => {
 })
 const emptySub = computed(() => {
   if (!userStore.weddingId) return '当前没有关联的婚礼信息'
-  if (loadError.value) return '请稍后重试或联系新人'
+  if (loadError.value) return '网络或云端暂时不可用，请重新加载或联系新人'
   return '新人还在准备婚纱照'
+})
+const albumActionText = computed(() => {
+  if (!userStore.weddingId) return ''
+  return loadError.value ? '重新加载' : '先看婚礼路书'
 })
 
 function previewImage(index) {
   const urls = photos.value.map(p => p.url)
-  uni.previewImage({ urls, current: urls[index] })
+  if (!urls.length) return
+  uni.previewImage({
+    urls,
+    current: urls[index],
+    fail: (err) => {
+      console.warn('预览相册图片失败:', err)
+      uni.showToast({ title: '图片预览失败', icon: 'none' })
+    }
+  })
 }
 
 function goToGuide() {
-  uni.switchTab({ url: '/pages/guide/index' })
+  uni.switchTab({
+    url: '/pages/guide/index',
+    fail: (err) => {
+      console.warn('相册打开路书失败:', err)
+      uni.showToast({ title: '路书打开失败，请稍后重试', icon: 'none' })
+    }
+  })
 }
 
-onShow(async () => {
-  if (!userStore.weddingId || photos.value.length > 0) return
+function handleEmptyAction() {
+  if (loadError.value) {
+    loadAlbum(true)
+    return
+  }
+  goToGuide()
+}
+
+async function loadAlbum(force = false) {
+  if (!userStore.weddingId || loading.value) return
+  if (!force && photos.value.length > 0) return
   loading.value = true
   loadError.value = ''
-  try { await fetchWedding(userStore.weddingId) } catch (err) { loadError.value = err?.message || 'load failed' }
-  finally { loading.value = false }
-})
+  try {
+    await fetchWedding(userStore.weddingId, force)
+  } catch (err) {
+    console.warn('相册加载失败:', err)
+    loadError.value = err?.message || '相册加载失败'
+  } finally {
+    loading.value = false
+  }
+}
+
+onShow(() => loadAlbum(false))
 </script>
 
 <style lang="scss" scoped>
@@ -119,6 +153,7 @@ onShow(async () => {
 .album-container {
   column-count: 2;
   column-gap: 16rpx;
+  padding: 0 $page-gutter;
 }
 
 .photo-item {

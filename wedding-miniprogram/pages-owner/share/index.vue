@@ -1,10 +1,10 @@
 <template>
-  <view class="page">
-    <!-- 顶部标题 -->
-    <view class="page-header">
-      <text class="page-tag">SHARE</text>
-      <text class="page-title">分享设置</text>
-    </view>
+  <PageShell
+    class="share-page"
+    kicker="SHARE"
+    title="分享设置"
+    desc="配置微信转发卡片、小程序码和分享海报，让邀请入口随时可发布。"
+  >
 
     <!-- 小程序码 -->
     <view class="qrcode-section">
@@ -21,30 +21,57 @@
 
     <!-- 分享卡片设置 -->
     <view class="section">
-      <text class="section-label">分享卡片</text>
+      <SectionHeader
+        title="分享卡片"
+        kicker="WECHAT CARD"
+        desc="标题建议控制在 28 字内，描述建议控制在 48 字内。"
+        compact
+      />
       <view class="form-group">
-        <text class="form-sub-label">标题</text>
-        <input class="form-input" v-model="shareForm.title" placeholder="例如：张三&李四的婚礼邀请" />
+        <view class="form-label-row">
+          <text class="form-sub-label">标题</text>
+          <text class="char-hint">{{ titleLength }}/28</text>
+        </view>
+        <input class="form-input" v-model="shareForm.title" maxlength="28" placeholder="例如：张三&李四的婚礼邀请" />
       </view>
       <view class="form-group">
-        <text class="form-sub-label">描述</text>
-        <input class="form-input" v-model="shareForm.description" placeholder="例如：2026年11月14日，我们结婚啦！" />
+        <view class="form-label-row">
+          <text class="form-sub-label">描述</text>
+          <text class="char-hint">{{ descLength }}/48</text>
+        </view>
+        <input class="form-input" v-model="shareForm.description" maxlength="48" placeholder="例如：2026年11月14日，我们结婚啦！" />
       </view>
     </view>
 
     <!-- 分享按钮 -->
     <view class="share-actions">
-      <button class="share-btn primary" :loading="saving" :disabled="saving" @click="saveShareSettings">保存分享设置</button>
-      <button class="share-btn primary" open-type="share">分享给微信好友</button>
-      <button class="share-btn" @click="goToPoster">生成分享海报</button>
-      <button class="share-btn" @click="copyPath">复制小程序路径</button>
+      <button class="share-btn primary" open-type="share" :disabled="!weddingId">
+        分享给微信好友
+      </button>
+      <ActionCard title="生成分享海报" desc="制作适合转发到群聊、朋友圈或线下展示的婚礼海报" icon="/static/visuals/icon-poster.svg" @click="goToPoster" />
+      <ActionCard title="复制小程序路径" :desc="miniProgramPath" icon="/static/visuals/icon-share.svg" @click="copyPath" />
     </view>
-  </view>
+
+    <BottomActionBar
+      primary-text="保存设置"
+      secondary-text="重新生成码"
+      :loading="saving"
+      :secondary-loading="qrLoading"
+      :primary-disabled="!weddingId"
+      :secondary-disabled="!weddingId"
+      @primary="saveShareSettings"
+      @secondary="refreshQrCode"
+    />
+  </PageShell>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
 import { onShow, onShareAppMessage } from '@dcloudio/uni-app'
+import PageShell from '@/components/ui/PageShell.vue'
+import SectionHeader from '@/components/ui/SectionHeader.vue'
+import ActionCard from '@/components/ui/ActionCard.vue'
+import BottomActionBar from '@/components/ui/BottomActionBar.vue'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { showError, showSuccess } from '@/utils/index.js'
@@ -62,6 +89,10 @@ const qrLoading = ref(false)
 const qrError = ref('')
 
 const weddingId = computed(() => userStore.weddingId)
+const encodedWeddingId = computed(() => encodeURIComponent(weddingId.value || ''))
+const titleLength = computed(() => String(shareForm.value.title || '').length)
+const descLength = computed(() => String(shareForm.value.description || '').length)
+const miniProgramPath = computed(() => weddingId.value ? `/pages/index/index?id=${encodedWeddingId.value}` : '创建婚礼后自动生成')
 
 function loadFromStore() {
   const cfg = store.wedding?.share_config || {}
@@ -74,8 +105,14 @@ function copyPath() {
     uni.showToast({ title: '请先创建婚礼', icon: 'none' })
     return
   }
-  const path = `pages/index/index?id=${weddingId.value}`
-  uni.setClipboardData({ data: path, success: () => showSuccess('已复制') })
+  uni.setClipboardData({
+    data: miniProgramPath.value,
+    success: () => showSuccess('已复制'),
+    fail: (err) => {
+      console.warn('复制小程序路径失败:', err)
+      showError('复制失败，请手动复制')
+    }
+  })
 }
 
 function goToPoster() {
@@ -83,7 +120,13 @@ function goToPoster() {
     showError('请先创建婚礼')
     return
   }
-  uni.navigateTo({ url: '/pages/poster/index' })
+  uni.navigateTo({
+    url: `/pages/poster/index?id=${encodedWeddingId.value}`,
+    fail: (err) => {
+      console.warn('打开分享海报失败:', err)
+      showError('海报页打开失败，请稍后重试')
+    }
+  })
 }
 
 async function refreshQrCode() {
@@ -120,10 +163,20 @@ async function saveShareSettings() {
     showError('请先创建婚礼')
     return
   }
+  const title = shareForm.value.title.trim() || `${store.coupleName}的婚礼邀请`
+  const description = shareForm.value.description.trim() || `${store.weddingDate}，我们结婚啦！诚邀您的见证~`
+  if (title.length > 28) {
+    showError('分享标题请控制在 28 字内')
+    return
+  }
+  if (description.length > 48) {
+    showError('分享描述请控制在 48 字内')
+    return
+  }
   const shareConfig = {
     ...(store.wedding?.share_config || {}),
-    title: shareForm.value.title.trim() || `${store.coupleName}的婚礼邀请`,
-    description: shareForm.value.description.trim() || `${store.weddingDate}，我们结婚啦！诚邀您的见证~`
+    title,
+    description
   }
   saving.value = true
   try {
@@ -147,44 +200,27 @@ onShareAppMessage(() => {
   if (!weddingId.value) {
     return { title: '甜囍手册', path: '/pages-owner/wizard/index' }
   }
-  recordShare(weddingId.value).catch(() => {})
+  recordShare(weddingId.value).catch((err) => {
+    console.warn('分享记录失败:', err)
+  })
   return {
-    title: shareForm.value.title,
-    path: `/pages/index/index?id=${weddingId.value}`,
-    desc: shareForm.value.description
+    title: shareForm.value.title.trim() || `${store.coupleName}的婚礼邀请`,
+    path: `/pages/index/index?id=${encodedWeddingId.value}`,
+    desc: shareForm.value.description.trim() || `${store.weddingDate}，我们结婚啦！诚邀您的见证~`
   }
 })
 
-onShow(() => {
-  useOwnerGuard()
+onShow(async () => {
+  if (!(await useOwnerGuard())) return
   loadFromStore()
   if (!qrCodePath.value && weddingId.value) refreshQrCode()
 })
 </script>
 
 <style lang="scss" scoped>
-.page {
+.share-page {
   background-color: $bg-color;
   min-height: 100vh;
-  padding-bottom: calc(80rpx + env(safe-area-inset-bottom));
-}
-
-/* 顶部标题 */
-.page-header {
-  padding: $page-header-top $page-gutter $page-header-bottom;
-}
-.page-tag {
-  display: block;
-  font-size: 22rpx;
-  color: $text-muted;
-  letter-spacing: 0;
-  margin-bottom: 12rpx;
-}
-.page-title {
-  display: block;
-  font-size: $font-h1;
-  font-weight: 600;
-  color: $text-primary;
 }
 
 /* 小程序码 */
@@ -245,23 +281,26 @@ onShow(() => {
 
 /* 表单 */
 .section {
-  padding: 0 $page-gutter;
+  padding: 0;
   margin-bottom: 48rpx;
 }
-.section-label {
-  display: block;
-  font-size: 26rpx;
-  color: $text-muted;
-  margin-bottom: 24rpx;
-}
 .form-group {
-  margin-bottom: 24rpx;
+  margin: 0 $page-gutter 24rpx;
+}
+.form-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin-bottom: 12rpx;
 }
 .form-sub-label {
-  display: block;
   font-size: 24rpx;
   color: $text-muted;
-  margin-bottom: 12rpx;
+}
+.char-hint {
+  font-size: 22rpx;
+  color: $text-muted;
 }
 .form-input {
   width: 100%;
@@ -279,6 +318,7 @@ onShow(() => {
   display: flex;
   flex-direction: column;
   gap: 16rpx;
+  margin-bottom: 34rpx;
 }
 .share-btn {
   width: 100%;
@@ -297,8 +337,5 @@ onShow(() => {
 .share-btn.primary {
   background: $text-primary;
   color: #fff;
-}
-.share-btn.primary + .share-btn.primary {
-  background: $color-primary;
 }
 </style>

@@ -1,7 +1,7 @@
 <template>
   <view class="page" :class="preview.templateClass">
     <view class="preview-header">
-      <text class="back-btn" @click="goBack">‹</text>
+      <image class="back-btn" src="/static/visuals/icon-back.svg" mode="aspectFit" @click="goBack" />
       <view class="header-main">
         <text class="page-kicker">TEMPLATE PREVIEW</text>
         <text class="page-title">{{ preview.template.name }}</text>
@@ -205,10 +205,14 @@
       </view>
     </view>
 
-    <view class="bottom-actions">
-      <button class="bottom-btn primary" @click="useTemplate">使用此模板</button>
-      <button class="bottom-btn" @click="goBack">返回选择</button>
-    </view>
+    <BottomActionBar
+      primary-text="使用此模板"
+      secondary-text="返回选择"
+      :loading="usingTemplate"
+      :disabled="usingTemplate"
+      @primary="useTemplate"
+      @secondary="goBack"
+    />
   </view>
 </template>
 
@@ -216,9 +220,11 @@
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { buildTemplatePreviewData, normalizeTemplateId } from '@/utils/templates.js'
+import BottomActionBar from '@/components/ui/BottomActionBar.vue'
 
 const templateId = ref('rose-couture')
 const activeTab = ref('home')
+const usingTemplate = ref(false)
 
 const tabs = [
   { id: 'home', name: '首页' },
@@ -242,13 +248,32 @@ function formatDate(date) {
 function goBack() {
   const pages = getCurrentPages()
   if (pages.length > 1) {
-    uni.navigateBack()
+    uni.navigateBack({
+      fail: (err) => {
+        console.warn('模板预览返回失败:', err)
+        uni.redirectTo({
+          url: '/pages-owner/wizard/index',
+          fail: (redirectErr) => {
+            console.warn('模板预览返回创建向导失败:', redirectErr)
+            uni.showToast({ title: '返回创建向导失败，请稍后重试', icon: 'none' })
+          }
+        })
+      }
+    })
   } else {
-    uni.redirectTo({ url: '/pages-owner/wizard/index' })
+    uni.redirectTo({
+      url: '/pages-owner/wizard/index',
+      fail: (err) => {
+        console.warn('模板预览返回创建向导失败:', err)
+        uni.showToast({ title: '返回创建向导失败，请稍后重试', icon: 'none' })
+      }
+    })
   }
 }
 
 function useTemplate() {
+  if (usingTemplate.value) return
+  usingTemplate.value = true
   uni.setStorageSync('pending_template_id', templateId.value)
   uni.showToast({ title: '已选择模板', icon: 'success' })
   setTimeout(goBack, 260)
@@ -276,9 +301,8 @@ onLoad((options = {}) => {
 .back-btn {
   width: 56rpx;
   height: 56rpx;
-  line-height: 48rpx;
-  font-size: 48rpx;
-  color: var(--theme-ink, $text-primary);
+  padding: 8rpx;
+  box-sizing: border-box;
   flex-shrink: 0;
 }
 .header-main {
@@ -740,30 +764,4 @@ onLoad((options = {}) => {
   color: var(--theme-muted, $text-muted);
 }
 
-.bottom-actions {
-  position: fixed;
-  left: $page-gutter;
-  right: $page-gutter;
-  bottom: calc(32rpx + env(safe-area-inset-bottom));
-  display: flex;
-  gap: 16rpx;
-  z-index: 20;
-}
-.bottom-btn {
-  flex: 1;
-  height: $control-height;
-  line-height: $control-height;
-  border-radius: $radius-full;
-  background: var(--theme-surface, $bg-surface);
-  border: 1rpx solid var(--theme-border, $border-color);
-  color: var(--theme-ink, $text-primary);
-  font-size: 28rpx;
-  padding: 0;
-}
-.bottom-btn.primary {
-  background: var(--theme-accent, $text-primary);
-  border-color: var(--theme-accent, $text-primary);
-  color: var(--theme-on-accent, #fff);
-}
-.bottom-btn::after { border: none; }
 </style>

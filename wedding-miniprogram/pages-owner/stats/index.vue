@@ -1,33 +1,24 @@
 <template>
-  <view class="page">
-    <!-- 顶部标题 -->
-    <view class="page-header">
-      <text class="page-tag">STATISTICS</text>
-      <text class="page-title">数据统计</text>
-    </view>
+  <PageShell
+    class="stats-page"
+    kicker="STATISTICS"
+    title="数据统计"
+    desc="把浏览、分享、回执、饮食和到场方式汇总成主人端发布判断。"
+  >
 
     <!-- 数据概览 -->
-    <view class="overview-row">
-      <view class="overview-item">
-        <text class="overview-num">{{ stats.views || 0 }}</text>
-        <text class="overview-label">总浏览</text>
-      </view>
-      <view class="overview-item">
-        <text class="overview-num">{{ stats.shares || 0 }}</text>
-        <text class="overview-label">分享次数</text>
-      </view>
-      <view class="overview-item">
-        <text class="overview-num">{{ stats.unique_viewers || 0 }}</text>
-        <text class="overview-label">独立访客</text>
-      </view>
-    </view>
+    <MetricStrip :items="overviewItems" />
+
+    <EmptyState
+      v-if="loadError"
+      icon="/static/visuals/icon-warning.svg"
+      title="统计刷新失败"
+      :desc="loadError"
+    />
 
     <!-- RSVP -->
-    <view class="section">
-      <view class="section-header">
-        <text class="section-title">RSVP</text>
-        <text class="section-count">{{ rsvpStats.total }} 人</text>
-      </view>
+    <view class="section" v-if="!loadError">
+      <SectionHeader title="RSVP" kicker="ATTENDANCE" :desc="`${rsvpStats.total || 0} 位宾客回执状态`" compact />
       <view class="chart-list">
         <view class="chart-item">
           <view class="chart-bar-bg">
@@ -69,10 +60,8 @@
     </view>
 
     <!-- 饮食 -->
-    <view class="section">
-      <view class="section-header">
-        <text class="section-title">饮食偏好</text>
-      </view>
+    <view class="section" v-if="!loadError">
+      <SectionHeader title="饮食偏好" kicker="DIETARY" desc="用于提前和宴会厅确认备餐需求。" compact />
       <view class="diet-list">
         <view class="diet-item">
           <text class="diet-label">普通</text>
@@ -97,46 +86,76 @@
     </view>
 
     <!-- 到场方式 -->
-    <view class="section">
-      <view class="section-header">
-        <text class="section-title">到场方式</text>
-      </view>
-      <view class="diet-list">
+    <view class="section" v-if="!loadError">
+      <SectionHeader title="到场方式" kicker="ARRIVAL" desc="辅助判断停车、接驳和签到提醒。" compact />
+      <view class="diet-list" v-if="transportStats.length">
         <view class="diet-item" v-for="item in transportStats" :key="item.label">
           <text class="diet-label">{{ item.label }}</text>
           <text class="diet-value">{{ item.count }} 人</text>
         </view>
       </view>
+      <EmptyState
+        v-else
+        icon="/static/visuals/empty-transport.svg"
+        title="暂无到场方式数据"
+        desc="宾客提交 RSVP 后会自动汇总到这里。"
+      />
     </view>
 
     <!-- 关系来源 -->
-    <view class="section">
-      <view class="section-header">
-        <text class="section-title">关系来源</text>
-      </view>
-      <view class="diet-list">
+    <view class="section" v-if="!loadError">
+      <SectionHeader title="关系来源" kicker="RELATION" desc="帮助新人快速理解来宾构成。" compact />
+      <view class="diet-list" v-if="relationshipStats.length">
         <view class="diet-item" v-for="item in relationshipStats" :key="item.label">
           <text class="diet-label">{{ item.label }}</text>
           <text class="diet-value">{{ item.count }} 人</text>
         </view>
       </view>
+      <EmptyState
+        v-else
+        icon="/static/visuals/empty-guests.svg"
+        title="暂无关系来源"
+        desc="添加宾客或收到回执后会自动生成分布。"
+      />
     </view>
-  </view>
+
+    <BottomActionBar
+      primary-text="刷新数据"
+      secondary-text="宾客管理"
+      :loading="loading"
+      @primary="refreshStats"
+      @secondary="goGuests"
+    />
+  </PageShell>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
+import PageShell from '@/components/ui/PageShell.vue'
+import SectionHeader from '@/components/ui/SectionHeader.vue'
+import MetricStrip from '@/components/ui/MetricStrip.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
+import BottomActionBar from '@/components/ui/BottomActionBar.vue'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
 import { fetchWedding, getStats } from '@/composables/useCloud.js'
+import { showError } from '@/utils/index.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
+const loading = ref(false)
+const loadError = ref('')
 
 const stats = computed(() => store.wedding?.stats || {})
 const rsvpStats = computed(() => store.rsvpStats)
+const overviewItems = computed(() => [
+  { label: '总浏览', value: stats.value.views || 0 },
+  { label: '分享', value: stats.value.shares || 0 },
+  { label: '独立访客', value: stats.value.unique_viewers || 0 },
+  { label: '祝福', value: stats.value.blessing_count || (store.blessings?.blessings || []).length }
+])
 
 const total = computed(() => Math.max(rsvpStats.value.total || 1, 1))
 const attendingPercent = computed(() => (rsvpStats.value.attending / total.value) * 100)
@@ -169,12 +188,16 @@ function groupGuestsBy(field, fallback = '未填写') {
 const transportStats = computed(() => groupGuestsBy('transport_mode'))
 const relationshipStats = computed(() => groupGuestsBy('relationship'))
 
-onShow(async () => {
-  if (!useOwnerGuard()) return
+async function refreshStats() {
+  if (!(await useOwnerGuard())) return
+  if (!userStore.weddingId || loading.value) return
+  loading.value = true
+  loadError.value = ''
   try {
-    await fetchWedding(userStore.weddingId)
+    await fetchWedding(userStore.weddingId, true)
     const res = await getStats(userStore.weddingId)
     if (res?.stats) {
+      if (!store.wedding) store.wedding = {}
       store.wedding.stats = {
         views: res.stats.views || 0,
         shares: res.stats.shares || 0,
@@ -185,56 +208,30 @@ onShow(async () => {
     }
   } catch (err) {
     console.warn('统计数据加载失败:', err)
+    loadError.value = err?.message || '统计数据加载失败，请稍后重试'
+    showError(loadError.value)
+  } finally {
+    loading.value = false
   }
-})
+}
+
+function goGuests() {
+  uni.navigateTo({
+    url: '/pages-owner/guests/manage',
+    fail: (err) => {
+      console.warn('统计页打开宾客管理失败:', err)
+      showError('宾客管理打开失败，请稍后重试')
+    }
+  })
+}
+
+onShow(refreshStats)
 </script>
 
 <style lang="scss" scoped>
-.page {
+.stats-page {
   background-color: $bg-color;
   min-height: 100vh;
-  padding-bottom: calc(80rpx + env(safe-area-inset-bottom));
-}
-
-.page-header {
-  padding: $page-header-top $page-gutter $page-header-bottom;
-}
-.page-tag {
-  display: block;
-  font-size: 22rpx;
-  color: $text-muted;
-  letter-spacing: 0;
-  margin-bottom: 12rpx;
-}
-.page-title {
-  display: block;
-  font-size: $font-h1;
-  font-weight: 600;
-  color: $text-primary;
-}
-
-/* 概览 */
-.overview-row {
-  display: flex;
-  padding: 0 $page-gutter 48rpx;
-}
-.overview-item {
-  flex: 1;
-  text-align: center;
-  padding: 24rpx 0;
-}
-.overview-num {
-  display: block;
-  font-size: 48rpx;
-  font-weight: 700;
-  color: $text-primary;
-  font-variant-numeric: tabular-nums;
-  margin-bottom: 8rpx;
-}
-.overview-label {
-  font-size: 22rpx;
-  color: $text-muted;
-  letter-spacing: 0;
 }
 
 /* 区块 */

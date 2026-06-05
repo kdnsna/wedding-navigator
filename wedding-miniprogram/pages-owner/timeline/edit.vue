@@ -1,10 +1,10 @@
 <template>
-  <view class="page">
-    <!-- 顶部标题 -->
-    <view class="page-header">
-      <text class="page-tag">TIMELINE</text>
-      <text class="page-title">流程编辑</text>
-    </view>
+  <PageShell
+    class="page timeline-edit-page"
+    kicker="TIMELINE"
+    title="流程编辑"
+    desc="把婚礼当天的时间、场地、角色和重点事项整理成宾客可执行的流程。"
+  >
 
     <!-- 时间轴 -->
     <view class="timeline" v-if="events.length > 0">
@@ -27,30 +27,27 @@
           </text>
           <text class="event-notes" v-if="event.notes">{{ event.notes }}</text>
           <view class="event-actions">
-            <text class="event-action" @click="editEvent(event)">编辑</text>
-            <text class="event-action delete" @click="deleteEvent(event.id)">删除</text>
+            <text class="event-action" :class="{ disabled: timelineBusy }" @click="editEvent(event)">编辑</text>
+            <text class="event-action delete" :class="{ disabled: timelineBusy }" @click="deleteEvent(event.id)">删除</text>
           </view>
         </view>
       </view>
     </view>
 
     <!-- 空状态 -->
-    <view class="empty-state" v-if="events.length === 0">
-      <image class="empty-visual empty-icon" src="/static/visuals/empty-timeline.svg" mode="aspectFit" />
-      <text class="empty-text">还没有添加时间节点</text>
-    </view>
-
-    <!-- 添加按钮 -->
-    <button class="add-btn" @click="showAddModal">
-      <text>+ 添加节点</text>
-    </button>
+    <EmptyState
+      v-if="events.length === 0"
+      icon="/static/visuals/empty-timeline.svg"
+      title="还没有添加时间节点"
+      desc="建议先录入迎宾、仪式、敬酒、合影和送客等关键节点。"
+    />
 
     <!-- 弹窗 -->
-    <view class="modal-mask" v-if="showModal" @click="showModal = false">
+    <view class="modal-mask" v-if="showModal" @click="requestCloseEventModal">
       <view class="modal-content" @click.stop>
         <view class="modal-header">
           <text class="modal-title">{{ editingEvent ? '编辑节点' : '添加节点' }}</text>
-          <text class="modal-close" @click="showModal = false">✕</text>
+          <image class="modal-close" src="/static/visuals/icon-close.svg" mode="aspectFit" @click="requestCloseEventModal" />
         </view>
         <view class="modal-body">
           <view class="form-group">
@@ -61,7 +58,7 @@
           </view>
           <view class="form-group">
             <text class="form-label">事件名称</text>
-            <input class="form-input" v-model="modalForm.title" placeholder="例如：接亲游戏" />
+            <input class="form-input" v-model="modalForm.title" maxlength="40" placeholder="例如：接亲游戏" />
           </view>
           <view class="form-group">
             <text class="form-label">关联场地</text>
@@ -71,7 +68,7 @@
           </view>
           <view class="form-group">
             <text class="form-label">备注</text>
-            <input class="form-input" v-model="modalForm.notes" placeholder="选填" />
+            <input class="form-input" v-model="modalForm.notes" maxlength="80" placeholder="选填" />
           </view>
           <view class="form-group">
             <text class="form-label">适用角色</text>
@@ -95,17 +92,29 @@
           </view>
         </view>
         <view class="modal-footer">
-          <button class="modal-btn secondary" @click="showModal = false">取消</button>
-          <button class="modal-btn primary" :loading="saving" :disabled="saving" @click="saveEvent">确定</button>
+          <button class="modal-btn secondary" :disabled="saving" @click="requestCloseEventModal">取消</button>
+          <button class="modal-btn primary" :loading="saving" :disabled="saving || !canSaveEvent" @click="saveEvent">确定</button>
         </view>
       </view>
     </view>
-  </view>
+    <BottomActionBar
+      primary-text="添加节点"
+      secondary-text="刷新"
+      :secondary-loading="refreshing"
+      :disabled="saving"
+      :primary-disabled="refreshing"
+      @primary="showAddModal"
+      @secondary="refreshTimeline"
+    />
+  </PageShell>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
+import PageShell from '@/components/ui/PageShell.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
+import BottomActionBar from '@/components/ui/BottomActionBar.vue'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { generateId, showSuccess, showError } from '@/utils/index.js'
@@ -120,6 +129,7 @@ const showModal = ref(false)
 const editingEvent = ref(null)
 const saving = ref(false)
 const refreshing = ref(false)
+const eventFormSnapshot = ref('')
 
 const modalForm = ref({ time: '', title: '', venueIndex: 0, notes: '', roleIds: ['guest'], isImportant: false })
 
@@ -127,6 +137,8 @@ const events = computed(() => store.timeline?.events || [])
 const venues = computed(() => store.venues?.venues || [])
 const venueNames = computed(() => ['无', ...venues.value.map(v => v.name)])
 const timelineRoles = computed(() => store.timeline?.roles?.length ? store.timeline.roles : DEFAULT_TIMELINE_ROLES)
+const canSaveEvent = computed(() => Boolean(modalForm.value.time && modalForm.value.title.trim()))
+const timelineBusy = computed(() => saving.value || refreshing.value)
 
 function getVenueName(venueId) {
   if (!venueId) return ''
@@ -142,12 +154,15 @@ function getEventRoles(roleIds = []) {
 }
 
 function showAddModal() {
+  if (guardTimelineBusy()) return
   editingEvent.value = null
   modalForm.value = { time: '', title: '', venueIndex: 0, notes: '', roleIds: ['guest'], isImportant: false }
+  snapshotEventForm()
   showModal.value = true
 }
 
 function editEvent(event) {
+  if (guardTimelineBusy()) return
   editingEvent.value = event
   const venueIdx = venues.value.findIndex(v => v.id === event.venue_id)
   modalForm.value = {
@@ -158,6 +173,7 @@ function editEvent(event) {
     roleIds: event.assignee_ids?.length ? [...event.assignee_ids] : ['guest'],
     isImportant: event.is_important || false
   }
+  snapshotEventForm()
   showModal.value = true
 }
 
@@ -173,6 +189,37 @@ function toggleRole(roleId) {
   }
 }
 
+function snapshotEventForm() {
+  eventFormSnapshot.value = JSON.stringify(modalForm.value)
+}
+
+function hasEventFormChanges() {
+  return showModal.value && JSON.stringify(modalForm.value) !== eventFormSnapshot.value
+}
+
+function guardTimelineBusy() {
+  if (!timelineBusy.value) return false
+  showError('流程数据正在同步，请稍候')
+  return true
+}
+
+function requestCloseEventModal() {
+  if (saving.value) return
+  if (!hasEventFormChanges()) {
+    showModal.value = false
+    return
+  }
+  uni.showModal({
+    title: '放弃未保存内容？',
+    content: '当前流程节点还没有保存。',
+    confirmText: '放弃',
+    cancelText: '继续编辑',
+    success: (res) => {
+      if (res.confirm) showModal.value = false
+    }
+  })
+}
+
 async function saveEvent() {
   if (saving.value) return
   if (!modalForm.value.time) {
@@ -181,6 +228,14 @@ async function saveEvent() {
   }
   if (!modalForm.value.title.trim()) {
     showError('请输入事件名称')
+    return
+  }
+  if (modalForm.value.title.trim().length > 40) {
+    showError('事件名称请控制在 40 字内')
+    return
+  }
+  if (modalForm.value.notes.trim().length > 80) {
+    showError('备注请控制在 80 字内')
     return
   }
   const previousTimeline = cloneTimeline()
@@ -208,6 +263,7 @@ async function saveEvent() {
     }
     sortTimelineEvents()
     await saveToStorage()
+    snapshotEventForm()
     showModal.value = false
     showSuccess('保存成功')
   } catch (err) {
@@ -220,12 +276,14 @@ async function saveEvent() {
 }
 
 function deleteEvent(id) {
+  if (guardTimelineBusy()) return
   uni.showModal({
     title: '确认删除',
     content: '确定删除该时间节点？',
     success: async (res) => {
       if (res.confirm) {
         const previousTimeline = cloneTimeline()
+        saving.value = true
         try {
           if (store.timeline && Array.isArray(store.timeline.events)) {
             store.timeline.events = store.timeline.events.filter(e => e.id !== id)
@@ -236,6 +294,8 @@ function deleteEvent(id) {
           store.timeline = previousTimeline
           console.error('流程删除失败:', err)
           showError(err?.message || '删除失败，请重试')
+        } finally {
+          saving.value = false
         }
       }
     }
@@ -280,8 +340,8 @@ function sortTimelineEvents() {
 }
 
 async function refreshTimeline() {
-  if (!useOwnerGuard()) return
-  if (!userStore.weddingId || refreshing.value) return
+  if (!(await useOwnerGuard())) return
+  if (!userStore.weddingId || refreshing.value || saving.value) return
   refreshing.value = true
   try {
     await fetchWedding(userStore.weddingId, true)
@@ -423,6 +483,10 @@ onShow(refreshTimeline)
 .event-action.delete {
   color: $color-error;
 }
+.event-action.disabled {
+  color: $text-placeholder;
+  pointer-events: none;
+}
 
 /* 空状态 */
 .empty-state {
@@ -489,9 +553,11 @@ onShow(refreshTimeline)
   color: $text-primary;
 }
 .modal-close {
-  font-size: 32rpx;
-  color: $text-muted;
+  width: 50rpx;
+  height: 50rpx;
   padding: 10rpx;
+  box-sizing: border-box;
+  opacity: 0.68;
 }
 
 .form-group {

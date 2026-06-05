@@ -1,140 +1,96 @@
 <template>
-  <view class="page">
-    <!-- 顶部标题 -->
-    <view class="page-header">
-      <text class="page-tag">DASHBOARD</text>
-      <text class="page-title">管理后台</text>
-    </view>
-
-    <!-- 婚礼信息 -->
-    <view class="couple-bar">
-      <view class="couple-meta">
-        <text class="couple-name">{{ coupleName }}</text>
-        <text class="couple-date">{{ formatDate(weddingDate) }}</text>
+  <PageShell
+    title="发布作战台"
+    kicker="OWNER DASHBOARD"
+    :desc="`${coupleName || '新人婚礼'} · ${formatDate(weddingDate) || '婚期未定'} · ${statusText}`"
+  >
+    <view class="owner-hero">
+      <view class="owner-hero-copy">
+        <text class="owner-hero-kicker">PUBLISH READY</text>
+        <text class="owner-hero-score">{{ checklist.percent }}%</text>
+        <text class="owner-hero-desc">{{ readinessSummary }}</text>
       </view>
-      <view class="status-tag" :class="weddingStatus">{{ statusText }}</view>
-    </view>
-
-    <!-- 发布准备 -->
-    <view class="readiness-card">
-      <view class="readiness-head">
-        <view>
-          <text class="readiness-kicker">PUBLISH READY</text>
-          <text class="readiness-title">发布准备度</text>
-        </view>
-        <text class="readiness-score">{{ checklist.percent }}%</text>
+      <view class="owner-status-tag" :class="{ ready: checklist.ready, draft: !checklist.ready }">
+        <text>{{ checklist.ready ? '可分享' : '需补齐' }}</text>
       </view>
-      <view class="readiness-bar">
-        <view class="readiness-fill" :style="{ width: checklist.percent + '%' }" />
-      </view>
-      <view class="readiness-summary">
-        <text>{{ readinessSummary }}</text>
-      </view>
-      <view class="readiness-list">
-        <view
-          class="readiness-item"
-          v-for="item in checklist.items"
-          :key="item.key"
-          @click="goToRoute(item.route)"
-        >
-          <view class="readiness-dot" :class="{ done: item.done }" />
-          <view class="readiness-meta">
-            <text class="readiness-item-title">{{ item.title }}</text>
-            <text class="readiness-item-desc">{{ item.desc }}</text>
-          </view>
-          <text class="readiness-arrow">›</text>
-        </view>
+      <view class="owner-readiness-bar">
+        <view class="owner-readiness-fill" :style="{ width: checklist.percent + '%' }" />
       </view>
     </view>
 
-    <!-- 数据概览 -->
-    <view class="stats-row">
-      <view class="stat-item">
-        <text class="stat-num">{{ stats.views }}</text>
-        <text class="stat-label">浏览</text>
+    <view class="owner-alert" v-if="loadError">
+      <view class="owner-alert-copy">
+        <text class="owner-alert-title">后台数据未完成刷新</text>
+        <text class="owner-alert-desc">{{ loadError }}</text>
       </view>
-      <view class="stat-item">
-        <text class="stat-num">{{ stats.shares }}</text>
-        <text class="stat-label">分享</text>
-      </view>
-      <view class="stat-item">
-        <text class="stat-num">{{ stats.rsvp }}</text>
-        <text class="stat-label">RSVP</text>
-      </view>
-      <view class="stat-item">
-        <text class="stat-num">{{ stats.blessings }}</text>
-        <text class="stat-label">祝福</text>
-      </view>
+      <button class="owner-alert-btn" :loading="loading" :disabled="loading" @click="refreshDashboard(true)">重试</button>
     </view>
 
-    <!-- 功能菜单 -->
-    <view class="menu-group">
-      <view class="menu-item" @click="goTo('invitation/edit')">
-        <text class="menu-title">婚书编辑</text>
-        <text class="menu-arrow">›</text>
-      </view>
-      <view class="divider" />
-      <view class="menu-item" @click="goTo('album/manage')">
-        <text class="menu-title">相册管理</text>
-        <text class="menu-arrow">›</text>
-      </view>
-      <view class="divider" />
-      <view class="menu-item" @click="goTo('guide/edit')">
-        <text class="menu-title">路书设置</text>
-        <text class="menu-arrow">›</text>
-      </view>
-      <view class="divider" />
-      <view class="menu-item" @click="goTo('timeline/edit')">
-        <text class="menu-title">流程编辑</text>
-        <text class="menu-arrow">›</text>
-      </view>
-      <view class="divider" />
-      <view class="menu-item" @click="goTo('guests/manage')">
-        <text class="menu-title">宾客管理</text>
-        <text class="menu-arrow">›</text>
-      </view>
-      <view class="divider" />
-      <view class="menu-item" @click="goTo('blessing/manage')">
-        <text class="menu-title">祝福管理</text>
-        <text class="menu-arrow">›</text>
-      </view>
-      <view class="divider" />
-      <view class="menu-item" @click="goTo('share/index')">
-        <text class="menu-title">分享设置</text>
-        <text class="menu-arrow">›</text>
-      </view>
-      <view class="divider" />
-      <view class="menu-item" @click="goTo('stats/index')">
-        <text class="menu-title">数据统计</text>
-        <text class="menu-arrow">›</text>
-      </view>
-      <view class="divider" />
-      <view class="menu-item" @click="goTo('diagnostics/index')">
-        <text class="menu-title">发布诊断</text>
-        <text class="menu-badge" :class="{ danger: !checklist.ready }">{{ checklist.ready ? '可发布' : '需补齐' }}</text>
-        <text class="menu-arrow">›</text>
-      </view>
-      <view class="divider" />
-      <view class="menu-item" @click="goTo('profile/index')">
-        <text class="menu-title">账号与权益</text>
-        <text class="menu-badge">{{ userStore.planTier.label }}</text>
-        <text class="menu-arrow">›</text>
-      </view>
+    <MetricStrip :items="metricItems" />
+
+    <SectionHeader title="发布清单" kicker="CHECKLIST" desc="先补齐会影响宾客体验的关键项" />
+    <view class="owner-action-list">
+      <ActionCard
+        v-for="item in checklist.items"
+        :key="item.key"
+        :title="item.title"
+        :desc="item.desc"
+        :status="item.done ? '已完成' : '待补齐'"
+        :tone="item.done ? 'default' : 'gold'"
+        @click="goToRoute(item.route)"
+      />
     </view>
 
-    <!-- 底部操作 -->
-    <view class="bottom-actions">
-      <button class="action-btn primary" @click="previewWedding">预览效果</button>
-      <button class="action-btn" @click="shareWedding">分享邀请</button>
+    <SectionHeader title="内容与到场" kicker="CONTENT" desc="婚书、相册、路书和流程构成宾客第一体验" />
+    <view class="owner-action-grid">
+      <ActionCard title="婚书编辑" desc="模板、文案、新人、开关和背景音乐" icon="/static/visuals/icon-date.svg" @click="goTo('invitation/edit')" />
+      <ActionCard title="相册管理" desc="上传照片，设置首页封面和相册顺序" icon="/static/visuals/icon-album.svg" @click="goTo('album/manage')" />
+      <ActionCard title="路书设置" desc="场地、地图坐标、停车、住宿和天气" icon="/static/visuals/icon-guide.svg" tone="primary" status="核心" @click="goTo('guide/edit')" />
+      <ActionCard title="流程编辑" desc="婚礼当天节点、角色和场地绑定" icon="/static/visuals/icon-timeline.svg" @click="goTo('timeline/edit')" />
     </view>
 
-    <view class="danger-zone">
+    <SectionHeader title="宾客与传播" kicker="GUESTS" desc="回执、祝福、分享和统计集中管理" />
+    <view class="owner-action-grid">
+      <ActionCard title="宾客管理" desc="查看 RSVP、关系、人数和到达信息" icon="/static/visuals/icon-person.svg" @click="goTo('guests/manage')" />
+      <ActionCard title="祝福管理" desc="查看、置顶或删除宾客祝福" icon="/static/visuals/icon-blessing.svg" @click="goTo('blessing/manage')" />
+      <ActionCard title="分享设置" desc="分享标题、海报、小程序路径和二维码" icon="/static/visuals/icon-poster.svg" @click="goTo('share/index')" />
+      <ActionCard title="数据统计" desc="浏览、分享、回执和祝福趋势" icon="/static/visuals/icon-manage.svg" @click="goTo('stats/index')" />
+    </view>
+
+    <SectionHeader title="发布与权益" kicker="OPS" desc="上线前检查和账号权益边界" />
+    <view class="owner-action-list">
+      <ActionCard
+        title="发布诊断"
+        desc="检查云环境、地图天气、隐私、海报和模板权益"
+        icon="/static/visuals/icon-warning.svg"
+        :status="checklist.ready ? '可发布' : '需补齐'"
+        :tone="checklist.ready ? 'default' : 'gold'"
+        @click="goTo('diagnostics/index')"
+      />
+      <ActionCard
+        title="账号与权益"
+        desc="查看免费版/高级版/商家版边界和工作区"
+        icon="/static/visuals/icon-manage.svg"
+        :status="userStore.planTier.label"
+        @click="goTo('profile/index')"
+      />
+    </view>
+
+    <view class="danger-zone owner-danger-zone">
       <text class="danger-kicker">DANGER ZONE</text>
       <text class="danger-title">删除婚礼邀请</text>
       <text class="danger-desc">删除后当前邀请链接将失效，婚书、相册记录、路书、流程、宾客回执、祝福和统计数据都会移除。</text>
       <button class="danger-btn" :loading="deleting" :disabled="deleting" @click="confirmDeleteWedding">删除婚礼邀请</button>
     </view>
-  </view>
+
+    <BottomActionBar
+      primary-text="预览效果"
+      secondary-text="分享邀请"
+      :disabled="deleting"
+      @primary="previewWedding"
+      @secondary="shareWedding"
+    />
+  </PageShell>
 </template>
 
 <script setup>
@@ -145,10 +101,17 @@ import { useUserStore } from '@/stores/user.js'
 import { formatDate, showError, showSuccess } from '@/utils/index.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
 import { deleteWedding, fetchWedding, getStats, syncOwnerProfile } from '@/composables/useCloud.js'
+import PageShell from '@/components/ui/PageShell.vue'
+import SectionHeader from '@/components/ui/SectionHeader.vue'
+import ActionCard from '@/components/ui/ActionCard.vue'
+import BottomActionBar from '@/components/ui/BottomActionBar.vue'
+import MetricStrip from '@/components/ui/MetricStrip.vue'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
 const deleting = ref(false)
+const loading = ref(false)
+const loadError = ref('')
 
 const coupleName = computed(() => store.coupleName)
 const weddingDate = computed(() => store.weddingDate)
@@ -174,19 +137,87 @@ const stats = computed(() => {
     blessings: s.blessing_count || 0
   }
 })
+const metricItems = computed(() => [
+  { label: '浏览', value: stats.value.views },
+  { label: '分享', value: stats.value.shares },
+  { label: 'RSVP', value: stats.value.rsvp },
+  { label: '祝福', value: stats.value.blessings }
+])
 
 function goTo(path) {
-  uni.navigateTo({ url: `/pages-owner/${path}` })
+  uni.navigateTo({
+    url: `/pages-owner/${path}`,
+    fail: (err) => {
+      console.warn('打开后台页面失败:', err)
+      showError('页面打开失败，请稍后重试')
+    }
+  })
 }
 function goToRoute(route) {
-  uni.navigateTo({ url: route })
+  uni.navigateTo({
+    url: route,
+    fail: (err) => {
+      console.warn('打开发布清单页面失败:', err)
+      showError('页面打开失败，请稍后重试')
+    }
+  })
 }
 function previewWedding() {
-  uni.switchTab({ url: '/pages/index/index' })
+  uni.switchTab({
+    url: '/pages/index/index',
+    fail: (err) => {
+      console.warn('打开预览首页失败:', err)
+      showError('预览页打开失败，请稍后重试')
+    }
+  })
 }
 function shareWedding() {
-  uni.navigateTo({ url: '/pages-owner/share/index' })
+  uni.navigateTo({
+    url: '/pages-owner/share/index',
+    fail: (err) => {
+      console.warn('打开分享设置失败:', err)
+      showError('分享设置打开失败，请稍后重试')
+    }
+  })
 }
+
+async function refreshDashboard(force = false) {
+  if (!(await useOwnerGuard())) return
+  if (!userStore.weddingId) {
+    loadError.value = '当前没有婚礼 ID，请先创建婚礼后再进入后台'
+    return
+  }
+  if (loading.value) return
+  loading.value = true
+  loadError.value = ''
+  try {
+    await fetchWedding(userStore.weddingId, force)
+    const profileRes = await syncOwnerProfile().catch((err) => {
+      console.warn('主人账号同步失败:', err)
+      return null
+    })
+    if (profileRes?.success) {
+      userStore.setOwnerProfile(profileRes)
+    }
+    const res = await getStats(userStore.weddingId)
+    if (res?.stats) {
+      store.wedding.stats = {
+        views: res.stats.views || 0,
+        shares: res.stats.shares || 0,
+        rsvp_count: res.stats.rsvp?.total || 0,
+        blessing_count: res.stats.blessings || 0,
+        unique_viewers: res.stats.unique_viewers || 0
+      }
+    }
+  } catch (err) {
+    console.warn('管理后台数据加载失败:', err)
+    loadError.value = err?.message || '后台数据加载失败，请稍后重试'
+    showError(loadError.value)
+  } finally {
+    loading.value = false
+  }
+}
+
 async function confirmDeleteWedding() {
   if (deleting.value) return
   if (!userStore.weddingId) {
@@ -214,7 +245,13 @@ async function confirmDeleteWedding() {
     await deleteWedding(weddingId, 'DELETE')
     clearLocalWedding(weddingId)
     showSuccess('已删除婚礼邀请')
-    uni.reLaunch({ url: '/pages-owner/wizard/index' })
+    uni.reLaunch({
+      url: '/pages-owner/wizard/index',
+      fail: (navErr) => {
+        console.warn('删除后返回创建向导失败:', navErr)
+        showError('已删除，但创建向导打开失败')
+      }
+    })
   } catch (err) {
     console.error('删除婚礼邀请失败:', err)
     showError(err.message || '删除失败，请稍后重试')
@@ -251,31 +288,7 @@ function clearLocalWedding(weddingId) {
   userStore.logout()
 }
 
-onShow(async () => {
-  if (!useOwnerGuard()) return
-  try {
-    await fetchWedding(userStore.weddingId)
-    const profileRes = await syncOwnerProfile().catch((err) => {
-      console.warn('主人账号同步失败:', err)
-      return null
-    })
-    if (profileRes?.success) {
-      userStore.setOwnerProfile(profileRes)
-    }
-    const res = await getStats(userStore.weddingId)
-    if (res?.stats) {
-      store.wedding.stats = {
-        views: res.stats.views || 0,
-        shares: res.stats.shares || 0,
-        rsvp_count: res.stats.rsvp?.total || 0,
-        blessing_count: res.stats.blessings || 0,
-        unique_viewers: res.stats.unique_viewers || 0
-      }
-    }
-  } catch (err) {
-    console.warn('管理后台数据加载失败:', err)
-  }
-})
+onShow(() => refreshDashboard(false))
 </script>
 
 <style lang="scss" scoped>
@@ -582,5 +595,144 @@ onShow(async () => {
 .danger-btn::after { border: none; }
 .danger-btn[disabled] {
   opacity: 0.62;
+}
+
+.owner-hero {
+  position: relative;
+  margin: 0 $page-gutter 30rpx;
+  padding: 34rpx;
+  border-radius: $card-radius;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, #1A1A1A 0%, #4B111E 72%, #6B1829 100%);
+  color: #fff;
+  box-shadow: $shadow-lg;
+}
+.owner-hero::after {
+  content: "";
+  position: absolute;
+  right: -90rpx;
+  top: -120rpx;
+  width: 280rpx;
+  height: 280rpx;
+  border: 1rpx solid rgba(201,169,110,0.28);
+  border-radius: 50%;
+}
+.owner-hero-copy {
+  position: relative;
+  z-index: 2;
+}
+.owner-hero-kicker {
+  display: block;
+  color: rgba(255,255,255,0.56);
+  font-size: 20rpx;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.owner-hero-score {
+  display: block;
+  margin-top: 12rpx;
+  color: #fff;
+  font-size: 72rpx;
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.owner-hero-desc {
+  display: block;
+  margin-top: 16rpx;
+  max-width: 520rpx;
+  color: rgba(255,255,255,0.76);
+  font-size: 26rpx;
+  line-height: 1.48;
+}
+.owner-status-tag {
+  position: absolute;
+  z-index: 3;
+  top: 32rpx;
+  right: 32rpx;
+  padding: 9rpx 16rpx;
+  border-radius: $radius-sm;
+  background: rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.82);
+  font-size: 22rpx;
+  font-weight: 600;
+}
+.owner-status-tag.ready {
+  background: rgba(52,168,83,0.20);
+  color: #B9E8C7;
+}
+.owner-readiness-bar {
+  position: relative;
+  z-index: 2;
+  height: 8rpx;
+  margin-top: 30rpx;
+  border-radius: 4rpx;
+  background: rgba(255,255,255,0.14);
+  overflow: hidden;
+}
+.owner-readiness-fill {
+  height: 100%;
+  border-radius: 4rpx;
+  background: $color-gold;
+  transition: width 0.45s ease;
+}
+.owner-alert {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  margin: 0 $page-gutter 28rpx;
+  padding: 22rpx 24rpx;
+  border-radius: $card-radius;
+  border: 1rpx solid rgba(249,171,0,0.24);
+  background: rgba(249,171,0,0.10);
+  box-sizing: border-box;
+}
+.owner-alert-copy {
+  flex: 1;
+  min-width: 0;
+}
+.owner-alert-title {
+  display: block;
+  color: #8F6100;
+  font-size: 26rpx;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.owner-alert-desc {
+  display: block;
+  margin-top: 6rpx;
+  color: $text-secondary;
+  font-size: 23rpx;
+  line-height: 1.45;
+  word-break: break-word;
+}
+.owner-alert-btn {
+  flex-shrink: 0;
+  width: 132rpx;
+  height: 62rpx;
+  line-height: 62rpx;
+  border-radius: $radius-sm;
+  background: $text-primary;
+  color: #fff;
+  font-size: 24rpx;
+  font-weight: 600;
+}
+.owner-alert-btn::after { border: none; }
+.owner-alert-btn[disabled] { opacity: 0.56; }
+.owner-action-list,
+.owner-action-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  padding: 0 $page-gutter;
+  margin-bottom: 42rpx;
+}
+.owner-action-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+.owner-danger-zone {
+  margin-bottom: calc(150rpx + env(safe-area-inset-bottom));
 }
 </style>

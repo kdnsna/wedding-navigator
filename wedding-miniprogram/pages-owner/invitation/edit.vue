@@ -1,32 +1,28 @@
 <template>
-  <view class="page">
-    <!-- 顶部标题 -->
-    <view class="page-header">
-      <text class="page-tag">INVITATION</text>
-      <text class="page-title">婚书编辑</text>
-    </view>
+  <PageShell
+    class="page invitation-edit-page"
+    kicker="INVITATION"
+    title="婚书编辑"
+    desc="统一模板、邀请文案、新人信息、显示开关和背景音乐，保存后会同步宾客端首页。"
+  >
 
     <!-- 模板选择 -->
     <view class="section">
-      <text class="section-label">模板风格</text>
-      <scroll-view scroll-x class="template-scroll">
-        <view
-          class="template-item"
+      <SectionHeader title="模板风格" kicker="TEMPLATE" desc="选择高级礼宴视觉方向，权益标签会保留商业化状态。" compact />
+      <view class="template-card-list">
+        <TemplateCard
           v-for="tpl in templates"
           :key="tpl.id"
-          :class="{ active: form.template === tpl.id }"
-          @click="selectTemplate(tpl)"
-        >
-          <view class="template-preview" :style="{ background: tpl.preview }">
-            <image class="template-hero-thumb" :src="tpl.defaultHero" mode="aspectFill" />
-            <view class="template-preview-shade" />
-            <text class="template-kicker">{{ tpl.kicker }}</text>
-            <text class="template-text">{{ tpl.shortName }}</text>
-            <text class="template-tier" :class="{ premium: isTemplatePremium(tpl) }">{{ getTemplateTierLabel(tpl) }}</text>
-          </view>
-          <text class="template-desc">{{ tpl.copy }}</text>
-        </view>
-      </scroll-view>
+          :template="tpl"
+          :selected="form.template === tpl.id"
+          :tier-label="getTemplateTierLabel(tpl)"
+          :premium="isTemplatePremium(tpl)"
+          :disabled="saving"
+          compact
+          @select="selectTemplate"
+          @preview="previewTemplate"
+        />
+      </view>
       <view class="template-panel">
         <view class="template-panel-head">
           <view>
@@ -41,18 +37,19 @@
         <text class="template-panel-copy">{{ activeTemplate.photoMood }}</text>
         <text class="template-panel-hint">{{ activeTemplateHint }}</text>
         <view class="template-panel-actions">
-          <button class="template-panel-btn primary" @click="previewTemplate">预览此模板</button>
-          <button class="template-panel-btn" @click="applyTemplatePreset">套用预设文案</button>
+          <button class="template-panel-btn primary" :disabled="saving" @click="previewTemplate">预览此模板</button>
+          <button class="template-panel-btn" :disabled="saving" @click="applyTemplatePreset">套用预设文案</button>
         </view>
       </view>
     </view>
 
     <!-- 邀请文案 -->
     <view class="section">
-      <text class="section-label">邀请文案</text>
+      <SectionHeader title="邀请文案" kicker="COPY" desc="建议保持真诚克制，长辈和朋友都能一眼读懂。" compact />
       <textarea
         class="form-textarea"
         v-model="form.content"
+        :disabled="saving"
         placeholder="请输入邀请文案"
         maxlength="500"
       />
@@ -60,92 +57,92 @@
 
     <!-- 新人信息 -->
     <view class="section">
-      <text class="section-label">新人信息</text>
+      <SectionHeader title="新人信息" kicker="COUPLE" desc="姓名会出现在首页、分享卡片和海报中。" compact />
       <view class="form-row">
         <view class="form-col">
           <text class="form-sub-label">新郎</text>
-          <input class="form-input" v-model="form.groomName" placeholder="姓名" />
+          <input class="form-input" v-model="form.groomName" :disabled="saving" maxlength="20" placeholder="姓名" />
         </view>
         <view class="form-col">
           <text class="form-sub-label">新娘</text>
-          <input class="form-input" v-model="form.brideName" placeholder="姓名" />
+          <input class="form-input" v-model="form.brideName" :disabled="saving" maxlength="20" placeholder="姓名" />
         </view>
       </view>
     </view>
 
     <!-- 婚礼信息 -->
     <view class="section">
-      <text class="section-label">婚礼信息</text>
+      <SectionHeader title="婚礼信息" kicker="DATE & VENUE" desc="日期、时间和主场地会影响首页行动台与回执提示。" compact />
       <view class="form-group">
         <text class="form-sub-label">日期</text>
-        <picker mode="date" :value="form.date" @change="onDateChange">
+        <picker mode="date" :value="form.date" :disabled="saving" @change="onDateChange">
           <view class="picker-value">{{ form.date || '请选择日期' }}</view>
         </picker>
       </view>
       <view class="form-group">
         <text class="form-sub-label">时间</text>
-        <picker mode="time" :value="form.time" @change="onTimeChange">
+        <picker mode="time" :value="form.time" :disabled="saving" @change="onTimeChange">
           <view class="picker-value">{{ form.time || '请选择时间' }}</view>
         </picker>
       </view>
       <view class="form-group">
         <text class="form-sub-label">场地</text>
-        <input class="form-input" v-model="form.venueName" placeholder="场地名称" />
+        <input class="form-input" v-model="form.venueName" :disabled="saving" maxlength="40" placeholder="场地名称" />
       </view>
     </view>
 
     <!-- 功能开关 -->
     <view class="section">
-      <text class="section-label">显示设置</text>
+      <SectionHeader title="显示设置" kicker="MODULES" desc="控制宾客端首页、回执、祝福墙和流程模块是否展示。" compact />
       <view class="switch-list">
         <view class="switch-item">
           <text class="switch-label">显示倒计时</text>
-          <switch :checked="form.showCountdown" @change="form.showCountdown = $event.detail.value" color="#1A1A1A" />
+          <switch :checked="form.showCountdown" :disabled="saving" @change="form.showCountdown = $event.detail.value" color="#1A1A1A" />
         </view>
         <view class="switch-item">
           <text class="switch-label">显示RSVP</text>
-          <switch :checked="form.showRsvp" @change="form.showRsvp = $event.detail.value" color="#1A1A1A" />
+          <switch :checked="form.showRsvp" :disabled="saving" @change="form.showRsvp = $event.detail.value" color="#1A1A1A" />
         </view>
         <view class="switch-item sub" v-if="form.showRsvp">
           <text class="switch-label">RSVP联系电话必填</text>
-          <switch :checked="form.rsvpPhoneRequired" @change="form.rsvpPhoneRequired = $event.detail.value" color="#1A1A1A" />
+          <switch :checked="form.rsvpPhoneRequired" :disabled="saving" @change="form.rsvpPhoneRequired = $event.detail.value" color="#1A1A1A" />
         </view>
         <view class="switch-item sub" v-if="form.showRsvp">
           <text class="switch-label">允许宾客修改回执</text>
-          <switch :checked="form.allowRsvpUpdate" @change="form.allowRsvpUpdate = $event.detail.value" color="#1A1A1A" />
+          <switch :checked="form.allowRsvpUpdate" :disabled="saving" @change="form.allowRsvpUpdate = $event.detail.value" color="#1A1A1A" />
         </view>
         <view class="switch-item">
           <text class="switch-label">显示祝福墙</text>
-          <switch :checked="form.showBlessing" @change="form.showBlessing = $event.detail.value" color="#1A1A1A" />
+          <switch :checked="form.showBlessing" :disabled="saving" @change="form.showBlessing = $event.detail.value" color="#1A1A1A" />
         </view>
         <view class="switch-item sub" v-if="form.showBlessing">
           <text class="switch-label">祝福公开展示</text>
-          <switch :checked="form.blessingPublic" @change="form.blessingPublic = $event.detail.value" color="#1A1A1A" />
+          <switch :checked="form.blessingPublic" :disabled="saving" @change="form.blessingPublic = $event.detail.value" color="#1A1A1A" />
         </view>
         <view class="switch-item sub" v-if="form.showBlessing">
           <text class="switch-label">允许匿名祝福</text>
-          <switch :checked="form.allowAnonymousBlessing" @change="form.allowAnonymousBlessing = $event.detail.value" color="#1A1A1A" />
+          <switch :checked="form.allowAnonymousBlessing" :disabled="saving" @change="form.allowAnonymousBlessing = $event.detail.value" color="#1A1A1A" />
         </view>
         <view class="switch-item">
           <text class="switch-label">显示流程</text>
-          <switch :checked="form.showTimeline" @change="form.showTimeline = $event.detail.value" color="#1A1A1A" />
+          <switch :checked="form.showTimeline" :disabled="saving" @change="form.showTimeline = $event.detail.value" color="#1A1A1A" />
         </view>
       </view>
     </view>
 
     <!-- 背景音乐 -->
     <view class="section">
-      <text class="section-label">背景音乐</text>
+      <SectionHeader title="背景音乐" kicker="MUSIC" desc="开启后会随首页互动播放，仍遵守小程序音频触发限制。" compact />
       <view class="switch-item">
         <text class="switch-label">开启背景音乐</text>
-        <switch :checked="form.bgMusicEnabled" @change="form.bgMusicEnabled = $event.detail.value" color="#1A1A1A" />
+        <switch :checked="form.bgMusicEnabled" :disabled="saving" @change="form.bgMusicEnabled = $event.detail.value" color="#1A1A1A" />
       </view>
       <view class="music-presets" v-if="form.bgMusicEnabled">
         <view
           class="music-item"
           v-for="music in musicPresets"
           :key="music.id"
-          :class="{ active: form.bgMusicId === music.id }"
+          :class="{ active: form.bgMusicId === music.id, disabled: saving }"
           @click="selectMusic(music)"
         >
           <image
@@ -161,12 +158,15 @@
       </view>
     </view>
 
-    <!-- 底部按钮 -->
-    <view class="bottom-actions">
-      <button class="action-btn primary" @click="saveInvitation">保存</button>
-      <button class="action-btn" @click="previewInvitation">预览</button>
-    </view>
-  </view>
+    <BottomActionBar
+      primary-text="保存"
+      secondary-text="预览"
+      :loading="saving"
+      :disabled="saving"
+      @primary="saveInvitation"
+      @secondary="previewInvitation"
+    />
+  </PageShell>
 </template>
 
 <script setup>
@@ -179,9 +179,14 @@ import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
 import { updateWedding } from '@/composables/useCloud.js'
 import { WEDDING_TEMPLATES, getWeddingTemplate, normalizeTemplateId } from '@/utils/templates.js'
 import { buildTemplateCommercialState, getCommercialHint, getTemplateTierLabel, isTemplatePremium } from '@/utils/commercial.js'
+import PageShell from '@/components/ui/PageShell.vue'
+import SectionHeader from '@/components/ui/SectionHeader.vue'
+import TemplateCard from '@/components/ui/TemplateCard.vue'
+import BottomActionBar from '@/components/ui/BottomActionBar.vue'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
+const saving = ref(false)
 
 const templates = WEDDING_TEMPLATES
 const activeTemplate = computed(() => getWeddingTemplate(form.value.template))
@@ -240,11 +245,13 @@ function loadFromStore() {
 }
 
 function selectMusic(music) {
+  if (guardInvitationSaving()) return
   form.value.bgMusicId = music.id
   form.value.bgMusicUrl = music.url
 }
 
 function selectTemplate(tpl) {
+  if (guardInvitationSaving()) return
   form.value.template = normalizeTemplateId(tpl.id)
 }
 
@@ -312,6 +319,7 @@ function applyLocalPreviewData() {
 }
 
 function applyTemplatePreset() {
+  if (guardInvitationSaving()) return
   uni.showModal({
     title: '套用预设文案',
     content: '会替换邀请文案，并在场地为空时填入示例场景；不会修改新人姓名、日期和已上传照片。',
@@ -329,7 +337,10 @@ function applyTemplatePreset() {
 }
 
 async function saveInvitation() {
+  if (saving.value) return
+  if (!validateInvitationForm()) return
   try {
+    saving.value = true
     uni.showLoading({ title: '保存中...', mask: true })
     const invitationData = buildInvitationData()
     const weddingData = buildWeddingData()
@@ -365,17 +376,101 @@ async function saveInvitation() {
     console.error('保存请柬失败:', err)
     showError(err.message || '保存失败')
   } finally {
+    saving.value = false
     uni.hideLoading()
   }
 }
 
 function previewInvitation() {
+  if (guardInvitationSaving()) return
+  if (!validateInvitationForm({ preview: true })) return
   applyLocalPreviewData()
-  uni.switchTab({ url: '/pages/index/index' })
+  uni.switchTab({
+    url: '/pages/index/index',
+    fail: (err) => {
+      console.warn('预览请柬失败:', err)
+      showError('预览页打开失败，请稍后重试')
+    }
+  })
 }
 
 function previewTemplate() {
-  uni.navigateTo({ url: `/pages-owner/template/preview?id=${encodeURIComponent(form.value.template)}` })
+  if (guardInvitationSaving()) return
+  uni.navigateTo({
+    url: `/pages-owner/template/preview?id=${encodeURIComponent(form.value.template)}`,
+    fail: (err) => {
+      console.warn('打开模板预览失败:', err)
+      showError('模板预览打开失败，请稍后重试')
+    }
+  })
+}
+
+function guardInvitationSaving() {
+  if (!saving.value) return false
+  showError('婚书正在保存，请稍候')
+  return true
+}
+
+function validateInvitationForm(options = {}) {
+  if (!form.value.template) {
+    showError('请选择模板')
+    return false
+  }
+  if (!form.value.groomName.trim() || !form.value.brideName.trim()) {
+    showError('请填写新人姓名')
+    return false
+  }
+  if (form.value.groomName.trim().length > 20 || form.value.brideName.trim().length > 20) {
+    showError('新人姓名请控制在 20 字内')
+    return false
+  }
+  if (!form.value.date) {
+    showError('请选择婚礼日期')
+    return false
+  }
+  if (!isValidDateString(form.value.date)) {
+    showError('婚礼日期格式有误')
+    return false
+  }
+  if (!form.value.time) {
+    showError('请选择婚礼时间')
+    return false
+  }
+  if (!isValidTimeString(form.value.time)) {
+    showError('婚礼时间格式有误')
+    return false
+  }
+  if (!form.value.venueName.trim()) {
+    showError('请填写婚礼场地')
+    return false
+  }
+  if (form.value.venueName.trim().length > 40) {
+    showError('场地名称请控制在 40 字内')
+    return false
+  }
+  if (!options.preview && !userStore.weddingId) {
+    showError('未找到婚礼信息，请重新进入')
+    return false
+  }
+  return true
+}
+
+function isValidDateString(value) {
+  const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (!match) return false
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const day = Number(match[3])
+  const date = new Date(year, month - 1, day)
+  return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day
+}
+
+function isValidTimeString(value) {
+  const match = String(value || '').match(/^(\d{2}):(\d{2})$/)
+  if (!match) return false
+  const hour = Number(match[1])
+  const minute = Number(match[2])
+  return hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59
 }
 
 function applyPendingTemplate() {
@@ -393,8 +488,8 @@ function applyPendingTemplate() {
   applyLocalPreviewData()
 }
 
-onShow(() => {
-  useOwnerGuard()
+onShow(async () => {
+  if (!(await useOwnerGuard())) return
   loadFromStore()
   applyPendingTemplate()
 })
@@ -402,27 +497,10 @@ onShow(() => {
 
 <style lang="scss" scoped>
 .page {
-  background-color: $bg-color;
+  background:
+    linear-gradient(180deg, rgba(255,248,245,0.98) 0%, #fff 46%, rgba(255,248,245,1) 100%);
   min-height: 100vh;
   padding-bottom: calc(160rpx + env(safe-area-inset-bottom));
-}
-
-/* 顶部标题 */
-.page-header {
-  padding: $page-header-top $page-gutter $page-header-bottom;
-}
-.page-tag {
-  display: block;
-  font-size: 22rpx;
-  color: $text-muted;
-  letter-spacing: 0;
-  margin-bottom: 12rpx;
-}
-.page-title {
-  display: block;
-  font-size: $font-h1;
-  font-weight: 600;
-  color: $text-primary;
 }
 
 /* 区块 */
@@ -430,11 +508,15 @@ onShow(() => {
   padding: 0 $page-gutter;
   margin-bottom: 48rpx;
 }
-.section-label {
-  display: block;
-  font-size: 26rpx;
-  color: $text-muted;
+.section :deep(.ui-section-header) {
+  padding: 0;
   margin-bottom: 20rpx;
+}
+
+.template-card-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18rpx;
 }
 
 /* 模板选择 */
@@ -623,6 +705,9 @@ onShow(() => {
 .template-panel-btn::after {
   border: none;
 }
+.template-panel-btn[disabled] {
+  opacity: 0.56;
+}
 
 /* 表单 */
 .form-textarea {
@@ -752,6 +837,10 @@ onShow(() => {
   background: $text-primary;
 }
 .music-item.active .music-name { color: #fff; }
+.music-item.disabled {
+  opacity: 0.62;
+  pointer-events: none;
+}
 .music-item:active { transform: scale(0.98); }
 .music-icon {
   width: 40rpx;

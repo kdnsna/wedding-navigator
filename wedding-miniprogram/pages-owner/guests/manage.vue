@@ -1,30 +1,13 @@
 <template>
-  <view class="page">
-    <!-- 顶部标题 -->
-    <view class="page-header">
-      <text class="page-tag">GUESTS</text>
-      <text class="page-title">宾客管理</text>
-    </view>
+  <PageShell
+    class="page guests-page"
+    kicker="GUESTS"
+    title="宾客管理"
+    desc="维护宾客名单、回执状态、到达信息和随行备注。"
+  >
 
     <!-- 统计 -->
-    <view class="stats-row">
-      <view class="stat-item">
-        <text class="stat-num">{{ stats.attending }}</text>
-        <text class="stat-label">出席</text>
-      </view>
-      <view class="stat-item">
-        <text class="stat-num">{{ stats.uncertain }}</text>
-        <text class="stat-label">待定</text>
-      </view>
-      <view class="stat-item">
-        <text class="stat-num">{{ stats.declined }}</text>
-        <text class="stat-label">缺席</text>
-      </view>
-      <view class="stat-item">
-        <text class="stat-num">{{ stats.pending }}</text>
-        <text class="stat-label">未填</text>
-      </view>
-    </view>
+    <MetricStrip :items="guestMetricItems" />
 
     <!-- 筛选 -->
     <view class="filter-row">
@@ -59,38 +42,35 @@
           <text v-if="guest.companion_note">{{ guest.companion_note }}</text>
         </view>
         <view class="guest-actions">
-          <text class="action-link" @click="editGuest(guest)">编辑</text>
-          <text class="action-link delete" @click="deleteGuest(guest.id)">删除</text>
+          <text class="action-link" :class="{ disabled: guestBusy }" @click="editGuest(guest)">编辑</text>
+          <text class="action-link delete" :class="{ disabled: guestBusy }" @click="deleteGuest(guest.id)">删除</text>
         </view>
       </view>
     </view>
 
     <!-- 空状态 -->
-    <view class="empty-state" v-if="filteredGuests.length === 0">
-      <image class="empty-visual empty-icon" src="/static/visuals/empty-guests.svg" mode="aspectFit" />
-      <text class="empty-text">暂无宾客</text>
-    </view>
-
-    <!-- 添加按钮 -->
-    <button class="add-btn" @click="showAddModal">
-      <text>+ 添加宾客</text>
-    </button>
+    <EmptyState
+      v-if="filteredGuests.length === 0"
+      icon="/static/visuals/empty-guests.svg"
+      :title="currentFilter === 'all' ? '暂无宾客' : '当前筛选下暂无宾客'"
+      desc="可以先添加核心亲友，后续 RSVP 会自动同步到这里。"
+    />
 
     <!-- 弹窗 -->
-    <view class="modal-mask" v-if="showModal" @click="showModal = false">
+    <view class="modal-mask" v-if="showModal" @click="requestCloseGuestModal">
       <view class="modal-content" @click.stop>
         <view class="modal-header">
           <text class="modal-title">{{ editingGuest ? '编辑宾客' : '添加宾客' }}</text>
-          <text class="modal-close" @click="showModal = false">✕</text>
+          <image class="modal-close" src="/static/visuals/icon-close.svg" mode="aspectFit" @click="requestCloseGuestModal" />
         </view>
         <view class="modal-body">
           <view class="form-group">
             <text class="form-label">姓名</text>
-            <input class="form-input" v-model="modalForm.name" placeholder="宾客姓名" />
+            <input class="form-input" v-model="modalForm.name" placeholder="宾客姓名" maxlength="20" />
           </view>
           <view class="form-group">
             <text class="form-label">手机号</text>
-            <input class="form-input" v-model="modalForm.phone" placeholder="手机号" type="number" />
+            <input class="form-input" v-model="modalForm.phone" placeholder="手机号" type="number" maxlength="20" />
           </view>
           <view class="form-group">
             <text class="form-label">RSVP状态</text>
@@ -101,9 +81,9 @@
           <view class="form-group">
             <text class="form-label">出席人数</text>
             <view class="stepper">
-              <button class="stepper-btn" @click="modalForm.count > 0 && modalForm.count--">−</button>
+              <button class="stepper-btn" :disabled="!canDecrementGuest" @click="decrementGuestCount">−</button>
               <text class="stepper-value">{{ modalForm.count }}</text>
-              <button class="stepper-btn" @click="modalForm.count++">+</button>
+              <button class="stepper-btn" :disabled="!canIncrementGuest" @click="incrementGuestCount">+</button>
             </view>
           </view>
           <view class="form-group">
@@ -132,21 +112,34 @@
           </view>
           <view class="form-group">
             <text class="form-label">随行备注</text>
-            <input class="form-input" v-model="modalForm.companionNote" placeholder="选填" />
+            <input class="form-input" v-model="modalForm.companionNote" placeholder="选填" maxlength="80" />
           </view>
         </view>
         <view class="modal-footer">
-          <button class="modal-btn secondary" @click="showModal = false">取消</button>
+          <button class="modal-btn secondary" :disabled="saving" @click="requestCloseGuestModal">取消</button>
           <button class="modal-btn primary" :loading="saving" :disabled="saving" @click="saveGuest">确定</button>
         </view>
       </view>
     </view>
-  </view>
+    <BottomActionBar
+      primary-text="添加宾客"
+      secondary-text="刷新"
+      :secondary-loading="refreshing"
+      :disabled="saving"
+      :primary-disabled="refreshing"
+      @primary="showAddModal"
+      @secondary="refreshGuests"
+    />
+  </PageShell>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
+import PageShell from '@/components/ui/PageShell.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
+import BottomActionBar from '@/components/ui/BottomActionBar.vue'
+import MetricStrip from '@/components/ui/MetricStrip.vue'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { generateId, showSuccess, showError } from '@/utils/index.js'
@@ -161,6 +154,7 @@ const editingGuest = ref(null)
 const currentFilter = ref('all')
 const saving = ref(false)
 const refreshing = ref(false)
+const guestFormSnapshot = ref('')
 
 const rsvpOptions = ['未填写', '出席', '待定', '缺席']
 const statusMap = { '未填写': 'pending', '出席': 'attending', '待定': 'uncertain', '缺席': 'declined' }
@@ -171,11 +165,21 @@ const dietMap = { '普通': 'normal', '素食': 'vegetarian', '清真': 'halal',
 const reverseDietMap = { 'normal': 0, 'vegetarian': 1, 'halal': 2, 'other': 3 }
 const relationshipOptions = ['未填写', '亲友', '同学', '同事', '家人', '其他']
 const transportOptions = ['未填写', '自驾', '打车', '公共交通', '跟车', '待定']
+const MAX_GUEST_COUNT = 20
 
 const modalForm = ref({ name: '', phone: '', statusIndex: 0, count: 1, dietIndex: 0, relationshipIndex: 0, arrivalTime: '', transportIndex: 0, companionNote: '' })
 
 const guests = computed(() => store.guests?.guests || [])
 const stats = computed(() => store.rsvpStats)
+const guestMetricItems = computed(() => [
+  { label: '出席', value: stats.value.attending || 0 },
+  { label: '待定', value: stats.value.uncertain || 0 },
+  { label: '缺席', value: stats.value.declined || 0 },
+  { label: '未填', value: stats.value.pending || 0 }
+])
+const canDecrementGuest = computed(() => Number(modalForm.value.count || 0) > minGuestCount())
+const canIncrementGuest = computed(() => Number(modalForm.value.count || 0) < MAX_GUEST_COUNT)
+const guestBusy = computed(() => saving.value || refreshing.value)
 
 const filterTabs = [
   { label: '全部', value: 'all' },
@@ -200,12 +204,15 @@ function maskPhone(phone) {
 }
 
 function showAddModal() {
+  if (guardGuestBusy()) return
   editingGuest.value = null
   modalForm.value = { name: '', phone: '', statusIndex: 0, count: 1, dietIndex: 0, relationshipIndex: 0, arrivalTime: '', transportIndex: 0, companionNote: '' }
+  snapshotGuestForm()
   showModal.value = true
 }
 
 function editGuest(guest) {
+  if (guardGuestBusy()) return
   editingGuest.value = guest
   modalForm.value = {
     name: guest.name,
@@ -218,14 +225,70 @@ function editGuest(guest) {
     transportIndex: Math.max(transportOptions.indexOf(guest.transport_mode || '未填写'), 0),
     companionNote: guest.companion_note || ''
   }
+  snapshotGuestForm()
   showModal.value = true
 }
 
-function onStatusChange(e) { modalForm.value.statusIndex = e.detail.value }
+function onStatusChange(e) {
+  modalForm.value.statusIndex = Number(e.detail.value)
+  const status = statusMap[rsvpOptions[modalForm.value.statusIndex]]
+  if (status === 'declined') {
+    modalForm.value.count = 0
+  } else if (Number(modalForm.value.count || 0) < 1) {
+    modalForm.value.count = 1
+  }
+}
 function onDietChange(e) { modalForm.value.dietIndex = e.detail.value }
 function onRelationshipChange(e) { modalForm.value.relationshipIndex = e.detail.value }
 function onArrivalTimeChange(e) { modalForm.value.arrivalTime = e.detail.value }
 function onTransportChange(e) { modalForm.value.transportIndex = e.detail.value }
+
+function minGuestCount() {
+  return statusMap[rsvpOptions[modalForm.value.statusIndex]] === 'declined' ? 0 : 1
+}
+
+function incrementGuestCount() {
+  modalForm.value.count = Math.min(MAX_GUEST_COUNT, Number(modalForm.value.count || 0) + 1)
+}
+
+function decrementGuestCount() {
+  modalForm.value.count = Math.max(minGuestCount(), Number(modalForm.value.count || 0) - 1)
+}
+
+function isValidPhone(phone) {
+  return /^\d{6,20}$/.test(String(phone || '').trim())
+}
+
+function snapshotGuestForm() {
+  guestFormSnapshot.value = JSON.stringify(modalForm.value)
+}
+
+function hasGuestFormChanges() {
+  return showModal.value && JSON.stringify(modalForm.value) !== guestFormSnapshot.value
+}
+
+function guardGuestBusy() {
+  if (!guestBusy.value) return false
+  showError('宾客数据正在同步，请稍候')
+  return true
+}
+
+function requestCloseGuestModal() {
+  if (saving.value) return
+  if (!hasGuestFormChanges()) {
+    showModal.value = false
+    return
+  }
+  uni.showModal({
+    title: '放弃未保存内容？',
+    content: '当前宾客信息还没有保存。',
+    confirmText: '放弃',
+    cancelText: '继续编辑',
+    success: (res) => {
+      if (res.confirm) showModal.value = false
+    }
+  })
+}
 
 async function saveGuest() {
   if (saving.value) return
@@ -237,12 +300,22 @@ async function saveGuest() {
     showError('请输入手机号')
     return
   }
+  if (!isValidPhone(modalForm.value.phone)) {
+    showError('请输入有效手机号')
+    return
+  }
+  const normalizedPhone = String(modalForm.value.phone).trim()
+  const duplicate = guests.value.find(item => item.id !== editingGuest.value?.id && String(item.phone || '').trim() === normalizedPhone)
+  if (duplicate) {
+    showError('手机号已存在，请直接编辑该宾客')
+    return
+  }
   const previousGuests = cloneGuests()
   saving.value = true
   const guest = {
     id: editingGuest.value?.id || generateId(),
     name: modalForm.value.name.trim(),
-    phone: modalForm.value.phone.trim(),
+    phone: normalizedPhone,
     rsvp_status: statusMap[rsvpOptions[modalForm.value.statusIndex]],
     attending_count: statusMap[rsvpOptions[modalForm.value.statusIndex]] === 'declined' ? 0 : Math.max(1, Number(modalForm.value.count) || 1),
     diet_preference: dietMap[dietOptions[modalForm.value.dietIndex]],
@@ -262,6 +335,7 @@ async function saveGuest() {
       store.addGuest(guest)
     }
     await saveToStorage()
+    snapshotGuestForm()
     showModal.value = false
     showSuccess('保存成功')
   } catch (err) {
@@ -274,12 +348,14 @@ async function saveGuest() {
 }
 
 function deleteGuest(id) {
+  if (guardGuestBusy()) return
   uni.showModal({
     title: '确认删除',
     content: '确定删除该宾客？',
     success: async (res) => {
       if (res.confirm) {
         const previousGuests = cloneGuests()
+        saving.value = true
         try {
           if (store.guests && Array.isArray(store.guests.guests)) {
             store.guests.guests = store.guests.guests.filter(g => g.id !== id)
@@ -290,6 +366,8 @@ function deleteGuest(id) {
           store.guests = previousGuests
           console.error('宾客删除失败:', err)
           showError(err?.message || '删除失败，请重试')
+        } finally {
+          saving.value = false
         }
       }
     }
@@ -321,8 +399,8 @@ function cloneGuests() {
 }
 
 async function refreshGuests() {
-  if (!useOwnerGuard()) return
-  if (!userStore.weddingId || refreshing.value) return
+  if (!(await useOwnerGuard())) return
+  if (!userStore.weddingId || refreshing.value || saving.value) return
   refreshing.value = true
   try {
     await fetchWedding(userStore.weddingId, true)
@@ -427,9 +505,8 @@ onShow(refreshGuests)
   font-weight: 600;
   color: $text-primary;
   min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  line-height: 1.35;
+  word-break: break-word;
 }
 .guest-phone {
   font-size: 22rpx;
@@ -480,6 +557,10 @@ onShow(refreshGuests)
 }
 .action-link.delete {
   color: $color-error;
+}
+.action-link.disabled {
+  color: $text-placeholder;
+  pointer-events: none;
 }
 
 /* 空状态 */
@@ -547,9 +628,11 @@ onShow(refreshGuests)
   color: $text-primary;
 }
 .modal-close {
-  font-size: 32rpx;
-  color: $text-muted;
+  width: 50rpx;
+  height: 50rpx;
   padding: 10rpx;
+  box-sizing: border-box;
+  opacity: 0.68;
 }
 
 .form-group {

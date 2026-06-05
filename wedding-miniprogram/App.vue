@@ -116,7 +116,7 @@ function checkPrivacySetting() {
 
 /* ========== 全局重置 ========== */
 page {
-  font-family: -apple-system, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
   color: $text-primary;
   background-color: $bg-color;
   -webkit-font-smoothing: antialiased;
@@ -447,7 +447,7 @@ uni-image {
   font-size: 72rpx;
   line-height: 1;
   color: $border-color;
-  font-family: Georgia, serif;
+  font-family: $font-serif;
 }
 
 /* 囍字水印 */

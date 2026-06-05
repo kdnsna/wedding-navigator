@@ -1,22 +1,13 @@
 <template>
-  <view class="page">
-    <!-- 顶部标题 -->
-    <view class="page-header">
-      <text class="page-tag">BLESSINGS</text>
-      <text class="page-title">祝福管理</text>
-    </view>
+  <PageShell
+    class="page blessing-manage-page"
+    kicker="BLESSINGS"
+    title="祝福管理"
+    desc="查看宾客留言，置顶精选祝福，及时处理不适合公开展示的内容。"
+  >
 
     <!-- 统计 -->
-    <view class="stats-row">
-      <view class="stat-item">
-        <text class="stat-num">{{ blessings.length }}</text>
-        <text class="stat-label">祝福总数</text>
-      </view>
-      <view class="stat-item">
-        <text class="stat-num">{{ pinnedCount }}</text>
-        <text class="stat-label">已置顶</text>
-      </view>
-    </view>
+    <MetricStrip :items="blessingMetricItems" />
 
     <!-- 祝福列表 -->
     <view class="blessing-list" v-if="blessings.length > 0">
@@ -27,24 +18,39 @@
         </view>
         <text class="item-content">{{ item.content }}</text>
         <view class="item-actions">
-          <text class="item-action" @click="togglePin(item)">
+          <text class="item-action" :class="{ disabled: blessingBusy }" @click="togglePin(item)">
             {{ item.is_pinned ? '取消置顶' : '置顶' }}
           </text>
-          <text class="item-action delete" @click="deleteBlessing(item.id)">删除</text>
+          <text class="item-action delete" :class="{ disabled: blessingBusy }" @click="deleteBlessing(item.id)">删除</text>
         </view>
       </view>
     </view>
 
-    <view class="empty-state" v-if="blessings.length === 0">
-      <image class="empty-visual empty-icon" src="/static/visuals/empty-blessing.svg" mode="aspectFit" />
-      <text class="empty-text">暂无祝福</text>
-    </view>
-  </view>
+    <EmptyState
+      v-if="blessings.length === 0"
+      icon="/static/visuals/empty-blessing.svg"
+      title="暂无祝福"
+      desc="宾客提交公开祝福后，会在这里统一审核和置顶。"
+    />
+
+    <BottomActionBar
+      primary-text="刷新祝福"
+      secondary-text="返回后台"
+      :loading="refreshing"
+      :disabled="saving"
+      @primary="refreshBlessings"
+      @secondary="goManage"
+    />
+  </PageShell>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
+import PageShell from '@/components/ui/PageShell.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
+import BottomActionBar from '@/components/ui/BottomActionBar.vue'
+import MetricStrip from '@/components/ui/MetricStrip.vue'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { showSuccess, showError, formatDateTime } from '@/utils/index.js'
@@ -55,6 +61,7 @@ const store = useWeddingStore()
 const userStore = useUserStore()
 const saving = ref(false)
 const refreshing = ref(false)
+const blessingBusy = computed(() => saving.value || refreshing.value)
 
 const blessings = computed(() => {
   const list = store.blessings?.blessings || []
@@ -66,13 +73,21 @@ const blessings = computed(() => {
 })
 
 const pinnedCount = computed(() => blessings.value.filter(b => b.is_pinned).length)
+const publicCount = computed(() => blessings.value.filter(b => b.is_public !== false).length)
+const anonymousCount = computed(() => blessings.value.filter(b => b.sender?.anonymous || !b.sender?.name).length)
+const blessingMetricItems = computed(() => [
+  { label: '总数', value: blessings.value.length },
+  { label: '置顶', value: pinnedCount.value },
+  { label: '公开', value: publicCount.value },
+  { label: '匿名', value: anonymousCount.value }
+])
 
 function formatTime(ts) {
   return formatDateTime(ts)
 }
 
 async function togglePin(item) {
-  if (saving.value) return
+  if (guardBlessingBusy()) return
   const originalList = store.blessings?.blessings || []
   const target = originalList.find(b => b.id === item.id)
   if (!target) return
@@ -96,12 +111,14 @@ async function togglePin(item) {
 }
 
 function deleteBlessing(id) {
+  if (guardBlessingBusy()) return
   uni.showModal({
     title: '确认删除',
     content: '确定删除这条祝福？',
     success: async (res) => {
       if (res.confirm) {
         const previousBlessings = cloneBlessings()
+        saving.value = true
         try {
           if (store.blessings && Array.isArray(store.blessings.blessings)) {
             store.blessings.blessings = store.blessings.blessings.filter(b => b.id !== id)
@@ -112,8 +129,42 @@ function deleteBlessing(id) {
           store.blessings = previousBlessings
           console.error('祝福删除失败:', err)
           showError(err?.message || '删除失败，请重试')
+        } finally {
+          saving.value = false
         }
       }
+    }
+  })
+}
+
+function guardBlessingBusy() {
+  if (!blessingBusy.value) return false
+  showError('祝福数据正在同步，请稍候')
+  return true
+}
+
+function goManage() {
+  const pages = getCurrentPages()
+  if (pages.length > 1) {
+    uni.navigateBack({
+      fail: (err) => {
+        console.warn('祝福管理返回失败:', err)
+        uni.redirectTo({
+          url: '/pages-owner/manage/index',
+          fail: (redirectErr) => {
+            console.warn('祝福管理返回后台失败:', redirectErr)
+            showError('返回后台失败，请稍后重试')
+          }
+        })
+      }
+    })
+    return
+  }
+  uni.redirectTo({
+    url: '/pages-owner/manage/index',
+    fail: (err) => {
+      console.warn('祝福管理返回后台失败:', err)
+      showError('返回后台失败，请稍后重试')
     }
   })
 }
@@ -143,8 +194,8 @@ function cloneBlessings() {
 }
 
 async function refreshBlessings() {
-  if (!useOwnerGuard()) return
-  if (!userStore.weddingId || refreshing.value) return
+  if (!(await useOwnerGuard())) return
+  if (!userStore.weddingId || refreshing.value || saving.value) return
   refreshing.value = true
   try {
     await fetchWedding(userStore.weddingId, true)
@@ -237,9 +288,8 @@ onShow(refreshBlessings)
   font-size: 28rpx;
   font-weight: 600;
   color: $text-primary;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  line-height: 1.35;
+  word-break: break-word;
 }
 .item-time {
   font-size: 22rpx;
@@ -264,6 +314,10 @@ onShow(refreshBlessings)
 }
 .item-action.delete {
   color: $color-error;
+}
+.item-action.disabled {
+  color: $text-placeholder;
+  pointer-events: none;
 }
 
 /* 空状态 */

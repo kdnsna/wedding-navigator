@@ -2,7 +2,7 @@ import { useUserStore } from '@/stores/user.js'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { checkOwnership, fetchWedding } from '@/composables/useCloud.js'
 
-export function useOwnerGuard() {
+export async function useOwnerGuard() {
   const userStore = useUserStore()
   const weddingStore = useWeddingStore()
 
@@ -13,7 +13,7 @@ export function useOwnerGuard() {
       confirmText: '去创建',
       showCancel: false,
       success: () => {
-        uni.navigateTo({ url: '/pages-owner/wizard/index' })
+        goCreateWizard()
       }
     })
     return false
@@ -24,8 +24,7 @@ export function useOwnerGuard() {
     return true
   }
 
-  verifyAndGuard(userStore, weddingStore)
-  return true
+  return verifyAndGuard(userStore, weddingStore)
 }
 
 function loadWeddingIfNeeded(userStore, weddingStore) {
@@ -43,6 +42,7 @@ async function verifyAndGuard(userStore, weddingStore) {
     if (res?.success && res.isOwner) {
       userStore.verifyOwner(true)
       loadWeddingIfNeeded(userStore, weddingStore)
+      return true
     } else {
       userStore.verifyOwner(false)
       uni.showModal({
@@ -50,12 +50,61 @@ async function verifyAndGuard(userStore, weddingStore) {
         content: '仅婚礼主人可访问此页面',
         showCancel: false,
         success: () => {
-          uni.reLaunch({ url: '/pages/index/index' })
+          goGuestHome()
         }
       })
+      return false
     }
   } catch (err) {
-    console.warn('所有权验证失败，允许访问（云端会做最终校验）:', err)
-    loadWeddingIfNeeded(userStore, weddingStore)
+    console.warn('所有权验证失败:', err)
+    if (userStore.isOwner) {
+      uni.showToast({ title: '主人权限暂未完成云端校验', icon: 'none' })
+      loadWeddingIfNeeded(userStore, weddingStore)
+      return true
+    }
+    return showOwnerVerificationFailure(userStore, weddingStore)
   }
+}
+
+function showOwnerVerificationFailure(userStore, weddingStore) {
+  return new Promise((resolve) => {
+    uni.showModal({
+      title: '权限校验失败',
+      content: '暂时无法确认您是婚礼主人，请检查网络后重试。',
+      confirmText: '重试',
+      cancelText: '返回首页',
+      success: async (res) => {
+        if (res.confirm) {
+          resolve(await verifyAndGuard(userStore, weddingStore))
+        } else {
+          goGuestHome()
+          resolve(false)
+        }
+      },
+      fail: () => {
+        goGuestHome()
+        resolve(false)
+      }
+    })
+  })
+}
+
+function goCreateWizard() {
+  uni.navigateTo({
+    url: '/pages-owner/wizard/index',
+    fail: (err) => {
+      console.warn('主人守卫打开创建向导失败:', err)
+      uni.showToast({ title: '创建向导打开失败，请稍后重试', icon: 'none' })
+    }
+  })
+}
+
+function goGuestHome() {
+  uni.reLaunch({
+    url: '/pages/index/index',
+    fail: (err) => {
+      console.warn('主人守卫返回首页失败:', err)
+      uni.showToast({ title: '返回首页失败，请稍后重试', icon: 'none' })
+    }
+  })
 }

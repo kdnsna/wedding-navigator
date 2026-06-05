@@ -37,6 +37,84 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath()
 }
 
+function posterChars(text) {
+  return Array.from(String(text || '').trim())
+}
+
+function estimateTextWidth(text, fontSize) {
+  return posterChars(text).reduce((total, char) => {
+    return total + (/[\u4e00-\u9fa5]/.test(char) ? fontSize : fontSize * 0.58)
+  }, 0)
+}
+
+function measureTextWidth(ctx, text, fontSize) {
+  try {
+    const width = ctx.measureText?.(text)?.width
+    return Number.isFinite(width) ? width : estimateTextWidth(text, fontSize)
+  } catch (err) {
+    return estimateTextWidth(text, fontSize)
+  }
+}
+
+function trimToWidth(ctx, text, maxWidth, fontSize) {
+  const chars = posterChars(text)
+  if (measureTextWidth(ctx, chars.join(''), fontSize) <= maxWidth) return chars.join('')
+  while (chars.length > 0 && measureTextWidth(ctx, `${chars.join('')}...`, fontSize) > maxWidth) {
+    chars.pop()
+  }
+  return chars.length ? `${chars.join('')}...` : ''
+}
+
+function drawFittedText(ctx, text, x, y, maxWidth, options = {}) {
+  const source = String(text || '').trim()
+  if (!source) return
+  const minFontSize = options.minFontSize || options.fontSize || 12
+  let fontSize = options.fontSize || 12
+  while (fontSize > minFontSize && measureTextWidth(ctx, source, fontSize) > maxWidth) {
+    fontSize -= 1
+  }
+  ctx.setFontSize(fontSize)
+  ctx.setTextAlign(options.align || 'center')
+  ctx.fillText(trimToWidth(ctx, source, maxWidth, fontSize), x, y)
+}
+
+function makeWrappedLines(ctx, text, maxWidth, fontSize, maxLines) {
+  const chars = posterChars(text)
+  const lines = []
+  let line = ''
+  for (const char of chars) {
+    const next = `${line}${char}`
+    if (line && measureTextWidth(ctx, next, fontSize) > maxWidth) {
+      lines.push(line)
+      line = char
+      if (lines.length === maxLines) break
+    } else {
+      line = next
+    }
+  }
+  if (line && lines.length < maxLines) lines.push(line)
+  if (lines.length === maxLines) {
+    const usedLength = lines.join('').length
+    if (chars.length > usedLength) {
+      lines[maxLines - 1] = trimToWidth(ctx, lines[maxLines - 1], maxWidth, fontSize)
+    }
+  }
+  return lines
+}
+
+function drawWrappedText(ctx, text, x, y, maxWidth, options = {}) {
+  const source = String(text || '').trim()
+  if (!source) return
+  const fontSize = options.fontSize || 12
+  const lineHeight = options.lineHeight || fontSize * 1.35
+  const maxLines = options.maxLines || 2
+  ctx.setFontSize(fontSize)
+  ctx.setTextAlign(options.align || 'center')
+  makeWrappedLines(ctx, source, maxWidth, fontSize, maxLines).forEach((line, index) => {
+    ctx.fillText(line, x, y + index * lineHeight)
+  })
+}
+
 export async function drawWeddingPoster({ instance, store, qrCodePath = '' }) {
   const ctx = uni.createCanvasContext('posterCanvas', instance)
   ctx.scale(POSTER_CANVAS_DPR, POSTER_CANVAS_DPR)
@@ -78,20 +156,24 @@ export async function drawWeddingPoster({ instance, store, qrCodePath = '' }) {
   const groom = store.invitation?.couple?.groom?.name || '新郎'
   const bride = store.invitation?.couple?.bride?.name || '新娘'
 
-  ctx.setFontSize(28)
-  ctx.setTextAlign('right')
   ctx.setFillStyle(theme.text)
-  ctx.fillText(groom, W / 2 - 16, 168)
+  drawFittedText(ctx, groom, W / 2 - 16, 168, 132, {
+    fontSize: 28,
+    minFontSize: 18,
+    align: 'right'
+  })
 
   ctx.setFontSize(16)
   ctx.setTextAlign('center')
   ctx.setFillStyle(theme.accent)
   ctx.fillText('&', W / 2, 162)
 
-  ctx.setFontSize(28)
-  ctx.setTextAlign('left')
   ctx.setFillStyle(theme.text)
-  ctx.fillText(bride, W / 2 + 16, 168)
+  drawFittedText(ctx, bride, W / 2 + 16, 168, 132, {
+    fontSize: 28,
+    minFontSize: 18,
+    align: 'left'
+  })
 
   ctx.setFontSize(11)
   ctx.setTextAlign('center')
@@ -137,14 +219,19 @@ export async function drawWeddingPoster({ instance, store, qrCodePath = '' }) {
   const venueAddress = store.invitation?.wedding?.venue_address || ''
 
   ctx.setFillStyle(theme.text)
-  ctx.setFontSize(13)
-  ctx.setTextAlign('center')
-  ctx.fillText(venueName, W / 2, 380)
+  drawWrappedText(ctx, venueName, W / 2, 380, 270, {
+    fontSize: 13,
+    lineHeight: 17,
+    maxLines: 2
+  })
 
   if (venueAddress) {
     ctx.setFillStyle(theme.muted)
-    ctx.setFontSize(9)
-    ctx.fillText(venueAddress, W / 2, 400)
+    drawWrappedText(ctx, venueAddress, W / 2, 414, 292, {
+      fontSize: 9,
+      lineHeight: 13,
+      maxLines: 2
+    })
   }
 
   const qrPath = await resolveImagePath(qrCodePath, 'poster_qr')

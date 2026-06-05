@@ -1,8 +1,8 @@
 /*
   甜囍手册 - 全局 SCSS 设计系统 v3.0
-  设计理念：高级简约无界
-  配色原则：纯白背景 + 近黑文字 + 暗玫瑰红点缀
-  去装饰化、大留白、强排版、克制用色
+  设计理念：高级礼宴手册
+  配色原则：柔白背景 + 近黑文字 + 暗玫瑰红 + 深酒红 + 暖金
+  强化首屏行动、礼宴质感、主人端发布效率
 */
 
 /* ========== 核心色彩 ========== */
@@ -10,7 +10,7 @@
 // 主色：暗玫瑰红（沉稳高级，仅用于核心强调）
 $color-primary: #B03A5B;
 $color-primary-light: #C85A7A;
-$color-primary-dark: #8A2E4A;
+$color-primary-dark: #4B111E;
 
 // 辅色：暖金色（仅用于极少数点缀，克制使用）
 $color-gold: #C9A96E;
@@ -18,11 +18,11 @@ $color-gold-light: #DCC8A0;
 $color-gold-dark: #A88B52;
 
 // 背景色体系：去暖化，偏向中性
-$bg-color: #FFFFFF;           // 主背景：纯白
+$bg-color: #FFF8F5;           // 主背景：礼宴柔白
 $bg-surface: #FFFFFF;         // 卡片表面：纯白
-$bg-elevated: #FAFAFA;        // elevated 表面：极浅灰
-$bg-muted: #F5F5F5;           // muted 背景：浅灰
-$bg-warm: #F7F7F7;            // 温暖背景：微暖灰
+$bg-elevated: #FFFDFB;        // elevated 表面：柔白
+$bg-muted: #F5ECEB;           // muted 背景：浅玫瑰灰
+$bg-warm: #FFF1EF;            // 温暖背景：浅礼宴粉
 
 // 文字色：去棕化，纯中性灰阶
 $text-primary: #1A1A1A;       // 主文字：近黑
@@ -32,9 +32,9 @@ $text-placeholder: #B8B8B8;   // 占位文字：更浅灰
 $text-inverse: #FFFFFF;       // 反色文字
 
 // 边框与分割线：极简，几乎不可见
-$border-color: #F0F0F0;
-$border-light: #F5F5F5;
-$border-gold: rgba(201, 169, 110, 0.2);
+$border-color: rgba(75, 17, 30, 0.10);
+$border-light: rgba(75, 17, 30, 0.06);
+$border-gold: rgba(201, 169, 110, 0.24);
 
 // 功能色
 $color-success: #34A853;
@@ -50,18 +50,18 @@ $rsvp-pending: #5F6368;
 
 /* ========== 阴影系统：极淡，仅用于悬浮元素 ========== */
 $shadow-xs: 0 1rpx 4rpx rgba(0, 0, 0, 0.04);
-$shadow-sm: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
-$shadow-md: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
-$shadow-lg: 0 8rpx 32rpx rgba(0, 0, 0, 0.10);
-$shadow-xl: 0 16rpx 48rpx rgba(0, 0, 0, 0.12);
-$shadow-gold: 0 4rpx 16rpx rgba(176, 58, 91, 0.12);
+$shadow-sm: 0 2rpx 8rpx rgba(75, 17, 30, 0.05);
+$shadow-md: 0 6rpx 18rpx rgba(75, 17, 30, 0.07);
+$shadow-lg: 0 10rpx 28rpx rgba(75, 17, 30, 0.09);
+$shadow-xl: 0 16rpx 42rpx rgba(75, 17, 30, 0.11);
+$shadow-gold: 0 5rpx 18rpx rgba(201, 169, 110, 0.14);
 
 /* ========== 圆角系统：更克制 ========== */
 $radius-sm: 8rpx;
 $radius-md: 12rpx;
 $radius-lg: 16rpx;
-$radius-xl: 24rpx;
-$radius-2xl: 32rpx;
+$radius-xl: 20rpx;
+$radius-2xl: 24rpx;
 $radius-full: 9999rpx;
 
 /* ========== 间距系统：更大留白 ========== */
@@ -97,6 +97,79 @@ $font-body: 28rpx;      // 正文
 $font-body-sm: 26rpx;   // 小正文
 $font-caption: 24rpx;   // 辅助文字
 $font-mini: 20rpx;      // 最小文字
+
+/* ========== 字体策略 ========== */
+$font-serif: "Songti SC", "STSong", "SimSun", serif;
+$font-sans: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+
+/* ========== 高级礼宴通用 UI 类 ========== */
+.lux-page {
+  min-height: 100vh;
+  background:
+    linear-gradient(180deg, rgba(255, 248, 245, 0.96) 0%, rgba(255, 255, 255, 0.98) 42%, rgba(255, 248, 245, 1) 100%);
+  color: $text-primary;
+  font-family: $font-sans;
+}
+
+.lux-page-title {
+  display: block;
+  color: var(--theme-ink, $text-primary);
+  font-family: $font-serif;
+  font-size: $font-h1;
+  font-weight: 600;
+  line-height: 1.18;
+  letter-spacing: 0;
+}
+
+.lux-kicker {
+  display: block;
+  color: var(--theme-accent, $color-primary);
+  font-size: 20rpx;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.2;
+}
+
+.lux-card {
+  background: rgba(255, 255, 255, 0.94);
+  border: 1rpx solid var(--theme-border, $border-color);
+  border-radius: $card-radius;
+  box-shadow: $shadow-sm;
+}
+
+.lux-form-surface {
+  margin: 0 $page-gutter 28rpx;
+  padding: 28rpx;
+  background: #fff;
+  border: 1rpx solid $border-light;
+  border-radius: $card-radius;
+}
+
+.lux-primary-btn,
+.lux-secondary-btn {
+  height: $control-height;
+  line-height: $control-height;
+  border-radius: $radius-sm;
+  font-size: $font-body;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.lux-primary-btn {
+  background: $text-primary;
+  color: #fff;
+}
+
+.lux-secondary-btn {
+  background: #fff;
+  color: $text-primary;
+  border: 1rpx solid $border-color;
+}
+
+.lux-primary-btn::after,
+.lux-secondary-btn::after {
+  border: none;
+}
 
 /* ========== 动画变量 ========== */
 $ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);

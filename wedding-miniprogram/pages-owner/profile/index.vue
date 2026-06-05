@@ -1,10 +1,10 @@
 <template>
-  <view class="page">
-    <view class="page-header">
-      <text class="page-tag">ACCOUNT</text>
-      <text class="page-title">账号与权益</text>
-      <text class="page-sub">用微信身份绑定主人账号，后续可接手机号授权、模板付费和多婚礼工作区</text>
-    </view>
+  <PageShell
+    class="profile-page"
+    kicker="ACCOUNT"
+    title="账号与权益"
+    desc="用微信身份绑定主人账号，后续可接手机号授权、模板付费和多婚礼工作区。"
+  >
 
     <view class="plan-card">
       <view>
@@ -16,25 +16,31 @@
     </view>
 
     <view class="section">
-      <text class="section-label">主人资料</text>
+      <SectionHeader title="主人资料" kicker="PROFILE" desc="这些信息仅用于主人端管理，不展示给宾客。" compact />
       <view class="form-card">
         <view class="form-group">
-          <text class="form-label">称呼</text>
-          <input class="form-input" v-model="form.nickname" placeholder="例如：新郎 / 新娘 / 策划师" />
+          <view class="form-label-row">
+            <text class="form-label">称呼</text>
+            <text class="char-hint">{{ (form.nickname || '').length }}/20</text>
+          </view>
+          <input class="form-input" v-model="form.nickname" maxlength="20" placeholder="例如：新郎 / 新娘 / 策划师" />
         </view>
         <view class="form-group">
           <text class="form-label">手机号</text>
-          <input class="form-input" v-model="form.phone" placeholder="用于主人端联系，不展示给宾客" type="number" />
+          <input class="form-input" v-model="form.phone" placeholder="用于主人端联系，不展示给宾客" type="number" maxlength="20" />
         </view>
         <view class="form-group last">
-          <text class="form-label">身份</text>
-          <input class="form-input" v-model="form.role" placeholder="例如：主人 / 策划师 / 家人" />
+          <view class="form-label-row">
+            <text class="form-label">身份</text>
+            <text class="char-hint">{{ (form.role || '').length }}/12</text>
+          </view>
+          <input class="form-input" v-model="form.role" maxlength="12" placeholder="例如：主人 / 策划师 / 家人" />
         </view>
       </view>
     </view>
 
     <view class="section">
-      <text class="section-label">权益边界</text>
+      <SectionHeader title="权益边界" kicker="PLAN" desc="当前保留商业化字段，不在本轮新增付费拦截。" compact />
       <view class="entitlement-list">
         <view
           class="entitlement-item"
@@ -51,10 +57,7 @@
     </view>
 
     <view class="section">
-      <view class="section-head">
-        <text class="section-label">婚礼工作区</text>
-        <text class="section-count">{{ userStore.workspaces.length }} 个</text>
-      </view>
+      <SectionHeader title="婚礼工作区" kicker="WORKSPACES" :desc="`${userStore.workspaces.length} 个可管理婚礼空间`" compact />
       <view class="workspace-list" v-if="userStore.workspaces.length">
         <view class="workspace-item" v-for="workspace in userStore.workspaces" :key="workspace.weddingId">
           <view>
@@ -64,23 +67,32 @@
           <text class="workspace-plan">{{ workspace.plan || 'free' }}</text>
         </view>
       </view>
-      <view class="empty-card" v-else>
-        <image class="empty-icon" src="/static/visuals/empty-guests.svg" mode="aspectFit" />
-        <text class="empty-title">暂无工作区</text>
-        <text class="empty-desc">创建婚礼后，这里会显示可运营的婚礼空间。</text>
-      </view>
+      <EmptyState
+        v-else
+        icon="/static/visuals/empty-guests.svg"
+        title="暂无工作区"
+        desc="创建婚礼后，这里会显示可运营的婚礼空间。"
+      />
     </view>
 
-    <view class="bottom-actions">
-      <button class="action-btn primary" :loading="saving" :disabled="saving" @click="saveProfile">同步账号</button>
-      <button class="action-btn" @click="goDiagnostics">发布诊断</button>
-    </view>
-  </view>
+    <BottomActionBar
+      primary-text="同步账号"
+      secondary-text="发布诊断"
+      :loading="saving"
+      :secondary-disabled="saving"
+      @primary="saveProfile"
+      @secondary="goDiagnostics"
+    />
+  </PageShell>
 </template>
 
 <script setup>
 import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
+import PageShell from '@/components/ui/PageShell.vue'
+import SectionHeader from '@/components/ui/SectionHeader.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
+import BottomActionBar from '@/components/ui/BottomActionBar.vue'
 import { useUserStore } from '@/stores/user.js'
 import { syncOwnerProfile } from '@/composables/useCloud.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
@@ -114,6 +126,11 @@ function loadFromUser() {
   }
 }
 
+function isValidPhone(phone) {
+  if (!phone) return true
+  return /^\d{6,20}$/.test(String(phone).trim())
+}
+
 async function refreshProfile(silent = true) {
   try {
     const res = await syncOwnerProfile()
@@ -129,6 +146,18 @@ async function refreshProfile(silent = true) {
 
 async function saveProfile() {
   if (saving.value) return
+  if ((form.value.nickname || '').trim().length > 20) {
+    showError('称呼请控制在 20 字内')
+    return
+  }
+  if ((form.value.role || '').trim().length > 12) {
+    showError('身份请控制在 12 字内')
+    return
+  }
+  if (form.value.phone && !isValidPhone(form.value.phone)) {
+    showError('请输入有效手机号')
+    return
+  }
   try {
     saving.value = true
     uni.showLoading({ title: '同步中...', mask: true })
@@ -147,44 +176,26 @@ async function saveProfile() {
 }
 
 function goDiagnostics() {
-  uni.navigateTo({ url: '/pages-owner/diagnostics/index' })
+  uni.navigateTo({
+    url: '/pages-owner/diagnostics/index',
+    fail: (err) => {
+      console.warn('打开发布诊断失败:', err)
+      showError('发布诊断打开失败，请稍后重试')
+    }
+  })
 }
 
 onShow(async () => {
-  if (!useOwnerGuard()) return
+  if (!(await useOwnerGuard())) return
   loadFromUser()
   await refreshProfile(true)
 })
 </script>
 
 <style lang="scss" scoped>
-.page {
+.profile-page {
   min-height: 100vh;
   background: $bg-color;
-  padding-bottom: calc(160rpx + env(safe-area-inset-bottom));
-}
-.page-header {
-  padding: $page-header-top $page-gutter $page-header-bottom;
-}
-.page-tag {
-  display: block;
-  font-size: 22rpx;
-  color: $text-muted;
-  letter-spacing: 0;
-  margin-bottom: 12rpx;
-}
-.page-title {
-  display: block;
-  font-size: $font-h1;
-  font-weight: 600;
-  color: $text-primary;
-}
-.page-sub {
-  display: block;
-  margin-top: 14rpx;
-  font-size: 26rpx;
-  line-height: 1.55;
-  color: $text-secondary;
 }
 .plan-card {
   margin: 0 $page-gutter 42rpx;
@@ -231,25 +242,9 @@ onShow(async () => {
   padding: 0 $page-gutter;
   margin-bottom: 44rpx;
 }
-.section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.section-label {
-  display: block;
-  font-size: 26rpx;
-  color: $text-muted;
-  margin-bottom: 20rpx;
-}
-.section-count {
-  font-size: 24rpx;
-  color: $text-muted;
-}
 .form-card,
 .entitlement-list,
-.workspace-list,
-.empty-card {
+.workspace-list {
   border-radius: $card-radius;
   background: $bg-surface;
   border: 1rpx solid $border-color;
@@ -263,10 +258,23 @@ onShow(async () => {
   border-bottom: none;
 }
 .form-label {
-  display: block;
   font-size: 24rpx;
   color: $text-muted;
+}
+.form-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
   margin-bottom: 12rpx;
+}
+.form-group > .form-label {
+  display: block;
+  margin-bottom: 12rpx;
+}
+.char-hint {
+  font-size: 22rpx;
+  color: $text-muted;
 }
 .form-input {
   width: 100%;
@@ -322,57 +330,5 @@ onShow(async () => {
 .entitlement-status.active {
   background: rgba(52,168,83,0.12);
   color: $color-success;
-}
-.empty-card {
-  padding: 44rpx 30rpx;
-  text-align: center;
-}
-.empty-icon {
-  width: 132rpx;
-  height: 132rpx;
-  opacity: 0.72;
-  margin-bottom: 12rpx;
-}
-.empty-title {
-  display: block;
-  font-size: 30rpx;
-  color: $text-primary;
-  font-weight: 500;
-  margin-bottom: 8rpx;
-}
-.empty-desc {
-  display: block;
-  font-size: 24rpx;
-  color: $text-secondary;
-  line-height: 1.45;
-}
-.bottom-actions {
-  position: fixed;
-  left: $page-gutter;
-  right: $page-gutter;
-  bottom: calc(40rpx + constant(safe-area-inset-bottom));
-  bottom: calc(40rpx + env(safe-area-inset-bottom));
-  display: flex;
-  gap: 16rpx;
-}
-.action-btn {
-  flex: 1;
-  height: $control-height;
-  line-height: $control-height;
-  border-radius: $radius-full;
-  background: $bg-muted;
-  color: $text-primary;
-  font-size: 28rpx;
-  font-weight: 500;
-}
-.action-btn.primary {
-  background: $text-primary;
-  color: #fff;
-}
-.action-btn::after {
-  border: none;
-}
-.action-btn[disabled] {
-  opacity: 0.62;
 }
 </style>

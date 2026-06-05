@@ -89,7 +89,6 @@ async function callFunction(name, data = {}, options = {}) {
       name,
       data,
       success: (res) => {
-        console.log(`[cloud] ${name} success:`, res)
         if (res.result?.success === false) {
           const error = new Error(res.result.message || `${name} 调用失败`)
           error.code = res.result.code || ''

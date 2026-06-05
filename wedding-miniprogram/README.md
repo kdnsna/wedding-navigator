@@ -323,18 +323,24 @@ WXACODE_ENV_VERSION=trial
 
 或在微信开发者工具中点击【上传】。
 
-也可以使用 CLI 上传，避免把本机路径或密钥写进代码：
+也可以使用微信开发者工具 CLI 上传，默认读取 `dist/build/mp-weixin`，避免把本机路径写进代码：
 
 ```bash
 npm run build:mp-weixin
-MINIPROGRAM_PRIVATE_KEY_PATH=/path/to/private.key npm run upload:mp-weixin
+npm run upload:mp-weixin
 ```
 
 可选环境变量：
-- `MINIPROGRAM_APPID`：覆盖 `manifest.json` 中的 AppID
+- `WECHAT_DEVTOOLS_CLI_PATH`：覆盖微信开发者工具 CLI 路径
 - `MINIPROGRAM_PROJECT_PATH`：覆盖默认的 `dist/build/mp-weixin`
 - `MINIPROGRAM_VERSION`：覆盖上传版本号
 - `MINIPROGRAM_UPLOAD_DESC`：覆盖上传描述
+
+如需走 `miniprogram-ci` 私钥上传，请使用独立脚本：
+
+```bash
+MINIPROGRAM_PRIVATE_KEY_PATH=/path/to/private.key node upload-ci.mjs
+```
 
 ### 5. 配置分享
 

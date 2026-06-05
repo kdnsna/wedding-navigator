@@ -1,20 +1,20 @@
 <template>
-  <view class="page" :class="templateClass">
-    <!-- 顶部标题 -->
-    <view class="page-header" v-if="isBlessingEnabled">
-      <text class="page-tag">BLESSINGS</text>
-      <text class="page-title">祝福墙</text>
-      <text class="page-count" v-if="blessings.length > 0">{{ blessings.length }} 条祝福</text>
-      <text class="page-template">{{ activeTemplate.shortName }} · 为新人留下第一眼会被看见的祝福</text>
-    </view>
+  <PageShell
+    title="祝福墙"
+    kicker="BLESSINGS"
+    :desc="blessingDesc"
+    :theme-class="templateClass"
+  >
 
     <!-- 发送区域 -->
-    <view class="feature-closed" v-if="!isBlessingEnabled">
-      <image class="empty-visual" src="/static/visuals/icon-blessing.svg" mode="aspectFit" />
-      <text class="feature-title">新人暂未开放祝福墙</text>
-      <text class="feature-desc">您仍可查看婚礼时间、地点和到场路线。</text>
-      <button class="feature-action" @click="goToGuide">查看路线</button>
-    </view>
+    <EmptyState
+      v-if="!isBlessingEnabled"
+      icon="/static/visuals/icon-blessing.svg"
+      title="新人暂未开放祝福墙"
+      desc="您仍可查看婚礼时间、地点和到场路线。"
+      action-text="查看路线"
+      @action="goToGuide"
+    />
 
     <view class="send-area" v-if="isBlessingEnabled">
       <view class="sender-row">
@@ -23,6 +23,7 @@
           v-model="senderName"
           :placeholder="allowAnonymousBlessing ? '您的称呼' : '请输入您的称呼'"
           placeholder-class="input-placeholder"
+          maxlength="20"
         />
       </view>
       <textarea
@@ -31,6 +32,8 @@
         placeholder="写下您对新人的祝福..."
         placeholder-class="input-placeholder"
         maxlength="500"
+        :focus="blessingInputFocus"
+        @blur="blessingInputFocus = false"
       />
       <view class="send-bar">
         <text class="char-count">{{ newBlessing.length }}/500</text>
@@ -56,15 +59,19 @@
     </view>
 
     <!-- 空状态 -->
-    <view class="empty-state" v-if="isBlessingEnabled && (blessings.length === 0 || !blessingPublic)">
-      <image class="empty-visual" src="/static/visuals/empty-blessing.svg" mode="aspectFit" />
-      <text class="empty-text">{{ emptyText }}</text>
-      <text class="empty-sub" v-if="emptySub">{{ emptySub }}</text>
-      <button class="empty-action" @click="focusBlessing" v-if="userStore.weddingId && !loadError">
-        {{ blessingPublic ? '写第一条祝福' : '继续写祝福' }}
-      </button>
+    <EmptyState
+      v-if="isBlessingEnabled && !loading && (blessings.length === 0 || !blessingPublic)"
+      icon="/static/visuals/empty-blessing.svg"
+      :title="emptyText"
+      :desc="emptySub"
+      :action-text="emptyActionText"
+      @action="handleEmptyAction"
+    />
+
+    <view class="loading-state" v-if="isBlessingEnabled && loading">
+      <text>祝福加载中...</text>
     </view>
-  </view>
+  </PageShell>
 </template>
 
 <script setup>
@@ -74,18 +81,27 @@ import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { fetchWedding, submitBlessing } from '@/composables/useCloud.js'
 import { showSuccess, showError, formatRelativeTime } from '@/utils/index.js'
+import PageShell from '@/components/ui/PageShell.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
 const newBlessing = ref('')
 const senderName = ref('')
 const sending = ref(false)
+const loading = ref(false)
 const loadError = ref('')
+const blessingInputFocus = ref(false)
 const activeTemplate = computed(() => store.activeTemplate)
 const templateClass = computed(() => store.templateClass)
 const isBlessingEnabled = computed(() => store.isBlessingEnabled)
 const blessingPublic = computed(() => store.blessingPublic)
 const allowAnonymousBlessing = computed(() => store.allowAnonymousBlessing)
+const blessingDesc = computed(() => {
+  if (!isBlessingEnabled.value) return '祝福墙暂未开放'
+  const countText = blessings.value.length > 0 ? `${blessings.value.length} 条祝福` : '还在等待第一条祝福'
+  return `${activeTemplate.value.shortName} · ${countText}`
+})
 
 const blessings = computed(() => {
   const list = store.blessings?.blessings || []
@@ -103,8 +119,13 @@ const emptyText = computed(() => {
 })
 const emptySub = computed(() => {
   if (!userStore.weddingId) return '当前没有关联的婚礼信息'
-  if (loadError.value) return '请稍后重试或联系新人'
+  if (loadError.value) return '网络或云端暂时不可用，请重新加载或联系新人'
   return ''
+})
+const emptyActionText = computed(() => {
+  if (!userStore.weddingId) return ''
+  if (loadError.value) return '重新加载'
+  return blessingPublic.value ? '写第一条祝福' : '继续写祝福'
 })
 
 function formatTime(ts) {
@@ -113,6 +134,17 @@ function formatTime(ts) {
 
 function focusBlessing() {
   uni.pageScrollTo({ scrollTop: 0, duration: 250 })
+  setTimeout(() => {
+    blessingInputFocus.value = true
+  }, 260)
+}
+
+function handleEmptyAction() {
+  if (loadError.value) {
+    loadBlessings(true)
+    return
+  }
+  focusBlessing()
 }
 
 async function sendTextBlessing() {
@@ -141,9 +173,10 @@ async function sendTextBlessing() {
       created_at: Date.now()
     })
     newBlessing.value = ''
+    loadError.value = ''
     showSuccess('发送成功')
   } catch (err) {
-    showError(err.message || '发送失败')
+    showError(err?.message || '发送失败')
   } finally {
     sending.value = false
     uni.hideLoading()
@@ -151,15 +184,31 @@ async function sendTextBlessing() {
 }
 
 function goToGuide() {
-  uni.switchTab({ url: '/pages/guide/index' })
+  uni.switchTab({
+    url: '/pages/guide/index',
+    fail: (err) => {
+      console.warn('祝福墙打开路书失败:', err)
+      uni.showToast({ title: '路书打开失败，请稍后重试', icon: 'none' })
+    }
+  })
 }
 
-onShow(async () => {
-  if (userStore.weddingId && blessings.value.length === 0) {
-    loadError.value = ''
-    try { await fetchWedding(userStore.weddingId) } catch (err) { loadError.value = err?.message || 'load failed' }
+async function loadBlessings(force = false) {
+  if (!userStore.weddingId || loading.value) return
+  if (!force && blessings.value.length > 0) return
+  loading.value = true
+  loadError.value = ''
+  try {
+    await fetchWedding(userStore.weddingId, force)
+  } catch (err) {
+    console.warn('祝福加载失败:', err)
+    loadError.value = err?.message || '祝福加载失败'
+  } finally {
+    loading.value = false
   }
-})
+}
+
+onShow(() => loadBlessings(false))
 </script>
 
 <style lang="scss" scoped>
@@ -250,6 +299,13 @@ onShow(async () => {
 .send-btn:active { opacity: 0.8; }
 .send-btn[disabled] { opacity: 0.55; }
 
+.loading-state {
+  text-align: center;
+  padding: 90rpx $page-gutter;
+  color: var(--theme-muted, $text-muted);
+  font-size: $font-body-sm;
+}
+
 .feature-closed {
   text-align: center;
   padding: 180rpx 64rpx;
@@ -299,9 +355,10 @@ onShow(async () => {
 
 .item-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   margin-bottom: 12rpx;
+  gap: 16rpx;
 }
 .item-name {
   font-size: 28rpx;
@@ -309,15 +366,13 @@ onShow(async () => {
   color: $text-primary;
   flex: 1;
   min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  line-height: 1.35;
+  word-break: break-word;
 }
 .item-time {
   font-size: 22rpx;
   color: $text-muted;
   flex-shrink: 0;
-  margin-left: 16rpx;
 }
 .item-content {
   display: block;

@@ -1,16 +1,18 @@
 <template>
-  <view class="page">
-    <!-- 顶部标题 -->
-    <view class="page-header">
-      <text class="page-tag">ALBUM</text>
-      <text class="page-title">相册管理</text>
-    </view>
+  <PageShell
+    class="page album-manage-page"
+    kicker="ALBUM"
+    title="相册管理"
+    desc="上传照片、指定首页封面，并保持邀请页和相册内容同步。"
+  >
+
+    <MetricStrip :items="albumMetricItems" />
 
     <!-- 上传区域 -->
-    <view class="upload-area" :class="{ disabled: uploading }" @click="chooseImage">
+    <view class="upload-area" :class="{ disabled: uploading || refreshing || saving }" @click="chooseImage">
       <text class="upload-icon">+</text>
-      <text class="upload-text">{{ uploading ? `上传中 ${uploadProgress.current}/${uploadProgress.total}` : '上传照片' }}</text>
-      <text class="upload-hint">{{ uploading ? '请保持页面打开' : '支持 JPG、PNG 格式，建议先上传竖版封面' }}</text>
+      <text class="upload-text">{{ uploadAreaTitle }}</text>
+      <text class="upload-hint">{{ uploadAreaHint }}</text>
     </view>
 
     <!-- 照片网格 -->
@@ -20,23 +22,42 @@
         <view class="photo-overlay">
           <view class="photo-actions">
             <text class="photo-tag" v-if="photo.type === 'cover'">封面</text>
-            <text class="photo-delete" @click.stop="deletePhoto(photo.id)">✕</text>
+            <text class="photo-cover" :class="{ disabled: albumBusy }" v-else @click.stop="setCover(photo.id)">设封面</text>
+            <image class="photo-delete" :class="{ disabled: albumBusy }" src="/static/visuals/icon-close-light.svg" mode="aspectFit" @click.stop="deletePhoto(photo.id)" />
           </view>
         </view>
       </view>
     </view>
 
     <!-- 空状态 -->
-    <view class="empty-state" v-if="photos.length === 0">
-      <image class="empty-visual empty-icon" src="/static/visuals/empty-album.svg" mode="aspectFit" />
-      <text class="empty-text">还没有照片</text>
-    </view>
-  </view>
+    <EmptyState
+      v-if="photos.length === 0 && !uploading && !refreshing"
+      icon="/static/visuals/empty-album.svg"
+      title="还没有照片"
+      desc="建议先上传一张竖版封面，再补充仪式、外景和合影照片。"
+    />
+
+    <BottomActionBar
+      primary-text="上传照片"
+      secondary-text="刷新"
+      :loading="uploading"
+      :secondary-loading="refreshing"
+      :disabled="saving"
+      :primary-disabled="refreshing"
+      :secondary-disabled="uploading"
+      @primary="chooseImage"
+      @secondary="refreshAlbum"
+    />
+  </PageShell>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
+import PageShell from '@/components/ui/PageShell.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
+import BottomActionBar from '@/components/ui/BottomActionBar.vue'
+import MetricStrip from '@/components/ui/MetricStrip.vue'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { generateId, showSuccess, showError, showLoading, hideLoading } from '@/utils/index.js'
@@ -49,12 +70,32 @@ const userStore = useUserStore()
 const photos = computed(() => store.album?.photos || [])
 const uploading = ref(false)
 const refreshing = ref(false)
+const saving = ref(false)
+const albumBusy = computed(() => uploading.value || refreshing.value || saving.value)
 
 const uploadProgress = ref({ current: 0, total: 0 })
 const MAX_UPLOAD_COUNT = 9
+const albumMetricItems = computed(() => [
+  { label: '照片', value: photos.value.length },
+  { label: '封面', value: photos.value.some(item => item.type === 'cover') ? 1 : 0 },
+  { label: '普通', value: photos.value.filter(item => item.type !== 'cover').length },
+  { label: '单次上限', value: MAX_UPLOAD_COUNT }
+])
+const uploadAreaTitle = computed(() => {
+  if (uploading.value) return `上传中 ${uploadProgress.value.current}/${uploadProgress.value.total}`
+  if (refreshing.value) return '刷新相册中'
+  if (saving.value) return '保存相册中'
+  return '上传照片'
+})
+const uploadAreaHint = computed(() => {
+  if (uploading.value) return '请保持页面打开'
+  if (refreshing.value) return '正在同步云端照片'
+  if (saving.value) return '正在写入云端，请稍候'
+  return '支持 JPG、PNG 格式，建议先上传竖版封面'
+})
 
 async function chooseImage() {
-  if (uploading.value) return
+  if (guardAlbumBusy()) return
   if (!userStore.weddingId) {
     showError('请先创建婚礼')
     return
@@ -101,7 +142,11 @@ async function chooseImage() {
       showSuccess('上传成功')
     } catch (err) {
       store.album = previousAlbum
-      await deleteUploadedPhotos(uploadedPhotos)
+      try {
+        await deleteUploadedPhotos(uploadedPhotos)
+      } catch (cleanupErr) {
+        console.warn('上传失败后清理云文件失败:', cleanupErr)
+      }
       throw err
     }
   } catch (err) {
@@ -111,6 +156,33 @@ async function chooseImage() {
     hideLoading()
     uploading.value = false
     uploadProgress.value = { current: 0, total: 0 }
+  }
+}
+
+async function setCover(id) {
+  if (guardAlbumBusy()) return
+  const target = photos.value.find(item => item.id === id)
+  if (!target) return
+  const previousAlbum = cloneAlbum()
+  const nextAlbum = {
+    ...previousAlbum,
+    photos: previousAlbum.photos.map(item => ({
+      ...item,
+      type: item.id === id ? 'cover' : 'normal'
+    })),
+    updated_at: new Date().toISOString()
+  }
+  saving.value = true
+  try {
+    store.album = nextAlbum
+    await saveAlbumData(nextAlbum)
+    showSuccess('已设为封面')
+  } catch (err) {
+    store.album = previousAlbum
+    console.error('设置封面失败:', err)
+    showError(err?.message || '设置失败，请重试')
+  } finally {
+    saving.value = false
   }
 }
 
@@ -289,8 +361,16 @@ function showUploadError(err) {
 
 function openAppSettings() {
   const api = typeof wx !== 'undefined' && wx.openSetting ? wx : (typeof uni !== 'undefined' && uni.openSetting ? uni : null)
-  if (!api) return
-  api.openSetting({})
+  if (!api) {
+    showError('当前环境无法打开设置，请在微信中手动开启相册权限')
+    return
+  }
+  api.openSetting({
+    fail: (err) => {
+      console.warn('打开相册设置失败:', err)
+      showError('打开设置失败，请在微信中手动开启相册权限')
+    }
+  })
 }
 
 function buildAlbumCloudPath(localPath, id) {
@@ -312,8 +392,8 @@ async function deleteUploadedPhotos(photoList) {
 }
 
 async function refreshAlbum() {
-  if (!useOwnerGuard()) return
-  if (!userStore.weddingId || refreshing.value) return
+  if (!(await useOwnerGuard())) return
+  if (!userStore.weddingId || refreshing.value || uploading.value || saving.value) return
 
   refreshing.value = true
   try {
@@ -327,6 +407,7 @@ async function refreshAlbum() {
 }
 
 function deletePhoto(id) {
+  if (guardAlbumBusy()) return
   const photo = photos.value.find(item => item.id === id)
   uni.showModal({
     title: '确认删除',
@@ -346,18 +427,40 @@ function deletePhoto(id) {
         updated_at: new Date().toISOString()
       }
 
+      saving.value = true
       try {
         store.album = nextAlbum
         await saveAlbumData(nextAlbum)
-        if (photo?.url) await deleteFiles([photo.url])
-        showSuccess('已删除')
+        let cleanupFailed = false
+        if (photo?.url) {
+          try {
+            await deleteFiles([photo.url])
+          } catch (cleanupErr) {
+            cleanupFailed = true
+            console.warn('照片云文件清理失败:', cleanupErr)
+          }
+        }
+        showSuccess(cleanupFailed ? '已移出相册' : '已删除')
       } catch (err) {
         store.album = previousAlbum
         console.error('照片删除失败:', err)
         showError(err?.message || '删除失败，请重试')
+      } finally {
+        saving.value = false
       }
     }
   })
+}
+
+function guardAlbumBusy() {
+  if (!albumBusy.value) return false
+  const message = uploading.value
+    ? '照片正在上传，请稍候'
+    : refreshing.value
+      ? '相册正在刷新，请稍候'
+      : '相册正在保存，请稍候'
+  showError(message)
+  return true
 }
 
 async function saveAlbumData(albumData) {
@@ -480,15 +583,29 @@ onShow(refreshAlbum)
   border-radius: 4rpx;
   font-weight: 500;
 }
+.photo-cover {
+  padding: 4rpx 10rpx;
+  background: rgba(255,255,255,0.88);
+  color: $text-primary;
+  font-size: 18rpx;
+  border-radius: 4rpx;
+  font-weight: 500;
+}
+.photo-cover.disabled {
+  opacity: 0.55;
+  pointer-events: none;
+}
 .photo-delete {
   width: 40rpx;
   height: 40rpx;
-  line-height: 40rpx;
-  text-align: center;
+  padding: 9rpx;
+  box-sizing: border-box;
   background: rgba(0,0,0,0.5);
-  color: #fff;
-  font-size: 22rpx;
   border-radius: 50%;
+}
+.photo-delete.disabled {
+  opacity: 0.42;
+  pointer-events: none;
 }
 
 /* 空状态 */

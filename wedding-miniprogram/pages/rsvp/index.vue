@@ -1,12 +1,12 @@
 <template>
-  <view class="page" :class="templateClass">
-    <!-- 顶部标题 -->
-    <view class="page-header" v-if="!submitted && isRsvpEnabled">
-      <text class="page-tag">RSVP</text>
-      <text class="page-title">确认出席</text>
-      <view class="page-divider" />
-      <text class="page-desc">请告诉我们是否能见证这美好时刻</text>
-    </view>
+  <PageShell
+    class="rsvp-page"
+    :theme-class="templateClass"
+    :kicker="pageKicker"
+    :title="pageTitle"
+    :desc="pageDesc"
+    :safe-bottom="!submitted && isRsvpEnabled && !loadError"
+  >
 
     <view class="rsvp-brief" v-if="!submitted && isRsvpEnabled">
       <view>
@@ -30,14 +30,25 @@
     </view>
 
     <!-- 表单 -->
-    <view class="feature-closed" v-if="!submitted && !isRsvpEnabled">
-      <image class="empty-visual" src="/static/visuals/icon-rsvp.svg" mode="aspectFit" />
-      <text class="feature-title">新人暂未开放在线回执</text>
-      <text class="feature-desc">您仍可查看婚礼时间、地点和到场路线。</text>
-      <button class="feature-action" @click="goToGuide">查看路线</button>
-    </view>
+    <EmptyState
+      v-if="loadError && !submitted"
+      icon="/static/visuals/icon-warning.svg"
+      title="婚礼信息加载失败"
+      :desc="loadError"
+      action-text="重新加载"
+      @action="reloadWedding"
+    />
 
-    <view class="form" v-if="!submitted && isRsvpEnabled">
+    <EmptyState
+      v-else-if="!submitted && !isRsvpEnabled"
+      icon="/static/visuals/icon-rsvp.svg"
+      title="新人暂未开放在线回执"
+      desc="您仍可查看婚礼时间、地点和到场路线。"
+      action-text="查看路线"
+      @action="goToGuide"
+    />
+
+    <view class="form" v-else-if="!submitted && isRsvpEnabled">
       <!-- 姓名 -->
       <view class="form-group">
         <view class="form-label">
@@ -49,6 +60,7 @@
           v-model="form.name"
           placeholder="您的称呼"
           placeholder-class="placeholder"
+          maxlength="20"
         />
       </view>
 
@@ -62,7 +74,7 @@
           <view
             class="radio-item"
             :class="{ active: form.status === 'attending' }"
-            @click="form.status = 'attending'"
+            @click="setAttendanceStatus('attending')"
           >
             <view class="radio-dot" />
             <text class="radio-label">我会出席</text>
@@ -70,7 +82,7 @@
           <view
             class="radio-item"
             :class="{ active: form.status === 'uncertain' }"
-            @click="form.status = 'uncertain'"
+            @click="setAttendanceStatus('uncertain')"
           >
             <view class="radio-dot" />
             <text class="radio-label">不确定</text>
@@ -78,7 +90,7 @@
           <view
             class="radio-item"
             :class="{ active: form.status === 'declined' }"
-            @click="form.status = 'declined'"
+            @click="setAttendanceStatus('declined')"
           >
             <view class="radio-dot" />
             <text class="radio-label">无法出席</text>
@@ -112,11 +124,11 @@
           <text class="label-en">GUESTS</text>
         </view>
         <view class="stepper">
-          <view class="step-btn" @click="form.guestCount = Math.max(1, form.guestCount - 1)">
+          <view class="step-btn" @click="decrementGuestCount">
             <text class="step-icon">−</text>
           </view>
           <text class="step-value">{{ form.guestCount }}</text>
-          <view class="step-btn" @click="form.guestCount = Math.min(form.guestCount + 1, 20)">
+          <view class="step-btn" @click="incrementGuestCount">
             <text class="step-icon">+</text>
           </view>
         </view>
@@ -133,6 +145,7 @@
           class="form-input"
           v-model="form.phone"
           type="number"
+          maxlength="20"
           :placeholder="phoneRequired ? '用于接收通知' : '选填，方便新人联系'"
           placeholder-class="placeholder"
         />
@@ -198,6 +211,7 @@
           v-model="form.companionNote"
           placeholder="如：携伴 1 位 / 儿童座椅 / 家人同行"
           placeholder-class="placeholder"
+          maxlength="80"
         />
       </view>
 
@@ -217,17 +231,10 @@
         <text class="char-count">{{ (form.message || '').length }}/200</text>
       </view>
 
-      <!-- 提交 -->
-      <view class="form-actions">
-        <button class="submit-btn" @click="handleSubmit" :disabled="submitting">
-          <text v-if="!submitting">确认提交</text>
-          <text v-else>提交中...</text>
-        </button>
-      </view>
     </view>
 
     <!-- 成功页 -->
-    <view class="success-page" v-else>
+    <view class="success-page" v-else-if="submitted">
       <view class="success-ring">
         <view class="success-circle">
           <text class="success-icon">✓</text>
@@ -259,7 +266,7 @@
           <text class="info-value">{{ form.guestCount }} 人</text>
         </view>
       </view>
-      <button class="back-btn" @click="resetForm">
+      <button class="back-btn" @click="goHome">
         <text>返回首页</text>
       </button>
       <view class="success-actions" v-if="form.status !== 'declined'">
@@ -268,12 +275,25 @@
         <button class="success-action" @click="goToBlessing">写祝福</button>
       </view>
     </view>
-  </view>
+    <BottomActionBar
+      v-if="!submitted && isRsvpEnabled && !loadError"
+      primary-text="确认提交"
+      secondary-text="查看路线"
+      :loading="submitting"
+      :disabled="submitting"
+      :primary-disabled="!requiredFieldsReady"
+      @primary="handleSubmit"
+      @secondary="goToGuide"
+    />
+  </PageShell>
 </template>
 
 <script setup>
 import { ref, reactive, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
+import PageShell from '@/components/ui/PageShell.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
+import BottomActionBar from '@/components/ui/BottomActionBar.vue'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { fetchWedding, submitRSVP } from '@/composables/useCloud.js'
@@ -284,11 +304,30 @@ const userStore = useUserStore()
 
 const submitted = ref(false)
 const submitting = ref(false)
+const loading = ref(false)
+const loadError = ref('')
 const activeTemplate = computed(() => store.activeTemplate)
 const templateClass = computed(() => store.templateClass)
 const isRsvpEnabled = computed(() => store.isRsvpEnabled)
 const phoneRequired = computed(() => store.rsvpPhoneRequired)
 const allowRsvpUpdate = computed(() => store.allowRsvpUpdate)
+const pageKicker = computed(() => (submitted.value ? '' : 'RSVP'))
+const pageTitle = computed(() => {
+  if (submitted.value) return ''
+  if (loadError.value) return '确认出席'
+  return isRsvpEnabled.value ? '确认出席' : '回执未开放'
+})
+const pageDesc = computed(() => {
+  if (submitted.value) return ''
+  if (loadError.value) return '请重新加载邀请信息后再提交回执。'
+  return isRsvpEnabled.value ? '请告诉我们是否能见证这美好时刻' : '新人暂未开放在线回执，路线和流程仍可查看。'
+})
+const requiredFieldsReady = computed(() => {
+  if (loading.value || !userStore.weddingId) return false
+  if (!form.name.trim()) return false
+  if (form.status !== 'declined' && phoneRequired.value && !form.phone.trim()) return false
+  return true
+})
 
 const form = reactive({
   name: '',
@@ -328,8 +367,39 @@ function toggleDiet(diet) {
   }
 }
 
+function setAttendanceStatus(status) {
+  form.status = status
+  if (status === 'declined') {
+    form.guestCount = 0
+    form.phone = ''
+    form.arrivalTime = ''
+    form.transportMode = ''
+    form.companionNote = ''
+    form.dietary = []
+    return
+  }
+  if (Number(form.guestCount || 0) < 1) {
+    form.guestCount = 1
+  }
+}
+
 function onArrivalTimeChange(e) {
   form.arrivalTime = e.detail.value
+}
+
+function isValidPhone(phone) {
+  if (!phone) return true
+  return /^\d{6,20}$/.test(String(phone).trim())
+}
+
+function incrementGuestCount() {
+  if (form.status === 'declined') return
+  form.guestCount = Math.min(Number(form.guestCount || 1) + 1, 20)
+}
+
+function decrementGuestCount() {
+  if (form.status === 'declined') return
+  form.guestCount = Math.max(1, Number(form.guestCount || 1) - 1)
 }
 
 async function handleSubmit() {
@@ -343,6 +413,10 @@ async function handleSubmit() {
   }
   if (form.status !== 'declined' && phoneRequired.value && !form.phone.trim()) {
     uni.showToast({ title: '请输入联系电话', icon: 'none' })
+    return
+  }
+  if (form.status !== 'declined' && form.phone.trim() && !isValidPhone(form.phone)) {
+    uni.showToast({ title: '请输入有效联系电话', icon: 'none' })
     return
   }
   if (!allowRsvpUpdate.value) {
@@ -408,15 +482,41 @@ function resetForm() {
   form.companionNote = ''
   form.dietary = []
   form.message = ''
-  uni.reLaunch({ url: '/pages/index/index' })
+  relaunchOrToast('/pages/index/index', '返回首页')
+}
+
+function goHome() {
+  relaunchOrToast('/pages/index/index', '返回首页')
 }
 
 function goToGuide() {
-  uni.switchTab({ url: '/pages/guide/index' })
+  switchTabOrToast('/pages/guide/index', '打开路书')
 }
 
 function goToBlessing() {
-  uni.navigateTo({ url: '/pages/blessing/index' })
+  uni.navigateTo({
+    url: '/pages/blessing/index',
+    fail: (err) => routeFail('打开祝福墙', err)
+  })
+}
+
+function routeFail(label, err) {
+  console.warn(`${label}失败:`, err)
+  uni.showToast({ title: `${label}失败，请稍后重试`, icon: 'none' })
+}
+
+function relaunchOrToast(url, label) {
+  uni.reLaunch({
+    url,
+    fail: (err) => routeFail(label, err)
+  })
+}
+
+function switchTabOrToast(url, label) {
+  uni.switchTab({
+    url,
+    fail: (err) => routeFail(label, err)
+  })
 }
 
 function openCalendar() {
@@ -427,13 +527,42 @@ function openCalendar() {
     return
   }
   const startTime = Math.floor(new Date(`${date}T${time}`).getTime() / 1000)
+  if (!Number.isFinite(startTime)) {
+    uni.showToast({ title: '婚礼日期格式有误', icon: 'none' })
+    return
+  }
   if (typeof wx !== 'undefined' && wx.addPhoneCalendar) {
     wx.addPhoneCalendar({
       title: `${store.coupleName} 的婚礼`,
       startTime,
       endTime: startTime + 4 * 3600,
       location: store.primaryVenue?.name || store.venueName || '',
-      description: '甜囍手册婚礼提醒'
+      description: '甜囍手册婚礼提醒',
+      success: () => {
+        uni.showToast({ title: '已添加到日历', icon: 'success' })
+      },
+      fail: (err) => {
+        if (err?.errMsg?.includes('auth deny')) {
+          uni.showModal({
+            title: '需要授权',
+            content: '请允许添加到日历权限',
+            confirmText: '去设置',
+            success: (res) => {
+              if (res.confirm) {
+                uni.openSetting({
+                  fail: (settingErr) => {
+                    console.warn('打开设置失败:', settingErr)
+                    uni.showToast({ title: '打开设置失败', icon: 'none' })
+                  }
+                })
+              }
+            }
+          })
+        } else {
+          console.warn('加入日历失败:', err)
+          uni.showToast({ title: '添加失败，请手动添加', icon: 'none' })
+        }
+      }
     })
   } else {
     uni.showToast({ title: '请手动添加到日历', icon: 'none' })
@@ -444,9 +573,7 @@ onLoad(async (options) => {
   if (options?.id) {
     userStore.setWeddingId(options.id)
   }
-  if (userStore.weddingId && !(store.guests?.guests?.length)) {
-    try { await fetchWedding(userStore.weddingId) } catch (err) {}
-  }
+  await loadWedding()
   const rsvp = (store.guests?.guests || []).find(item => {
     if (item.is_current_user === true) return true
     return (form.phone && item.phone === form.phone) || (userStore.openid && item.openid === userStore.openid)
@@ -456,6 +583,7 @@ onLoad(async (options) => {
     form.status = rsvp.rsvp_status || rsvp.status || 'attending'
     form.relationship = rsvp.relationship || ''
     form.guestCount = rsvp.attending_count || rsvp.guest_count || rsvp.guestCount || 1
+    if (form.status === 'declined') form.guestCount = 0
     form.phone = rsvp.phone || ''
     form.arrivalTime = rsvp.arrival_time || ''
     form.transportMode = rsvp.transport_mode || ''
@@ -464,14 +592,32 @@ onLoad(async (options) => {
     form.message = rsvp.message || ''
   }
 })
+
+async function loadWedding(force = false) {
+  loadError.value = ''
+  if (!userStore.weddingId || (store.guests?.guests?.length && !force)) return
+  loading.value = true
+  try {
+    await fetchWedding(userStore.weddingId, force)
+  } catch (err) {
+    console.error('回执页加载婚礼失败:', err)
+    loadError.value = err?.message || '暂时无法读取婚礼信息，请检查网络后重试。'
+    uni.showToast({ title: '婚礼信息加载失败', icon: 'none' })
+  } finally {
+    loading.value = false
+  }
+}
+
+async function reloadWedding() {
+  await loadWedding(true)
+}
 </script>
 
 <style lang="scss" scoped>
-.page {
+.rsvp-page {
   background-color: var(--theme-page, $bg-color);
   color: var(--theme-ink, $text-primary);
   min-height: 100vh;
-  padding-bottom: calc(80rpx + env(safe-area-inset-bottom));
 }
 
 /* 顶部标题 */

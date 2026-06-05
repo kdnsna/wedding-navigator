@@ -1,25 +1,20 @@
 <template>
-  <view class="page" :class="templateClass">
-    <!-- 顶部标题 -->
-    <view class="page-header" v-if="isTimelineEnabled">
-      <text class="page-tag">TIMELINE</text>
-      <text class="page-title">婚礼流程</text>
-      <view class="page-divider" />
-      <text class="page-desc" v-if="countdown && !countdown.isToday">
-        距离婚礼还有 {{ countdown.days }} 天
-      </text>
-      <text class="page-desc today" v-if="countdown?.isToday">
-        今天是我们的婚礼日
-      </text>
-    </view>
+  <PageShell
+    title="婚礼流程"
+    kicker="TIMELINE"
+    :desc="timelineDesc"
+    :theme-class="templateClass"
+  >
 
     <!-- 日期展示 -->
-    <view class="feature-closed" v-if="!isTimelineEnabled">
-      <image class="empty-visual" src="/static/visuals/icon-timeline.svg" mode="aspectFit" />
-      <text class="feature-title">新人暂未开放婚礼流程</text>
-      <text class="feature-desc">您仍可查看婚礼时间、地点和到场路线。</text>
-      <button class="feature-action" @click="goToGuide">查看路线</button>
-    </view>
+    <EmptyState
+      v-if="!isTimelineEnabled"
+      icon="/static/visuals/icon-timeline.svg"
+      title="新人暂未开放婚礼流程"
+      desc="您仍可查看婚礼时间、地点和到场路线。"
+      action-text="查看路线"
+      @action="goToGuide"
+    />
 
     <view class="date-banner" v-if="isTimelineEnabled && weddingDate">
       <text class="date-num">{{ weddingDay }}</text>
@@ -56,7 +51,7 @@
             <view class="timeline-dot" />
             <view class="timeline-dot-ring" v-if="getEventStatus(event.time) === 'current'" />
           </view>
-          <view class="timeline-line" v-if="index < events.length - 1" :class="{ dashed: index % 2 === 0 }" />
+          <view class="timeline-line" v-if="index < visibleEvents.length - 1" :class="{ dashed: index % 2 === 0 }" />
         </view>
         <view class="timeline-content">
           <view class="content-header">
@@ -81,10 +76,17 @@
     </view>
 
     <!-- 空状态 -->
-    <view class="empty-state" v-if="isTimelineEnabled && visibleEvents.length === 0">
-      <image class="empty-visual empty-icon" src="/static/visuals/empty-timeline.svg" mode="aspectFit" />
-      <text class="empty-text">{{ emptyText }}</text>
-      <text class="empty-sub">{{ emptySub }}</text>
+    <EmptyState
+      v-if="isTimelineEnabled && !loading && visibleEvents.length === 0"
+      icon="/static/visuals/empty-timeline.svg"
+      :title="emptyText"
+      :desc="emptySub"
+      :action-text="timelineActionText"
+      @action="handleEmptyAction"
+    />
+
+    <view class="loading-state" v-if="isTimelineEnabled && loading">
+      <text>流程加载中...</text>
     </view>
 
     <!-- 底部 -->
@@ -92,7 +94,7 @@
       <view class="footer-line" />
       <text class="footer-text">以上为预计安排，以现场为准</text>
     </view>
-  </view>
+  </PageShell>
 </template>
 
 <script setup>
@@ -101,9 +103,12 @@ import { onShow } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { fetchWedding } from '@/composables/useCloud.js'
+import PageShell from '@/components/ui/PageShell.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
+const loading = ref(false)
 const loadError = ref('')
 const templateClass = computed(() => store.templateClass)
 const isTimelineEnabled = computed(() => store.isTimelineEnabled)
@@ -111,6 +116,12 @@ const activeRole = ref('all')
 
 const weddingDate = computed(() => store.weddingDate)
 const countdown = computed(() => store.countdown)
+const timelineDesc = computed(() => {
+  if (!isTimelineEnabled.value) return '流程暂未开放，您仍可查看到场路书'
+  if (countdown.value?.isToday) return '今天是我们的婚礼日'
+  if (countdown.value) return `距离婚礼还有 ${countdown.value.days} 天`
+  return '按角色查看婚礼当天安排'
+})
 const events = computed(() => store.timeline?.events || [])
 const venues = computed(() => store.venues?.venues || [])
 const roles = computed(() => store.timeline?.roles || [])
@@ -134,12 +145,20 @@ const visibleEvents = computed(() => {
 const emptyText = computed(() => {
   if (!userStore.weddingId) return '请从有效婚礼邀请进入'
   if (loadError.value) return '流程加载失败'
+  if (activeRole.value !== 'all') return '当前角色暂无专属安排'
   return '暂无流程安排'
 })
 const emptySub = computed(() => {
   if (!userStore.weddingId) return '当前没有关联的婚礼信息'
-  if (loadError.value) return '请稍后重试或联系新人'
+  if (loadError.value) return '网络或云端暂时不可用，请重新加载或联系新人'
+  if (activeRole.value !== 'all') return '可以切回“全部”查看完整婚礼流程'
   return '婚礼当天的时间表将在这里展示'
+})
+const timelineActionText = computed(() => {
+  if (!userStore.weddingId) return ''
+  if (loadError.value) return '重新加载'
+  if (activeRole.value !== 'all') return '查看全部流程'
+  return '查看路线'
 })
 
 const weddingDay = computed(() => {
@@ -187,15 +206,43 @@ function getEventStatus(timeStr) {
 }
 
 function goToGuide() {
-  uni.switchTab({ url: '/pages/guide/index' })
+  uni.switchTab({
+    url: '/pages/guide/index',
+    fail: (err) => {
+      console.warn('流程打开路书失败:', err)
+      uni.showToast({ title: '路书打开失败，请稍后重试', icon: 'none' })
+    }
+  })
 }
 
-onShow(async () => {
-  if (userStore.weddingId && events.value.length === 0) {
-    loadError.value = ''
-    try { await fetchWedding(userStore.weddingId) } catch (err) { loadError.value = err?.message || 'load failed' }
+function handleEmptyAction() {
+  if (loadError.value) {
+    loadTimeline(true)
+    return
   }
-})
+  if (activeRole.value !== 'all') {
+    activeRole.value = 'all'
+    return
+  }
+  goToGuide()
+}
+
+async function loadTimeline(force = false) {
+  if (!userStore.weddingId || loading.value) return
+  if (!force && events.value.length > 0) return
+  loading.value = true
+  loadError.value = ''
+  try {
+    await fetchWedding(userStore.weddingId, force)
+  } catch (err) {
+    console.warn('流程加载失败:', err)
+    loadError.value = err?.message || '流程加载失败'
+  } finally {
+    loading.value = false
+  }
+}
+
+onShow(() => loadTimeline(false))
 </script>
 
 <style lang="scss" scoped>
@@ -268,6 +315,13 @@ onShow(async () => {
   font-size: 26rpx;
 }
 .feature-action::after { border: none; }
+
+.loading-state {
+  text-align: center;
+  padding: 90rpx $page-gutter;
+  color: var(--theme-muted, $text-muted);
+  font-size: $font-body-sm;
+}
 
 /* 日期横幅 */
 .date-banner {
@@ -400,7 +454,7 @@ onShow(async () => {
 }
 .content-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 16rpx;
   margin-bottom: 12rpx;
@@ -410,12 +464,11 @@ onShow(async () => {
   font-weight: 600;
   color: $text-primary;
   min-width: 0;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  line-height: 1.42;
+  word-break: break-word;
 }
 .status-badge {
+  flex-shrink: 0;
   padding: 4rpx 12rpx;
   border-radius: 6rpx;
   font-size: 18rpx;

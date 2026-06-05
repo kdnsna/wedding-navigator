@@ -88,10 +88,50 @@ function walk(dir) {
 
 function listCloudFunctionDirs() {
   const cloudRoot = path.join(root, 'cloudfunctions')
-  return fs.readdirSync(cloudRoot, { withFileTypes: true })
-    .filter(entry => entry.isDirectory() && fs.existsSync(path.join(cloudRoot, entry.name, 'index.js')))
+  const directoryNames = fs.readdirSync(cloudRoot, { withFileTypes: true })
+    .filter(entry => entry.isDirectory())
     .map(entry => entry.name)
     .sort()
+
+  assertNoDuplicateSuffixedDirs('cloudfunctions source', directoryNames)
+
+  return directoryNames
+    .filter(name => fs.existsSync(path.join(cloudRoot, name, 'index.js')))
+    .sort()
+}
+
+function listBuildCloudFunctionDirs() {
+  const cloudRoot = path.join(root, 'dist/build/mp-weixin/cloudfunctions')
+  if (!fs.existsSync(cloudRoot)) return null
+
+  return fs.readdirSync(cloudRoot, { withFileTypes: true })
+    .filter(entry => entry.isDirectory())
+    .map(entry => entry.name)
+    .sort()
+}
+
+function getCloudbasercFunctionNames(file = 'cloudbaserc.json') {
+  const cloudbaserc = readJson(file)
+  assert(Array.isArray(cloudbaserc.functions), `${file} must declare deployable functions`)
+  const names = cloudbaserc.functions.map(fn => fn.name).filter(Boolean).sort()
+  assert(new Set(names).size === names.length, `${file} must not contain duplicate cloud function entries`)
+  return names
+}
+
+function assertNoDuplicateSuffixedDirs(label, names) {
+  const duplicateSuffixedNames = names.filter(name => /\s+\d+$/.test(name))
+  assert(!duplicateSuffixedNames.length, `${label} must not contain duplicate-suffixed directories: ${duplicateSuffixedNames.join(', ')}`)
+}
+
+function assertCloudFunctionSet(label, actualNames, expectedNames) {
+  assertNoDuplicateSuffixedDirs(label, actualNames)
+
+  const missing = expectedNames.filter(name => !actualNames.includes(name))
+  const extra = actualNames.filter(name => !expectedNames.includes(name))
+  assert(
+    !missing.length && !extra.length,
+    `${label} must match cloudbaserc functions. missing: ${missing.join(', ') || 'none'}; extra: ${extra.join(', ') || 'none'}`
+  )
 }
 
 function checkRsvpContract() {
@@ -147,9 +187,8 @@ function checkCloudFunctionDeployConfig() {
   assert(cloudbaserc.functionRoot === 'cloudfunctions', 'cloudbaserc must deploy from cloudfunctions root')
   assert(Array.isArray(cloudbaserc.functions), 'cloudbaserc must declare deployable functions')
 
-  const deployNames = cloudbaserc.functions.map(fn => fn.name).sort()
-  assert(new Set(deployNames).size === deployNames.length, 'cloudbaserc must not contain duplicate cloud function entries')
-  assert(JSON.stringify(deployNames) === JSON.stringify(cloudFunctions), `cloudbaserc must include every cloud function. expected ${cloudFunctions.join(', ')}, got ${deployNames.join(', ')}`)
+  const deployNames = getCloudbasercFunctionNames()
+  assertCloudFunctionSet('cloudfunctions source', cloudFunctions, deployNames)
 
   const deployByName = new Map(cloudbaserc.functions.map(fn => [fn.name, fn]))
   for (const name of cloudFunctions) {
@@ -176,6 +215,16 @@ function checkCloudFunctionDeployConfig() {
     const openapi = readJson(`cloudfunctions/${name}/config.json`).permissions.openapi
     assert(openapi.includes('security.msgSecCheck'), `${name} must declare security.msgSecCheck permission`)
   }
+}
+
+function checkBuildCloudfunctionsOutputIfPresent() {
+  const actualNames = listBuildCloudFunctionDirs()
+  if (!actualNames) return
+
+  const expectedNames = getCloudbasercFunctionNames()
+  assertCloudFunctionSet('dist/build/mp-weixin/cloudfunctions', actualNames, expectedNames)
+  assert(fs.existsSync(path.join(root, 'dist/build/mp-weixin/cloudbaserc.json')), 'dist/build/mp-weixin must include cloudbaserc.json')
+  assertCloudFunctionSet('dist/build/mp-weixin/cloudbaserc.json', getCloudbasercFunctionNames('dist/build/mp-weixin/cloudbaserc.json'), expectedNames)
 }
 
 function checkDataContracts() {
@@ -333,6 +382,11 @@ function checkUploadScript() {
   assertIncludes('package.json', 'postbuild:mp-weixin', 'package scripts must copy cloudfunctions into the WeChat build output')
   assert(fs.existsSync(path.join(root, 'scripts/copy-cloudfunctions-to-dist.js')), 'cloud function copy script must exist')
   assertIncludes('scripts/copy-cloudfunctions-to-dist.js', 'cloudbaserc.json', 'cloud function copy script must copy cloudbaserc into build output')
+
+  const readme = read('README.md')
+  assertIncludes('README.md', 'WECHAT_DEVTOOLS_CLI_PATH', 'README must document WeChat DevTools CLI upload configuration')
+  assertIncludes('README.md', 'node upload-ci.mjs', 'README must document miniprogram-ci as the private-key upload path')
+  assert(!/MINIPROGRAM_PRIVATE_KEY_PATH=[^\n]+npm run upload:mp-weixin/.test(readme), 'README must not imply DevTools CLI upload requires a private key')
 }
 
 function checkReleaseDocs() {
@@ -464,6 +518,7 @@ checkRsvpContract()
 checkOwnerGuard()
 checkCloudSafety()
 checkCloudFunctionDeployConfig()
+checkBuildCloudfunctionsOutputIfPresent()
 checkDataContracts()
 checkTemplateSystem()
 checkCommercializationFoundations()

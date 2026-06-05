@@ -3,17 +3,17 @@
     <!-- 顶部标题 -->
     <view class="page-header">
       <view class="header-top">
-        <text class="back-btn" @click="goBack">‹</text>
+        <image class="back-btn" src="/static/visuals/icon-back.svg" mode="aspectFit" @click="goBack" />
         <text class="page-title">婚礼海报</text>
-        <text class="share-btn" @click="sharePoster">分享</text>
+        <button class="share-btn" open-type="share" :disabled="!posterReady">分享</button>
       </view>
       <text class="page-desc">保存图片分享到朋友圈，邀请更多人见证</text>
     </view>
 
     <!-- 海报预览 -->
     <view class="poster-preview">
-      <view class="poster-container">
-        <view class="poster-wrapper">
+      <view class="poster-container" :style="previewFrameStyle">
+        <view class="poster-wrapper" :style="posterScaleStyle">
           <canvas
             canvas-id="posterCanvas"
             id="posterCanvas"
@@ -35,7 +35,7 @@
         <text class="action-text">保存到相册</text>
       </button>
       <button class="action-btn" open-type="share" :disabled="!posterReady">
-        <text class="action-icon">↗</text>
+        <image class="action-visual-icon" src="/static/visuals/icon-share.svg" mode="aspectFit" />
         <text class="action-text">发给好友</text>
       </button>
     </view>
@@ -69,6 +69,26 @@ const loadingText = ref('生成海报中...')
 const posterNotice = ref('')
 const canvasStyle = POSTER_CANVAS_STYLE
 const templateClass = computed(() => store.templateClass)
+const windowWidth = ref(375)
+const previewScale = computed(() => Math.min(Math.max((windowWidth.value - 32) / 375, 0.68), 1))
+const previewFrameStyle = computed(() => ({
+  width: `${375 * previewScale.value}px`,
+  height: `${667 * previewScale.value}px`
+}))
+const posterScaleStyle = computed(() => ({
+  width: '375px',
+  height: '667px',
+  transform: `scale(${previewScale.value})`,
+  transformOrigin: 'top left'
+}))
+
+function syncViewport() {
+  try {
+    windowWidth.value = uni.getSystemInfoSync()?.windowWidth || 375
+  } catch (err) {
+    windowWidth.value = 375
+  }
+}
 
 async function generateQRCode() {
   loading.value = true
@@ -148,16 +168,24 @@ async function saveToAlbum() {
         },
         fail: (err) => {
           if (err.errMsg?.includes('auth deny')) {
+            const handledError = Object.assign(new Error('需要相册授权'), { handled: true })
             uni.showModal({
               title: '需要授权',
               content: '请允许保存图片到相册',
               confirmText: '去设置',
               success: (res) => {
                 if (res.confirm) {
-                  uni.openSetting()
+                  uni.openSetting({
+                    fail: (settingErr) => {
+                      console.warn('打开设置失败:', settingErr)
+                      uni.showToast({ title: '打开设置失败', icon: 'none' })
+                    }
+                  })
                 }
               }
             })
+            reject(handledError)
+            return
           } else {
             uni.showToast({ title: '保存失败', icon: 'none' })
           }
@@ -167,7 +195,9 @@ async function saveToAlbum() {
     })
   } catch (err) {
     console.error('saveToAlbum error:', err)
-    uni.showToast({ title: '保存失败', icon: 'none' })
+    if (!err?.handled) {
+      uni.showToast({ title: '保存失败', icon: 'none' })
+    }
   } finally {
     loading.value = false
   }
@@ -184,22 +214,40 @@ function canvasToTempFilePath() {
   })
 }
 
-function sharePoster() {
-  // 触发页面分享
-  uni.showToast({ title: '点击右上角分享', icon: 'none' })
-}
-
 function goBack() {
-  uni.navigateBack()
+  const pages = getCurrentPages()
+  if (pages.length > 1) {
+    uni.navigateBack({
+      fail: (err) => {
+        console.warn('海报页返回失败:', err)
+        uni.switchTab({
+          url: '/pages/index/index',
+          fail: (tabErr) => {
+            console.warn('海报页返回首页失败:', tabErr)
+            uni.showToast({ title: '返回失败，请稍后重试', icon: 'none' })
+          }
+        })
+      }
+    })
+  } else {
+    uni.switchTab({
+      url: '/pages/index/index',
+      fail: (err) => {
+        console.warn('海报页返回首页失败:', err)
+        uni.showToast({ title: '返回失败，请稍后重试', icon: 'none' })
+      }
+    })
+  }
 }
 
 onShareAppMessage(() => {
   const groom = store.invitation?.couple?.groom?.name || '我们'
   const bride = store.invitation?.couple?.bride?.name || ''
   const title = `${groom} & ${bride} 诚邀您见证我们的婚礼`
+  const path = userStore.weddingId ? `/pages/index/index?id=${encodeURIComponent(userStore.weddingId)}` : '/pages/index/index'
   return {
     title,
-    path: `/pages/index/index?id=${userStore.weddingId}`
+    path
   }
 })
 
@@ -217,16 +265,25 @@ async function ensureWeddingLoaded(options = {}) {
 }
 
 function parseWeddingId(options = {}) {
-  if (options.id) return options.id
-  if (options.weddingId) return options.weddingId
-  const scene = options.scene ? decodeURIComponent(options.scene) : ''
+  if (options.id) return decodeSceneValue(options.id)
+  if (options.weddingId) return decodeSceneValue(options.weddingId)
+  const scene = options.scene ? decodeSceneValue(options.scene) : ''
   if (!scene) return ''
   if (!scene.includes('=')) return scene
   const pair = scene.split('&').map(item => item.split('=')).find(([key]) => key === 'id' || key === 'weddingId')
-  return pair?.[1] || ''
+  return pair?.[1] ? decodeSceneValue(pair[1]) : ''
+}
+
+function decodeSceneValue(value) {
+  try {
+    return decodeURIComponent(value)
+  } catch (err) {
+    return value
+  }
 }
 
 onLoad(async (options) => {
+  syncViewport()
   await ensureWeddingLoaded(options)
   await generateQRCode()
   await redrawPoster()
@@ -253,10 +310,10 @@ onLoad(async (options) => {
   margin-bottom: 12rpx;
 }
 .back-btn {
-  font-size: 48rpx;
-  color: $text-primary;
-  padding: 8rpx 16rpx;
-  line-height: 1;
+  width: 52rpx;
+  height: 52rpx;
+  padding: 8rpx;
+  box-sizing: border-box;
 }
 .page-title {
   font-size: 32rpx;
@@ -267,9 +324,20 @@ onLoad(async (options) => {
   transform: translateX(-50%);
 }
 .share-btn {
+  min-width: 96rpx;
+  height: 52rpx;
+  line-height: 52rpx;
   font-size: 28rpx;
   color: $color-primary;
-  padding: 8rpx 16rpx;
+  padding: 0 16rpx;
+  background: transparent;
+  border-radius: $radius-sm;
+}
+.share-btn::after {
+  border: none;
+}
+.share-btn[disabled] {
+  color: $text-placeholder;
 }
 .page-desc {
   font-size: 24rpx;
@@ -287,16 +355,12 @@ onLoad(async (options) => {
   padding: 24rpx $page-gutter;
 }
 .poster-container {
-  width: 375px;
-  height: 667px;
   border-radius: $card-radius;
   overflow: hidden;
   box-shadow: $shadow-md;
 }
 .poster-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
 }
 .poster-canvas {
   border-radius: 16rpx;
@@ -351,7 +415,6 @@ onLoad(async (options) => {
   border-color: $text-primary;
 }
 .action-btn[disabled] { opacity: 0.4; }
-.action-icon { font-size: 32rpx; }
 .action-visual-icon {
   width: 34rpx;
   height: 34rpx;

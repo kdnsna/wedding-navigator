@@ -382,21 +382,48 @@ function navigateTo(venue) {
     uni.showToast({ title: '场地还未匹配地图', icon: 'none' })
     return
   }
+  const latitude = Number(venue.coordinate.latitude)
+  const longitude = Number(venue.coordinate.longitude)
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    uni.showToast({ title: '地图坐标格式有误', icon: 'none' })
+    return
+  }
   uni.openLocation({
-    latitude: Number(venue.coordinate.latitude),
-    longitude: Number(venue.coordinate.longitude),
+    latitude,
+    longitude,
     name: venue.name,
-    address: venue.address
+    address: venue.address,
+    fail: (err) => {
+      console.warn('打开导航失败:', err)
+      uni.showToast({ title: '打开导航失败', icon: 'none' })
+    }
   })
 }
 
 function callPhone(phone) {
   if (!phone) return
-  uni.makePhoneCall({ phoneNumber: phone })
+  uni.makePhoneCall({
+    phoneNumber: String(phone),
+    fail: (err) => {
+      if (!err?.errMsg?.includes('cancel')) {
+        console.warn('拨打电话失败:', err)
+        uni.showToast({ title: '拨打电话失败', icon: 'none' })
+      }
+    }
+  })
 }
 
 function callHotel(phone) {
-  if (phone) uni.makePhoneCall({ phoneNumber: String(phone) })
+  if (!phone) return
+  uni.makePhoneCall({
+    phoneNumber: String(phone),
+    fail: (err) => {
+      if (!err?.errMsg?.includes('cancel')) {
+        console.warn('拨打酒店电话失败:', err)
+        uni.showToast({ title: '拨打电话失败', icon: 'none' })
+      }
+    }
+  })
 }
 
 function formatDate(dateStr) {
@@ -525,19 +552,15 @@ onShow(async () => {
   color: var(--theme-strong-ink, #fff);
   font-weight: 600;
   margin-bottom: 8rpx;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  line-height: 1.35;
+  word-break: break-word;
 }
 .arrival-address {
   display: block;
   font-size: 24rpx;
   color: var(--theme-strong-muted, rgba(255,255,255,0.72));
   line-height: 1.5;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  word-break: break-word;
 }
 .arrival-actions {
   display: flex;
@@ -761,19 +784,16 @@ onShow(async () => {
   font-weight: 500;
   color: var(--theme-ink, $text-primary);
   margin-bottom: 4rpx;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  line-height: 1.35;
+  word-break: break-word;
 }
 .venue-address {
   display: block;
   font-size: 24rpx;
   color: var(--theme-muted, $text-secondary);
   margin-bottom: 8rpx;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  line-height: 1.5;
+  word-break: break-word;
 }
 .venue-geo {
   display: inline-block;
@@ -1015,11 +1035,10 @@ onShow(async () => {
   font-weight: 500;
   color: var(--theme-ink, $text-primary);
   margin-bottom: 8rpx;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  line-height: 1.35;
+  word-break: break-word;
 }
-.hotel-tags { display: flex; gap: 12rpx; margin: 8rpx 0; }
+.hotel-tags { display: flex; flex-wrap: wrap; gap: 12rpx; margin: 8rpx 0; }
 .hotel-tag {
   font-size: 20rpx;
   color: var(--theme-muted, $text-secondary);

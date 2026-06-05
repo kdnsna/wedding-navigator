@@ -16,8 +16,8 @@ const DEFAULT_FEATURES = {
 export const useWeddingStore = defineStore('wedding', () => {
   const fallbackWedding = {
     basic_info: {
-      date: '2026-10-01',
-      time: '12:00'
+      date: '2026-11-14',
+      time: '12:08'
     },
     share_config: {
       title: '诚邀您参加我们的婚礼'

@@ -1,14 +1,16 @@
 # 甜囍手册上线前全功能审查报告
 
-审查日期：2026-05-19  
+审查日期：2026-06-05
 小程序 AppID：`wx2477cb578d01e89f`  
 云环境：`cloud1-d5gqyur7g5a4d3c8d`
 
 ## 总结
 
-本轮按“代码 + 云函数 + 主链路 + 上线配置”的口径完成静态审查，并修复了仓库内可以直接解决的上线风险。当前代码侧最主要的阻断项已经清理：15 个云函数全部写入 `cloudbaserc.json`，内容安全接口权限补齐，上传脚本移除本机私钥路径，上传版本改为优先读取 `manifest.versionName`，RSVP/祝福提交增加服务端必填和长度校验。
+本轮按“代码 + 云函数 + 主链路 + 上线配置 + H5 视觉冒烟”的口径完成审查，并在原有绿色基线上完成“甜囍手册”全链路高级礼宴重设计。当前代码侧最主要的阻断项已经清理：15 个云函数全部写入 `cloudbaserc.json`，内容安全接口权限补齐，上传脚本移除本机私钥路径，上传版本改为优先读取 `manifest.versionName`，RSVP/祝福提交增加服务端必填和长度校验。
 
-真云部署状态仍需要在微信开发者工具或云开发控制台做最后确认。本机未发现 `tcb` / `cloudbase` CLI，也没有可用的 CloudBase 管理 MCP；微信开发者工具 CLI 可启动且 `islogin` 返回登录态，但执行 `cloud env list` / `cloud functions list` 时云端接口返回 `code 10，需要重新登录`。因此本轮无法从终端直接读取云端已部署函数、环境变量、数据库索引和小程序码权限。下面的“真云必验清单”是上线前必须逐项点亮的人工检查。
+2026-06-05 复验结论：`npm run check:release`、`npm run build:mp-weixin`、`npm run build:h5`、`git diff --check` 均通过；H5 使用 Chrome/Playwright 对 375px、390px、430px 的 13 条关键路由完成 39 组 smoke，未发现 pageerror、主体空白或横向溢出。
+
+真云部署状态仍需要在微信开发者工具或云开发控制台做最后确认。本机未发现 `tcb` / `cloudbase` CLI，也没有可用的 CloudBase 管理 MCP；微信开发者工具 CLI 当前 `islogin --port 59321` 返回 `{"login":false}`，执行 `open --project dist/build/mp-weixin` 返回 `#initialize-error: wait IDE port timeout`。因此本轮无法从终端完成模拟器打开、预览二维码、云端已部署函数、环境变量、数据库索引和小程序码权限校验。下面的“真云必验清单”是上线前必须逐项点亮的人工检查。
 
 ## 本轮已修复
 
@@ -20,8 +22,20 @@
 | 服务端表单校验 | `submitRSVP` 校验姓名、手机号长度、关系、随行备注、留言；`submitBlessing` 校验祝福内容和称呼 | 避免绕过前端提交空姓名、空祝福或超长文本 |
 | 主人身份保护 | `createWedding` 在没有微信 `OPENID` 时拒绝创建 | 避免产生无主人归属的婚礼数据 |
 | 上传脚本 | `upload.mjs` 上传版本优先读取 `manifest.versionName`；`upload-ci.mjs` 改为环境变量读取 AppID、构建目录、私钥、版本和描述 | 避免上传旧版本号或把本机私钥路径写进仓库 |
-| 构建产物 | `postbuild:mp-weixin` 自动同步 `cloudfunctions/` 和 `cloudbaserc.json` 到 `dist/build/mp-weixin` | 避免开发者工具打开构建目录时看不到云函数 |
-| 发布检查 | `npm run check:release` 新增云函数全量部署、OpenAPI 权限、CI 上传脚本安全和当前宾客回执断言 | 后续迭代更难漏掉上线关键配置 |
+| 构建产物 | `postbuild:mp-weixin` 按 `cloudbaserc.json` 白名单同步 15 个云函数和 `cloudbaserc.json` 到 `dist/build/mp-weixin` | 避免开发者工具打开构建目录时看不到云函数，且不会带入 `* 2` 重复目录 |
+| 发布检查 | `npm run check:release` 新增云函数全量部署、构建产物云函数一致性、OpenAPI 权限、CI 上传脚本安全和当前宾客回执断言 | 后续迭代更难漏掉上线关键配置 |
+| 设计系统 | 重整 `uni.scss` 色彩、字号、圆角、表单、按钮、卡片和全局字体栈，并新增 `components/ui` 共享组件 | 全链路保持高级礼宴视觉，不再散落重复 header/card/bottom-action 写法 |
+| 宾客端重设计 | 首页、相册、路书、流程、RSVP、祝福墙、更多页、海报页和隐私页统一为“第一眼能行动”的婚礼手册 | 宾客打开后可直接看日期地点、导航、回执、流程和分享入口 |
+| 主人端重设计 | 管理台、婚书、路书、相册、流程、宾客、祝福、分享、统计、诊断、权益页统一为发布作战台体系 | 主人端不再是纯菜单后台，发布准备度、数据、快捷任务和底部操作更清晰 |
+| 细节与事务 | 相册上传/设封面/删除增加保存态、刷新互斥、失败回滚和云文件清理兜底；底部按钮支持主/副按钮独立 loading/disabled | 降低重复点击、误触和局部失败造成的状态不一致 |
+| 操作兜底 | 宾客端首页/更多/RSVP/相册/流程/祝福墙、主人端发布台/统计/诊断/模板/婚书/分享等跳转增加失败反馈；发布台数据加载失败显示页面提示和重试 | 避免“点了没反应”或数据过期但用户无感 |
+| 路书互斥 | 路书编辑页保存、地理编码、交通、住宿任一操作进行中，会禁用添加/编辑/删除等入口 | 避免多个弹窗和保存事务交叉造成状态不一致 |
+| 分享规范 | 分享页复制路径改为 `/pages/index/index?id=...`，海报页好友分享按钮使用本地线性图标 | 发布物料更规范，视觉图标体系更统一 |
+| 主人守卫 | `useOwnerGuard` 改为可等待的权限守卫，主人端页面必须等云端/缓存验证结果后再继续加载 | 避免权限尚未确认时继续刷新后台数据或误触发后续逻辑 |
+| 图标体系 | 新增返回、右箭头、关闭等本地线性图标，并替换文本箭头/关闭符号 | 统一操作视觉，减少文字符号在不同端渲染不一致 |
+| 兜底数据 | 创建向导与 guest fallback 默认婚期统一为 `2026-11-14` | 默认展示与本次婚礼目的保持一致 |
+| 控制台收敛 | 云函数成功回调不再打印完整返回 payload | 减少宾客回执、祝福、统计等数据在控制台暴露 |
+| UI 质量检查 | 新增 `scripts/check-ui-polish.js` 并接入 `check:release`，覆盖注册页、主人守卫、PageShell、长文本、原生失败反馈、底部操作栏等约束 | 后续迭代更难漏掉界面和逻辑细节 |
 
 ## 云函数审查矩阵
 
@@ -55,7 +69,7 @@
 | 祝福墙 | 功能关闭、公开/私密、匿名开关均已接入；云函数已补内容校验 |
 | 更多页 | RSVP、祝福、流程入口跟随功能开关；管理后台仅主人可见 |
 | 分享/海报 | 分享设置保存到云端，小程序码失败会提示配置原因，Canvas 支持 `cloud://` 和 base64 图片 |
-| 主人管理端 | 发布诊断、账号权益、统计、删除婚礼、模板预览、路书/流程/宾客/祝福管理均已纳入检查脚本 |
+| 主人管理端 | 发布诊断、账号权益、统计、删除婚礼、模板预览、路书/流程/宾客/祝福管理均已纳入检查脚本；除创建向导和模板预览外，注册主人端页面均接入 `PageShell` 与 `useOwnerGuard` |
 
 ## 真云必验清单
 
@@ -78,6 +92,7 @@
 ```bash
 npm run check:release
 npm run build:mp-weixin
+npm run build:h5
 git diff --check
 ```
 
@@ -100,6 +115,9 @@ MINIPROGRAM_PRIVATE_KEY_PATH=/path/to/private.key node upload-ci.mjs
 
 - `npm run check:release` 通过
 - `npm run build:mp-weixin` 通过
+- `npm run build:h5` 通过
+- H5 Chrome/Playwright smoke：375px、390px、430px；13 条关键路由共 39 组通过，无 pageerror、主体空白或横向溢出。H5 下云函数不可用的 console error 属预期环境限制
+- 微信开发者工具 CLI `islogin --port 59321` 当前返回 `{"login":false}`；`open --project dist/build/mp-weixin` 返回 `#initialize-error: wait IDE port timeout`
 - `git diff --check` 通过
-- `node --check` 已覆盖 `scripts/copy-cloudfunctions-to-dist.js`、`upload.mjs`、`upload-ci.mjs`、`scripts/check-release-readiness.js`
-- `dist/build/mp-weixin/cloudfunctions` 已确认包含 15 个云函数目录
+- `node --check` 已覆盖 `scripts/copy-cloudfunctions-to-dist.js`、`upload.mjs`、`upload-ci.mjs`、`scripts/check-release-readiness.js`、`scripts/check-ui-polish.js`
+- `dist/build/mp-weixin/cloudfunctions` 已确认包含 15 个云函数目录；`check:release` 会拦截多余、缺失或 `* 2` 后缀重复目录

@@ -1,9 +1,10 @@
 <template>
-  <view class="page">
-    <view class="page-header">
-      <text class="page-tag">PRIVACY</text>
-      <text class="page-title">隐私保护指引</text>
-    </view>
+  <PageShell
+    class="privacy-page"
+    kicker="PRIVACY"
+    title="隐私保护指引"
+    desc="说明甜囍手册在婚礼邀请、回执、祝福、相册和导航场景中的信息使用方式。"
+  >
 
     <view class="content">
       <text class="section-title">一、引言</text>
@@ -58,11 +59,12 @@
 
       <text class="update-time">更新日期：2026年5月19日</text>
     </view>
-  </view>
+  </PageShell>
 </template>
 
 <script setup>
 import { onShareAppMessage } from '@dcloudio/uni-app'
+import PageShell from '@/components/ui/PageShell.vue'
 
 onShareAppMessage(() => ({
   title: '甜囍手册 - 隐私保护指引',
@@ -71,27 +73,9 @@ onShareAppMessage(() => ({
 </script>
 
 <style lang="scss" scoped>
-.page {
+.privacy-page {
   background-color: $bg-color;
   min-height: 100vh;
-  padding-bottom: calc(80rpx + env(safe-area-inset-bottom));
-}
-
-.page-header {
-  padding: $page-header-top $page-gutter $page-header-bottom;
-}
-.page-tag {
-  display: block;
-  font-size: 22rpx;
-  color: $text-muted;
-  letter-spacing: 0;
-  margin-bottom: 12rpx;
-}
-.page-title {
-  display: block;
-  font-size: $font-h1;
-  font-weight: 600;
-  color: $text-primary;
 }
 
 .content {

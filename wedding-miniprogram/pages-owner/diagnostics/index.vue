@@ -1,10 +1,10 @@
 <template>
-  <view class="page">
-    <view class="page-header">
-      <text class="page-tag">RELEASE CHECK</text>
-      <text class="page-title">发布诊断</text>
-      <text class="page-sub">把上线前最容易遗漏的云环境、路书、分享、隐私和模板权益集中检查</text>
-    </view>
+  <PageShell
+    class="diagnostics-page"
+    kicker="RELEASE CHECK"
+    title="发布诊断"
+    desc="把上线前最容易遗漏的云环境、路书、分享、隐私和模板权益集中检查。"
+  >
 
     <view class="summary-card" :class="{ ready: diagnostics.ready }">
       <view>
@@ -15,22 +15,25 @@
       <text class="summary-score">{{ diagnostics.percent }}%</text>
     </view>
 
-    <view class="metric-row">
-      <view class="metric-item">
-        <text class="metric-num">{{ diagnostics.blockers }}</text>
-        <text class="metric-label">阻断项</text>
-      </view>
-      <view class="metric-item">
-        <text class="metric-num">{{ diagnostics.warnings }}</text>
-        <text class="metric-label">建议项</text>
-      </view>
-      <view class="metric-item">
-        <text class="metric-num">{{ diagnostics.manual }}</text>
-        <text class="metric-label">人工确认</text>
-      </view>
+    <MetricStrip :items="diagnosticMetrics" />
+
+    <EmptyState
+      v-if="loadError"
+      icon="/static/visuals/icon-warning.svg"
+      title="诊断刷新失败"
+      :desc="loadError"
+    />
+
+    <view class="diagnostic-section" v-if="!loadError">
+      <SectionHeader
+        title="发布项"
+        kicker="CHECKLIST"
+        desc="点击每一项可直接进入对应处理页面。"
+        compact
+      />
     </view>
 
-    <view class="diagnostic-list">
+    <view class="diagnostic-list" v-if="!loadError">
       <view
         class="diagnostic-item"
         v-for="item in diagnostics.items"
@@ -53,22 +56,44 @@
       <text class="note-title">上线前人工验收</text>
       <text class="note-copy">建议最后用真机完整走一遍：创建婚礼、上传封面、补场地坐标、提交 RSVP、写祝福、分享好友、生成海报、删除婚礼后旧链接失效。</text>
     </view>
-  </view>
+
+    <BottomActionBar
+      primary-text="重新检查"
+      secondary-text="返回后台"
+      :loading="loading"
+      @primary="refreshDiagnostics"
+      @secondary="goManage"
+    />
+  </PageShell>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
+import PageShell from '@/components/ui/PageShell.vue'
+import SectionHeader from '@/components/ui/SectionHeader.vue'
+import MetricStrip from '@/components/ui/MetricStrip.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
+import BottomActionBar from '@/components/ui/BottomActionBar.vue'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { fetchWedding } from '@/composables/useCloud.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
 import { buildReleaseDiagnostics } from '@/utils/releaseDiagnostics.js'
+import { showError } from '@/utils/index.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
+const loading = ref(false)
+const loadError = ref('')
 
 const diagnostics = computed(() => buildReleaseDiagnostics(store))
+const diagnosticMetrics = computed(() => [
+  { label: '阻断', value: diagnostics.value.blockers },
+  { label: '建议', value: diagnostics.value.warnings },
+  { label: '人工', value: diagnostics.value.manual },
+  { label: '已完成', value: diagnostics.value.done }
+])
 const summaryText = computed(() => {
   if (diagnostics.value.blockers > 0) return `还有 ${diagnostics.value.blockers} 个阻断项，补齐后再分享更稳`
   if (diagnostics.value.warnings > 0) return `主链路可用，还有 ${diagnostics.value.warnings} 个建议项可优化`
@@ -88,51 +113,74 @@ function statusText(status) {
 function goItem(item) {
   if (!item.route) return
   if (item.route.startsWith('/pages/guide') || item.route.startsWith('/pages/index')) {
-    uni.switchTab({ url: item.route })
+    uni.switchTab({
+      url: item.route,
+      fail: (err) => {
+        console.warn('打开诊断处理页面失败:', err)
+        showError('处理页面打开失败，请稍后重试')
+      }
+    })
     return
   }
-  uni.navigateTo({ url: item.route })
+  uni.navigateTo({
+    url: item.route,
+    fail: (err) => {
+      console.warn('打开诊断处理页面失败:', err)
+      showError('处理页面打开失败，请稍后重试')
+    }
+  })
 }
 
-onShow(async () => {
-  if (!useOwnerGuard()) return
+async function refreshDiagnostics() {
+  if (!(await useOwnerGuard())) return
   if (!userStore.weddingId) return
+  if (loading.value) return
+  loading.value = true
+  loadError.value = ''
   try {
     await fetchWedding(userStore.weddingId, true)
   } catch (err) {
     console.warn('发布诊断刷新数据失败:', err)
+    loadError.value = err?.message || '发布诊断刷新失败，请稍后重试'
+    showError(loadError.value)
+  } finally {
+    loading.value = false
   }
-})
+}
+
+function goManage() {
+  const pages = getCurrentPages()
+  if (pages.length > 1) {
+    uni.navigateBack({
+      fail: (err) => {
+        console.warn('发布诊断返回失败:', err)
+        uni.redirectTo({
+          url: '/pages-owner/manage/index',
+          fail: (redirectErr) => {
+            console.warn('发布诊断返回后台失败:', redirectErr)
+            showError('返回后台失败，请稍后重试')
+          }
+        })
+      }
+    })
+    return
+  }
+  uni.redirectTo({
+    url: '/pages-owner/manage/index',
+    fail: (err) => {
+      console.warn('发布诊断返回后台失败:', err)
+      showError('返回后台失败，请稍后重试')
+    }
+  })
+}
+
+onShow(refreshDiagnostics)
 </script>
 
 <style lang="scss" scoped>
-.page {
+.diagnostics-page {
   min-height: 100vh;
   background: $bg-color;
-  padding-bottom: calc(80rpx + env(safe-area-inset-bottom));
-}
-.page-header {
-  padding: $page-header-top $page-gutter $page-header-bottom;
-}
-.page-tag {
-  display: block;
-  font-size: 22rpx;
-  color: $text-muted;
-  letter-spacing: 0;
-  margin-bottom: 12rpx;
-}
-.page-title {
-  display: block;
-  font-size: $font-h1;
-  font-weight: 600;
-  color: $text-primary;
-}
-.page-sub {
-  display: block;
-  margin-top: 14rpx;
-  color: $text-secondary;
-  font-size: 26rpx;
-  line-height: 1.55;
 }
 .summary-card {
   margin: 0 $page-gutter 32rpx;
@@ -176,26 +224,8 @@ onShow(async () => {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
-.metric-row {
-  display: flex;
-  padding: 0 $page-gutter;
-  margin-bottom: 40rpx;
-}
-.metric-item {
-  flex: 1;
-  text-align: center;
-}
-.metric-num {
-  display: block;
-  font-size: 42rpx;
-  color: $text-primary;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  margin-bottom: 6rpx;
-}
-.metric-label {
-  font-size: 22rpx;
-  color: $text-muted;
+.diagnostic-section {
+  margin-top: 34rpx;
 }
 .diagnostic-list {
   margin: 0 $page-gutter 42rpx;

@@ -1,16 +1,17 @@
 <template>
-  <view class="page">
-    <!-- 顶部标题 -->
-    <view class="page-header">
-      <text class="page-tag">VENUES</text>
-      <text class="page-title">路书设置</text>
-    </view>
+  <PageShell
+    class="page guide-edit-page"
+    kicker="VENUES"
+    title="路书设置"
+    desc="整理场地、地图坐标、停车路线和住宿建议，保证宾客当天能直接行动。"
+  >
 
     <!-- ===== 场地列表 ===== -->
-    <view class="section-title">
-      <text class="section-label">婚礼场地</text>
-      <text class="section-hint">宾客可一键导航</text>
-    </view>
+    <SectionHeader
+      title="婚礼场地"
+      kicker="MAP READY"
+      desc="宾客可一键导航；建议至少补齐主会场坐标和到达时间。"
+    />
 
     <view class="venue-list" v-if="venues.length > 0">
       <view class="venue-item" v-for="venue in venues" :key="venue.id">
@@ -24,50 +25,54 @@
           {{ hasCoordinate(venue) ? '已匹配地图和天气' : '未匹配地图坐标' }}
         </text>
         <view class="venue-actions">
-          <text class="venue-action" @click="editVenue(venue)">编辑</text>
-          <text class="venue-action delete" @click="deleteVenue(venue.id)">删除</text>
+          <text class="venue-action" :class="{ disabled: guideBusy }" @click="editVenue(venue)">编辑</text>
+          <text class="venue-action delete" :class="{ disabled: guideBusy }" @click="deleteVenue(venue.id)">删除</text>
         </view>
       </view>
     </view>
 
-    <view class="empty-state" v-if="venues.length === 0">
-      <image class="empty-visual" src="/static/visuals/empty-venue.svg" mode="aspectFit" />
-      <text class="empty-text">还没有添加场地</text>
-    </view>
+    <EmptyState
+      v-if="venues.length === 0"
+      icon="/static/visuals/empty-venue.svg"
+      title="还没有添加场地"
+      desc="先添加主仪式场地，再补充接亲、住宿或拍摄点。"
+    />
 
-    <button class="add-btn secondary" @click="showAddModal">
+    <button class="add-btn secondary" :disabled="guideBusy" @click="showAddModal">
       <text>+ 添加场地</text>
     </button>
 
     <!-- ===== 交通指引 ===== -->
-    <view class="section-title">
-      <text class="section-label">交通指引</text>
-      <text class="section-hint">帮助外地宾客出行</text>
-    </view>
+    <SectionHeader
+      title="交通指引"
+      kicker="ARRIVAL"
+      desc="把外地宾客、自驾宾客和停车信息整理成一段可执行的到场说明。"
+    />
 
     <view class="info-section">
-      <view class="info-row" @click="editTransportation">
+      <view class="info-row" :class="{ disabled: guideBusy }" @click="editTransportation">
         <view class="info-meta">
           <text class="info-row-label">出行方式</text>
           <text class="info-row-value">{{ transportation.transport || '点击设置' }}</text>
         </view>
-        <text class="info-arrow">›</text>
+        <image class="info-arrow" src="/static/visuals/icon-chevron-right.svg" mode="aspectFit" />
       </view>
       <view class="info-divider" />
-      <view class="info-row" @click="editTransportation">
+      <view class="info-row" :class="{ disabled: guideBusy }" @click="editTransportation">
         <view class="info-meta">
           <text class="info-row-label">停车信息</text>
           <text class="info-row-value">{{ transportation.parking || '点击设置' }}</text>
         </view>
-        <text class="info-arrow">›</text>
+        <image class="info-arrow" src="/static/visuals/icon-chevron-right.svg" mode="aspectFit" />
       </view>
     </view>
 
     <!-- ===== 推荐住宿 ===== -->
-    <view class="section-title">
-      <text class="section-label">推荐住宿</text>
-      <text class="section-hint">附近酒店推荐给宾客</text>
-    </view>
+    <SectionHeader
+      title="推荐住宿"
+      kicker="STAY"
+      desc="给远道而来的亲友准备距离、价格和电话，减少当天反复确认。"
+    />
 
     <view class="hotel-list" v-if="accommodations.length > 0">
       <view class="hotel-item" v-for="hotel in accommodations" :key="hotel.id">
@@ -83,35 +88,42 @@
           </view>
         </view>
         <view class="hotel-actions">
-          <text class="venue-action" @click="editHotel(hotel)">编辑</text>
-          <text class="venue-action delete" @click="deleteHotel(hotel.id)">删除</text>
+          <text class="venue-action" :class="{ disabled: guideBusy }" @click="editHotel(hotel)">编辑</text>
+          <text class="venue-action delete" :class="{ disabled: guideBusy }" @click="deleteHotel(hotel.id)">删除</text>
         </view>
       </view>
     </view>
 
-    <view class="empty-state" v-if="accommodations.length === 0">
-      <image class="empty-visual" src="/static/visuals/empty-hotel.svg" mode="aspectFit" />
-      <text class="empty-text">还没有添加推荐住宿</text>
-    </view>
+    <EmptyState
+      v-if="accommodations.length === 0"
+      icon="/static/visuals/empty-hotel.svg"
+      title="还没有添加推荐住宿"
+      desc="可以添加协议酒店、附近酒店或新人推荐的住宿点。"
+    />
 
-    <button class="add-btn secondary" @click="showHotelModal">
+    <button class="add-btn secondary" :disabled="guideBusy" @click="showHotelModal">
       <text>+ 添加住宿</text>
     </button>
 
-    <!-- 底部占位 -->
-    <view style="height: 160rpx" />
+    <BottomActionBar
+      primary-text="添加场地"
+      secondary-text="添加住宿"
+      :disabled="guideBusy"
+      @primary="showAddModal"
+      @secondary="showHotelModal"
+    />
 
     <!-- ===== 场地弹窗 ===== -->
-    <view class="modal-mask" v-if="showModal" @click="showModal = false">
+    <view class="modal-mask" v-if="showModal" @click="requestCloseVenueModal">
       <view class="modal-content" @click.stop>
         <view class="modal-header">
           <text class="modal-title">{{ editingVenue ? '编辑场地' : '添加场地' }}</text>
-          <text class="modal-close" @click="showModal = false">✕</text>
+          <image class="modal-close" src="/static/visuals/icon-close.svg" mode="aspectFit" @click="requestCloseVenueModal" />
         </view>
         <view class="modal-body">
           <view class="form-group">
             <text class="form-label">场地名称</text>
-            <input class="form-input" v-model="modalForm.name" placeholder="例如：华丽大酒楼" />
+            <input class="form-input" v-model="modalForm.name" placeholder="例如：华丽大酒楼" maxlength="40" />
           </view>
           <view class="form-group">
             <text class="form-label">场地类型</text>
@@ -121,7 +133,7 @@
           </view>
           <view class="form-group">
             <text class="form-label">详细地址</text>
-            <input class="form-input" v-model="modalForm.address" placeholder="请输入地址" />
+            <input class="form-input" v-model="modalForm.address" placeholder="请输入地址" maxlength="100" />
           </view>
           <view class="geo-box">
             <view class="geo-meta">
@@ -129,8 +141,8 @@
               <text class="geo-desc">{{ geoStatusText }}</text>
             </view>
             <view class="geo-actions">
-              <button class="geo-btn" :loading="geocoding" :disabled="geocoding" @click="autoMatchLocation">自动匹配</button>
-              <button class="geo-btn primary" :disabled="geocoding" @click="chooseVenueLocation">地图选点</button>
+              <button class="geo-btn" :loading="geocoding" :disabled="geocoding || savingVenue" @click="autoMatchLocation">自动匹配</button>
+              <button class="geo-btn primary" :disabled="geocoding || savingVenue" @click="chooseVenueLocation">地图选点</button>
             </view>
           </view>
           <view class="manual-coordinate">
@@ -141,11 +153,11 @@
             <view class="coordinate-grid" v-if="showManualCoordinate">
               <view class="coordinate-field">
                 <text class="form-label">纬度</text>
-                <input class="form-input" v-model="manualCoordinate.latitude" placeholder="例如 36.65120" type="digit" />
+                <input class="form-input" v-model="manualCoordinate.latitude" placeholder="例如 36.65120" type="digit" maxlength="16" />
               </view>
               <view class="coordinate-field">
                 <text class="form-label">经度</text>
-                <input class="form-input" v-model="manualCoordinate.longitude" placeholder="例如 117.12010" type="digit" />
+                <input class="form-input" v-model="manualCoordinate.longitude" placeholder="例如 117.12010" type="digit" maxlength="16" />
               </view>
               <button class="coordinate-apply" @click="applyManualCoordinate">应用坐标</button>
             </view>
@@ -158,80 +170,80 @@
           </view>
           <view class="form-group">
             <text class="form-label">联系电话</text>
-            <input class="form-input" v-model="modalForm.phone" placeholder="选填" type="number" />
+            <input class="form-input" v-model="modalForm.phone" placeholder="选填" type="number" maxlength="20" />
           </view>
         </view>
         <view class="modal-footer">
-          <button class="modal-btn secondary" @click="showModal = false">取消</button>
-          <button class="modal-btn primary" @click="saveVenue">确定</button>
+          <button class="modal-btn secondary" :disabled="savingVenue || geocoding" @click="requestCloseVenueModal">取消</button>
+          <button class="modal-btn primary" :loading="savingVenue" :disabled="savingVenue || geocoding" @click="saveVenue">确定</button>
         </view>
       </view>
     </view>
 
     <!-- ===== 交通指引弹窗 ===== -->
-    <view class="modal-mask" v-if="showTransportModal" @click="showTransportModal = false">
+    <view class="modal-mask" v-if="showTransportModal" @click="requestCloseTransportModal">
       <view class="modal-content" @click.stop>
         <view class="modal-header">
           <text class="modal-title">交通指引</text>
-          <text class="modal-close" @click="showTransportModal = false">✕</text>
+          <image class="modal-close" src="/static/visuals/icon-close.svg" mode="aspectFit" @click="requestCloseTransportModal" />
         </view>
         <view class="modal-body">
           <view class="form-group">
             <text class="form-label">出行方式</text>
-            <input class="form-input" v-model="transportForm.transport" placeholder="如：高铁至南京南站，换乘地铁2号线" />
+            <input class="form-input" v-model="transportForm.transport" placeholder="如：高铁至南京南站，换乘地铁2号线" maxlength="80" />
           </view>
           <view class="form-group">
             <text class="form-label">停车信息</text>
-            <textarea class="form-textarea" v-model="transportForm.parking" placeholder="如：酒店地下停车场，宾客免费停车" />
+            <textarea class="form-textarea" v-model="transportForm.parking" placeholder="如：酒店地下停车场，宾客免费停车" maxlength="160" />
           </view>
           <view class="form-group">
             <text class="form-label">角色路线提示</text>
-            <textarea class="form-textarea" v-model="transportForm.routeTipsText" placeholder="每行一条，如：普通宾客：直接导航至主场地" />
+            <textarea class="form-textarea" v-model="transportForm.routeTipsText" placeholder="每行一条，如：普通宾客：直接导航至主场地" maxlength="200" />
           </view>
         </view>
         <view class="modal-footer">
-          <button class="modal-btn secondary" @click="showTransportModal = false">取消</button>
-          <button class="modal-btn primary" @click="saveTransportation">确定</button>
+          <button class="modal-btn secondary" :disabled="savingTransport" @click="requestCloseTransportModal">取消</button>
+          <button class="modal-btn primary" :loading="savingTransport" :disabled="savingTransport" @click="saveTransportation">确定</button>
         </view>
       </view>
     </view>
 
     <!-- ===== 住宿弹窗 ===== -->
-    <view class="modal-mask" v-if="showHotelM" @click="showHotelM = false">
+    <view class="modal-mask" v-if="showHotelM" @click="requestCloseHotelModal">
       <view class="modal-content" @click.stop>
         <view class="modal-header">
           <text class="modal-title">{{ editingHotel ? '编辑住宿' : '添加住宿' }}</text>
-          <text class="modal-close" @click="showHotelM = false">✕</text>
+          <image class="modal-close" src="/static/visuals/icon-close.svg" mode="aspectFit" @click="requestCloseHotelModal" />
         </view>
         <view class="modal-body">
           <view class="form-group">
             <text class="form-label">酒店名称</text>
-            <input class="form-input" v-model="hotelForm.name" placeholder="例如：金陵饭店" />
+            <input class="form-input" v-model="hotelForm.name" placeholder="例如：金陵饭店" maxlength="40" />
           </view>
           <view class="form-group">
             <text class="form-label">距离场地</text>
-            <input class="form-input" v-model="hotelForm.distance" placeholder="例如：距仪式场地 800 米" />
+            <input class="form-input" v-model="hotelForm.distance" placeholder="例如：距仪式场地 800 米" maxlength="30" />
           </view>
           <view class="form-group">
             <text class="form-label">价格区间</text>
-            <input class="form-input" v-model="hotelForm.price_range" placeholder="例如：400-600元/晚" />
+            <input class="form-input" v-model="hotelForm.price_range" placeholder="例如：400-600元/晚" maxlength="30" />
           </view>
           <view class="form-group">
             <text class="form-label">预订电话</text>
-            <input class="form-input" v-model="hotelForm.phone" placeholder="选填" type="number" />
+            <input class="form-input" v-model="hotelForm.phone" placeholder="选填" type="number" maxlength="20" />
           </view>
           <view class="form-group">
             <text class="form-label">备注</text>
-            <input class="form-input" v-model="hotelForm.notes" placeholder="选填，如：协议价，订房报新人名字" />
+            <input class="form-input" v-model="hotelForm.notes" placeholder="选填，如：协议价，订房报新人名字" maxlength="80" />
           </view>
         </view>
         <view class="modal-footer">
-          <button class="modal-btn secondary" @click="showHotelM = false">取消</button>
-          <button class="modal-btn primary" @click="saveHotel">确定</button>
+          <button class="modal-btn secondary" :disabled="savingHotel" @click="requestCloseHotelModal">取消</button>
+          <button class="modal-btn primary" :loading="savingHotel" :disabled="savingHotel" @click="saveHotel">确定</button>
         </view>
       </view>
     </view>
-  </view>
+  </PageShell>
 </template>
 
 <script setup>
@@ -242,6 +254,10 @@ import { useUserStore } from '@/stores/user.js'
 import { generateId, showError, showSuccess } from '@/utils/index.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
 import { geocodeVenue, updateWedding } from '@/composables/useCloud.js'
+import PageShell from '@/components/ui/PageShell.vue'
+import SectionHeader from '@/components/ui/SectionHeader.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
+import BottomActionBar from '@/components/ui/BottomActionBar.vue'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
@@ -257,6 +273,8 @@ const geocoding = ref(false)
 const lastGeocodeError = ref('')
 const showManualCoordinate = ref(false)
 const manualCoordinate = ref({ latitude: '', longitude: '' })
+const savingVenue = ref(false)
+const venueFormSnapshot = ref('')
 
 const venues = computed(() => store.venues?.venues || [])
 const geoStatusText = computed(() => {
@@ -276,15 +294,24 @@ function hasCoordinate(venue) {
   return Boolean(venue?.coordinate?.latitude && venue?.coordinate?.longitude)
 }
 
+function guardGuideBusy() {
+  if (!guideBusy.value) return false
+  showError('路书数据正在保存或匹配地图，请稍候')
+  return true
+}
+
 function showAddModal() {
+  if (guardGuideBusy()) return
   editingVenue.value = null
   modalForm.value = { name: '', typeIndex: 2, address: '', arrivalTime: '', phone: '', coordinate: null }
   manualCoordinate.value = { latitude: '', longitude: '' }
   showManualCoordinate.value = false
+  snapshotVenueForm()
   showModal.value = true
 }
 
 function editVenue(venue) {
+  if (guardGuideBusy()) return
   editingVenue.value = venue
   modalForm.value = {
     name: venue.name,
@@ -299,11 +326,45 @@ function editVenue(venue) {
     longitude: venue.coordinate?.longitude ? String(venue.coordinate.longitude) : ''
   }
   showManualCoordinate.value = !hasCoordinate(venue)
+  snapshotVenueForm()
   showModal.value = true
 }
 
 function onTypeChange(e) { modalForm.value.typeIndex = e.detail.value }
 function onArrivalTimeChange(e) { modalForm.value.arrivalTime = e.detail.value }
+
+function snapshotVenueForm() {
+  venueFormSnapshot.value = JSON.stringify({
+    modalForm: modalForm.value,
+    manualCoordinate: manualCoordinate.value,
+    showManualCoordinate: showManualCoordinate.value
+  })
+}
+
+function hasVenueFormChanges() {
+  return showModal.value && JSON.stringify({
+    modalForm: modalForm.value,
+    manualCoordinate: manualCoordinate.value,
+    showManualCoordinate: showManualCoordinate.value
+  }) !== venueFormSnapshot.value
+}
+
+function requestCloseVenueModal() {
+  if (savingVenue.value || geocoding.value) return
+  if (!hasVenueFormChanges()) {
+    showModal.value = false
+    return
+  }
+  uni.showModal({
+    title: '放弃未保存内容？',
+    content: '当前场地信息还没有保存。',
+    confirmText: '放弃',
+    cancelText: '继续编辑',
+    success: (res) => {
+      if (res.confirm) showModal.value = false
+    }
+  })
+}
 
 async function autoMatchLocation(options = {}) {
   const { silent = false } = options
@@ -340,7 +401,15 @@ async function autoMatchLocation(options = {}) {
 
 function chooseVenueLocation() {
   return new Promise((resolve) => {
-    const api = (typeof wx !== 'undefined' && wx.chooseLocation) ? wx : uni
+    const api = (typeof wx !== 'undefined' && wx.chooseLocation)
+      ? wx
+      : (typeof uni !== 'undefined' && typeof uni.chooseLocation === 'function' ? uni : null)
+    if (!api) {
+      console.warn('地图选点能力不可用')
+      showError('当前环境不支持地图选点，请在微信小程序中操作')
+      resolve(false)
+      return
+    }
     const keyword = modalForm.value.address || modalForm.value.name
     api.chooseLocation({
       keyword,
@@ -362,6 +431,7 @@ function chooseVenueLocation() {
       },
       fail: (err) => {
         if (!String(err?.errMsg || '').includes('cancel')) {
+          console.warn('地图选点失败:', err)
           showError('地图选点失败，请检查定位权限')
         }
         resolve(false)
@@ -371,11 +441,17 @@ function chooseVenueLocation() {
 }
 
 async function saveVenue() {
+  if (savingVenue.value) return
   if (!modalForm.value.name.trim()) {
     uni.showToast({ title: '请输入场地名称', icon: 'none' })
     return
   }
+  if (modalForm.value.phone && !isValidPhone(modalForm.value.phone)) {
+    showError('请输入有效联系电话')
+    return
+  }
   const previousVenues = cloneVenues()
+  savingVenue.value = true
   try {
     if (shouldResolveCoordinate()) {
       await autoMatchLocation({ silent: true })
@@ -405,12 +481,15 @@ async function saveVenue() {
       store.addVenue(venue)
     }
     await saveToStorage()
+    snapshotVenueForm()
     showModal.value = false
     showSuccess(venue.coordinate ? '保存成功，已匹配地图' : '已保存，待匹配地图')
   } catch (err) {
     store.venues = previousVenues
     console.error('场地保存失败:', err)
     showError(err?.message || '保存失败，请重试')
+  } finally {
+    savingVenue.value = false
   }
 }
 
@@ -466,12 +545,14 @@ function syncManualCoordinate() {
 }
 
 function deleteVenue(id) {
+  if (guardGuideBusy()) return
   uni.showModal({
     title: '确认删除',
     content: '确定删除该场地？',
     success: async (res) => {
       if (res.confirm) {
         const previousVenues = cloneVenues()
+        savingVenue.value = true
         try {
           if (store.venues && Array.isArray(store.venues.venues)) {
             store.venues.venues = store.venues.venues.filter(v => v.id !== id)
@@ -481,6 +562,8 @@ function deleteVenue(id) {
         } catch (err) {
           store.venues = previousVenues
           showError(err?.message || '删除失败，请重试')
+        } finally {
+          savingVenue.value = false
         }
       }
     }
@@ -490,20 +573,51 @@ function deleteVenue(id) {
 // ========== 交通指引 ==========
 const showTransportModal = ref(false)
 const transportForm = ref({ transport: '', parking: '', routeTipsText: '' })
+const savingTransport = ref(false)
+const transportFormSnapshot = ref('')
 
 const transportation = computed(() => store.venues?.transportation || {})
 
 function editTransportation() {
+  if (guardGuideBusy()) return
   transportForm.value = {
     transport: transportation.value.transport || '',
     parking: transportation.value.parking || '',
     routeTipsText: (transportation.value.route_tips || []).join('\n')
   }
+  snapshotTransportForm()
   showTransportModal.value = true
 }
 
+function snapshotTransportForm() {
+  transportFormSnapshot.value = JSON.stringify(transportForm.value)
+}
+
+function hasTransportFormChanges() {
+  return showTransportModal.value && JSON.stringify(transportForm.value) !== transportFormSnapshot.value
+}
+
+function requestCloseTransportModal() {
+  if (savingTransport.value) return
+  if (!hasTransportFormChanges()) {
+    showTransportModal.value = false
+    return
+  }
+  uni.showModal({
+    title: '放弃未保存内容？',
+    content: '当前交通指引还没有保存。',
+    confirmText: '放弃',
+    cancelText: '继续编辑',
+    success: (res) => {
+      if (res.confirm) showTransportModal.value = false
+    }
+  })
+}
+
 async function saveTransportation() {
+  if (savingTransport.value) return
   const previousVenues = cloneVenues()
+  savingTransport.value = true
   try {
     if (!store.venues) store.venues = { venues: [], transportation: {}, accommodations: [] }
     store.venues.transportation = {
@@ -515,11 +629,14 @@ async function saveTransportation() {
         .filter(Boolean)
     }
     await saveToStorage()
+    snapshotTransportForm()
     showTransportModal.value = false
     showSuccess('保存成功')
   } catch (err) {
     store.venues = previousVenues
     showError(err?.message || '保存失败，请重试')
+  } finally {
+    savingTransport.value = false
   }
 }
 
@@ -527,16 +644,22 @@ async function saveTransportation() {
 const showHotelM = ref(false)
 const editingHotel = ref(null)
 const hotelForm = ref({ name: '', distance: '', price_range: '', phone: '', notes: '' })
+const savingHotel = ref(false)
+const guideBusy = computed(() => savingVenue.value || geocoding.value || savingTransport.value || savingHotel.value)
+const hotelFormSnapshot = ref('')
 
 const accommodations = computed(() => store.venues?.accommodations || [])
 
 function showHotelModal() {
+  if (guardGuideBusy()) return
   editingHotel.value = null
   hotelForm.value = { name: '', distance: '', price_range: '', phone: '', notes: '' }
+  snapshotHotelForm()
   showHotelM.value = true
 }
 
 function editHotel(hotel) {
+  if (guardGuideBusy()) return
   editingHotel.value = hotel
   hotelForm.value = {
     name: hotel.name,
@@ -545,15 +668,47 @@ function editHotel(hotel) {
     phone: hotel.phone || '',
     notes: hotel.notes || ''
   }
+  snapshotHotelForm()
   showHotelM.value = true
 }
 
+function snapshotHotelForm() {
+  hotelFormSnapshot.value = JSON.stringify(hotelForm.value)
+}
+
+function hasHotelFormChanges() {
+  return showHotelM.value && JSON.stringify(hotelForm.value) !== hotelFormSnapshot.value
+}
+
+function requestCloseHotelModal() {
+  if (savingHotel.value) return
+  if (!hasHotelFormChanges()) {
+    showHotelM.value = false
+    return
+  }
+  uni.showModal({
+    title: '放弃未保存内容？',
+    content: '当前住宿信息还没有保存。',
+    confirmText: '放弃',
+    cancelText: '继续编辑',
+    success: (res) => {
+      if (res.confirm) showHotelM.value = false
+    }
+  })
+}
+
 async function saveHotel() {
+  if (savingHotel.value) return
   if (!hotelForm.value.name.trim()) {
     uni.showToast({ title: '请输入酒店名称', icon: 'none' })
     return
   }
+  if (hotelForm.value.phone && !isValidPhone(hotelForm.value.phone)) {
+    showError('请输入有效预订电话')
+    return
+  }
   const previousVenues = cloneVenues()
+  savingHotel.value = true
   try {
     const hotel = {
       id: editingHotel.value?.id || generateId(),
@@ -572,21 +727,26 @@ async function saveHotel() {
       store.venues.accommodations.push(hotel)
     }
     await saveToStorage()
+    snapshotHotelForm()
     showHotelM.value = false
     showSuccess('保存成功')
   } catch (err) {
     store.venues = previousVenues
     showError(err?.message || '保存失败，请重试')
+  } finally {
+    savingHotel.value = false
   }
 }
 
 function deleteHotel(id) {
+  if (guardGuideBusy()) return
   uni.showModal({
     title: '确认删除',
     content: '确定删除该住宿？',
     success: async (res) => {
       if (res.confirm) {
         const previousVenues = cloneVenues()
+        savingHotel.value = true
         try {
           if (store.venues && Array.isArray(store.venues.accommodations)) {
             store.venues.accommodations = store.venues.accommodations.filter(h => h.id !== id)
@@ -596,6 +756,8 @@ function deleteHotel(id) {
         } catch (err) {
           store.venues = previousVenues
           showError(err?.message || '删除失败，请重试')
+        } finally {
+          savingHotel.value = false
         }
       }
     }
@@ -604,8 +766,20 @@ function deleteHotel(id) {
 
 function callHotel(phone) {
   if (phone) {
-    uni.makePhoneCall({ phoneNumber: String(phone) })
+    uni.makePhoneCall({
+      phoneNumber: String(phone),
+      fail: (err) => {
+        if (!err?.errMsg?.includes('cancel')) {
+          console.warn('拨打酒店电话失败:', err)
+          showError('拨打电话失败')
+        }
+      }
+    })
   }
+}
+
+function isValidPhone(phone) {
+  return /^\d{6,20}$/.test(String(phone || '').trim())
 }
 
 // ========== 数据持久化 ==========
@@ -663,7 +837,9 @@ function formatGeocodeError(err) {
   return message || '地图匹配失败'
 }
 
-onShow(() => { useOwnerGuard() })
+onShow(async () => {
+  if (!(await useOwnerGuard())) return
+})
 </script>
 
 <style lang="scss" scoped>
@@ -739,19 +915,16 @@ onShow(() => { useOwnerGuard() })
   color: $text-primary;
   font-weight: 500;
   margin-bottom: 6rpx;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  line-height: 1.35;
+  word-break: break-word;
 }
 .venue-address {
   display: block;
   font-size: 24rpx;
   color: $text-secondary;
   margin-bottom: 8rpx;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  line-height: 1.5;
+  word-break: break-word;
 }
 .venue-geo {
   display: inline-block;
@@ -776,6 +949,9 @@ onShow(() => { useOwnerGuard() })
 }
 .venue-action.delete {
   color: $color-error;
+}
+.venue-action.disabled {
+  opacity: 0.42;
 }
 
 /* 住宿 */
@@ -816,6 +992,9 @@ onShow(() => { useOwnerGuard() })
   align-items: center;
   padding: 32rpx;
 }
+.info-row.disabled {
+  opacity: 0.55;
+}
 .info-row-label {
   display: block;
   font-size: 26rpx;
@@ -827,14 +1006,13 @@ onShow(() => { useOwnerGuard() })
   display: block;
   font-size: 24rpx;
   color: $text-secondary;
-  max-width: 480rpx;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  line-height: 1.45;
+  word-break: break-word;
 }
 .info-arrow {
-  font-size: 28rpx;
-  color: $text-muted;
+  width: 30rpx;
+  height: 30rpx;
+  opacity: 0.54;
   margin-left: auto;
 }
 .info-divider {
@@ -878,6 +1056,9 @@ onShow(() => { useOwnerGuard() })
 }
 .add-btn::after { border: none; }
 .add-btn:active { background: $bg-muted; }
+.add-btn[disabled] {
+  opacity: 0.48;
+}
 
 /* 弹窗 */
 .modal-mask {
@@ -912,9 +1093,11 @@ onShow(() => { useOwnerGuard() })
   color: $text-primary;
 }
 .modal-close {
-  font-size: 32rpx;
-  color: $text-muted;
-  padding: 8rpx;
+  width: 50rpx;
+  height: 50rpx;
+  padding: 10rpx;
+  box-sizing: border-box;
+  opacity: 0.68;
 }
 .modal-body {
   padding: 32rpx $page-gutter;
