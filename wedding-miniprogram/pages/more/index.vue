@@ -160,17 +160,30 @@ onShow(async () => {
   padding: $page-header-top $page-gutter 24rpx;
 }
 .page-tag {
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  gap: 10rpx;
   font-size: 22rpx;
   color: $text-muted;
-  letter-spacing: 0;
-  margin-bottom: 12rpx;
+  letter-spacing: $tracking-kicker;
+  text-transform: uppercase;
+  margin-bottom: 18rpx;
+  font-weight: 500;
+}
+.page-tag::before {
+  content: '';
+  width: 24rpx;
+  height: 1rpx;
+  background: currentColor;
+  opacity: 0.5;
 }
 .page-title {
   display: block;
   font-size: $font-h1;
   font-weight: 600;
   color: $text-primary;
+  letter-spacing: $tracking-cn;
+  line-height: 1.25;
 }
 
 /* 新人信息 */
@@ -199,13 +212,16 @@ onShow(async () => {
   background: $bg-surface;
   border-radius: $card-radius;
   overflow: hidden;
+  border: 1rpx solid $hairline-soft;
+  box-shadow: $shadow-xs;
 }
 .menu-item {
   display: flex;
   align-items: center;
   min-height: $tap-min-height;
   padding: 28rpx;
-  transition: background 0.15s ease;
+  transition: background 0.2s $ease-editorial;
+  position: relative;
 }
 .menu-item:active {
   background: $bg-muted;
@@ -217,13 +233,25 @@ onShow(async () => {
   margin: 0;
   line-height: inherit;
   text-align: left;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: $tap-min-height;
+  transition: background 0.2s $ease-editorial;
 }
 .contact-btn::after { border: none; }
-.menu-icon {
-  font-size: 36rpx;
-  margin-right: 20rpx;
-  width: 48rpx;
-  text-align: center;
+.contact-btn:active {
+  background: $bg-muted;
+}
+.menu-item .menu-icon {
+  margin-right: 24rpx;
+  width: 40rpx;
+  height: 40rpx;
+  opacity: 0.78;
+  transition: opacity 0.2s $ease-editorial;
+}
+.menu-item:active .menu-icon {
+  opacity: 1;
 }
 .menu-title {
   flex: 1;
@@ -231,6 +259,7 @@ onShow(async () => {
   font-size: 30rpx;
   color: $text-primary;
   font-weight: 500;
+  letter-spacing: $tracking-cn-soft;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -238,11 +267,17 @@ onShow(async () => {
 .menu-arrow {
   font-size: 28rpx;
   color: $text-muted;
+  font-family: Georgia, serif;
+  font-weight: 300;
+  transition: transform 0.25s $ease-editorial;
+}
+.menu-item:active .menu-arrow {
+  transform: translateX(4rpx);
 }
 
 .divider {
   height: 1rpx;
-  background: $border-color;
+  background: $hairline-soft;
   margin: 0 28rpx;
 }
 
@@ -260,10 +295,11 @@ onShow(async () => {
   color: #fff;
   font-size: 30rpx;
   font-weight: 500;
-  transition: opacity 0.2s ease;
+  letter-spacing: $tracking-kicker;
+  transition: opacity 0.25s $ease-editorial, transform 0.25s $ease-editorial;
 }
 .share-btn::after { border: none; }
-.share-btn:active { opacity: 0.8; }
+.share-btn:active { opacity: 0.85; transform: scale(0.99); }
 
 /* 引流 */
 .promo-link {

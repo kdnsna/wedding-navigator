@@ -479,11 +479,22 @@ onLoad(async (options) => {
   padding: $page-header-top $page-gutter $page-header-bottom;
 }
 .page-tag {
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  gap: 10rpx;
   font-size: 22rpx;
   color: $text-muted;
-  letter-spacing: 0;
-  margin-bottom: 12rpx;
+  letter-spacing: $tracking-kicker;
+  text-transform: uppercase;
+  margin-bottom: 18rpx;
+  font-weight: 500;
+}
+.page-tag::before {
+  content: '';
+  width: 24rpx;
+  height: 1rpx;
+  background: currentColor;
+  opacity: 0.5;
 }
 .page-title {
   display: block;
@@ -491,29 +502,50 @@ onLoad(async (options) => {
   font-weight: 600;
   color: $text-primary;
   margin-bottom: 16rpx;
+  letter-spacing: $tracking-cn;
+  line-height: 1.25;
 }
 .page-divider {
   width: 32rpx;
   height: 2rpx;
+  background: $text-primary;
+  margin-bottom: 20rpx;
+  border-radius: 2rpx;
+  position: relative;
+}
+.page-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 12rpx);
+  width: 6rpx;
+  height: 6rpx;
+  border-radius: 50%;
   background: $text-muted;
-  margin-bottom: 16rpx;
+  opacity: 0.4;
+  transform: translateY(-50%);
 }
 .page-desc {
   display: block;
   font-size: $font-body;
   color: $text-secondary;
+  line-height: 1.7;
+  letter-spacing: $tracking-cn-soft;
 }
 
 .rsvp-brief {
   width: calc(100vw - 96rpx);
   margin: 0 auto 44rpx;
-  padding: 32rpx;
+  padding: 36rpx 36rpx 32rpx;
   border-radius: $card-radius;
   background: $text-primary;
   color: #fff;
-  box-shadow: $shadow-sm;
+  box-shadow:
+    0 12rpx 32rpx rgba(0, 0, 0, 0.08),
+    0 2rpx 6rpx rgba(0, 0, 0, 0.04);
   position: relative;
   overflow: hidden;
+  isolation: isolate;
 }
 .rsvp-brief::before {
   content: '';
@@ -521,15 +553,29 @@ onLoad(async (options) => {
   left: 0;
   top: 0;
   bottom: 0;
-  width: 8rpx;
+  width: 6rpx;
   background: $color-primary;
+}
+.rsvp-brief::after {
+  content: '';
+  position: absolute;
+  top: 32rpx;
+  right: 28rpx;
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 70%);
+  pointer-events: none;
+  z-index: -1;
 }
 .brief-kicker {
   display: block;
   font-size: 18rpx;
   color: rgba(255,255,255,0.56);
-  letter-spacing: 0;
-  margin-bottom: 10rpx;
+  letter-spacing: $tracking-kicker;
+  text-transform: uppercase;
+  margin-bottom: 12rpx;
+  font-weight: 500;
 }
 .brief-title {
   display: block;
@@ -539,6 +585,7 @@ onLoad(async (options) => {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+  letter-spacing: $tracking-cn-soft;
 }
 .brief-grid {
   display: grid;
@@ -548,7 +595,7 @@ onLoad(async (options) => {
 }
 .brief-item {
   padding-top: 18rpx;
-  border-top: 1rpx solid rgba(255,255,255,0.12);
+  border-top: 1rpx solid rgba(255,255,255,0.10);
 }
 .brief-item.wide {
   grid-column: 1 / -1;
@@ -556,9 +603,11 @@ onLoad(async (options) => {
 .brief-label {
   display: block;
   font-size: 18rpx;
-  letter-spacing: 0;
+  letter-spacing: $tracking-kicker;
+  text-transform: uppercase;
   color: rgba(255,255,255,0.45);
-  margin-bottom: 6rpx;
+  margin-bottom: 8rpx;
+  font-weight: 500;
 }
 .brief-value {
   display: block;
@@ -597,34 +646,48 @@ onLoad(async (options) => {
   background: $bg-muted;
   color: $text-muted;
   font-size: 20rpx;
+  letter-spacing: 0.04em;
 }
 .label-en {
   font-size: 20rpx;
   color: $text-muted;
-  letter-spacing: 0;
+  letter-spacing: $tracking-kicker;
+  text-transform: uppercase;
+  font-weight: 500;
 }
 
 .form-input {
   height: $control-height;
   font-size: 30rpx;
   color: $text-primary;
-  border-bottom: 2rpx solid $border-color;
+  border-bottom: 2rpx solid $hairline-medium;
   padding: 0;
-  transition: border-color 0.3s ease;
+  transition:
+    border-color 0.4s $ease-editorial,
+    background 0.4s $ease-editorial;
+  background: transparent;
 }
 .form-input:focus {
   border-color: $text-primary;
+  border-bottom-width: 2rpx;
+}
+.form-input::placeholder {
+  color: $text-placeholder;
+  font-weight: 400;
+  font-size: 28rpx;
 }
 .picker-value {
   height: $control-height;
   line-height: $control-height;
-  border-bottom: 2rpx solid $border-color;
+  border-bottom: 2rpx solid $hairline-medium;
   font-size: 30rpx;
   color: $text-primary;
+  transition: border-color 0.4s $ease-editorial;
 }
 .placeholder {
   color: $text-placeholder;
   font-size: 30rpx;
+  font-weight: 400;
 }
 
 .feature-closed {
@@ -636,23 +699,38 @@ onLoad(async (options) => {
   font-size: 34rpx;
   color: $text-primary;
   font-weight: 600;
-  margin-bottom: 14rpx;
+  margin-bottom: 16rpx;
+  letter-spacing: $tracking-cn-soft;
+  position: relative;
+}
+.feature-title::after {
+  content: '';
+  display: block;
+  width: 32rpx;
+  height: 2rpx;
+  background: $text-primary;
+  margin: 18rpx auto 0;
+  border-radius: 2rpx;
+  opacity: 0.6;
 }
 .feature-desc {
   display: block;
   font-size: 26rpx;
   color: $text-secondary;
-  line-height: 1.6;
-  margin-bottom: 36rpx;
+  line-height: 1.7;
+  margin-bottom: 40rpx;
+  letter-spacing: $tracking-cn-soft;
 }
 .feature-action {
-  width: 260rpx;
+  width: 280rpx;
   height: $control-height-sm;
   line-height: $control-height-sm;
   border-radius: $radius-full;
   background: $text-primary;
   color: #fff;
   font-size: 26rpx;
+  letter-spacing: $tracking-cn-soft;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
 }
 .feature-action::after { border: none; }
 
@@ -670,37 +748,57 @@ onLoad(async (options) => {
   gap: 12rpx;
   padding: 24rpx 8rpx;
   border-radius: $card-radius;
-  border: 2rpx solid $border-color;
+  border: 2rpx solid $hairline-medium;
   background: $bg-surface;
-  transition: all 0.25s ease;
+  transition:
+    all 0.35s $ease-editorial,
+    transform 0.2s $ease-editorial;
+  position: relative;
+  overflow: hidden;
 }
 .radio-item:active {
   transform: scale(0.98);
+  background: $bg-muted;
 }
 .radio-item.active {
   border-color: $text-primary;
   background: $text-primary;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
 }
 .radio-dot {
   width: 24rpx;
   height: 24rpx;
   border-radius: 50%;
-  border: 2rpx solid $border-color;
+  border: 2rpx solid $hairline-strong;
   position: relative;
-  transition: all 0.25s ease;
+  transition: all 0.35s $ease-editorial;
+  background: transparent;
 }
 .radio-item.active .radio-dot {
-  border-color: #fff;
+  border-color: rgba(255, 255, 255, 0.9);
+  background: $text-primary;
+}
+.radio-item.active .radio-dot::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10rpx;
+  height: 10rpx;
+  border-radius: 50%;
   background: #fff;
+  transform: translate(-50%, -50%);
+  animation: scaleIn 0.35s $ease-out-back both;
 }
 .radio-label {
   max-width: 100%;
   font-size: 24rpx;
   color: $text-primary;
-  transition: color 0.25s ease;
+  transition: color 0.3s $ease-editorial;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: $tracking-cn-soft;
 }
 .radio-item.active .radio-label {
   color: #fff;
@@ -711,25 +809,33 @@ onLoad(async (options) => {
   display: flex;
   align-items: center;
   gap: 32rpx;
+  padding: 8rpx 0;
 }
 .step-btn {
   width: $tap-min-height;
   height: $tap-min-height;
   border-radius: 50%;
-  border: 2rpx solid $border-color;
+  border: 2rpx solid $hairline-medium;
+  background: $bg-surface;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: all 0.3s $ease-editorial;
+  color: $text-primary;
 }
 .step-btn:active {
-  background: $bg-muted;
-  transform: scale(0.95);
+  background: $text-primary;
+  border-color: $text-primary;
+  transform: scale(0.94);
+  color: #fff;
+  box-shadow: 0 4rpx 10rpx rgba(0, 0, 0, 0.08);
 }
 .step-icon {
   font-size: 32rpx;
-  color: $text-primary;
   font-weight: 300;
+  line-height: 1;
+  transition: color 0.25s $ease-editorial;
+  color: inherit;
 }
 .step-value {
   font-size: 36rpx;
@@ -738,6 +844,7 @@ onLoad(async (options) => {
   min-width: 48rpx;
   text-align: center;
   font-variant-numeric: tabular-nums;
+  letter-spacing: $tracking-cn-soft;
 }
 
 /* 标签选择 */
@@ -749,21 +856,25 @@ onLoad(async (options) => {
 .tag-item {
   padding: 14rpx 28rpx;
   border-radius: $radius-full;
-  border: 2rpx solid $border-color;
+  border: 2rpx solid $hairline-medium;
   font-size: 26rpx;
   color: $text-primary;
-  transition: all 0.25s ease;
+  transition: all 0.3s $ease-editorial;
   min-height: $control-height-sm;
   display: flex;
   align-items: center;
+  background: $bg-surface;
+  letter-spacing: $tracking-cn-soft;
 }
 .tag-item:active {
-  transform: scale(0.95);
+  transform: scale(0.96);
+  background: $bg-muted;
 }
 .tag-item.active {
   background: $text-primary;
   color: #fff;
   border-color: $text-primary;
+  box-shadow: 0 4rpx 10rpx rgba(0, 0, 0, 0.06);
 }
 
 /* 文本域 */
@@ -772,21 +883,38 @@ onLoad(async (options) => {
   height: 200rpx;
   font-size: 30rpx;
   color: $text-primary;
-  border-bottom: 2rpx solid $border-color;
+  border-bottom: 2rpx solid $hairline-medium;
   padding: 16rpx 0;
-  line-height: 1.6;
+  line-height: 1.7;
+  transition: border-color 0.4s $ease-editorial;
+  letter-spacing: $tracking-cn-soft;
+}
+.form-textarea:focus {
+  border-color: $text-primary;
 }
 .char-count {
   display: block;
   text-align: right;
-  font-size: 22rpx;
+  font-size: 20rpx;
   color: $text-muted;
-  margin-top: 8rpx;
+  margin-top: 10rpx;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
 }
 
 /* 提交按钮 */
 .form-actions {
-  padding-top: 24rpx;
+  padding-top: 32rpx;
+  position: relative;
+}
+.form-actions::before {
+  content: '';
+  display: block;
+  width: 1rpx;
+  height: 48rpx;
+  background: $hairline-strong;
+  margin: 0 auto 32rpx;
+  opacity: 0.6;
 }
 .submit-btn {
   height: $control-height;
@@ -797,16 +925,23 @@ onLoad(async (options) => {
   color: #fff;
   font-size: 30rpx;
   font-weight: 500;
-  transition: all 0.2s ease;
-  box-shadow: $shadow-sm;
+  letter-spacing: $tracking-cn-soft;
+  transition: all 0.3s $ease-editorial;
+  box-shadow:
+    0 6rpx 18rpx rgba(0, 0, 0, 0.1),
+    0 2rpx 4rpx rgba(0, 0, 0, 0.04);
+  position: relative;
+  overflow: hidden;
 }
 .submit-btn::after { border: none; }
 .submit-btn:active {
-  transform: scale(0.97);
-  box-shadow: $shadow-xs;
+  transform: scale(0.985);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
+  opacity: 0.92;
 }
 .submit-btn[disabled] {
-  opacity: 0.5;
+  opacity: 0.45;
+  box-shadow: none;
 }
 
 .tpl-rose .rsvp-brief::before {
@@ -897,15 +1032,30 @@ onLoad(async (options) => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 80rpx $page-gutter;
+  padding: 120rpx $page-gutter 80rpx;
   min-height: 100vh;
+  background: var(--theme-page, $bg-color);
+  position: relative;
 }
+.success-page::before {
+  content: '';
+  position: absolute;
+  top: 8%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 480rpx;
+  height: 480rpx;
+  background: radial-gradient(circle at center, rgba(176, 58, 91, 0.04) 0%, rgba(176, 58, 91, 0) 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+.success-page > * { position: relative; z-index: 1; }
 
 .success-ring {
   position: relative;
-  width: 160rpx;
-  height: 160rpx;
-  margin-bottom: 48rpx;
+  width: 168rpx;
+  height: 168rpx;
+  margin-bottom: 56rpx;
 }
 .success-ring::before {
   content: '';
@@ -915,18 +1065,30 @@ onLoad(async (options) => {
   right: -8rpx;
   bottom: -8rpx;
   border-radius: 50%;
-  border: 2rpx solid $color-success;
-  opacity: 0.3;
-  animation: scale-fade 2s ease-out infinite;
+  border: 1rpx solid $color-success;
+  opacity: 0.32;
+  animation: scale-fade 2.4s ease-out infinite;
+}
+.success-ring::after {
+  content: '';
+  position: absolute;
+  top: -16rpx;
+  left: -16rpx;
+  right: -16rpx;
+  bottom: -16rpx;
+  border-radius: 50%;
+  border: 1rpx solid $color-success;
+  opacity: 0.18;
+  animation: scale-fade 2.4s ease-out 0.4s infinite;
 }
 @keyframes scale-fade {
-  0% { transform: scale(1); opacity: 0.3; }
-  100% { transform: scale(1.3); opacity: 0; }
+  0% { transform: scale(1); opacity: var(--ring-start, 0.32); }
+  100% { transform: scale(1.4); opacity: 0; }
 }
 
 .success-circle {
-  width: 160rpx;
-  height: 160rpx;
+  width: 168rpx;
+  height: 168rpx;
   border-radius: 50%;
   background: $color-success;
   display: flex;
@@ -934,12 +1096,16 @@ onLoad(async (options) => {
   justify-content: center;
   position: relative;
   z-index: 2;
-  animation: bounceIn 0.8s $ease-out-back both;
+  box-shadow:
+    0 12rpx 28rpx rgba(0, 0, 0, 0.12),
+    inset 0 2rpx 4rpx rgba(255, 255, 255, 0.2);
+  animation: bounceIn 0.9s $ease-out-back both;
 }
 .success-icon {
-  font-size: 72rpx;
+  font-size: 76rpx;
   color: #fff;
-  font-weight: 700;
+  font-weight: 600;
+  line-height: 1;
 }
 
 .success-title {
@@ -947,15 +1113,27 @@ onLoad(async (options) => {
   font-weight: 600;
   color: $text-primary;
   margin-bottom: 16rpx;
-  letter-spacing: 0;
-  animation: fadeInUp 0.6s $ease-out 0.3s both;
+  letter-spacing: $tracking-cn-soft;
+  animation: fadeInUp 0.7s $ease-editorial 0.3s both;
+}
+.success-title::after {
+  content: '';
+  display: block;
+  width: 32rpx;
+  height: 2rpx;
+  background: $text-primary;
+  margin: 18rpx auto 0;
+  border-radius: 2rpx;
+  opacity: 0.6;
 }
 .success-desc {
   font-size: 26rpx;
   color: $text-secondary;
-  margin-bottom: 48rpx;
+  margin-bottom: 56rpx;
   text-align: center;
-  animation: fadeInUp 0.6s $ease-out 0.45s both;
+  line-height: 1.7;
+  letter-spacing: $tracking-cn-soft;
+  animation: fadeInUp 0.7s $ease-editorial 0.45s both;
 }
 
 .success-card {
@@ -963,29 +1141,35 @@ onLoad(async (options) => {
   max-width: 560rpx;
   background: $bg-surface;
   border-radius: $card-radius;
-  border: 1rpx solid $border-color;
-  padding: 32rpx;
+  border: 1rpx solid $hairline-soft;
+  padding: 36rpx 32rpx;
   margin-bottom: 48rpx;
-  animation: fadeInUp 0.6s $ease-out 0.6s both;
+  box-shadow:
+    0 8rpx 24rpx rgba(0, 0, 0, 0.04),
+    0 1rpx 2rpx rgba(0, 0, 0, 0.02);
+  animation: fadeInUp 0.7s $ease-editorial 0.6s both;
 }
 .success-info {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16rpx 0;
+  padding: 18rpx 0;
 }
 .info-label {
   font-size: 24rpx;
   color: $text-muted;
+  letter-spacing: $tracking-cn-soft;
 }
 .info-value {
   font-size: 28rpx;
   color: $text-primary;
   font-weight: 500;
+  letter-spacing: $tracking-cn-soft;
 }
 .success-divider {
   height: 1rpx;
-  background: $border-color;
+  background: $hairline-soft;
+  margin: 0 8rpx;
 }
 
 .back-btn {
@@ -994,24 +1178,27 @@ onLoad(async (options) => {
   line-height: 80rpx;
   text-align: center;
   border-radius: $radius-full;
-  border: 2rpx solid $border-color;
+  border: 1rpx solid $hairline-strong;
   background: transparent;
   color: $text-primary;
   font-size: 28rpx;
-  transition: all 0.2s ease;
-  animation: fadeInUp 0.6s $ease-out 0.75s both;
+  letter-spacing: $tracking-cn-soft;
+  transition: all 0.3s $ease-editorial;
+  animation: fadeInUp 0.7s $ease-editorial 0.75s both;
 }
 .back-btn::after { border: none; }
 .back-btn:active {
-  background: $bg-muted;
-  transform: scale(0.97);
+  background: $text-primary;
+  color: #fff;
+  border-color: $text-primary;
+  transform: scale(0.985);
 }
 .success-actions {
   width: 100%;
   display: flex;
   gap: 14rpx;
   margin-top: 24rpx;
-  animation: fadeInUp 0.6s $ease-out 0.85s both;
+  animation: fadeInUp 0.7s $ease-editorial 0.85s both;
 }
 .success-action {
   flex: 1;
@@ -1022,11 +1209,14 @@ onLoad(async (options) => {
   color: $text-primary;
   font-size: 24rpx;
   padding: 0;
+  letter-spacing: $tracking-cn-soft;
+  transition: all 0.3s $ease-editorial;
 }
 .success-action::after { border: none; }
 .success-action:active {
   background: $text-primary;
   color: #fff;
+  transform: scale(0.98);
 }
 
 .theme-rose,

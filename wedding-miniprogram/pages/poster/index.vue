@@ -262,6 +262,7 @@ onLoad(async (options) => {
   font-size: 32rpx;
   font-weight: 600;
   color: $text-primary;
+  letter-spacing: $tracking-cn-soft;
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
@@ -270,11 +271,13 @@ onLoad(async (options) => {
   font-size: 28rpx;
   color: $color-primary;
   padding: 8rpx 16rpx;
+  letter-spacing: $tracking-kicker;
 }
 .page-desc {
   font-size: 24rpx;
   color: $text-muted;
   display: block;
+  letter-spacing: $tracking-cn-soft;
 }
 
 .poster-preview {
@@ -309,10 +312,12 @@ onLoad(async (options) => {
   gap: 10rpx;
   padding: 16rpx 20rpx;
   border-radius: $card-radius;
-  background: rgba(249,171,0,0.12);
+  background: rgba(249,171,0,0.08);
   color: #8F6100;
   font-size: 23rpx;
-  line-height: 1.45;
+  line-height: 1.5;
+  letter-spacing: $tracking-cn-soft;
+  border: 1rpx solid rgba(249,171,0,0.18);
   box-sizing: border-box;
 }
 .poster-status-icon {
@@ -338,10 +343,13 @@ onLoad(async (options) => {
   gap: 12rpx;
   border-radius: $radius-full;
   background: $bg-surface;
-  border: 1rpx solid $border-color;
+  border: 1rpx solid $hairline-soft;
   font-size: 28rpx;
   color: $text-primary;
-  transition: all 0.2s ease;
+  letter-spacing: $tracking-kicker;
+  font-weight: 500;
+  transition: all 0.25s $ease-editorial;
+  box-shadow: $shadow-xs;
 }
 .action-btn::after { border: none; }
 .action-btn:active { transform: scale(0.97); }

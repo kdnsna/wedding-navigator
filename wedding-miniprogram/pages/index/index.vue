@@ -9,6 +9,14 @@
         :mode="coverImageMode"
       />
       <view class="hero-gradient" :class="{ default: isLegacyDefaultCover }" />
+      <view class="hero-vignette" />
+      <view class="hero-corner-mark top-left">
+        <view class="corner-dot" />
+        <text>{{ activeTemplate.shortName }}</text>
+      </view>
+      <view class="hero-corner-mark top-right">
+        <text>{{ formatWeddingYear(weddingDate) }}</text>
+      </view>
       <text class="xi-watermark">囍</text>
       <view class="hero-content">
         <text class="hero-tag animate-fade-in delay-2">{{ activeTemplate.kicker }}</text>
@@ -357,6 +365,13 @@ const invitationText = computed(() => {
   return store.invitation?.content?.main_text || '诚挚邀请您参加我们的婚礼，见证我们的幸福时刻。'
 })
 
+function formatWeddingYear(dateStr) {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  if (Number.isNaN(d.getTime())) return ''
+  return String(d.getFullYear())
+}
+
 function updateCountdown() {
   const cd = store.getLiveCountdown(Date.now())
   if (!cd) return
@@ -611,12 +626,14 @@ onUnmounted(() => {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 600rpx;
+  transform: translate(-50%, -50%) rotate(-2deg);
+  font-size: 560rpx;
   font-weight: 900;
-  color: rgba(255,255,255,0.04);
+  color: rgba(255, 255, 255, 0.035);
   pointer-events: none;
   z-index: 3;
+  letter-spacing: -0.04em;
+  user-select: none;
 }
 .hero-content {
   position: relative;
@@ -631,14 +648,25 @@ onUnmounted(() => {
 }
 
 .hero-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 12rpx;
   font-size: 22rpx;
-  color: rgba(255,255,255,0.65);
-  letter-spacing: 0;
-  font-weight: 300;
+  color: rgba(255,255,255,0.7);
+  letter-spacing: $tracking-kicker;
+  text-transform: uppercase;
+  font-weight: 500;
   margin-bottom: 20rpx;
 }
+.hero-tag::before,
+.hero-tag::after {
+  content: '';
+  width: 18rpx;
+  height: 1rpx;
+  background: rgba(255,255,255,0.4);
+}
 .hero-divider {
-  width: 40rpx;
+  width: 48rpx;
   height: 1rpx;
   background: rgba(255,255,255,0.5);
   margin-bottom: 32rpx;
@@ -649,9 +677,9 @@ onUnmounted(() => {
   width: 100%;
   max-width: 560rpx;
   font-size: 56rpx;
-  font-weight: 700;
+  font-weight: 600;
   color: #fff;
-  letter-spacing: 0;
+  letter-spacing: $tracking-cn;
   margin-bottom: 12rpx;
   text-shadow: 0 4rpx 24rpx rgba(0,0,0,0.3);
   line-height: 1.2;
@@ -661,15 +689,16 @@ onUnmounted(() => {
 .hero-sub {
   font-size: 24rpx;
   color: rgba(255,255,255,0.7);
-  letter-spacing: 0;
+  letter-spacing: $tracking-cn-soft;
   font-weight: 300;
   margin-bottom: 20rpx;
   font-style: italic;
+  font-family: Georgia, 'Times New Roman', serif;
 }
 .hero-date {
   font-size: 28rpx;
   color: rgba(255,255,255,0.95);
-  letter-spacing: 0;
+  letter-spacing: $tracking-cn-soft;
   margin-bottom: 18rpx;
   text-shadow: 0 2rpx 12rpx rgba(0,0,0,0.25);
 }
@@ -685,7 +714,7 @@ onUnmounted(() => {
   border: 1rpx solid rgba(255,255,255,0.26);
   color: rgba(255,255,255,0.86);
   font-size: 22rpx;
-  letter-spacing: 0;
+  letter-spacing: $tracking-cn-soft;
   background: rgba(20,20,20,0.18);
   backdrop-filter: blur(12rpx);
   max-width: 100%;
@@ -735,15 +764,15 @@ onUnmounted(() => {
   max-width: 220rpx;
 }
 .countdown-label {
-  font-size: 26rpx;
+  font-size: 24rpx;
   color: rgba(255,255,255,0.75);
-  letter-spacing: 0;
+  letter-spacing: $tracking-cn-soft;
   font-weight: 400;
 }
 .countdown-desc {
   font-size: 24rpx;
   color: rgba(255,255,255,0.92);
-  letter-spacing: 0;
+  letter-spacing: $tracking-cn-soft;
   max-width: 100%;
   overflow: hidden;
   white-space: nowrap;
@@ -810,33 +839,49 @@ onUnmounted(() => {
   margin-bottom: 28rpx;
 }
 .daypack-kicker {
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  gap: 10rpx;
   font-size: 20rpx;
   color: var(--theme-accent, $color-primary);
-  letter-spacing: 0;
-  margin-bottom: 8rpx;
+  letter-spacing: $tracking-kicker;
+  text-transform: uppercase;
+  margin-bottom: 10rpx;
   font-weight: 600;
+}
+.daypack-kicker::before {
+  content: '';
+  width: 18rpx;
+  height: 1rpx;
+  background: currentColor;
+  opacity: 0.6;
 }
 .daypack-title {
   display: block;
   font-size: 40rpx;
   color: var(--theme-ink, $text-primary);
   font-weight: 600;
+  letter-spacing: $tracking-cn;
+  line-height: 1.3;
 }
 .daypack-template {
   display: block;
   margin-top: 8rpx;
   font-size: 22rpx;
   color: var(--theme-muted, $text-muted);
-  letter-spacing: 0;
+  letter-spacing: $tracking-cn-soft;
 }
 .daypack-status {
-  padding: 10rpx 20rpx;
+  padding: 10rpx 22rpx;
   border-radius: $radius-full;
-  background: var(--theme-accent-soft, rgba(176,58,91,0.08));
+  background: var(--theme-accent-soft, rgba(176, 58, 91, 0.08));
   color: var(--theme-accent, $color-primary);
-  font-size: 24rpx;
+  font-size: 22rpx;
+  letter-spacing: 0.04em;
+  font-weight: 500;
   flex-shrink: 0;
+  border: 1rpx solid transparent;
+  transition: all 0.25s $ease-editorial;
 }
 .daypack-status.done {
   background: rgba(52,168,83,0.1);
@@ -852,8 +897,9 @@ onUnmounted(() => {
   margin-bottom: 16rpx;
 }
 .daypack-card.primary {
-  background: var(--theme-strong-bg, $text-primary);
+  background: linear-gradient(135deg, var(--theme-strong-bg, $text-primary) 0%, var(--theme-strong-bg, $text-primary) 60%, var(--theme-accent-soft, $hairline-soft) 220%);
   border-color: var(--theme-strong-border, transparent);
+  box-shadow: 0 6rpx 20rpx rgba(0, 0, 0, 0.06);
 }
 .daypack-card-main {
   flex: 1;
@@ -904,10 +950,19 @@ onUnmounted(() => {
   margin-bottom: 20rpx;
 }
 .daypack-mini {
-  padding: 28rpx;
-  background: var(--theme-elevated, $bg-muted);
+  padding: 28rpx 26rpx;
+  background: var(--theme-elevated, $card-bg-soft);
   border-radius: $card-radius;
   min-height: 132rpx;
+  border: 1rpx solid var(--theme-border, $hairline-soft);
+  transition: all 0.3s $ease-editorial;
+  position: relative;
+  overflow: hidden;
+}
+.daypack-mini:active {
+  transform: translateY(-2rpx);
+  background: var(--theme-surface, $card-bg);
+  box-shadow: 0 6rpx 16rpx rgba(0, 0, 0, 0.04);
 }
 .mini-label {
   display: block;
@@ -951,11 +1006,17 @@ onUnmounted(() => {
   background: var(--theme-page-soft, $bg-muted);
 }
 .preview-block {
-  background: var(--theme-surface, $bg-surface);
+  background: var(--theme-surface, $card-bg);
   border-radius: $card-radius;
-  padding: 28rpx;
-  margin-bottom: 20rpx;
-  border: 1rpx solid var(--theme-border, $border-color);
+  padding: 32rpx 30rpx;
+  margin-bottom: 22rpx;
+  border: 1rpx solid var(--theme-border, $hairline-soft);
+  box-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.015), 0 4rpx 16rpx rgba(0, 0, 0, 0.025);
+  transition: transform 0.3s $ease-editorial, box-shadow 0.3s $ease-editorial;
+}
+.preview-block:active {
+  transform: translateY(-2rpx);
+  box-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.02), 0 8rpx 24rpx rgba(0, 0, 0, 0.045);
 }
 .preview-block:last-child {
   margin-bottom: 0;
@@ -971,22 +1032,40 @@ onUnmounted(() => {
   font-size: 30rpx;
   font-weight: 600;
   color: var(--theme-ink, $text-primary);
+  letter-spacing: $tracking-cn-soft;
 }
 .preview-sub {
   display: block;
   max-width: 470rpx;
   margin-top: 6rpx;
   font-size: 22rpx;
-  line-height: 1.45;
+  line-height: 1.55;
   color: var(--theme-muted, $text-muted);
+  letter-spacing: $tracking-cn-soft;
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 }
 .preview-more {
-  font-size: 24rpx;
+  font-size: 22rpx;
   color: var(--theme-accent, $color-primary);
+  letter-spacing: $tracking-kicker;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4rpx;
+  transition: gap 0.25s $ease-editorial;
+}
+.preview-more::after {
+  content: '›';
+  font-family: Georgia, serif;
+  font-size: 26rpx;
+  line-height: 1;
+  font-weight: 300;
+}
+.preview-block:active .preview-more {
+  gap: 8rpx;
 }
 .photo-strip {
   display: flex;
@@ -1001,6 +1080,10 @@ onUnmounted(() => {
   background: $bg-muted;
   display: block;
   overflow: hidden;
+  transition: transform 0.4s $ease-editorial;
+}
+.preview-block:active .photo-thumb {
+  transform: scale(1.02);
 }
 .blessing-preview {
   padding: 20rpx 0;
@@ -1012,15 +1095,18 @@ onUnmounted(() => {
 }
 .blessing-name {
   display: block;
-  font-size: 24rpx;
+  font-size: 22rpx;
   color: var(--theme-muted, $text-muted);
-  margin-bottom: 8rpx;
+  margin-bottom: 10rpx;
+  letter-spacing: $tracking-cn-soft;
+  font-weight: 500;
 }
 .blessing-text {
   display: block;
   font-size: 28rpx;
   color: var(--theme-ink, $text-primary);
-  line-height: 1.6;
+  line-height: 1.65;
+  letter-spacing: $tracking-cn-soft;
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -1042,10 +1128,12 @@ onUnmounted(() => {
   transform: rotate(180deg);
 }
 .quote-mark {
-  font-size: 80rpx;
-  line-height: 1;
-  color: var(--theme-border, $border-color);
-  font-family: Georgia, serif;
+  font-family: "Times New Roman", "Songti SC", Georgia, serif;
+  font-size: 96rpx;
+  line-height: 0.5;
+  color: var(--theme-border, $hairline-medium);
+  font-style: italic;
+  font-weight: 400;
 }
 .invitation-body {
   max-width: 560rpx;
@@ -1057,6 +1145,8 @@ onUnmounted(() => {
   color: var(--theme-ink, $text-primary);
   letter-spacing: 0;
   font-weight: 400;
+  text-align: justify;
+  text-justify: inter-ideograph;
 }
 .invitation-couple {
   display: flex;
@@ -1074,43 +1164,46 @@ onUnmounted(() => {
 .couple-label {
   font-size: 18rpx;
   color: var(--theme-muted, $text-muted);
-  letter-spacing: 0;
+  letter-spacing: $tracking-kicker;
+  text-transform: uppercase;
+  font-weight: 500;
 }
 .couple-name {
   font-size: 36rpx;
   font-weight: 600;
-  letter-spacing: 0;
+  letter-spacing: $tracking-cn;
   color: var(--theme-ink, $text-primary);
 }
 .couple-divider {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8rpx;
+  gap: 10rpx;
 }
 .couple-line {
   width: 1rpx;
   height: 20rpx;
-  background: var(--theme-border, $border-color);
+  background: var(--theme-border, $hairline-medium);
 }
 .couple-heart {
-  width: 10rpx;
-  height: 10rpx;
+  width: 12rpx;
+  height: 12rpx;
   background: var(--theme-accent, $color-primary);
   transform: rotate(45deg);
   position: relative;
+  border-radius: 1rpx;
 }
 .couple-heart::before,
 .couple-heart::after {
   content: '';
   position: absolute;
-  width: 10rpx;
-  height: 10rpx;
+  width: 12rpx;
+  height: 12rpx;
   background: var(--theme-accent, $color-primary);
   border-radius: 50%;
 }
-.couple-heart::before { left: -5rpx; top: 0; }
-.couple-heart::after { left: 0; top: -5rpx; }
+.couple-heart::before { left: -6rpx; top: 0; }
+.couple-heart::after { left: 0; top: -6rpx; }
 
 /* ========== 婚礼信息 ========== */
 .info-section {
@@ -1122,37 +1215,52 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 24rpx;
-  margin-bottom: 48rpx;
+  gap: 18rpx;
+  margin-bottom: 56rpx;
 }
 .header-line {
   flex: 1;
-  max-width: 80rpx;
+  max-width: 56rpx;
   height: 1rpx;
-  background: var(--theme-border, $border-color);
+  background: var(--theme-border, $hairline-medium);
 }
 .header-text {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8rpx;
+  gap: 10rpx;
+}
+.header-text::before {
+  content: '';
+  display: block;
+  width: 4rpx;
+  height: 4rpx;
+  border-radius: 50%;
+  background: var(--theme-muted, $text-muted);
+  opacity: 0.45;
+  margin-bottom: 4rpx;
 }
 .info-title {
-  font-size: 36rpx;
+  font-size: 38rpx;
   font-weight: 600;
   color: var(--theme-ink, $text-primary);
-  letter-spacing: 0;
+  letter-spacing: $tracking-cn;
+  line-height: 1.25;
 }
 .info-sub {
   font-size: 20rpx;
   color: var(--theme-muted, $text-muted);
-  letter-spacing: 0;
+  letter-spacing: $tracking-kicker;
+  text-transform: uppercase;
+  font-weight: 500;
 }
 
 .info-list {
-  background: var(--theme-surface, $bg-surface);
+  background: var(--theme-surface, $card-bg);
   border-radius: $card-radius;
   overflow: hidden;
+  border: 1rpx solid var(--theme-border, $hairline-soft);
+  box-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.015), 0 4rpx 16rpx rgba(0, 0, 0, 0.025);
 }
 .info-row {
   display: flex;
@@ -1175,7 +1283,10 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 .info-icon {
-  font-size: 32rpx;
+  width: 56rpx;
+  height: 56rpx;
+  flex-shrink: 0;
+  opacity: 0.82;
 }
 .info-meta {
   flex: 1;
@@ -1185,8 +1296,10 @@ onUnmounted(() => {
   display: block;
   font-size: 20rpx;
   color: var(--theme-muted, $text-muted);
-  margin-bottom: 6rpx;
-  letter-spacing: 0;
+  margin-bottom: 8rpx;
+  letter-spacing: $tracking-kicker;
+  text-transform: uppercase;
+  font-weight: 500;
 }
 .info-value {
   display: block;
@@ -1223,15 +1336,18 @@ onUnmounted(() => {
   padding-top: 80rpx;
 }
 .quick-title {
-  font-size: 36rpx;
+  font-size: 38rpx;
   font-weight: 600;
   color: var(--theme-ink, $text-primary);
   letter-spacing: 0;
+  line-height: 1.25;
 }
 .quick-sub {
   font-size: 20rpx;
   color: var(--theme-muted, $text-muted);
-  letter-spacing: 0;
+  letter-spacing: $tracking-kicker;
+  text-transform: uppercase;
+  font-weight: 500;
 }
 .quick-grid {
   display: grid;
@@ -1243,32 +1359,61 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 20rpx;
-  padding: 32rpx 24rpx;
-  background: var(--theme-surface, $bg-surface);
+  padding: 32rpx 28rpx;
+  background: var(--theme-surface, $card-bg);
   border-radius: $card-radius;
-  border: 1rpx solid var(--theme-border, $border-color);
-  transition: all 0.25s ease;
+  border: 1rpx solid var(--theme-border, $hairline-soft);
+  box-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.015), 0 4rpx 16rpx rgba(0, 0, 0, 0.025);
+  transition: transform 0.3s $ease-editorial, box-shadow 0.3s $ease-editorial, background 0.3s $ease-editorial;
+  position: relative;
+  overflow: hidden;
+}
+.quick-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 24rpx;
+  bottom: 24rpx;
+  width: 2rpx;
+  background: var(--theme-accent, $text-primary);
+  opacity: 0;
+  transform: scaleY(0.4);
+  transform-origin: center;
+  transition: opacity 0.3s $ease-editorial, transform 0.3s $ease-editorial;
+  border-radius: 2rpx;
 }
 .quick-item:active {
-  background: var(--theme-elevated, $bg-muted);
-  transform: scale(0.98);
+  background: var(--theme-elevated, $card-bg-soft);
+  transform: scale(0.99);
+  box-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.02), 0 2rpx 6rpx rgba(0, 0, 0, 0.03);
+}
+.quick-item:active::before {
+  opacity: 0.45;
+  transform: scaleY(1);
 }
 .quick-icon {
-  font-size: 40rpx;
+  width: 64rpx;
+  height: 64rpx;
   flex-shrink: 0;
+  opacity: 0.82;
+  transition: opacity 0.25s $ease-editorial;
+}
+.quick-item:active .quick-icon {
+  opacity: 1;
 }
 .quick-meta {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4rpx;
+  gap: 6rpx;
 }
 .quick-label {
   display: block;
   font-size: 28rpx;
   color: var(--theme-ink, $text-primary);
   font-weight: 500;
+  letter-spacing: $tracking-cn-soft;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1276,11 +1421,19 @@ onUnmounted(() => {
 .quick-en {
   font-size: 18rpx;
   color: var(--theme-muted, $text-muted);
-  letter-spacing: 0;
+  letter-spacing: $tracking-kicker;
+  text-transform: uppercase;
+  font-weight: 500;
 }
 .quick-arrow {
   font-size: 28rpx;
   color: var(--theme-muted, $text-muted);
+  font-family: Georgia, serif;
+  font-weight: 300;
+  transition: transform 0.25s $ease-editorial;
+}
+.quick-item:active .quick-arrow {
+  transform: translateX(4rpx);
 }
 
 /* ========== 底部 ========== */
@@ -1292,23 +1445,39 @@ onUnmounted(() => {
 .footer-line {
   width: 40rpx;
   height: 1rpx;
-  background: var(--theme-border, $border-color);
+  background: var(--theme-border, $hairline-medium);
   margin: 0 auto 32rpx;
+  position: relative;
 }
+.footer-line::before,
+.footer-line::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 4rpx;
+  height: 4rpx;
+  background: var(--theme-muted, $text-muted);
+  opacity: 0.4;
+  border-radius: 50%;
+  transform: translateY(-50%);
+}
+.footer-line::before { left: -16rpx; }
+.footer-line::after { right: -16rpx; }
 .footer-text {
   display: block;
   font-size: 28rpx;
   color: var(--theme-ink, $text-primary);
-  letter-spacing: 0;
+  letter-spacing: 0.04em;
   margin-bottom: 12rpx;
   font-weight: 500;
 }
 .footer-sub {
   display: block;
-  font-size: 22rpx;
+  font-size: 20rpx;
   color: var(--theme-muted, $text-muted);
-  letter-spacing: 0;
-  font-weight: 300;
+  letter-spacing: $tracking-kicker;
+  text-transform: uppercase;
+  font-weight: 500;
 }
 
 /* ========== 悬浮操作 ========== */
@@ -1324,7 +1493,8 @@ onUnmounted(() => {
   border-radius: $radius-full;
   font-size: 30rpx;
   font-weight: 500;
-  transition: all 0.2s ease;
+  letter-spacing: $tracking-kicker;
+  transition: all 0.25s $ease-editorial;
 }
 .float-btn::after { border: none; }
 .float-btn:active { transform: scale(0.96); opacity: 0.85; }
@@ -1333,13 +1503,15 @@ onUnmounted(() => {
   min-width: 0;
   background: var(--theme-accent, $text-primary);
   color: var(--theme-on-accent, #fff);
-  box-shadow: $shadow-sm;
+  box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.08), 0 2rpx 4rpx rgba(0, 0, 0, 0.04);
+  letter-spacing: $tracking-kicker;
 }
 .float-btn.share {
   width: 88rpx;
-  background: var(--theme-surface, $bg-surface);
+  background: var(--theme-surface, $card-bg);
   color: var(--theme-ink, $text-primary);
-  border: 1rpx solid var(--theme-border, $border-color);
+  border: 1rpx solid var(--theme-border, $hairline-soft);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.04);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1357,14 +1529,15 @@ onUnmounted(() => {
   width: $tap-min-height;
   height: $tap-min-height;
   border-radius: 50%;
-  background: var(--theme-surface, rgba(255,255,255,0.9));
-  border: 1rpx solid var(--theme-border, $border-color);
+  background: var(--theme-surface, rgba(255, 255, 255, 0.92));
+  border: 1rpx solid var(--theme-border, $hairline-soft);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 200;
-  box-shadow: $shadow-xs;
-  transition: all 0.2s ease;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.06), 0 1rpx 2rpx rgba(0, 0, 0, 0.03);
+  backdrop-filter: blur(12rpx);
+  transition: all 0.3s $ease-editorial;
 }
 .music-control:active { transform: scale(0.92); }
 .music-icon {

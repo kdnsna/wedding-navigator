@@ -96,24 +96,51 @@ onShow(async () => {
   padding: $page-header-top 0 $page-header-bottom;
 }
 .page-tag {
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  gap: 10rpx;
   font-size: 22rpx;
   color: $text-muted;
-  letter-spacing: 0;
-  margin-bottom: 12rpx;
+  letter-spacing: $tracking-kicker;
+  text-transform: uppercase;
+  margin-bottom: 18rpx;
+  font-weight: 500;
+}
+.page-tag::before {
+  content: '';
+  width: 24rpx;
+  height: 1rpx;
+  background: currentColor;
+  opacity: 0.5;
 }
 .page-title {
   display: block;
   font-size: $font-h1;
   font-weight: 600;
   color: $text-primary;
+  letter-spacing: $tracking-cn;
+  line-height: 1.25;
 }
 .page-desc {
   display: block;
   margin-top: 14rpx;
   font-size: 24rpx;
   color: $text-secondary;
-  line-height: 1.55;
+  line-height: 1.65;
+  letter-spacing: $tracking-cn-soft;
+  position: relative;
+  padding-left: 20rpx;
+}
+.page-desc::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 12rpx;
+  bottom: 12rpx;
+  width: 2rpx;
+  background: $text-primary;
+  opacity: 0.5;
+  border-radius: 2rpx;
 }
 
 .album-container {
@@ -126,8 +153,14 @@ onShow(async () => {
   margin-bottom: 16rpx;
   border-radius: $radius-md;
   overflow: hidden;
-  animation: fadeInScale 0.5s $ease-out both;
+  animation: fadeInScale 0.6s $ease-editorial both;
   opacity: 0;
+  transition: transform 0.3s $ease-editorial, box-shadow 0.3s $ease-editorial;
+  cursor: pointer;
+  position: relative;
+}
+.photo-item:active {
+  transform: scale(0.98);
 }
 
 @for $i from 1 through 20 {
@@ -143,21 +176,30 @@ onShow(async () => {
 
 .empty-state {
   text-align: center;
-  padding: 200rpx 60rpx;
+  padding: 160rpx 60rpx 200rpx;
+}
+.empty-visual {
+  width: 220rpx;
+  height: 220rpx;
+  margin: 0 auto 40rpx;
+  display: block;
+  filter: grayscale(0.05);
 }
 .empty-text {
   display: block;
   font-size: 30rpx;
   color: $text-muted;
+  letter-spacing: $tracking-cn-soft;
 }
 .empty-sub {
   display: block;
   margin-top: 12rpx;
   font-size: 24rpx;
   color: $text-placeholder;
+  letter-spacing: $tracking-cn-soft;
 }
 .empty-action {
-  margin-top: 32rpx;
+  margin-top: 36rpx;
   width: 260rpx;
   height: $control-height-sm;
   line-height: $control-height-sm;
@@ -165,6 +207,13 @@ onShow(async () => {
   background: $text-primary;
   color: #fff;
   font-size: 26rpx;
+  letter-spacing: $tracking-kicker;
+  font-weight: 500;
+  transition: opacity 0.25s $ease-editorial, transform 0.25s $ease-editorial;
+}
+.empty-action:active {
+  opacity: 0.85;
+  transform: scale(0.98);
 }
 .empty-action::after { border: none; }
 
