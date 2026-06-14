@@ -1049,7 +1049,15 @@ onLoad(async (options) => {
   pointer-events: none;
   z-index: 0;
 }
-.success-page > * { position: relative; z-index: 1; }
+.success-page .success-ring,
+.success-page .success-title,
+.success-page .success-desc,
+.success-page .success-card,
+.success-page .success-info,
+.success-page .success-divider,
+.success-page .success-btn,
+.success-page > view,
+.success-page > text { position: relative; z-index: 1; }
 
 .success-ring {
   position: relative;
