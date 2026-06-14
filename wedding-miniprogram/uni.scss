@@ -303,6 +303,8 @@ $card-bg-elevated: #FFFFFF;
 $tracking-kicker: 0.18em;       // 英文小标（KICKER / eyebrow）
 $tracking-eyebrow: 0.14em;      // 略小一点
 $tracking-tight-en: 0.04em;     // 局部英文小字
+$tracking-cn: 0.02em;           // 中文标题微开字距
+$tracking-cn-soft: 0.01em;      // 中文正文极微字距
 
 // 渐入曲线：更慢、更编辑感
 $ease-editorial: cubic-bezier(0.22, 0.61, 0.36, 1);
