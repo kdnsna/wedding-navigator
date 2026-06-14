@@ -2,115 +2,157 @@
 
 > 主人 2026年11月14日婚礼的专属婚礼导航小程序
 
-## 最新更新（2026-05-19）
+「甜囍手册」不是普通电子请柬，而是给宾客看的**婚礼当天行动手册**。它集**婚书请柬**、**今日行动台**、**婚礼路书**、**流程时间线**、**RSVP 宾客管理**、**祝福墙**、**海报分享**于一体，建立「主人编辑端 + 宾客展示端」双角色体系。
 
-本次已将调研结论落到产品实现：甜囍手册从“电子请柬”升级为“婚礼当天行动手册”。重点包括：
+- 🎴 主人端：基于 7 套主题模板的婚书编辑、向导式创建、宾客/相册/祝福/流程管理、统计、发布诊断
+- 📱 宾客端：聚合倒计时、路线、流程、RSVP、祝福、相册、海报分享的「行动台」
+- 🎨 视觉系统：「高级简约无界」设计语言，7 套主题、3 套模板、零 JS 风险精修的视觉细节
 
-- 分享设置已支持云端保存，主人保存后会明确提示“已同步云端”
-- RSVP、祝福墙、流程、倒计时的功能开关已接入首页、更多页、对应页面和云函数权限
-- RSVP 降低填写摩擦，手机号默认可选，可由主人开启必填
-- 祝福墙支持公开/私密展示和匿名开关，普通宾客不再看到敏感 RSVP 信息
-- 流程时间线支持普通宾客、伴郎伴娘、双方父母、摄影司仪等角色视图
-- 模板从视觉模板扩展为婚礼方案模板，新增新中式礼宴、山东家宴、异地宾客友好等方向
+---
 
-P1 像素级一致性优化已同步完成，覆盖宾客端首页、路书、RSVP、祝福墙、流程、更多页，以及主人端管理后台、创建向导、婚书编辑、路书编辑、流程编辑、宾客管理、祝福管理、分享设置和统计页：
+## 最新更新（Phase 14 · 2025 年 6 月）
 
-- 全局页面横向边距统一为 `48rpx`，主按钮 `88rpx`，紧凑按钮 `72rpx`，可点击控件不低于 `80rpx`
-- 卡片圆角收敛到 `16rpx` 以内，胶囊按钮保留全圆角，重阴影改为轻阴影
-- 英文装饰字距统一为 0，中文信息优先，降低氛围标签密度
-- 长场地名、地址、祝福、流程标题和列表标题增加 1-2 行收口，避免小屏溢出
-- 底部固定按钮和页面底部统一避开安全区，避免遮挡表单和列表内容
+本次以**「零功能改动、零 JS 改动、零新 bug 风险」**为前提，对宾客端 8 个页面 + 全局设计系统做了纯视觉精修：
 
-P2 大众化/商业化基础已完成第一版，重点不锁刚需功能，先把可运营的数据结构和主人端入口补齐：
+### 设计系统层（`uni.scss`，仅追加）
 
-- 新增 `syncOwnerProfile` 云函数，基于微信 `OPENID` 同步主人资料、权益和婚礼工作区
-- 新增主人端“账号与权益”页面，展示免费版/高级版/商家版边界，以及高级模板、海报套装、去品牌水印、多工作区等权益位
-- 新增主人端“发布诊断”页面，集中检查云环境、场地坐标、分享卡片、隐私开关、海报素材、天气/地图 Key 和模板权益
-- 模板配置增加免费/高级分层，创建向导和婚书编辑会展示模板权益状态，并写入 `commercial` 状态，便于后续接微信支付
-- 发布检查脚本新增 P2 断言，确保账号、权益、诊断、模板分层和 README 不会在后续迭代中被遗漏
+- 新增 `hairline-soft / medium / strong` 三档边框透明度，替代裸用 `$border-color` 时的生硬感
+- 新增 `ink-soft`、`surface-soft`、`surface-strong` 文本与背景灰阶，支持细腻层次
+- 新增 `shadow-xs` / `shadow-sm` 两档阴影，与原有 `shadow-md` 形成三级深度
+- 新增 `tracking-kicker (0.12em)` / `tracking-cn (0.04em)` / `tracking-cn-soft (0.02em)` 三档字距 token —— 保留原有 `$ui-letter-spacing: 0` 为全局中文默认
+- 新增 `ease-editorial` 编辑感缓动曲线，用于 hover / active 微动效
+- 新增 `letter-spacing-en` 工具变量供英文小标签使用
 
-相册上传稳定性也已修复：主人端相册页移除不稳定的 `wx.chooseMedia` 兜底，优先使用微信原生 `wx.chooseImage`、再回退到 `uni.chooseImage`，并在上传前同时确保 `wx.cloud` 与 `uni.cloud` 已初始化，避免“选图成功但云存储上传失败”。
+### 7 个宾客端页面通用精修
 
-地图、天气、地理编码和海报链路继续补强：
+- `page-tag` 改为「细横线 + 文字 + 细横线」编辑感装饰，字距 0.12em
+- `page-title` 加 letter-spacing 0.04em；行高统一 1.25
+- `page-desc` 增加左侧 2rpx 近黑细线作为编辑感装饰
+- `section-header` 装饰线条全部使用 `$hairline-medium`
+- 卡片使用 `shadow-xs + 1rpx hairline-soft 边框`，弱化盒子感
+- 按钮点击改为 `opacity 0.85 + scale(0.99)`，更克制
+- `menu-arrow` / `quick-arrow` 使用 Georgia 衬线 + 4rpx 右滑微动效
+- `quote-mark` 改为 Georgia 衬线 + `translateY(8rpx)` 基线对齐
 
-- 首页支持从小程序码 `scene` 参数进入婚礼详情，避免扫码后拿不到婚礼 ID
-- 海报绘制支持 `cloud://` 相册封面和 base64 小程序码转本地临时文件，减少封面/小程序码不显示
-- 分享设置页会尝试生成并展示真实小程序码，失败时显示具体配置原因
-- 路书天气页会显示缺 Key、缺坐标或服务超时等具体失败原因，并支持重试
-- 主人端路书增加手动经纬度兜底，自动匹配和地图选点失败时也能补坐标
-- `cloudbaserc.json` 已加入 `generatePoster`，方便和地图/天气函数一起部署
+### 逐页面精修
 
-模板一致性继续升级：模板不再只是首页局部皮肤，而是贯穿宾客端的主题系统。
+| 页面 | 关键改动 |
+|---|---|
+| `pages/index` | hero tag 双线装饰、couple-heart 12rpx + 圆角微化、quick 图标统一 64rpx、preview-more 添加 Georgia "›" 装饰、quick 卡片加 `::before` 4rpx 顶色 |
+| `pages/rsvp` | 表单 textarea focus 加左侧 accent line、submit 圆环动画、成功页 editorial 装饰、result-circle 重画为对勾+双圆环 |
+| `pages/blessing` | 置顶条目加左侧 4rpx accent line + Georgia 引号装饰、send-card 渐入动画 |
+| `pages/timeline` | role filter 改为纯文字 + 下划线（无背景 pill）、timeline dot 加 outer ring、date banner 编辑感装饰 |
+| `pages/guide` | tab 改为纯文字 + 2rpx 细线下划线指示器、venue/transport/hotel 卡片加 shadow-xs、weather 卡片渐入 |
+| `pages/album` | photo-item 按压 scale(0.98)、empty state 容器调整 |
+| `pages/more` | menu-group 加 shadow-xs、menu-item 箭头按压右滑、share-btn 加 letter-spacing |
+| `pages/poster` | action-btn 加 letter-spacing + shadow、状态条加边框 |
 
-- 每套模板新增独立 `theme-*` 主题类，新中式、山东家宴、异地宾客友好不再复用香槟/花园的整页配色
-- `uni.scss` 增加模板主题变量，统一控制封面背景、主图遮罩、默认封面透明度、页面背景、卡片、按钮、边框和强调色
-- 首页封面会按模板自动调整主图滤镜和遮罩；默认窄竖图改为满屏裁切和底部信息渐变，避免首屏两侧出现割裂色带
-- 路书、流程、RSVP、祝福墙、更多页、相册和海报预览页已接入同一套主题变量，模块颜色不再割裂
-- Canvas 海报生成改为读取当前模板调色板，分享海报不再固定黑金风格
-- 主人端新增“完整模板预览”，每套模板都带虚拟婚礼示例，可切换首页、路书、流程、RSVP、祝福墙、相册和海报模拟界面
+### 安全保障
 
-默认封面也已从抽象插画升级为写实模板主图：
+- 所有改动只涉及 `<style>` 块
+- 未修改任何 JS / TS 逻辑、未修改路由、未修改主题色 token、未修改 icon SVG
+- 新增 token 与原有 token 命名规范一致（`$xxx` 风格）
+- 新增 utility class（`.quick-item::before` 等）使用 `var(--theme-xxx, $fallback)` 双兜底，在 7 套主题下行为一致
+- 所有 `page-tag` / `page-title` 的 padding / gutter 数值未变，**未破坏**现有页面布局
+- font-size / line-height 调整均在 ±2rpx 范围内
 
-- 7 套模板各自绑定一张 750×1334 竖版婚纱照主图，色彩、场地和人物构图与模板主题一致
-- 首页、完整模板预览和 Canvas 分享海报共用同一套模板主图兜底；用户上传相册封面后仍优先使用真实上传照片
-- 完整模板预览的首页封面已拉高并轻微下移主体，减少竖版婚纱照在手机预览壳里被顶部裁切或被底部文案压住的问题
-- 旧的 `default-cover.png` 保留为极端兜底，不再作为模板首屏的主要视觉
+---
 
-上线前全功能审查已完成代码侧修复，并新增 [RELEASE-AUDIT.md](wedding-miniprogram/RELEASE-AUDIT.md)：
+## 核心功能
 
-- `cloudbaserc.json` 已补齐 15 个云函数的部署清单，统一 runtime、handler、timeout 和描述
-- `submitRSVP`、`submitBlessing` 已补 `security.msgSecCheck` 权限，并增加服务端必填、长度和内容安全校验
-- `getWedding` 只向普通宾客返回当前宾客自己的 RSVP，并用 `is_current_user` 支持重复打开识别
-- `upload.mjs` 上传版本优先读取 `manifest.versionName`，`upload-ci.mjs` 移除本机私钥硬编码，改为环境变量配置
-- `build:mp-weixin` 完成后会自动把 `cloudfunctions/` 和 `cloudbaserc.json` 同步到构建产物，避免开发者工具打开构建目录时看不到云函数
-- 发布检查脚本新增云函数全量部署、OpenAPI 权限、CI 上传脚本安全和宾客回执识别断言
+### 婚书请柬
 
-## 项目简介
+- 7 套视觉/方案模板（传统红金、现代简约、极简纯白、新中式礼宴、山东家宴、异地宾客友好等）
+- 支持免费/高级模板分层、写实模板主图、统一主题色、完整模拟预览
+- 背景音乐、封面文案、婚礼信息、隐私与功能开关
 
-「甜囍手册」是一款专为婚礼当天打造的微信小程序，定位不是普通电子请柬，而是给宾客看的**婚礼行动手册**。它集**婚书请柬**、**今日行动台**、**婚礼路书**、**流程时间线**、**RSVP宾客管理**、**祝福墙**于一体，建立「主人编辑端 + 宾客展示端」双角色体系。
+### 宾客行动台（首页）
 
-### 核心功能
+- 倒计时 + 新人信息 + 婚礼信息
+- 6 个快速入口（相册/路书/流程/RSVP/祝福/海报）
+- 浮窗快捷分享
 
-- **婚书请柬**：多套视觉/方案模板，支持免费/高级模板分层、写实模板主图、统一主题色、完整模拟预览、背景音乐、封面文案、婚礼信息和功能开关
-- **宾客行动台**：首页聚合时间地点、路线、RSVP、流程、祝福等婚礼当天高频任务
-- **婚纱相册**：上传/瀑布流/轮播展示
-- **婚礼路书**：地图标记、一键导航、天气预报、交通住宿、停车和角色路线提示
-- **流程时间线**：婚礼当天完整时间轴，支持普通宾客、伴郎伴娘、双方父母、摄影司仪角色筛选
-- **RSVP宾客管理**：回执收集、出席统计、饮食偏好记录，手机号是否必填由主人配置
-- **祝福墙**：文字祝福提交、主人审核置顶，支持公开展示和匿名祝福开关
-- **海报生成**：Canvas 绘制精美分享海报，含小程序码
-- **账号与商业化基础**：主人资料、权益位、婚礼工作区、发布诊断、模板付费状态字段
+### 婚纱相册
+
+- 主人端上传 + 宾客端瀑布流/轮播展示
+- 海报封面支持 `cloud://` 与 base64 小程序码
+
+### 婚礼路书
+
+- 腾讯位置服务地图标记、一键导航
+- 婚礼当天天气预报（含降级/重试）
+- 交通方式、酒店住宿、停车、角色路线提示
+
+### 流程时间线
+
+- 婚礼当天完整时间轴，自动高亮「进行中/已完成/即将开始」
+- 支持普通宾客、伴郎伴娘、双方父母、摄影司仪角色筛选
+
+### RSVP 宾客管理
+
+- 回执收集、出席统计、饮食偏好记录
+- 手机号是否必填由主人配置
+- 服务端必填、长度、内容安全三重校验
+
+### 祝福墙
+
+- 文字祝福提交、主人审核置顶
+- 支持公开/私密展示、匿名祝福开关
+- 同一宾客重复打开识别（`is_current_user`）
+
+### 海报生成
+
+- Canvas 绘制精美分享海报
+- 读取当前模板调色板，不再固定黑金风格
+- 含小程序码（`wxacode.getUnlimited`）
+
+### 主人端运营/商业化基础
+
+- 主人资料同步（`syncOwnerProfile`）、权益位（免费版/高级版/商家版）
+- 「账号与权益」页面、「发布诊断」页面
+- 模板配置含 `commercial` 状态字段，便于后续接微信支付
+- 完整模板预览：每套模板带虚拟婚礼示例，可切换首页/路书/流程/RSVP/祝福/相册/海报模拟界面
+
+---
 
 ## 技术栈
 
-- **框架**：uni-app (Vue3) + Vite
-- **UI**：uni-ui + 自定义婚礼主题组件
-- **状态管理**：Pinia
-- **后端**：微信云开发（CloudBase）— 数据库 + 存储 + 云函数
-- **地图**：腾讯位置服务
+| 模块 | 选型 |
+|---|---|
+| 框架 | uni-app (Vue 3) + Vite |
+| UI | uni-ui + 自定义婚礼主题组件 |
+| 状态管理 | Pinia |
+| 后端 | 微信云开发（CloudBase）— 数据库 + 存储 + 云函数 |
+| 地图 | 腾讯位置服务 |
+| 设计系统 | 全局 SCSS（`uni.scss`），3 套配色 + 7 套主题 + 3 级字距 + 3 级阴影 |
+| 校验 | 微信 `security.msgSecCheck` 内容安全 |
+| CI | `upload.mjs` / `upload-ci.mjs`（环境变量注入） |
+
+---
 
 ## 快速开始
 
-### 1. 克隆项目
+### 1. 克隆与安装
 
 ```bash
 git clone https://github.com/kdnsna/wedding-navigator.git
 cd wedding-navigator/wedding-miniprogram
-```
-
-### 2. 安装依赖
-
-```bash
 pnpm install
 ```
 
-### 3. 配置云开发环境
+### 2. 配置云开发环境
 
 修改 `config/cloud.js` 中的 `CLOUD_ENV` 为你的云开发环境 ID：
 
 ```js
 export const CLOUD_ENV = 'your-cloud-env-id'
 ```
+
+### 3. 填写 manifest
+
+- `manifest.json` 中填入你的小程序 `appid`
+- 生产环境需在腾讯位置服务申请 Key，填入 `manifest.json` 地图字段
+- 体验版/已发布后才能生成小程序码海报（`wxacode.getUnlimited`）
 
 ### 4. 运行到微信开发者工具
 
@@ -122,31 +164,121 @@ pnpm dev:mp-weixin
 
 在微信开发者工具中，右键 `cloudfunctions/` 下的每个云函数目录，选择「上传并部署：云端安装依赖」。
 
+也可以用 `cloudbaserc.json` 一次性部署：
+
+```bash
+# 当前已加入 generatePoster、getWedding、createWedding 等 15 个云函数
+tcb fn deploy
+```
+
+### 6. 发布前自检
+
+```bash
+pnpm check:release
+```
+
+会校验云函数全量部署、OpenAPI 权限、CI 上传脚本安全、宾客回执识别、模板分层等 P0/P1/P2 断言。
+
+---
+
 ## 项目结构
 
 ```
-wedding-miniprogram/
-├── pages/              # 宾客端与分享辅助页
-├── pages-owner/        # 主人端（subPackages分包）
-├── cloudfunctions/     # 云函数（15个）
-├── components/         # 公共组件
-├── stores/             # Pinia 状态管理
-├── composables/        # 组合式逻辑
-├── utils/              # 工具函数
-├── config/             # 云配置
-└── uni.scss            # 全局设计系统
+wedding-navigator/
+├── wedding-miniprogram/           # 小程序源码（uni-app）
+│   ├── pages/                     # 宾客端（7 页）：首页/相册/路书/流程/RSVP/祝福墙/更多
+│   │   └── poster/                # 海报页
+│   ├── pages-owner/               # 主人端（10 页，subPackages 分包）
+│   │   ├── wizard/                # 创建婚礼向导
+│   │   ├── manage/                # 管理后台首页
+│   │   ├── invitation/edit.vue    # 婚书编辑（含背景音乐）
+│   │   ├── guide/edit.vue         # 路书编辑（场地/交通/住宿）
+│   │   ├── timeline/edit.vue      # 流程编辑
+│   │   ├── guests/manage.vue      # 宾客管理
+│   │   ├── album/manage.vue       # 相册管理
+│   │   ├── blessing/manage.vue    # 祝福管理
+│   │   ├── share/index.vue        # 分享设置
+│   │   ├── stats/index.vue        # 数据统计
+│   │   └── poster/index.vue       # 海报管理
+│   ├── cloudfunctions/            # 15 个云函数
+│   │   ├── createWedding/         # 创建婚礼（初始化所有集合）
+│   │   ├── getWedding/            # 读取婚礼（并行查询所有关联集合）
+│   │   ├── updateWedding/         # 更新指定集合（带权限校验）
+│   │   ├── deleteWedding/         # 删除婚礼
+│   │   ├── submitRSVP/            # 提交 RSVP（内容安全 + 服务端必填）
+│   │   ├── submitBlessing/        # 提交祝福（内容安全 + 服务端必填）
+│   │   ├── pinBlessing/           # 置顶/取消置顶祝福
+│   │   ├── recordView/            # 记录浏览
+│   │   ├── getStats/              # 统计数据
+│   │   ├── getRSVPStats/          # RSVP 统计
+│   │   ├── generatePoster/        # 生成小程序码海报
+│   │   ├── getWeather/            # 婚礼当天天气
+│   │   ├── geocodeVenue/          # 地理编码
+│   │   ├── checkOwnership/        # 权限校验
+│   │   └── syncOwnerProfile/      # 主人资料同步（商业化基础）
+│   ├── components/                # 公共组件（海报绘制等）
+│   ├── stores/                    # Pinia：user.js + wedding.js
+│   ├── composables/               # useCloud.js + useOwnerGuard.js
+│   ├── utils/                     # 工具函数库
+│   ├── config/                    # 云配置集中管理
+│   ├── scripts/                   # check-release-readiness.js + copy-cloudfunctions
+│   ├── upload.mjs                 # 微信开发者工具上传
+│   ├── upload-ci.mjs              # 微信 CI 上传（环境变量注入）
+│   ├── cloudbaserc.json           # 15 个云函数部署清单
+│   ├── App.vue                    # 全局应用配置
+│   ├── main.js                    # 入口
+│   ├── manifest.json              # 小程序配置
+│   ├── pages.json                 # 页面路由
+│   ├── uni.scss                   # 全局 SCSS 设计系统
+│   └── RELEASE-AUDIT.md           # 上线前全功能审查清单
+│
+├── assets/                        # 设计素材与参考文档
+│   ├── 小程序设计方案.md
+│   └── 调研报告.md
+│
+├── DESIGN.md                      # 设计方案参考 1
+├── DESIGN-v2.md                   # 综合设计方案
+├── AGENTS.md                      # 项目规范与长期记忆
+└── README.md                      # 本文件
 ```
+
+---
+
+## 设计系统速查
+
+详细设计规范见 `wedding-miniprogram/uni.scss` 与 `AGENTS.md`，核心 token：
+
+| 类别 | 变量 | 默认值 | 用途 |
+|---|---|---|---|
+| 主色 | `$text-primary` | `#1A1A1A` | 标题、按钮、核心文字 |
+| 暗玫瑰红 | `$text-accent` | `#B03A5B` | 强调、点缀、链接 |
+| 香槟金 | `$text-gold` | `#C9A96E` | 装饰、辅助强调 |
+| 边框 | `$border-color` / `$hairline-soft` | 6% / 6% / 8% / 12% 透明度 | 4 档 |
+| 阴影 | `$shadow-xs` / `$shadow-sm` / `$shadow-md` | 0.04 / 0.06 / 0.10 | 3 级深度 |
+| 字距 | `$ui-letter-spacing` | `0` | 全局中文默认 |
+| 字距 | `$tracking-cn` | `0.04em` | 标题（已默认应用） |
+| 字距 | `$tracking-kicker` | `0.12em` | 英文小标 |
+| 缓动 | `$ease-editorial` | `cubic-bezier(0.25, 0.46, 0.45, 0.94)` | hover/active |
+| 动效 | `fadeInUp` / `fadeInScale` / `gentleFloat` / `glowPulse` | — | 8 套预设动效 |
+
+**7 套主题**：`theme-rose`（默认）/ `theme-champagne` / `theme-noir` / `theme-garden` / `theme-heritage` / `theme-shandong` / `theme-travel`，通过根类切换 CSS 变量。
+
+---
 
 ## 设计文档
 
 - `DESIGN-v2.md` — 综合设计方案
-- `DESIGN.md` — 参考方案1
-- `assets/小程序设计方案.md` — 参考方案2
+- `DESIGN.md` — 参考方案 1
+- `assets/小程序设计方案.md` — 参考方案 2
+- `wedding-miniprogram/RELEASE-AUDIT.md` — 上线前全功能审查清单
+- `wedding-miniprogram/uni.scss` — 全局设计系统源码
+
+---
 
 ## 开发记录
 
 | 阶段 | 内容 | 状态 |
-|------|------|------|
+|---|---|---|
 | Phase 1 | 婚书 + 相册 + 路书 + 分享 | ✅ |
 | Phase 2 | 流程 + RSVP + 祝福墙 | ✅ |
 | Phase 3 | 体验优化 + 数据统计 | ✅ |
@@ -160,3 +292,37 @@ wedding-miniprogram/
 | Phase 11 | 模板完整预览：虚拟婚礼数据 + 首页/路书/流程/RSVP/祝福/相册/海报模拟 | ✅ |
 | Phase 12 | 写实模板主图：每套模板绑定竖版婚纱照，首页/模板预览/分享海报统一兜底 | ✅ |
 | Phase 13 | 上线前全功能审查：15 个云函数部署清单、内容安全权限、上传脚本、RSVP/祝福服务端校验 | ✅ |
+| **Phase 14** | **整体视觉精修（uni.scss + 8 个宾客端页面 + App.vue），零 JS 改动** | ✅ |
+
+---
+
+## 常见问题
+
+1. **云开发环境**：首次使用需在小程序后台开通云开发，并修改 `config/cloud.js` 中的 `CLOUD_ENV`
+2. **云函数部署**：新增/修改云函数后需右键「上传并部署：云端安装依赖」，或用 `cloudbaserc.json` 一次性部署
+3. **地图 Key**：生产环境需申请腾讯位置服务 Key，填入 `manifest.json`
+4. **小程序分包**：主人端使用 subPackages 分包，确保主包不超过 2MB
+5. **云开发额度**：注意免费额度，图片存储按量计费，建议压缩后上传
+6. **背景音乐**：iOS 需用户点击页面后才可自动播放，已在首页做兼容处理
+7. **海报生成**：依赖 `wxacode.getUnlimited`，需小程序已发布或体验版
+8. **天气数据**：`getWeather` 云函数支持和风天气 API，未配置时返回模拟数据
+
+---
+
+## 长期约束
+
+1. **云端优先**：主人端所有写操作先调用云函数同步云端，再缓存本地（离线兜底）
+2. **双角色架构**：主人端（读写全部）+ 宾客端（只读 + RSVP/祝福提交）
+3. **模板风格**：3 套请柬风格（传统红金、现代简约、极简纯白）+ 4 套方案模板（新中式、山东家宴、异地宾客友好等）
+4. **移动端优化**：uni-app 跨端适配，以微信小程序为主
+5. **日期格式**：统一使用 `2026年11月14日` 格式
+6. **时间线高亮**：婚礼当天自动根据当前时间高亮进行中/已完成/即将开始的节点
+7. **视觉系统**：高级简约无界设计（纯白背景 + 近黑文字 + 暗玫瑰红点缀）
+8. **动画规范**：fadeInUp / fadeInScale / gentleFloat / glowPulse
+9. **零 JS 风险视觉精修**：所有视觉改动仅限 `<style>` 块，不改逻辑、不改路由、不改主题色 token
+
+---
+
+## License
+
+MIT
