@@ -826,8 +826,8 @@ async function reloadWedding() {
   transform: scale(0.98);
 }
 .radio-item.active {
-  border-color: $text-primary;
-  background: $text-primary;
+  border-color: var(--theme-accent-line, rgba(176,58,91,0.28));
+  background: var(--theme-accent-soft, $gold-soft);
 }
 .radio-dot {
   width: 24rpx;
@@ -838,8 +838,8 @@ async function reloadWedding() {
   transition: all 0.25s ease;
 }
 .radio-item.active .radio-dot {
-  border-color: $ink-inverse;
-  background: $ink-inverse;
+  border-color: var(--theme-accent, $color-primary);
+  background: var(--theme-accent, $color-primary);
 }
 .radio-label {
   max-width: 100%;
@@ -851,7 +851,7 @@ async function reloadWedding() {
   text-overflow: ellipsis;
 }
 .radio-item.active .radio-label {
-  color: $ink-inverse;
+  color: var(--theme-accent, $color-primary);
 }
 
 /* 步进器 */
@@ -909,9 +909,9 @@ async function reloadWedding() {
   transform: scale(0.95);
 }
 .tag-item.active {
-  background: $text-primary;
-  color: $ink-inverse;
-  border-color: $text-primary;
+  background: var(--theme-accent-soft, $gold-soft);
+  color: var(--theme-accent, $color-primary);
+  border-color: var(--theme-accent-line, rgba(176,58,91,0.28));
 }
 
 /* 文本域 */
@@ -1163,13 +1163,27 @@ async function reloadWedding() {
     border-color: var(--theme-border, $border-color);
   }
 
-  .radio-item.active,
-  .tag-item.active,
   .feature-action,
   .submit-btn {
     background: var(--theme-accent, $text-primary);
     border-color: var(--theme-accent, $text-primary);
     color: var(--theme-on-accent, $ink-inverse);
+  }
+
+  .radio-item.active,
+  .tag-item.active {
+    background: var(--theme-accent-soft, rgba(176,58,91,0.10));
+    border-color: var(--theme-accent-line, rgba(176,58,91,0.28));
+    color: var(--theme-accent, $color-primary);
+  }
+
+  .radio-item.active .radio-dot {
+    border-color: var(--theme-accent, $color-primary);
+    background: var(--theme-accent, $color-primary);
+  }
+
+  .radio-item.active .radio-label {
+    color: var(--theme-accent, $color-primary);
   }
 
   .form-input,

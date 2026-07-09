@@ -386,8 +386,8 @@ onShow(() => loadBlessings(false))
   top: 32rpx;
   right: $page-gutter;
   padding: 4rpx 12rpx;
-  background: $text-primary;
-  color: $ink-inverse;
+  background: var(--theme-accent-soft, $gold-soft);
+  color: var(--theme-accent, $color-primary);
   font-size: 18rpx;
   border-radius: 4rpx;
   font-weight: 500;
@@ -455,10 +455,14 @@ onShow(() => loadBlessings(false))
 
   .send-btn,
   .feature-action,
-  .pinned-tag,
   .empty-action {
     background: var(--theme-accent, $text-primary);
     color: var(--theme-on-accent, $ink-inverse);
+  }
+
+  .pinned-tag {
+    background: var(--theme-accent-soft, rgba(176,58,91,0.10));
+    color: var(--theme-accent, $color-primary);
   }
 
   .blessing-item {

@@ -456,6 +456,15 @@ function checkGuestNavigationFailureFeedback() {
   }
 }
 
+function checkGuestAccentSolidDiscipline() {
+  const rsvp = read(path.join(root, 'pages/rsvp/index.vue'))
+  assert(rsvp.includes('.radio-item.active,\n  .tag-item.active {\n    background: var(--theme-accent-soft'), 'pages/rsvp/index.vue: active RSVP chips must use accent-soft, not solid accent')
+  assert(!rsvp.includes('.radio-item.active,\n  .tag-item.active,\n  .feature-action,\n  .submit-btn'), 'pages/rsvp/index.vue: active RSVP chips must not share the solid submit-button rule')
+
+  const blessing = read(path.join(root, 'pages/blessing/index.vue'))
+  assert(blessing.includes('.pinned-tag {\n    background: var(--theme-accent-soft'), 'pages/blessing/index.vue: pinned blessing tag must use accent-soft, not solid accent')
+}
+
 function checkOwnerNavigationFailureFeedback() {
   const expectations = [
     ['pages-owner/stats/index.vue', '宾客管理打开失败，请稍后重试'],
@@ -511,6 +520,7 @@ checkOwnerSharePosterRoute()
 checkGuestSharePathEncoding()
 checkOwnerDashboardFailureFeedback()
 checkGuestNavigationFailureFeedback()
+checkGuestAccentSolidDiscipline()
 checkOwnerNavigationFailureFeedback()
 checkWeddingDateDefaults()
 checkCloudSuccessLogsDoNotExposePayloads()
