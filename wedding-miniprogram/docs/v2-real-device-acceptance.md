@@ -19,6 +19,16 @@ npm run create:v2-acceptance-record
 
 3. 用 `.release/v2-real-device-acceptance-<version>.md` 记录真机证据。
 
+4. 如果要找真实旧数据，先登录 CloudBase，再运行只读查询：
+
+```bash
+npm exec --yes --package @cloudbase/cli -- tcb login
+npm run find:legacy-sakura
+```
+
+查询结果会写入 `.release/legacy-sakura-query.json`，从中选择一个真实 weddingId 做旧库验收。
+如果查询结果为空，不代表旧数据项通过；需要继续从控制台或历史数据中提供真实 `sakura-pink` weddingId，或确认生产库确无该类存量数据后单独记录例外说明。
+
 ## 必填证据
 
 | 项目 | 判定标准 | 证据 |
