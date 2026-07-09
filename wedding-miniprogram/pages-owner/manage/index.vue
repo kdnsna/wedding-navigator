@@ -5,6 +5,8 @@
     :desc="`${coupleName || '新人婚礼'} · ${formatDate(weddingDate) || '婚期未定'} · ${statusText}`"
   >
     <view class="owner-hero">
+      <image class="owner-hero-media" src="/static/visuals/hero/hero-signature-rose.jpg" mode="aspectFill" />
+      <view class="owner-hero-scrim" />
       <view class="owner-hero-copy">
         <text class="owner-hero-kicker">PUBLISH READY</text>
         <text class="owner-hero-score">{{ checklist.percent }}%</text>
@@ -600,6 +602,7 @@ onShow(() => refreshDashboard(false))
 .owner-hero {
   position: relative;
   margin: 0 $page-gutter 30rpx;
+  min-height: 306rpx;
   padding: 34rpx;
   border-radius: $card-radius;
   overflow: hidden;
@@ -608,14 +611,30 @@ onShow(() => refreshDashboard(false))
   color: #fff;
   box-shadow: $shadow-lg;
 }
+.owner-hero-media,
+.owner-hero-scrim {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.owner-hero-media {
+  opacity: 0.48;
+  filter: saturate(0.98) contrast(1.04);
+}
+.owner-hero-scrim {
+  background:
+    linear-gradient(90deg, rgba(7,3,5,0.94) 0%, rgba(24,7,12,0.80) 48%, rgba(75,17,30,0.56) 100%),
+    linear-gradient(180deg, rgba(0,0,0,0.12), rgba(0,0,0,0.52));
+}
 .owner-hero::after {
   content: "";
   position: absolute;
-  right: -90rpx;
-  top: -120rpx;
-  width: 280rpx;
-  height: 280rpx;
-  border: 1rpx solid rgba(201,169,110,0.28);
+  right: -96rpx;
+  bottom: -118rpx;
+  width: 310rpx;
+  height: 310rpx;
+  border: 1rpx solid rgba(201,169,110,0.24);
   border-radius: 50%;
 }
 .owner-hero-copy {

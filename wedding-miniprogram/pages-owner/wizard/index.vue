@@ -225,19 +225,22 @@ async function createWeddingAction() {
     creating.value = true
     uni.showLoading({ title: '创建中...', mask: true })
     const tpl = selectedTemplate.value
+    const theme = tpl?.theme || 'wine'
 
     const weddingPayload = {
-      basic_info: { date: form.value.date, time: form.value.time, week_day: getWeekDay(form.value.date) },
+      basic_info: { date: form.value.date, time: form.value.time, week_day: getWeekDay(form.value.date), theme },
       status: 'published',
       stats: { views: 0, shares: 0, rsvp_count: 0, blessing_count: 0, unique_viewers: 0 },
       commercial: {
         plan: userStore.plan || 'free',
         template_id: form.value.template,
+        theme_key: theme,
         ...buildTemplateCommercialState(tpl, userStore.entitlements)
       },
       workspace: {
         plan: userStore.plan || 'free',
         template_id: form.value.template,
+        theme_key: theme,
         commercial_status: 'trial'
       },
       share_config: {
@@ -248,6 +251,8 @@ async function createWeddingAction() {
     }
     const invitationPayload = {
       template: form.value.template,
+      theme,
+      photo_treatment: 'original',
       commercial: buildTemplateCommercialState(tpl, userStore.entitlements),
       content: {
         title: '婚礼请柬',

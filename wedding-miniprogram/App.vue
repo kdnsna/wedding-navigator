@@ -113,12 +113,13 @@ function checkPrivacySetting() {
 
 <style lang="scss">
 @import '@/uni.scss';
+@import '@/styles/theme.scss';
 
 /* ========== 全局重置 ========== */
 page {
-  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-  color: $text-primary;
-  background-color: $bg-color;
+  font-family: $font-serif;
+  color: $ink;
+  background-color: $paper-bg;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

@@ -9,6 +9,19 @@
     <!-- 数据概览 -->
     <MetricStrip :items="overviewItems" />
 
+    <view class="ops-card" v-if="!loadError">
+      <view class="ops-copy">
+        <text class="ops-kicker">{{ isWeddingDay ? 'WEDDING DAY MODE' : 'RSVP OPS' }}</text>
+        <text class="ops-title">{{ opsSummaryTitle }}</text>
+        <text class="ops-desc">{{ opsSummaryDesc }}</text>
+      </view>
+      <view class="ops-tags">
+        <text class="ops-tag">{{ rsvpStats.attending_people || 0 }} 人到场</text>
+        <text class="ops-tag" v-if="pendingTransportCount > 0">{{ pendingTransportCount }} 人待确认交通</text>
+        <text class="ops-tag" v-if="specialDietCount > 0">{{ specialDietCount }} 人特殊餐食</text>
+      </view>
+    </view>
+
     <EmptyState
       v-if="loadError"
       icon="/static/visuals/icon-warning.svg"
@@ -162,6 +175,12 @@ const attendingPercent = computed(() => (rsvpStats.value.attending / total.value
 const uncertainPercent = computed(() => (rsvpStats.value.uncertain / total.value) * 100)
 const declinedPercent = computed(() => (rsvpStats.value.declined / total.value) * 100)
 const pendingPercent = computed(() => (rsvpStats.value.pending / total.value) * 100)
+const isWeddingDay = computed(() => {
+  if (!store.weddingDate) return false
+  const now = new Date()
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  return today === store.weddingDate
+})
 
 const dietStats = computed(() => {
   const guests = store.guests?.guests || []
@@ -171,6 +190,23 @@ const dietStats = computed(() => {
     halal: guests.filter(g => g.diet_preference === 'halal').length,
     other: guests.filter(g => g.diet_preference === 'other').length
   }
+})
+const specialDietCount = computed(() => dietStats.value.vegetarian + dietStats.value.halal + dietStats.value.other)
+const pendingTransportCount = computed(() => {
+  const guests = store.guests?.guests || []
+  return guests.filter(g => (g.rsvp_status || g.status) === 'attending' && !g.transport_mode).length
+})
+const opsSummaryTitle = computed(() => {
+  if (isWeddingDay.value) return '今天优先盯签到、交通和特殊餐食'
+  if (rsvpStats.value.pending > 0) return `还有 ${rsvpStats.value.pending} 位宾客未填写回执`
+  if (rsvpStats.value.uncertain > 0) return `还有 ${rsvpStats.value.uncertain} 位宾客待定`
+  return '回执结构基本清楚，可以进入现场准备'
+})
+const opsSummaryDesc = computed(() => {
+  if (isWeddingDay.value) return '建议打开宾客管理，按到达时间和交通方式确认现场衔接。'
+  if (rsvpStats.value.pending > 0) return '建议把邀请链接再次发给未填写宾客，优先确认出席人数和交通方式。'
+  if (specialDietCount.value > 0) return '已有特殊餐食需求，建议提前同步给宴会厅或桌长。'
+  return '继续关注分享转化和祝福反馈，发布前再做一次真机检查。'
 })
 
 function groupGuestsBy(field, fallback = '未填写') {
@@ -232,6 +268,50 @@ onShow(refreshStats)
 .stats-page {
   background-color: $bg-color;
   min-height: 100vh;
+}
+.ops-card {
+  margin: 0 $page-gutter 44rpx;
+  padding: 30rpx;
+  border-radius: $card-radius;
+  background: $text-primary;
+  color: #fff;
+}
+.ops-copy {
+  min-width: 0;
+}
+.ops-kicker {
+  display: block;
+  font-size: 18rpx;
+  color: rgba(255,255,255,0.52);
+  letter-spacing: 0;
+  margin-bottom: 10rpx;
+}
+.ops-title {
+  display: block;
+  font-size: 34rpx;
+  font-weight: 600;
+  line-height: 1.35;
+  margin-bottom: 10rpx;
+}
+.ops-desc {
+  display: block;
+  font-size: 24rpx;
+  line-height: 1.55;
+  color: rgba(255,255,255,0.72);
+}
+.ops-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 22rpx;
+}
+.ops-tag {
+  max-width: 100%;
+  padding: 8rpx 14rpx;
+  border-radius: $radius-full;
+  background: rgba(255,255,255,0.10);
+  color: rgba(255,255,255,0.82);
+  font-size: 22rpx;
 }
 
 /* 区块 */

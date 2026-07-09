@@ -17,6 +17,20 @@
 
     <MetricStrip :items="diagnosticMetrics" />
 
+    <AiSuggestionPanel
+      title="AI 下一步"
+      desc="把阻断项、建议项和人工确认项浓缩成三件可执行任务。"
+      generate-text="生成建议"
+      empty-text="点击生成，获得发布前最应该先做的三件事。"
+      :suggestions="aiSuggestions"
+      :warnings="aiWarnings"
+      :error="aiError"
+      :loading="aiLoading"
+      :disabled="loading"
+      @generate="generateDiagnosticsAdvice"
+      @apply="copyDiagnosticsAdvice"
+    />
+
     <EmptyState
       v-if="loadError"
       icon="/static/visuals/icon-warning.svg"
@@ -75,17 +89,22 @@ import SectionHeader from '@/components/ui/SectionHeader.vue'
 import MetricStrip from '@/components/ui/MetricStrip.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import BottomActionBar from '@/components/ui/BottomActionBar.vue'
+import AiSuggestionPanel from '@/components/ui/AiSuggestionPanel.vue'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
-import { fetchWedding } from '@/composables/useCloud.js'
+import { fetchWedding, generateAiSuggestions } from '@/composables/useCloud.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
 import { buildReleaseDiagnostics } from '@/utils/releaseDiagnostics.js'
-import { showError } from '@/utils/index.js'
+import { showError, showSuccess } from '@/utils/index.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
 const loading = ref(false)
 const loadError = ref('')
+const aiLoading = ref(false)
+const aiError = ref('')
+const aiWarnings = ref([])
+const aiSuggestions = ref([])
 
 const diagnostics = computed(() => buildReleaseDiagnostics(store))
 const diagnosticMetrics = computed(() => [
@@ -128,6 +147,54 @@ function goItem(item) {
       console.warn('打开诊断处理页面失败:', err)
       showError('处理页面打开失败，请稍后重试')
     }
+  })
+}
+
+async function generateDiagnosticsAdvice() {
+  if (aiLoading.value || loading.value) return
+  aiLoading.value = true
+  aiError.value = ''
+  aiWarnings.value = []
+  try {
+    const res = await generateAiSuggestions('diagnostics_advice', {
+      tone: 'luxury_refined',
+      context: {
+        coupleName: store.coupleName,
+        weddingDate: store.weddingDate,
+        readiness: {
+          ready: diagnostics.value.ready,
+          percent: diagnostics.value.percent,
+          blockers: diagnostics.value.blockers,
+          warnings: diagnostics.value.warnings,
+          manual: diagnostics.value.manual
+        },
+        items: diagnostics.value.items.map(item => ({
+          title: item.title,
+          desc: item.desc,
+          status: item.status,
+          actionText: item.actionText
+        }))
+      }
+    })
+    aiSuggestions.value = res.suggestions || []
+    aiWarnings.value = res.warnings || []
+  } catch (err) {
+    aiError.value = err?.message || 'AI 诊断建议生成失败，请稍后重试'
+  } finally {
+    aiLoading.value = false
+  }
+}
+
+function copyDiagnosticsAdvice(item) {
+  const list = Array.isArray(item?.content) ? item.content : []
+  if (!list.length) {
+    showError('候选建议为空')
+    return
+  }
+  uni.setClipboardData({
+    data: list.map((text, index) => `${index + 1}. ${text}`).join('\n'),
+    success: () => showSuccess('已复制三步建议'),
+    fail: () => showError('复制失败，请手动查看')
   })
 }
 

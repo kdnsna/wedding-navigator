@@ -211,6 +211,20 @@ async function geocodeVenue(data) {
   return callFunction('geocodeVenue', data, { timeoutMs: 12000 })
 }
 
+// AI 主人发布助手：只返回候选内容，不直接写入数据库
+async function generateAiSuggestions(task, payload = {}) {
+  const userStore = useUserStore()
+  if (!userStore.weddingId) {
+    throw new Error('请先创建婚礼后再使用 AI 发布助手')
+  }
+  return callFunction('aiPublishAssistant', {
+    weddingId: userStore.weddingId,
+    task,
+    tone: payload.tone || 'luxury_refined',
+    context: payload.context || {}
+  }, { timeoutMs: 125000 })
+}
+
 // 上传文件到云存储
 async function uploadFile(filePath, cloudPath) {
   return new Promise((resolve, reject) => {
@@ -288,6 +302,7 @@ export {
   generatePoster,
   getWeather,
   geocodeVenue,
+  generateAiSuggestions,
   uploadFile,
   deleteFiles,
   uploadBase64

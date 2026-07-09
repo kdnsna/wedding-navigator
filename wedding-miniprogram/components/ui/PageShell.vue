@@ -23,7 +23,7 @@ defineProps({
 .ui-page-shell {
   min-height: 100vh;
   background:
-    linear-gradient(180deg, rgba(255, 248, 245, 0.98) 0%, rgba(255, 255, 255, 0.98) 44%, rgba(255, 248, 245, 1) 100%);
+    linear-gradient(180deg, var(--theme-page-soft, rgba(255, 248, 245, 0.98)) 0%, var(--theme-page, rgba(255, 255, 255, 0.98)) 42%, var(--theme-page-soft, rgba(255, 248, 245, 1)) 100%);
   color: var(--theme-ink, $text-primary);
 }
 .safe-bottom {
@@ -31,6 +31,8 @@ defineProps({
 }
 .ui-page-head {
   padding: $page-header-top $page-gutter $page-header-bottom;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.34) 0%, rgba(255,255,255,0) 100%);
 }
 .ui-kicker {
   display: block;

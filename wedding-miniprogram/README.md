@@ -49,7 +49,7 @@ P2 大众化/商业化基础已完成第一版：
 
 上线前全功能审查已完成代码侧修复，并新增 `RELEASE-AUDIT.md`：
 
-- `cloudbaserc.json` 已补齐全部 15 个云函数，避免上线时漏部署创建、更新、RSVP、祝福、统计等核心函数
+- `cloudbaserc.json` 已补齐全部 16 个云函数，避免上线时漏部署创建、更新、RSVP、祝福、统计、AI 发布助手等核心函数
 - `submitRSVP`、`submitBlessing` 已补 `security.msgSecCheck` 权限，并增加服务端姓名、祝福内容、长度和内容安全校验
 - 普通宾客重新打开 RSVP 时，`getWedding` 只返回自己的回执并标记 `is_current_user`，页面可识别已提交状态
 - `upload.mjs` 上传版本优先读取 `manifest.versionName`，`upload-ci.mjs` 移除本机私钥路径硬编码，改为环境变量配置
@@ -304,7 +304,7 @@ CONTENT_SAFETY_MODE=strict
 WXACODE_ENV_VERSION=trial
 ```
 
-`cloudbaserc.json` 已包含全部 15 个云函数。如果分享设置页提示小程序码生成失败，请优先确认 `generatePoster` 已部署，并已在云函数权限中开启 `wxacode.getUnlimited`。
+`cloudbaserc.json` 已包含全部 16 个云函数。如果分享设置页提示小程序码生成失败，请优先确认 `generatePoster` 已部署，并已在云函数权限中开启 `wxacode.getUnlimited`。如果主人端 AI 发布助手提示暂不可用，请确认 `aiPublishAssistant` 已部署、已云端安装依赖，并已启用 CloudBase AI 模型服务。
 
 ### 3. 创建数据库索引
 
@@ -351,8 +351,9 @@ MINIPROGRAM_PRIVATE_KEY_PATH=/path/to/private.key node upload-ci.mjs
 - 已阅读 `RELEASE-AUDIT.md`，并完成其中的真云必验清单
 - `manifest.json` 中 `mp-weixin.appid` 已替换为正式小程序 AppID
 - `config/cloud.js` 中 `CLOUD_ENV` 已替换为正式云开发环境 ID
-- 已按 `cloudbaserc.json` 部署全部 15 个 `cloudfunctions/*`，选择「云端安装依赖」
-- 已确认 `dist/build/mp-weixin/cloudfunctions` 存在 15 个云函数目录；如不存在，请重新运行 `npm run build:mp-weixin`
+- 已按 `cloudbaserc.json` 部署全部 16 个 `cloudfunctions/*`，选择「云端安装依赖」
+- 已确认 `dist/build/mp-weixin/cloudfunctions` 存在 16 个云函数目录；如不存在，请重新运行 `npm run build:mp-weixin`
+- 已确认 `aiPublishAssistant` 云函数依赖 `@cloudbase/node-sdk` 安装成功，并已启用 CloudBase AI 模型服务
 - 已确认 `submitRSVP`、`submitBlessing` 具备 `security.msgSecCheck` 权限，`generatePoster` 具备 `wxacode.getUnlimited` 权限
 - 已重新部署 `createWedding`、`getWedding`、`submitRSVP`、`submitBlessing`、`updateWedding`，并验证模板初始化、功能开关、隐私控制和分享设置保存
 - 已部署 `syncOwnerProfile`，并验证主人端“账号与权益”能同步 openid、套餐、权益和工作区

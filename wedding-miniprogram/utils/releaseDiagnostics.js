@@ -81,6 +81,14 @@ export function buildReleaseDiagnostics(store) {
       actionText: '人工确认'
     }),
     statusItem({
+      key: 'ai',
+      title: 'AI 发布助手',
+      desc: '需确认 aiPublishAssistant 已部署、依赖已安装，并在 CloudBase 启用 AI 模型服务',
+      status: 'manual',
+      route: '/pages-owner/diagnostics/index',
+      actionText: '人工确认'
+    }),
+    statusItem({
       key: 'timeline',
       title: '流程展示',
       desc: timelineReady ? '宾客端流程展示逻辑完整' : '添加至少 1 个流程节点，或关闭流程展示',

@@ -5,22 +5,30 @@
     :desc="`${activeTemplate.albumMood} · ${activeTemplate.photoMood}`"
     :theme-class="templateClass"
   >
-    <view class="album-container" v-if="photos.length > 0">
-      <view
-        class="photo-item"
-        v-for="(photo, index) in photos"
-        :key="photo.id"
-        @click="previewImage(index)"
-        :style="{ animationDelay: `${index * 0.05}s` }"
-      >
-        <image
-          class="photo-image"
-          :src="photo.url"
-          mode="widthFix"
-          lazy-load
-        />
+    <scroll-view class="album-container" scroll-x enhanced :show-scrollbar="false" v-if="photos.length > 0">
+      <view class="album-track">
+        <view
+          class="photo-item"
+          v-for="(photo, index) in photos"
+          :key="photo.id || photo.url"
+          @click="previewImage(index)"
+          :style="{ animationDelay: `${index * 0.05}s` }"
+        >
+          <view class="photo-corner top-left" />
+          <view class="photo-corner top-right" />
+          <view class="photo-frame">
+            <image
+              class="photo-image"
+              :class="photoTreatmentClass(photo)"
+              :src="photo.url"
+              mode="aspectFill"
+              lazy-load
+            />
+          </view>
+          <text class="photo-caption">{{ photoCaption(photo, index) }}</text>
+        </view>
       </view>
-    </view>
+    </scroll-view>
 
     <EmptyState
       v-if="photos.length === 0 && !loading"
@@ -50,10 +58,12 @@ const store = useWeddingStore()
 const userStore = useUserStore()
 const loading = ref(false)
 const loadError = ref('')
+const MAX_ALBUM_PHOTOS = 9
 
-const photos = computed(() => store.album?.photos || [])
+const photos = computed(() => (store.album?.photos || []).slice(0, MAX_ALBUM_PHOTOS))
 const activeTemplate = computed(() => store.activeTemplate)
 const templateClass = computed(() => store.templateClass)
+const photoTreatment = computed(() => store.invitation?.photo_treatment || 'original')
 const emptyText = computed(() => {
   if (!userStore.weddingId) return '请从有效婚礼邀请进入'
   if (loadError.value) return '相册加载失败'
@@ -80,6 +90,27 @@ function previewImage(index) {
       uni.showToast({ title: '图片预览失败', icon: 'none' })
     }
   })
+}
+
+function photoCaption(photo, index) {
+  const custom = photo?.caption || photo?.title || photo?.desc || photo?.description
+  if (custom) return custom
+  const date = photo?.date || photo?.taken_at || photo?.upload_time || photo?.created_at
+  if (date) return formatPhotoDate(date)
+  return `PHOTO ${String(index + 1).padStart(2, '0')}`
+}
+
+function formatPhotoDate(value) {
+  const normalized = String(value || '').slice(0, 10)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(normalized)) return normalized || ''
+  return normalized.replace(/-/g, '.')
+}
+
+function photoTreatmentClass(photo) {
+  const treatment = String(photo?.treatment || photo?.effect || photo?.filter || photoTreatment.value || '').toLowerCase()
+  if (['silver', 'silver-bw', 'black-white', 'bw'].includes(treatment)) return 'treatment-silver'
+  if (['soft-color', 'light-color', 'tint'].includes(treatment)) return 'treatment-tint'
+  return ''
 }
 
 function goToGuide() {
@@ -151,16 +182,24 @@ onShow(() => loadAlbum(false))
 }
 
 .album-container {
-  column-count: 2;
-  column-gap: 16rpx;
-  padding: 0 $page-gutter;
+  width: 100%;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.album-track {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 24rpx;
+  padding: 0 $page-gutter 36rpx;
 }
 
 .photo-item {
-  break-inside: avoid;
-  margin-bottom: 16rpx;
-  border-radius: $radius-md;
-  overflow: hidden;
+  position: relative;
+  flex: 0 0 560rpx;
+  width: 560rpx;
+  @include photo-mount;
+  box-sizing: border-box;
   animation: fadeInScale 0.5s $ease-out both;
   opacity: 0;
 }
@@ -172,8 +211,60 @@ onShow(() => loadAlbum(false))
 }
 
 .photo-image {
+  position: absolute;
+  inset: 0;
   width: 100%;
+  height: 100%;
   display: block;
+  filter: none;
+}
+
+.photo-image.treatment-silver {
+  filter: grayscale(1) contrast(1.04);
+}
+
+.photo-image.treatment-tint {
+  filter: saturate(0.86) contrast(0.96);
+}
+
+.photo-frame {
+  position: relative;
+  width: 100%;
+  padding-top: $photo-ratio;
+  overflow: hidden;
+  background: $paper-deep;
+}
+
+.photo-caption {
+  display: block;
+  margin-top: 14rpx;
+  color: $ink-soft;
+  font-family: $font-num;
+  font-size: 22rpx;
+  line-height: 1.35;
+  text-align: center;
+  word-break: break-word;
+}
+
+.photo-corner {
+  position: absolute;
+  z-index: 2;
+  top: -10rpx;
+  width: 60rpx;
+  height: 28rpx;
+  border-top: 1rpx solid var(--theme-border, $line);
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+.photo-corner.top-left {
+  left: 18rpx;
+  border-left: 1rpx solid var(--theme-border, $line);
+}
+
+.photo-corner.top-right {
+  right: 18rpx;
+  border-right: 1rpx solid var(--theme-border, $line);
 }
 
 .empty-state {
@@ -241,6 +332,10 @@ onShow(() => loadAlbum(false))
   }
 }
 
+.theme-wine,
+.theme-cinnabar,
+.theme-indigo,
+.theme-pine,
 .theme-rose,
 .theme-champagne,
 .theme-noir,
@@ -264,8 +359,8 @@ onShow(() => loadAlbum(false))
   }
 
   .photo-item {
-    background: var(--theme-surface, $bg-surface);
-    border: 1rpx solid var(--theme-border, transparent);
+    background: $photo-matte;
+    border: 1rpx solid $line;
     box-shadow: $shadow-sm;
   }
 

@@ -262,6 +262,7 @@ import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { fetchWedding, getWeather } from '@/composables/useCloud.js'
 import { MARKER_ICON } from '@/config/cloud.js'
+import { getThemeTokens } from '@/utils/legacy-theme-map.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
@@ -306,6 +307,7 @@ const transportInfo = computed(() => store.venues?.transportation || {})
 const accommodations = computed(() => store.venues?.accommodations || [])
 const routeTips = computed(() => transportInfo.value.route_tips || [])
 const mapReady = computed(() => geocodedVenues.value.length > 0)
+const mapAccent = computed(() => getThemeTokens(activeTemplate.value?.theme).accent)
 const weatherHint = computed(() => {
   if (weatherLoading.value) return '加载中'
   if (weatherError.value) return '待配置'
@@ -338,7 +340,7 @@ const polyline = computed(() => {
     latitude: Number(v.coordinate.latitude), longitude: Number(v.coordinate.longitude)
   }))
   if (points.length < 2) return []
-  return [{ points, color: '#B03A5B', width: 3, dottedLine: false }]
+  return [{ points, color: mapAccent.value, width: 3, dottedLine: false }]
 })
 
 function typeLabel(type) {
@@ -1121,7 +1123,7 @@ onShow(async () => {
   .arrival-btn.primary,
   .action-btn.primary,
   .hotel-btn {
-    background: #A4783B;
+    background: var(--accent, $color-primary);
   }
 }
 .tpl-noir {
@@ -1171,10 +1173,14 @@ onShow(async () => {
   .arrival-btn.primary,
   .action-btn.primary,
   .hotel-btn {
-    background: #506247;
+    background: var(--accent, $color-primary);
   }
 }
 
+.theme-wine,
+.theme-cinnabar,
+.theme-indigo,
+.theme-pine,
 .theme-rose,
 .theme-champagne,
 .theme-noir,

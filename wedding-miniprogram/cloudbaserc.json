@@ -4,6 +4,14 @@
   "functionRoot": "cloudfunctions",
   "functions": [
     {
+      "name": "aiPublishAssistant",
+      "timeout": 120,
+      "runtime": "Nodejs16.13",
+      "handler": "index.main",
+      "installDependency": true,
+      "description": "AI 主人发布助手，生成婚书、分享、流程、路书和诊断候选"
+    },
+    {
       "name": "checkOwnership",
       "timeout": 10,
       "runtime": "Nodejs16.13",

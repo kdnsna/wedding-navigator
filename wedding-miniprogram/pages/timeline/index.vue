@@ -578,10 +578,10 @@ onShow(() => loadTimeline(false))
   .feature-action,
   .timeline-dot,
   .timeline-item.current .timeline-dot {
-    background: #A4783B;
+    background: var(--accent, $color-primary);
   }
   .timeline-item.current .timeline-time {
-    color: #A4783B;
+    color: var(--accent, $color-primary);
   }
 }
 .tpl-noir {
@@ -625,13 +625,17 @@ onShow(() => loadTimeline(false))
   .feature-action,
   .timeline-dot,
   .timeline-item.current .timeline-dot {
-    background: #506247;
+    background: var(--accent, $color-primary);
   }
   .timeline-item.current .timeline-time {
-    color: #506247;
+    color: var(--accent, $color-primary);
   }
 }
 
+.theme-wine,
+.theme-cinnabar,
+.theme-indigo,
+.theme-pine,
 .theme-rose,
 .theme-champagne,
 .theme-noir,

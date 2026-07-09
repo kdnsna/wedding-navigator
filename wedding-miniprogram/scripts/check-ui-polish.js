@@ -122,12 +122,12 @@ function checkGuestLoadErrorCopy() {
 
 function checkTypographyContract() {
   const appSource = read(path.join(root, 'App.vue'))
-  assert(appSource.includes('"PingFang SC"'), 'App.vue: global body copy must start from PingFang SC')
+  assert(appSource.includes('font-family: $font-serif;'), 'App.vue: global body copy must use the wedding serif stack')
   const fontPattern = /font-family:[^;\n]*(?:-apple-system|Helvetica|Arial|Inter|Roboto|system-ui|Georgia)/
   assert(!fontPattern.test(appSource), 'App.vue: global font stack must not override the wedding typography contract')
 
   const tokenSource = read(path.join(root, 'uni.scss'))
-  assert(tokenSource.includes('$font-serif: "Songti SC", "STSong", "SimSun", serif;'), 'uni.scss: display typography must use Songti SC/STSong')
+  assert(tokenSource.includes('$font-serif: "Noto Serif SC", "Songti SC", "STSong", "SimSun", serif;'), 'uni.scss: display typography must use Noto Serif SC/Songti SC/STSong')
   assert(tokenSource.includes('$font-sans: "PingFang SC"'), 'uni.scss: body typography must use PingFang SC')
 
   for (const file of files.filter(file => file.endsWith('.vue'))) {
@@ -348,6 +348,7 @@ function checkPosterAuthFailureHandledOnce() {
 function checkSharedUiComponentsExist() {
   const required = [
     'ActionCard.vue',
+    'AiSuggestionPanel.vue',
     'BottomActionBar.vue',
     'EmptyState.vue',
     'MetricStrip.vue',

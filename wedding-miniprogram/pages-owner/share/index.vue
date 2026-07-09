@@ -19,6 +19,31 @@
       <button class="qrcode-refresh" :loading="qrLoading" :disabled="qrLoading" @click="refreshQrCode">重新生成小程序码</button>
     </view>
 
+    <view class="publish-pack">
+      <view class="publish-pack-head">
+        <text class="publish-pack-kicker">PUBLISH PACK</text>
+        <text class="publish-pack-title">发布包预览</text>
+      </view>
+      <view class="publish-pack-list">
+        <view class="publish-pack-item">
+          <text class="publish-pack-label">微信标题</text>
+          <text class="publish-pack-value">{{ shareForm.title || '待填写' }}</text>
+        </view>
+        <view class="publish-pack-item">
+          <text class="publish-pack-label">邀请路径</text>
+          <text class="publish-pack-value">{{ miniProgramPath }}</text>
+        </view>
+        <view class="publish-pack-item">
+          <text class="publish-pack-label">小程序码</text>
+          <text class="publish-pack-value">{{ qrCodePath ? '已生成' : (qrLoading ? '生成中' : '待生成') }}</text>
+        </view>
+        <view class="publish-pack-item">
+          <text class="publish-pack-label">海报短句</text>
+          <text class="publish-pack-value">{{ shareForm.posterLine || '可选' }}</text>
+        </view>
+      </view>
+    </view>
+
     <!-- 分享卡片设置 -->
     <view class="section">
       <SectionHeader
@@ -26,6 +51,19 @@
         kicker="WECHAT CARD"
         desc="标题建议控制在 28 字内，描述建议控制在 48 字内。"
         compact
+      />
+      <AiSuggestionPanel
+        title="AI 分享卡片"
+        desc="生成适合微信转发的标题、描述和海报短句；应用后仍需保存。"
+        generate-text="生成分享语"
+        empty-text="点击生成，获得 3 套分享卡片候选。"
+        :suggestions="aiSuggestions"
+        :warnings="aiWarnings"
+        :error="aiError"
+        :loading="aiLoading"
+        :disabled="saving"
+        @generate="generateShareCard"
+        @apply="applyShareCard"
       />
       <view class="form-group">
         <view class="form-label-row">
@@ -40,6 +78,13 @@
           <text class="char-hint">{{ descLength }}/48</text>
         </view>
         <input class="form-input" v-model="shareForm.description" maxlength="48" placeholder="例如：2026年11月14日，我们结婚啦！" />
+      </view>
+      <view class="form-group">
+        <view class="form-label-row">
+          <text class="form-sub-label">海报短句</text>
+          <text class="char-hint">{{ posterLineLength }}/18</text>
+        </view>
+        <input class="form-input" v-model="shareForm.posterLine" maxlength="18" placeholder="例如：期待与您相见" />
       </view>
     </view>
 
@@ -72,32 +117,79 @@ import PageShell from '@/components/ui/PageShell.vue'
 import SectionHeader from '@/components/ui/SectionHeader.vue'
 import ActionCard from '@/components/ui/ActionCard.vue'
 import BottomActionBar from '@/components/ui/BottomActionBar.vue'
+import AiSuggestionPanel from '@/components/ui/AiSuggestionPanel.vue'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { showError, showSuccess } from '@/utils/index.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
-import { generatePoster, recordShare, updateWedding } from '@/composables/useCloud.js'
+import { generateAiSuggestions, generatePoster, recordShare, updateWedding } from '@/composables/useCloud.js'
 import { resolveImagePath } from '@/utils/imagePaths.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
 
-const shareForm = ref({ title: '', description: '' })
+const shareForm = ref({ title: '', description: '', posterLine: '' })
 const saving = ref(false)
 const qrCodePath = ref('')
 const qrLoading = ref(false)
 const qrError = ref('')
+const aiLoading = ref(false)
+const aiError = ref('')
+const aiWarnings = ref([])
+const aiSuggestions = ref([])
 
 const weddingId = computed(() => userStore.weddingId)
 const encodedWeddingId = computed(() => encodeURIComponent(weddingId.value || ''))
 const titleLength = computed(() => String(shareForm.value.title || '').length)
 const descLength = computed(() => String(shareForm.value.description || '').length)
+const posterLineLength = computed(() => String(shareForm.value.posterLine || '').length)
 const miniProgramPath = computed(() => weddingId.value ? `/pages/index/index?id=${encodedWeddingId.value}` : '创建婚礼后自动生成')
 
 function loadFromStore() {
   const cfg = store.wedding?.share_config || {}
   shareForm.value.title = cfg.title || `${store.coupleName}的婚礼邀请`
   shareForm.value.description = cfg.description || `${store.weddingDate}，我们结婚啦！诚邀您的见证~`
+  shareForm.value.posterLine = cfg.poster_line || ''
+}
+
+async function generateShareCard() {
+  if (aiLoading.value || saving.value) return
+  aiLoading.value = true
+  aiError.value = ''
+  aiWarnings.value = []
+  try {
+    const res = await generateAiSuggestions('share_card', {
+      tone: 'luxury_refined',
+      context: {
+        coupleName: store.coupleName,
+        weddingDate: store.weddingDate,
+        weddingTime: store.weddingTime,
+        venueName: store.venueName,
+        template: store.activeTemplate?.name,
+        currentTitle: shareForm.value.title,
+        currentDescription: shareForm.value.description
+      }
+    })
+    aiSuggestions.value = res.suggestions || []
+    aiWarnings.value = res.warnings || []
+  } catch (err) {
+    aiError.value = err?.message || 'AI 分享语生成失败，请稍后重试'
+  } finally {
+    aiLoading.value = false
+  }
+}
+
+function applyShareCard(item) {
+  if (saving.value) return
+  const content = item?.content || {}
+  if (!content.title || !content.description) {
+    showError('候选分享语不完整')
+    return
+  }
+  shareForm.value.title = String(content.title).slice(0, 28)
+  shareForm.value.description = String(content.description).slice(0, 48)
+  shareForm.value.posterLine = String(content.posterLine || '').slice(0, 18)
+  showSuccess('已应用到表单，请保存')
 }
 
 function copyPath() {
@@ -173,10 +265,16 @@ async function saveShareSettings() {
     showError('分享描述请控制在 48 字内')
     return
   }
+  const posterLine = shareForm.value.posterLine.trim()
+  if (posterLine.length > 18) {
+    showError('海报短句请控制在 18 字内')
+    return
+  }
   const shareConfig = {
     ...(store.wedding?.share_config || {}),
     title,
-    description
+    description,
+    poster_line: posterLine
   }
   saving.value = true
   try {
@@ -278,6 +376,61 @@ onShow(async () => {
 }
 .qrcode-refresh::after { border: none; }
 .qrcode-refresh[disabled] { opacity: 0.62; }
+.publish-pack {
+  margin: 0 $page-gutter 44rpx;
+  padding: 28rpx;
+  border-radius: $card-radius;
+  background: $bg-surface;
+  border: 1rpx solid $border-color;
+}
+.publish-pack-head {
+  margin-bottom: 18rpx;
+}
+.publish-pack-kicker {
+  display: block;
+  font-size: 18rpx;
+  letter-spacing: 0;
+  color: $color-gold;
+  margin-bottom: 8rpx;
+}
+.publish-pack-title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: $text-primary;
+}
+.publish-pack-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+.publish-pack-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 22rpx;
+  padding-bottom: 16rpx;
+  border-bottom: 1rpx solid $border-light;
+}
+.publish-pack-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.publish-pack-label {
+  width: 132rpx;
+  flex-shrink: 0;
+  font-size: 24rpx;
+  color: $text-muted;
+}
+.publish-pack-value {
+  flex: 1;
+  min-width: 0;
+  text-align: right;
+  font-size: 24rpx;
+  line-height: 1.45;
+  color: $text-primary;
+  word-break: break-word;
+}
 
 /* 表单 */
 .section {

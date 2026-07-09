@@ -43,9 +43,49 @@
       </view>
     </view>
 
+    <!-- 笔墨 -->
+    <view class="section">
+      <SectionHeader title="笔墨" kicker="PHOTO TONE" desc="默认保留原片；银盐和淡彩需主动选择。" compact />
+      <view class="photo-tone-row">
+        <text
+          class="photo-tone-pill"
+          v-for="item in photoToneOptions"
+          :key="item.value"
+          :class="{ active: form.photoTreatment === item.value, disabled: saving }"
+          @click="selectPhotoTreatment(item.value)"
+        >
+          {{ item.label }}
+        </text>
+      </view>
+    </view>
+
     <!-- 邀请文案 -->
     <view class="section">
       <SectionHeader title="邀请文案" kicker="COPY" desc="建议保持真诚克制，长辈和朋友都能一眼读懂。" compact />
+      <view class="ai-tone-row">
+        <text
+          class="ai-tone-pill"
+          v-for="tone in aiToneOptions"
+          :key="tone.value"
+          :class="{ active: aiTone === tone.value, disabled: aiLoading || saving }"
+          @click="selectAiTone(tone.value)"
+        >
+          {{ tone.label }}
+        </text>
+      </view>
+      <AiSuggestionPanel
+        title="AI 邀请文案"
+        desc="按当前模板、新人、婚期和场地生成候选；应用后仍需点击保存。"
+        generate-text="生成文案"
+        empty-text="选择语气后生成 3 版邀请文案。"
+        :suggestions="aiSuggestions"
+        :warnings="aiWarnings"
+        :error="aiError"
+        :loading="aiLoading"
+        :disabled="saving"
+        @generate="generateInvitationCopy"
+        @apply="applyInvitationCopy"
+      />
       <textarea
         class="form-textarea"
         v-model="form.content"
@@ -176,13 +216,14 @@ import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { showSuccess, showError } from '@/utils/index.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
-import { updateWedding } from '@/composables/useCloud.js'
+import { generateAiSuggestions, updateWedding } from '@/composables/useCloud.js'
 import { WEDDING_TEMPLATES, getWeddingTemplate, normalizeTemplateId } from '@/utils/templates.js'
 import { buildTemplateCommercialState, getCommercialHint, getTemplateTierLabel, isTemplatePremium } from '@/utils/commercial.js'
 import PageShell from '@/components/ui/PageShell.vue'
 import SectionHeader from '@/components/ui/SectionHeader.vue'
 import TemplateCard from '@/components/ui/TemplateCard.vue'
 import BottomActionBar from '@/components/ui/BottomActionBar.vue'
+import AiSuggestionPanel from '@/components/ui/AiSuggestionPanel.vue'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
@@ -191,6 +232,21 @@ const saving = ref(false)
 const templates = WEDDING_TEMPLATES
 const activeTemplate = computed(() => getWeddingTemplate(form.value.template))
 const activeTemplateHint = computed(() => getCommercialHint(activeTemplate.value, userStore.entitlements))
+const aiLoading = ref(false)
+const aiError = ref('')
+const aiWarnings = ref([])
+const aiSuggestions = ref([])
+const aiTone = ref('luxury_refined')
+const aiToneOptions = [
+  { label: '高级礼宴', value: 'luxury_refined' },
+  { label: '长辈正式', value: 'elder_friendly' },
+  { label: '朋友温柔', value: 'friends_warm' }
+]
+const photoToneOptions = [
+  { label: '原片', value: 'original' },
+  { label: '银盐黑白', value: 'silver' },
+  { label: '淡彩', value: 'tint' }
+]
 
 const musicPresets = [
   { id: 'piano-dream', name: '梦中的钢琴', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
@@ -216,7 +272,8 @@ const form = ref({
   showTimeline: true,
   bgMusicEnabled: false,
   bgMusicId: '',
-  bgMusicUrl: ''
+  bgMusicUrl: '',
+  photoTreatment: 'original'
 })
 
 function loadFromStore() {
@@ -240,7 +297,8 @@ function loadFromStore() {
     showTimeline: inv.features?.show_timeline !== false,
     bgMusicEnabled: inv.features?.bg_music_enabled || false,
     bgMusicId: inv.features?.bg_music_id || '',
-    bgMusicUrl: inv.features?.bg_music_url || ''
+    bgMusicUrl: inv.features?.bg_music_url || '',
+    photoTreatment: inv.photo_treatment || 'original'
   }
 }
 
@@ -258,11 +316,71 @@ function selectTemplate(tpl) {
 function onDateChange(e) { form.value.date = e.detail.value }
 function onTimeChange(e) { form.value.time = e.detail.value }
 
+function selectAiTone(value) {
+  if (aiLoading.value || saving.value) return
+  aiTone.value = value
+}
+
+function selectPhotoTreatment(value) {
+  if (guardInvitationSaving()) return
+  form.value.photoTreatment = value || 'original'
+  applyLocalPreviewData()
+}
+
+async function generateInvitationCopy() {
+  if (aiLoading.value || saving.value) return
+  aiLoading.value = true
+  aiError.value = ''
+  aiWarnings.value = []
+  try {
+    const res = await generateAiSuggestions('invitation_copy', {
+      tone: aiTone.value,
+      context: buildAiInvitationContext()
+    })
+    aiSuggestions.value = res.suggestions || []
+    aiWarnings.value = res.warnings || []
+  } catch (err) {
+    aiError.value = err?.message || 'AI 文案生成失败，请稍后重试'
+  } finally {
+    aiLoading.value = false
+  }
+}
+
+function applyInvitationCopy(item) {
+  if (saving.value) return
+  const content = String(item?.content || '').trim()
+  if (!content) {
+    showError('候选文案为空')
+    return
+  }
+  form.value.content = content
+  applyLocalPreviewData()
+  showSuccess('已应用到文案，请保存')
+}
+
+function buildAiInvitationContext() {
+  return {
+    template: activeTemplate.value?.name,
+    templateScenario: activeTemplate.value?.plan?.scenario,
+    templateCopyRule: activeTemplate.value?.plan?.invitationCopy,
+    groomName: form.value.groomName,
+    brideName: form.value.brideName,
+    weddingDate: form.value.date,
+    weddingTime: form.value.time,
+    venueName: form.value.venueName,
+    venueAddress: store.invitation?.wedding?.venue_address || '',
+    currentCopy: form.value.content
+  }
+}
+
 function buildInvitationData() {
   const commercial = buildTemplateCommercialState(activeTemplate.value, userStore.entitlements)
+  const theme = activeTemplate.value?.theme || 'wine'
   return {
     template: form.value.template,
+    theme,
     commercial,
+    photo_treatment: form.value.photoTreatment || 'original',
     content: {
       title: '婚礼请柬',
       main_text: form.value.content,
@@ -296,16 +414,19 @@ function buildInvitationData() {
 }
 
 function buildWeddingData() {
+  const theme = activeTemplate.value?.theme || 'wine'
   return {
     basic_info: {
       ...(store.wedding?.basic_info || {}),
       date: form.value.date,
-      time: form.value.time
+      time: form.value.time,
+      theme
     },
     commercial: {
       ...(store.wedding?.commercial || {}),
       plan: userStore.plan || store.wedding?.commercial?.plan || 'free',
       template_id: form.value.template,
+      theme_key: theme,
       ...buildTemplateCommercialState(activeTemplate.value, userStore.entitlements)
     }
   }
@@ -511,6 +632,36 @@ onShow(async () => {
 .section :deep(.ui-section-header) {
   padding: 0;
   margin-bottom: 20rpx;
+}
+.section :deep(.ai-panel) {
+  margin-left: 0;
+  margin-right: 0;
+}
+.ai-tone-row,
+.photo-tone-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14rpx;
+  margin-bottom: 18rpx;
+}
+.ai-tone-pill,
+.photo-tone-pill {
+  min-height: 56rpx;
+  line-height: 56rpx;
+  padding: 0 22rpx;
+  border-radius: $radius-full;
+  background: $bg-muted;
+  color: $text-secondary;
+  font-size: 24rpx;
+}
+.ai-tone-pill.active,
+.photo-tone-pill.active {
+  background: var(--theme-accent, $text-primary);
+  color: var(--theme-on-accent, $ink-inverse);
+}
+.ai-tone-pill.disabled,
+.photo-tone-pill.disabled {
+  opacity: 0.58;
 }
 
 .template-card-list {

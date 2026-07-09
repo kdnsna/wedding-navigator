@@ -42,6 +42,20 @@
       desc="建议先录入迎宾、仪式、敬酒、合影和送客等关键节点。"
     />
 
+    <AiSuggestionPanel
+      title="AI 流程草案"
+      desc="基于婚期、模板和场地生成当天流程；点击应用会追加到流程并保存。"
+      generate-text="生成流程"
+      empty-text="生成迎宾、仪式、开席、敬酒等可编辑节点。"
+      :suggestions="aiSuggestions"
+      :warnings="aiWarnings"
+      :error="aiError"
+      :loading="aiLoading"
+      :disabled="timelineBusy"
+      @generate="generateTimelinePack"
+      @apply="applyTimelinePack"
+    />
+
     <!-- 弹窗 -->
     <view class="modal-mask" v-if="showModal" @click="requestCloseEventModal">
       <view class="modal-content" @click.stop>
@@ -115,11 +129,12 @@ import { onShow } from '@dcloudio/uni-app'
 import PageShell from '@/components/ui/PageShell.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import BottomActionBar from '@/components/ui/BottomActionBar.vue'
+import AiSuggestionPanel from '@/components/ui/AiSuggestionPanel.vue'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { generateId, showSuccess, showError } from '@/utils/index.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
-import { fetchWedding, updateWedding } from '@/composables/useCloud.js'
+import { fetchWedding, generateAiSuggestions, updateWedding } from '@/composables/useCloud.js'
 import { DEFAULT_TIMELINE_ROLES } from '@/utils/templates.js'
 
 const store = useWeddingStore()
@@ -130,6 +145,10 @@ const editingEvent = ref(null)
 const saving = ref(false)
 const refreshing = ref(false)
 const eventFormSnapshot = ref('')
+const aiLoading = ref(false)
+const aiError = ref('')
+const aiWarnings = ref([])
+const aiSuggestions = ref([])
 
 const modalForm = ref({ time: '', title: '', venueIndex: 0, notes: '', roleIds: ['guest'], isImportant: false })
 
@@ -187,6 +206,83 @@ function toggleRole(roleId) {
   } else {
     ids.push(roleId)
   }
+}
+
+async function generateTimelinePack() {
+  if (timelineBusy.value || aiLoading.value) return
+  aiLoading.value = true
+  aiError.value = ''
+  aiWarnings.value = []
+  try {
+    const res = await generateAiSuggestions('timeline_pack', {
+      tone: 'luxury_refined',
+      context: {
+        coupleName: store.coupleName,
+        weddingDate: store.weddingDate,
+        weddingTime: store.weddingTime,
+        template: store.activeTemplate?.name,
+        venueName: store.venueName,
+        venues: venues.value.map(v => ({ id: v.id, name: v.name, type: v.type, arrival_time: v.arrival_time })),
+        existingEvents: events.value.map(e => ({ time: e.time, title: e.title, notes: e.notes }))
+      }
+    })
+    aiSuggestions.value = res.suggestions || []
+    aiWarnings.value = res.warnings || []
+  } catch (err) {
+    aiError.value = err?.message || 'AI 流程生成失败，请稍后重试'
+  } finally {
+    aiLoading.value = false
+  }
+}
+
+async function applyTimelinePack(item) {
+  if (timelineBusy.value) return
+  const aiEvents = Array.isArray(item?.content) ? item.content : []
+  if (!aiEvents.length) {
+    showError('候选流程为空')
+    return
+  }
+  const confirmed = await confirmApplyTimeline(aiEvents.length)
+  if (!confirmed) return
+  const previousTimeline = cloneTimeline()
+  saving.value = true
+  try {
+    if (!store.timeline) store.timeline = { events: [], roles: DEFAULT_TIMELINE_ROLES }
+    if (!store.timeline.events) store.timeline.events = []
+    if (!store.timeline.roles?.length) store.timeline.roles = DEFAULT_TIMELINE_ROLES
+    const normalizedEvents = aiEvents.map((event, index) => ({
+      id: event.id || generateId(),
+      time: event.time,
+      title: event.title,
+      notes: event.notes || '',
+      venue_id: '',
+      assignee_ids: event.assignee_ids?.length ? event.assignee_ids : ['guest'],
+      is_important: event.is_important === true,
+      sort_order: events.value.length + index
+    }))
+    store.timeline.events.push(...normalizedEvents)
+    sortTimelineEvents()
+    await saveToStorage()
+    showSuccess('AI 流程已应用')
+  } catch (err) {
+    store.timeline = previousTimeline
+    showError(err?.message || 'AI 流程应用失败')
+  } finally {
+    saving.value = false
+  }
+}
+
+function confirmApplyTimeline(count) {
+  return new Promise((resolve) => {
+    uni.showModal({
+      title: '应用 AI 流程？',
+      content: `将追加 ${count} 个流程节点，并同步保存到云端。`,
+      confirmText: '应用',
+      cancelText: '取消',
+      success: (res) => resolve(Boolean(res.confirm)),
+      fail: () => resolve(false)
+    })
+  })
 }
 
 function snapshotEventForm() {

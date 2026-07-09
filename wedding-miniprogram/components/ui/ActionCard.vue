@@ -32,27 +32,46 @@ function handleClick() {
 
 <style lang="scss" scoped>
 .ui-action-card {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 20rpx;
   min-height: 112rpx;
   padding: 24rpx;
-  background: rgba(255, 255, 255, 0.94);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, var(--theme-surface, rgba(255, 255, 255, 0.94)) 100%);
   border: 1rpx solid var(--theme-border, $border-color);
   border-radius: $card-radius;
-  box-shadow: $shadow-sm;
+  box-shadow: 0 8rpx 28rpx rgba(42, 17, 20, 0.055);
   box-sizing: border-box;
+  overflow: hidden;
+}
+.ui-action-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 4rpx;
+  background: var(--theme-accent, $color-primary);
+  opacity: 0;
 }
 .ui-action-card:active {
   opacity: 0.82;
 }
 .ui-action-card.primary {
-  background: var(--theme-strong-bg, $text-primary);
+  background:
+    linear-gradient(135deg, var(--theme-strong-bg, $text-primary) 0%, var(--theme-accent-deep, $color-primary-dark) 100%);
   border-color: var(--theme-strong-border, transparent);
+  box-shadow: 0 14rpx 34rpx rgba(30, 8, 12, 0.16);
 }
 .ui-action-card.gold {
-  background: #FFF8EA;
+  background: linear-gradient(135deg, #FFFDF8 0%, #FFF4DA 100%);
   border-color: rgba(201, 169, 110, 0.30);
+}
+.ui-action-card.primary::before,
+.ui-action-card.gold::before {
+  opacity: 0.74;
 }
 .ui-action-card.disabled {
   opacity: 0.55;
@@ -61,11 +80,16 @@ function handleClick() {
   width: 64rpx;
   height: 64rpx;
   border-radius: $radius-sm;
-  background: var(--theme-accent-soft, rgba(176, 58, 91, 0.10));
+  background:
+    linear-gradient(135deg, var(--theme-accent-soft, rgba(176, 58, 91, 0.10)) 0%, rgba(255,255,255,0.74) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-shadow: inset 0 0 0 1rpx rgba(255,255,255,0.56);
+}
+.ui-action-card.primary .ui-action-icon-wrap {
+  background: var(--theme-strong-soft, rgba(255,255,255,0.13));
 }
 .ui-action-icon {
   width: 34rpx;
@@ -101,6 +125,14 @@ function handleClick() {
   color: var(--theme-accent, $color-primary);
   font-size: $font-mini;
   line-height: 1.2;
+  max-width: 128rpx;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.ui-action-card.primary .ui-action-status {
+  background: var(--theme-strong-soft, rgba(255,255,255,0.14));
+  color: var(--theme-strong-ink, #fff);
 }
 .ui-action-desc {
   display: block;

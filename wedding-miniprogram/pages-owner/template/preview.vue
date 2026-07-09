@@ -168,7 +168,10 @@
           </view>
           <view class="album-grid">
             <view class="photo-tile" v-for="(item, index) in preview.gallery" :key="item" :class="'tile-' + index">
-              <text>{{ item }}</text>
+              <view class="photo-tile-frame">
+                <image class="photo-tile-image" :src="previewHeroImage" mode="aspectFill" />
+              </view>
+              <text class="photo-tile-caption">{{ item }}</text>
             </view>
           </view>
         </view>
@@ -665,22 +668,40 @@ onLoad((options = {}) => {
   gap: 14rpx;
 }
 .photo-tile {
-  min-height: 190rpx;
-  border-radius: $card-radius;
-  padding: 18rpx;
-  display: flex;
-  align-items: flex-end;
-  background: var(--theme-panel-gradient);
-  color: var(--theme-ink, $text-primary);
-  font-size: 24rpx;
-  font-weight: 600;
+  @include photo-mount;
+  box-sizing: border-box;
 }
 .photo-tile.tile-1 {
-  min-height: 260rpx;
+  transform: translateY(18rpx);
 }
 .photo-tile.tile-2 {
   grid-column: span 2;
-  min-height: 160rpx;
+  width: 72%;
+  margin: 0 auto;
+}
+.photo-tile-frame {
+  position: relative;
+  width: 100%;
+  padding-top: $photo-ratio;
+  overflow: hidden;
+  background: $paper-deep;
+}
+.photo-tile-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  filter: none;
+}
+.photo-tile-caption {
+  display: block;
+  margin-top: 10rpx;
+  color: $ink-soft;
+  font-family: $font-num;
+  font-size: 20rpx;
+  line-height: 1.3;
+  text-align: center;
 }
 
 .poster-mock {

@@ -67,6 +67,20 @@
       </view>
     </view>
 
+    <AiSuggestionPanel
+      title="AI 路书提示"
+      desc="生成出行、停车和到达提醒；不会生成或覆盖地图坐标。"
+      generate-text="生成路书"
+      empty-text="生成后可一键填入交通指引弹窗，再由你确认保存。"
+      :suggestions="aiSuggestions"
+      :warnings="aiWarnings"
+      :error="aiError"
+      :loading="aiLoading"
+      :disabled="guideBusy"
+      @generate="generateGuideTips"
+      @apply="applyGuideTips"
+    />
+
     <!-- ===== 推荐住宿 ===== -->
     <SectionHeader
       title="推荐住宿"
@@ -253,11 +267,12 @@ import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { generateId, showError, showSuccess } from '@/utils/index.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
-import { geocodeVenue, updateWedding } from '@/composables/useCloud.js'
+import { generateAiSuggestions, geocodeVenue, updateWedding } from '@/composables/useCloud.js'
 import PageShell from '@/components/ui/PageShell.vue'
 import SectionHeader from '@/components/ui/SectionHeader.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import BottomActionBar from '@/components/ui/BottomActionBar.vue'
+import AiSuggestionPanel from '@/components/ui/AiSuggestionPanel.vue'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
@@ -275,6 +290,10 @@ const showManualCoordinate = ref(false)
 const manualCoordinate = ref({ latitude: '', longitude: '' })
 const savingVenue = ref(false)
 const venueFormSnapshot = ref('')
+const aiLoading = ref(false)
+const aiError = ref('')
+const aiWarnings = ref([])
+const aiSuggestions = ref([])
 
 const venues = computed(() => store.venues?.venues || [])
 const geoStatusText = computed(() => {
@@ -614,6 +633,66 @@ function requestCloseTransportModal() {
   })
 }
 
+async function generateGuideTips() {
+  if (guideBusy.value || aiLoading.value) return
+  aiLoading.value = true
+  aiError.value = ''
+  aiWarnings.value = []
+  try {
+    const res = await generateAiSuggestions('guide_tips', {
+      tone: 'luxury_refined',
+      context: {
+        coupleName: store.coupleName,
+        weddingDate: store.weddingDate,
+        weddingTime: store.weddingTime,
+        template: store.activeTemplate?.name,
+        venueName: store.venueName,
+        primaryVenue: store.primaryVenue,
+        venues: venues.value.map(v => ({
+          name: v.name,
+          type: v.type,
+          address: v.address,
+          arrival_time: v.arrival_time,
+          hasCoordinate: hasCoordinate(v)
+        })),
+        transportation: transportation.value,
+        accommodations: accommodations.value.map(h => ({
+          name: h.name,
+          distance: h.distance,
+          price_range: h.price_range
+        }))
+      }
+    })
+    aiSuggestions.value = res.suggestions || []
+    aiWarnings.value = res.warnings || []
+  } catch (err) {
+    aiError.value = err?.message || 'AI 路书生成失败，请稍后重试'
+  } finally {
+    aiLoading.value = false
+  }
+}
+
+function applyGuideTips(item) {
+  if (guideBusy.value) return
+  const content = item?.content || {}
+  if (!content.transport && !content.parking && !content.route_tips?.length) {
+    showError('候选路书为空')
+    return
+  }
+  transportForm.value = {
+    transport: content.transport || transportation.value.transport || '',
+    parking: content.parking || transportation.value.parking || '',
+    routeTipsText: (content.route_tips || []).join('\n')
+  }
+  transportFormSnapshot.value = JSON.stringify({
+    transport: transportation.value.transport || '',
+    parking: transportation.value.parking || '',
+    routeTipsText: (transportation.value.route_tips || []).join('\n')
+  })
+  showTransportModal.value = true
+  showSuccess('已填入交通指引，请保存')
+}
+
 async function saveTransportation() {
   if (savingTransport.value) return
   const previousVenues = cloneVenues()
@@ -645,7 +724,7 @@ const showHotelM = ref(false)
 const editingHotel = ref(null)
 const hotelForm = ref({ name: '', distance: '', price_range: '', phone: '', notes: '' })
 const savingHotel = ref(false)
-const guideBusy = computed(() => savingVenue.value || geocoding.value || savingTransport.value || savingHotel.value)
+const guideBusy = computed(() => savingVenue.value || geocoding.value || savingTransport.value || savingHotel.value || aiLoading.value)
 const hotelFormSnapshot = ref('')
 
 const accommodations = computed(() => store.venues?.accommodations || [])

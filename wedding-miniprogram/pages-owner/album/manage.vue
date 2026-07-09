@@ -9,7 +9,7 @@
     <MetricStrip :items="albumMetricItems" />
 
     <!-- 上传区域 -->
-    <view class="upload-area" :class="{ disabled: uploading || refreshing || saving }" @click="chooseImage">
+    <view class="upload-area" :class="{ disabled: uploading || refreshing || saving || !remainingPhotoSlots }" @click="chooseImage">
       <text class="upload-icon">+</text>
       <text class="upload-text">{{ uploadAreaTitle }}</text>
       <text class="upload-hint">{{ uploadAreaHint }}</text>
@@ -43,7 +43,7 @@
       :loading="uploading"
       :secondary-loading="refreshing"
       :disabled="saving"
-      :primary-disabled="refreshing"
+      :primary-disabled="refreshing || !remainingPhotoSlots"
       :secondary-disabled="uploading"
       @primary="chooseImage"
       @secondary="refreshAlbum"
@@ -74,24 +74,27 @@ const saving = ref(false)
 const albumBusy = computed(() => uploading.value || refreshing.value || saving.value)
 
 const uploadProgress = ref({ current: 0, total: 0 })
-const MAX_UPLOAD_COUNT = 9
+const MAX_ALBUM_PHOTOS = 9
+const remainingPhotoSlots = computed(() => Math.max(0, MAX_ALBUM_PHOTOS - photos.value.length))
 const albumMetricItems = computed(() => [
-  { label: '照片', value: photos.value.length },
+  { label: '精选', value: `${Math.min(photos.value.length, MAX_ALBUM_PHOTOS)}/${MAX_ALBUM_PHOTOS}` },
   { label: '封面', value: photos.value.some(item => item.type === 'cover') ? 1 : 0 },
   { label: '普通', value: photos.value.filter(item => item.type !== 'cover').length },
-  { label: '单次上限', value: MAX_UPLOAD_COUNT }
+  { label: '剩余', value: remainingPhotoSlots.value }
 ])
 const uploadAreaTitle = computed(() => {
   if (uploading.value) return `上传中 ${uploadProgress.value.current}/${uploadProgress.value.total}`
   if (refreshing.value) return '刷新相册中'
   if (saving.value) return '保存相册中'
+  if (!remainingPhotoSlots.value) return '已满 9 张'
   return '上传照片'
 })
 const uploadAreaHint = computed(() => {
   if (uploading.value) return '请保持页面打开'
   if (refreshing.value) return '正在同步云端照片'
   if (saving.value) return '正在写入云端，请稍候'
-  return '支持 JPG、PNG 格式，建议先上传竖版封面'
+  if (!remainingPhotoSlots.value) return '精选相册最多 9 张，删除后可重新上传'
+  return `还可上传 ${remainingPhotoSlots.value} 张，建议先上传竖版封面`
 })
 
 async function chooseImage() {
@@ -100,9 +103,13 @@ async function chooseImage() {
     showError('请先创建婚礼')
     return
   }
+  if (!remainingPhotoSlots.value) {
+    showError('精选相册最多 9 张')
+    return
+  }
 
   try {
-    const filePaths = await chooseAlbumImages()
+    const filePaths = await chooseAlbumImages(remainingPhotoSlots.value)
     if (!filePaths.length) return
 
     const previousAlbum = cloneAlbum()
@@ -186,9 +193,9 @@ async function setCover(id) {
   }
 }
 
-function chooseAlbumImages() {
+function chooseAlbumImages(count = remainingPhotoSlots.value) {
   return new Promise((resolve, reject) => {
-    const chooseImageApi = getChooseImageApi()
+    const chooseImageApi = getChooseImageApi(count)
     if (!chooseImageApi.length) {
       reject(new Error('当前环境不支持选择照片，请在微信小程序中重试'))
       return
@@ -201,14 +208,15 @@ function chooseAlbumImages() {
   })
 }
 
-function getChooseImageApi() {
+function getChooseImageApi(count = remainingPhotoSlots.value) {
+  const chooseCount = Math.max(1, Math.min(MAX_ALBUM_PHOTOS, Number(count) || 1))
   const apis = []
   if (typeof wx !== 'undefined' && typeof wx.chooseImage === 'function') {
     apis.push({
       name: 'wx.chooseImage',
       choose: wx.chooseImage.bind(wx),
       options: {
-        count: MAX_UPLOAD_COUNT,
+        count: chooseCount,
         sizeType: ['compressed', 'original'],
         sourceType: ['album']
       }
@@ -219,7 +227,7 @@ function getChooseImageApi() {
       name: 'uni.chooseImage',
       choose: uni.chooseImage.bind(uni),
       options: {
-        count: MAX_UPLOAD_COUNT,
+        count: chooseCount,
         sizeType: ['compressed', 'original'],
         sourceType: ['album']
       }
@@ -230,7 +238,7 @@ function getChooseImageApi() {
       name: 'wx.chooseMedia',
       choose: wx.chooseMedia.bind(wx),
       options: {
-        count: MAX_UPLOAD_COUNT,
+        count: chooseCount,
         mediaType: ['image'],
         sourceType: ['album'],
         sizeType: ['compressed']
@@ -286,7 +294,7 @@ function runChooseApi(api) {
           reject(new Error('未获取到照片路径，请重新选择'))
           return
         }
-        resolve([...new Set(paths)])
+        resolve([...new Set(paths)].slice(0, api.options.count))
       },
       fail: (err) => {
         const msg = err?.errMsg || err?.message || ''
@@ -548,20 +556,22 @@ onShow(refreshAlbum)
 .photo-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12rpx;
+  gap: 16rpx;
   padding: 0 $page-gutter;
 }
 .photo-item {
   position: relative;
-  aspect-ratio: 1;
-  border-radius: $radius-md;
+  aspect-ratio: 4 / 5;
+  @include photo-mount;
+  box-sizing: border-box;
   overflow: hidden;
 }
 .photo-img {
   width: 100%;
   height: 100%;
   display: block;
-  background: $bg-muted;
+  background: $paper-deep;
+  filter: none;
 }
 .photo-overlay {
   position: absolute;
@@ -577,15 +587,15 @@ onShow(refreshAlbum)
 }
 .photo-tag {
   padding: 4rpx 10rpx;
-  background: $text-primary;
-  color: #fff;
+  background: var(--theme-accent, $text-primary);
+  color: $ink-inverse;
   font-size: 18rpx;
   border-radius: 4rpx;
   font-weight: 500;
 }
 .photo-cover {
   padding: 4rpx 10rpx;
-  background: rgba(255,255,255,0.88);
+  background: rgba(255,253,248,0.88);
   color: $text-primary;
   font-size: 18rpx;
   border-radius: 4rpx;

@@ -326,7 +326,7 @@ onShow(async () => {
     border: 1rpx solid rgba(164,120,59,0.14);
   }
   .share-btn {
-    background: #A4783B;
+    background: var(--accent, $color-primary);
   }
 }
 .tpl-noir {
@@ -358,10 +358,14 @@ onShow(async () => {
     border: 1rpx solid rgba(80,98,71,0.12);
   }
   .share-btn {
-    background: #506247;
+    background: var(--accent, $color-primary);
   }
 }
 
+.theme-wine,
+.theme-cinnabar,
+.theme-indigo,
+.theme-pine,
 .theme-rose,
 .theme-champagne,
 .theme-noir,

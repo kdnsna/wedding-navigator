@@ -1,3 +1,5 @@
+import { getThemeTokens, isPremiumTheme, resolveTheme } from '@/utils/legacy-theme-map.js'
+
 export const PLAN_TIERS = {
   free: {
     id: 'free',
@@ -42,6 +44,8 @@ export function getPlanTier(plan = 'free') {
 }
 
 export function getTemplateTier(template = {}) {
+  const theme = template?.theme || template?.commercial?.theme_key || template?.themeClass
+  if (theme) return isPremiumTheme(theme) ? 'premium' : 'free'
   return template?.commercial?.tier || template?.tier || 'free'
 }
 
@@ -76,10 +80,14 @@ export function getCommercialHint(template = {}, entitlements = {}) {
 }
 
 export function buildTemplateCommercialState(template = {}, entitlements = {}) {
+  const theme = resolveTheme(template?.theme || template?.commercial?.theme_key || template?.themeClass)
+  const themeMeta = getThemeTokens(theme)
   const tier = getTemplateTier(template)
   const entitlement = getTemplateEntitlement(template)
   return {
     template_tier: tier,
+    theme_key: theme,
+    theme_name: themeMeta.name,
     template_entitlement: entitlement,
     billing_state: isTemplatePremium(template) && !canUseTemplate(template, entitlements) ? 'trial' : 'included'
   }

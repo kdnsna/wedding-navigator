@@ -1,0 +1,128 @@
+/* =========================================================
+   甜囍手册 - 情绪色（运行时）
+   ---------------------------------------------------------
+   页面根节点动态挂类即可整页换色：
+   <view :class="['page', `theme-${weddingInfo.theme}`]">
+   每套情绪色固定输出六个变量，组件只认这六个名字。
+   ========================================================= */
+
+@mixin page-paper-vars {
+  --theme-page: #F7F2E9;
+  --theme-page-soft: #EFE7D8;
+  --theme-surface: #FFFDF8;
+  --theme-elevated: #EFE7D8;
+  --theme-ink: #2A231D;
+  --theme-muted: #8C8072;
+  --theme-strong-ink: #FFFDF8;
+  --theme-strong-muted: rgba(255, 253, 248, 0.72);
+  --theme-strong-soft: rgba(255, 253, 248, 0.14);
+  --theme-strong-border: rgba(255, 253, 248, 0.18);
+}
+
+@mixin theme-bridge-vars {
+  --theme-accent: var(--accent);
+  --theme-accent-deep: var(--accent-ink);
+  --theme-accent-soft: var(--accent-soft);
+  --theme-border: var(--accent-line);
+  --theme-on-accent: var(--on-accent);
+}
+
+@mixin theme-wine-vars {
+  @include page-paper-vars;
+  @include theme-bridge-vars;
+  --accent: #8A3B45;
+  --accent-ink: #6E2F38;
+  --accent-soft: rgba(138, 59, 69, 0.08);
+  --accent-line: rgba(138, 59, 69, 0.28);
+  --accent-glow: rgba(138, 59, 69, 0.45);
+  --on-accent: #FFFDF8;
+  --theme-strong-bg: #6E2F38;
+  --theme-hero-bg: #6E2F38;
+  --theme-hero-filter: none;
+  --theme-default-cover-opacity: 0.92;
+  --theme-hero-overlay: linear-gradient(to bottom, rgba(247, 242, 233, 0) 0%, rgba(247, 242, 233, 0.6) 55%, #F7F2E9 100%);
+  --theme-panel-gradient: linear-gradient(135deg, #FFFDF8 0%, #EFE7D8 100%);
+}
+
+@mixin theme-cinnabar-vars {
+  @include page-paper-vars;
+  @include theme-bridge-vars;
+  --accent: #C3402B;
+  --accent-ink: #9E3322;
+  --accent-soft: rgba(195, 64, 43, 0.08);
+  --accent-line: rgba(195, 64, 43, 0.28);
+  --accent-glow: rgba(195, 64, 43, 0.45);
+  --on-accent: #FFFDF8;
+  --theme-strong-bg: #9E3322;
+  --theme-hero-bg: #9E3322;
+  --theme-hero-filter: none;
+  --theme-default-cover-opacity: 0.94;
+  --theme-hero-overlay: linear-gradient(to bottom, rgba(247, 242, 233, 0) 0%, rgba(247, 242, 233, 0.6) 55%, #F7F2E9 100%);
+  --theme-panel-gradient: linear-gradient(135deg, #FFFDF8 0%, #F4E4D7 100%);
+}
+
+@mixin theme-indigo-vars {
+  @include page-paper-vars;
+  @include theme-bridge-vars;
+  --accent: #3A5068;
+  --accent-ink: #2C3E52;
+  --accent-soft: rgba(58, 80, 104, 0.08);
+  --accent-line: rgba(58, 80, 104, 0.28);
+  --accent-glow: rgba(58, 80, 104, 0.45);
+  --on-accent: #FFFDF8;
+  --theme-strong-bg: #2C3E52;
+  --theme-hero-bg: #2C3E52;
+  --theme-hero-filter: none;
+  --theme-default-cover-opacity: 0.88;
+  --theme-hero-overlay: linear-gradient(to bottom, rgba(247, 242, 233, 0) 0%, rgba(247, 242, 233, 0.6) 55%, #F7F2E9 100%);
+  --theme-panel-gradient: linear-gradient(135deg, #FFFDF8 0%, #E5E7EA 100%);
+}
+
+@mixin theme-pine-vars {
+  @include page-paper-vars;
+  @include theme-bridge-vars;
+  --accent: #4A6151;
+  --accent-ink: #3A4D40;
+  --accent-soft: rgba(74, 97, 81, 0.08);
+  --accent-line: rgba(74, 97, 81, 0.28);
+  --accent-glow: rgba(74, 97, 81, 0.45);
+  --on-accent: #FFFDF8;
+  --theme-strong-bg: #3A4D40;
+  --theme-hero-bg: #3A4D40;
+  --theme-hero-filter: none;
+  --theme-default-cover-opacity: 0.86;
+  --theme-hero-overlay: linear-gradient(to bottom, rgba(247, 242, 233, 0) 0%, rgba(247, 242, 233, 0.6) 55%, #F7F2E9 100%);
+  --theme-panel-gradient: linear-gradient(135deg, #FFFDF8 0%, #E5E9DF 100%);
+}
+
+page,
+.theme-wine {
+  @include theme-wine-vars;
+}
+
+page {
+  background: #F7F2E9;
+  color: #2A231D;
+  font-family: "Noto Serif SC", "Songti SC", "STSong", "SimSun", serif;
+}
+
+.theme-cinnabar { @include theme-cinnabar-vars; }
+.theme-indigo { @include theme-indigo-vars; }
+.theme-pine { @include theme-pine-vars; }
+
+/* 旧主题兼容别名 —— 迁移期保留，计划 v2.1 移除。 */
+.theme-red-classic { @include theme-cinnabar-vars; }
+.theme-sakura-pink { @include theme-wine-vars; }
+.theme-champagne { @include theme-wine-vars; }
+.theme-minimal-white { @include theme-wine-vars; }
+.theme-ocean-blue { @include theme-indigo-vars; }
+.theme-violet-dream { @include theme-indigo-vars; }
+.theme-garden-green { @include theme-pine-vars; }
+
+/* 旧模板主题兼容别名。 */
+.theme-rose { @include theme-wine-vars; }
+.theme-noir { @include theme-indigo-vars; }
+.theme-garden { @include theme-pine-vars; }
+.theme-heritage { @include theme-cinnabar-vars; }
+.theme-shandong { @include theme-cinnabar-vars; }
+.theme-travel { @include theme-indigo-vars; }

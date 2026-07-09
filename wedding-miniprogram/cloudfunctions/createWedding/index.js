@@ -26,8 +26,8 @@ exports.main = async (event, context) => {
   const { weddingData, wedding, invitation, venues, timeline } = event
   const { OPENID } = cloud.getWXContext()
 
-  const weddingPayload = weddingData?.wedding || wedding
-  const invitationPayload = weddingData?.invitation || invitation
+  let weddingPayload = weddingData?.wedding || wedding
+  let invitationPayload = weddingData?.invitation || invitation
   const venuesPayload = weddingData?.venues || venues || { venues: [] }
   const timelinePayload = weddingData?.timeline || timeline || { events: [] }
 
@@ -37,6 +37,15 @@ exports.main = async (event, context) => {
   if (!OPENID) {
     return { success: false, message: '无法识别微信身份，请重新打开小程序' }
   }
+
+  const theme = resolveTheme(
+    invitationPayload?.theme ||
+    weddingPayload?.basic_info?.theme ||
+    weddingPayload?.commercial?.theme_key ||
+    weddingPayload?.workspace?.theme_key
+  )
+  weddingPayload = normalizeWeddingPayload(weddingPayload, theme)
+  invitationPayload = normalizeInvitationPayload(invitationPayload, theme)
 
   let weddingId = null
   try {
@@ -136,4 +145,56 @@ async function ensureOwnerProfile(openid, now) {
       updated_at: now
     }
   })
+}
+
+const LEGACY_THEME_MAP = {
+  'red-classic': 'cinnabar',
+  'sakura-pink': 'wine',
+  champagne: 'wine',
+  'minimal-white': 'wine',
+  'ocean-blue': 'indigo',
+  'violet-dream': 'indigo',
+  'garden-green': 'pine',
+  rose: 'wine',
+  noir: 'indigo',
+  garden: 'pine',
+  heritage: 'cinnabar',
+  shandong: 'cinnabar',
+  travel: 'indigo'
+}
+const VALID_THEMES = ['wine', 'cinnabar', 'indigo', 'pine']
+
+function resolveTheme(key) {
+  const normalized = String(key || '').trim().replace(/^theme-/, '')
+  if (VALID_THEMES.includes(normalized)) return normalized
+  return LEGACY_THEME_MAP[normalized] || 'wine'
+}
+
+function normalizeWeddingPayload(payload, theme) {
+  return {
+    ...payload,
+    basic_info: {
+      ...(payload.basic_info || {}),
+      theme
+    },
+    commercial: {
+      ...(payload.commercial || {}),
+      theme_key: theme
+    },
+    workspace: {
+      ...(payload.workspace || {}),
+      theme_key: theme
+    }
+  }
+}
+
+function normalizeInvitationPayload(payload = {}, theme) {
+  return {
+    ...payload,
+    theme,
+    commercial: {
+      ...(payload.commercial || {}),
+      theme_key: theme
+    }
+  }
 }

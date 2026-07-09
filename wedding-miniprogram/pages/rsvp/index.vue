@@ -967,11 +967,11 @@ async function reloadWedding() {
     box-shadow: $shadow-sm;
   }
   .rsvp-brief::before {
-    background: #A4783B;
+    background: var(--accent, $color-primary);
   }
   .brief-kicker,
   .brief-label {
-    color: #A4783B;
+    color: var(--accent, $color-primary);
   }
   .brief-title,
   .brief-value {
@@ -984,8 +984,8 @@ async function reloadWedding() {
   .submit-btn,
   .radio-item.active,
   .tag-item.active {
-    background: #A4783B;
-    border-color: #A4783B;
+    background: var(--accent, $color-primary);
+    border-color: var(--accent, $color-primary);
   }
 }
 .tpl-noir {
@@ -1026,15 +1026,15 @@ async function reloadWedding() {
 .tpl-garden {
   background: #f5f6ef;
   .rsvp-brief {
-    background: #506247;
+    background: var(--accent, $color-primary);
   }
   .rsvp-brief::before,
   .feature-action,
   .submit-btn,
   .radio-item.active,
   .tag-item.active {
-    background: #6F7E5D;
-    border-color: #6F7E5D;
+    background: var(--accent, $color-primary);
+    border-color: var(--accent, $color-primary);
   }
 }
 
@@ -1175,6 +1175,10 @@ async function reloadWedding() {
   color: #fff;
 }
 
+.theme-wine,
+.theme-cinnabar,
+.theme-indigo,
+.theme-pine,
 .theme-rose,
 .theme-champagne,
 .theme-noir,

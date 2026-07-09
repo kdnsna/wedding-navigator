@@ -234,6 +234,16 @@ export async function drawWeddingPoster({ instance, store, qrCodePath = '' }) {
     })
   }
 
+  const posterLine = store.wedding?.share_config?.poster_line || ''
+  if (posterLine) {
+    ctx.setFillStyle(theme.accent)
+    drawWrappedText(ctx, posterLine, W / 2, 466, 250, {
+      fontSize: 12,
+      lineHeight: 15,
+      maxLines: 1
+    })
+  }
+
   const qrPath = await resolveImagePath(qrCodePath, 'poster_qr')
   if (qrPath) {
     const qrSize = 60

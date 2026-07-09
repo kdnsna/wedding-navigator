@@ -427,7 +427,7 @@ onShow(() => loadBlessings(false))
   .feature-action,
   .pinned-tag,
   .empty-action {
-    background: #A4783B;
+    background: var(--accent, $color-primary);
   }
   .blessing-item.pinned {
     background: #f7eee4;
@@ -468,13 +468,17 @@ onShow(() => loadBlessings(false))
   .feature-action,
   .pinned-tag,
   .empty-action {
-    background: #506247;
+    background: var(--accent, $color-primary);
   }
   .blessing-item.pinned {
     background: #eef2e7;
   }
 }
 
+.theme-wine,
+.theme-cinnabar,
+.theme-indigo,
+.theme-pine,
 .theme-rose,
 .theme-champagne,
 .theme-noir,

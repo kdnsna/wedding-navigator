@@ -1,11 +1,33 @@
+import { getThemeClass, getThemeTokens, isPremiumTheme, resolveTheme } from '@/utils/legacy-theme-map.js'
+
 export const TEMPLATE_HERO_IMAGES = {
-  'rose-couture': '/static/visuals/hero/hero-rose-couture.jpg',
+  'rose-couture': '/static/visuals/hero/hero-signature-rose.jpg',
   'champagne-editorial': '/static/visuals/hero/hero-champagne-editorial.jpg',
   'noir-banquet': '/static/visuals/hero/hero-noir-banquet.jpg',
   'garden-film': '/static/visuals/hero/hero-garden-film.jpg',
   'heritage-ritual': '/static/visuals/hero/hero-heritage-ritual.jpg',
   'shandong-family': '/static/visuals/hero/hero-shandong-family.jpg',
   'travel-friendly': '/static/visuals/hero/hero-travel-friendly.jpg'
+}
+
+function themeAccent(theme) {
+  return getThemeTokens(theme).accent
+}
+
+function themeTier(theme) {
+  return isPremiumTheme(theme) ? 'premium' : 'free'
+}
+
+function buildThemeCommercial(theme, unlockText) {
+  const normalizedTheme = resolveTheme(theme)
+  const premium = isPremiumTheme(normalizedTheme)
+  return {
+    tier: premium ? 'premium' : 'free',
+    theme_key: normalizedTheme,
+    entitlement: premium ? 'premium_templates' : '',
+    priceLabel: premium ? '高级模板' : '免费模板',
+    unlockText: unlockText || (premium ? '适合作为高级情绪色模板收费' : '基础免费，适合直接上线')
+  }
 }
 
 export const WEDDING_TEMPLATES = [
@@ -17,21 +39,17 @@ export const WEDDING_TEMPLATES = [
     desc: '红金、近黑、大片封面，仪式感最强，默认主推',
     kicker: 'LUXURY ROSE WEDDING',
     className: 'tpl-rose',
-    themeClass: 'theme-rose',
-    accent: '#B03A5B',
-    surface: '#1A1A1A',
-    preview: 'linear-gradient(145deg, #4B111E 0%, #B03A5B 52%, #C9A96E 100%)',
+    theme: 'wine',
+    themeClass: getThemeClass('wine'),
+    accent: themeAccent('wine'),
+    surface: '#6E2F38',
+    preview: 'linear-gradient(145deg, #6E2F38 0%, #8A3B45 52%, #B08D57 100%)',
     defaultHero: TEMPLATE_HERO_IMAGES['rose-couture'],
     photoMood: '建议使用竖版主封面，人物居中偏上，留出底部文字空间',
     albumMood: '高定相册',
     copy: '适合酒店、宴会厅、正式仪式和大多数婚礼场景',
-    tier: 'free',
-    commercial: {
-      tier: 'free',
-      entitlement: '',
-      priceLabel: '免费模板',
-      unlockText: '基础免费，适合直接上线'
-    },
+    tier: themeTier('wine'),
+    commercial: buildThemeCommercial('wine', '基础免费，适合直接上线'),
     preset: {
       mainText: '以爱为名，以余生为约。诚挚邀请您莅临我们的婚礼，在玫瑰与灯光之间，见证我们人生中最珍贵的一刻。',
       venueName: '玫瑰宴会厅'
@@ -56,7 +74,7 @@ export const WEDDING_TEMPLATES = [
       posterStyle: {
         title: '正式宴会海报',
         composition: '大幅照片 + 红玫瑰标题 + 小程序码居中收束',
-        accent: '#B03A5B'
+        accent: themeAccent('wine')
       }
     }
   },
@@ -68,21 +86,17 @@ export const WEDDING_TEMPLATES = [
     desc: '浅色、拱门、杂志排版，轻盈干净',
     kicker: 'MODERN CEREMONY',
     className: 'tpl-champagne',
-    themeClass: 'theme-champagne',
-    accent: '#A4783B',
-    surface: '#F7EEE4',
-    preview: 'linear-gradient(145deg, #F7EEE4 0%, #FFFFFF 52%, #C9A96E 100%)',
+    theme: 'wine',
+    themeClass: getThemeClass('wine'),
+    accent: themeAccent('wine'),
+    surface: '#F7F2E9',
+    preview: 'linear-gradient(145deg, #F7F2E9 0%, #FFFDF8 52%, #B08D57 100%)',
     defaultHero: TEMPLATE_HERO_IMAGES['champagne-editorial'],
     photoMood: '建议使用浅色、户外或白纱照片，画面保留自然留白',
     albumMood: '杂志影像',
     copy: '适合草坪、极简、白绿色或香槟色婚礼',
-    tier: 'free',
-    commercial: {
-      tier: 'free',
-      entitlement: '',
-      priceLabel: '免费模板',
-      unlockText: '基础免费，适合直接上线'
-    },
+    tier: themeTier('wine'),
+    commercial: buildThemeCommercial('wine', '基础免费，适合直接上线'),
     preset: {
       mainText: '我们把这一天折进一页温柔的请柬里。愿您与我们一起，在香槟色的光影中，共赴一场关于爱与承诺的仪式。',
       venueName: '香槟花园厅'
@@ -106,7 +120,7 @@ export const WEDDING_TEMPLATES = [
       posterStyle: {
         title: '香槟杂志海报',
         composition: '浅底留白 + 拱形照片 + 细线信息分区',
-        accent: '#A4783B'
+        accent: themeAccent('wine')
       }
     }
   },
@@ -118,21 +132,17 @@ export const WEDDING_TEMPLATES = [
     desc: '强对比、夜宴灯光、黑金卡片，第一眼更戏剧',
     kicker: 'BLACK TIE BANQUET',
     className: 'tpl-noir',
-    themeClass: 'theme-noir',
-    accent: '#C9A96E',
-    surface: '#111111',
-    preview: 'linear-gradient(145deg, #050505 0%, #2C2C2C 58%, #C9A96E 100%)',
+    theme: 'indigo',
+    themeClass: getThemeClass('indigo'),
+    accent: themeAccent('indigo'),
+    surface: '#2C3E52',
+    preview: 'linear-gradient(145deg, #2C3E52 0%, #3A5068 58%, #B08D57 100%)',
     defaultHero: TEMPLATE_HERO_IMAGES['noir-banquet'],
     photoMood: '建议使用夜景、宴会厅、灯光或黑礼服照片',
     albumMood: '晚宴片场',
     copy: '适合晚宴、酒店宴会厅、高级餐厅和黑金主题',
-    tier: 'premium',
-    commercial: {
-      tier: 'premium',
-      entitlement: 'premium_templates',
-      priceLabel: '高级模板',
-      unlockText: '适合作为视觉高级模板收费'
-    },
+    tier: themeTier('indigo'),
+    commercial: buildThemeCommercial('indigo', '适合作为视觉高级模板收费'),
     preset: {
       mainText: '夜幕、灯火、挚爱与挚友。诚邀您出席我们的婚礼晚宴，与我们一同举杯，见证这场属于爱意的黑金时刻。',
       venueName: '黑金宴会厅'
@@ -156,7 +166,7 @@ export const WEDDING_TEMPLATES = [
       posterStyle: {
         title: '黑金晚宴海报',
         composition: '暗色照片 + 金色信息条 + 小程序码底部',
-        accent: '#C9A96E'
+        accent: themeAccent('indigo')
       }
     }
   },
@@ -168,21 +178,17 @@ export const WEDDING_TEMPLATES = [
     desc: '自然、胶片、生活感，照片故事性强',
     kicker: 'GARDEN FILM',
     className: 'tpl-garden',
-    themeClass: 'theme-garden',
-    accent: '#6F7E5D',
-    surface: '#F5F6EF',
-    preview: 'linear-gradient(145deg, #EAF0E2 0%, #FFFFFF 54%, #6F7E5D 100%)',
+    theme: 'pine',
+    themeClass: getThemeClass('pine'),
+    accent: themeAccent('pine'),
+    surface: '#F7F2E9',
+    preview: 'linear-gradient(145deg, #E5E9DF 0%, #FFFDF8 54%, #4A6151 100%)',
     defaultHero: TEMPLATE_HERO_IMAGES['garden-film'],
     photoMood: '建议使用草坪、花园、旅拍或自然光照片',
     albumMood: '胶片故事',
     copy: '适合户外、草坪、旅拍和温柔生活感婚礼',
-    tier: 'free',
-    commercial: {
-      tier: 'free',
-      entitlement: '',
-      priceLabel: '免费模板',
-      unlockText: '基础免费，适合直接上线'
-    },
+    tier: themeTier('pine'),
+    commercial: buildThemeCommercial('pine', '适合作为庭园情绪色模板收费'),
     preset: {
       mainText: '在花香、微风与自然光里，我们将把相爱的日常郑重写成誓言。期待您来到现场，和我们一起收藏这段春日般的记忆。',
       venueName: '花园草坪仪式区'
@@ -206,7 +212,7 @@ export const WEDDING_TEMPLATES = [
       posterStyle: {
         title: '胶片故事海报',
         composition: '照片拼贴 + 细体中文标题 + 温柔绿色点缀',
-        accent: '#6F7E5D'
+        accent: themeAccent('pine')
       }
     }
   },
@@ -218,21 +224,17 @@ export const WEDDING_TEMPLATES = [
     desc: '红金、留白、礼序感，适合重视敬茶改口和家庭仪式的婚礼',
     kicker: '中式礼宴',
     className: 'tpl-rose',
-    themeClass: 'theme-heritage',
-    accent: '#A8323E',
+    theme: 'cinnabar',
+    themeClass: getThemeClass('cinnabar'),
+    accent: themeAccent('cinnabar'),
     surface: '#FAF6EF',
-    preview: 'linear-gradient(145deg, #8A1F2D 0%, #FAF6EF 54%, #C9A96E 100%)',
+    preview: 'linear-gradient(145deg, #9E3322 0%, #FAF6EF 54%, #B08D57 100%)',
     defaultHero: TEMPLATE_HERO_IMAGES['heritage-ritual'],
     photoMood: '建议使用中式礼服、敬茶或家宴场景照片，画面要端正、留白充足',
     albumMood: '礼序影像',
     copy: '适合中式礼服、敬茶改口、证婚和家庭仪式感较强的婚礼',
-    tier: 'premium',
-    commercial: {
-      tier: 'premium',
-      entitlement: 'premium_templates',
-      priceLabel: '高级模板',
-      unlockText: '适合作为礼序方案模板收费'
-    },
+    tier: themeTier('cinnabar'),
+    commercial: buildThemeCommercial('cinnabar', '适合作为礼序方案模板收费'),
     preset: {
       mainText: '良辰已定，喜期将至。谨以此函敬邀亲友莅临喜宴，见证我们结为连理，也与家人同享这份团圆与欢喜。',
       venueName: '中式礼宴厅'
@@ -257,7 +259,7 @@ export const WEDDING_TEMPLATES = [
       posterStyle: {
         title: '新中式礼宴海报',
         composition: '红金留白 + 礼序文案 + 小程序码底部',
-        accent: '#A8323E'
+        accent: themeAccent('cinnabar')
       }
     }
   },
@@ -269,21 +271,17 @@ export const WEDDING_TEMPLATES = [
     desc: '体面、明白、节俭有礼，强调接亲路线、席设地点和回门安排',
     kicker: '喜宴手册',
     className: 'tpl-champagne',
-    themeClass: 'theme-shandong',
-    accent: '#A4783B',
+    theme: 'cinnabar',
+    themeClass: getThemeClass('cinnabar'),
+    accent: themeAccent('cinnabar'),
     surface: '#FBF7F1',
-    preview: 'linear-gradient(145deg, #F9E4D2 0%, #FFFFFF 48%, #A4783B 100%)',
+    preview: 'linear-gradient(145deg, #F4E4D7 0%, #FFFDF8 48%, #C3402B 100%)',
     defaultHero: TEMPLATE_HERO_IMAGES['shandong-family'],
     photoMood: '建议使用端正合影、家宴或仪式照片，信息区域保持清晰易读',
     albumMood: '家宴纪实',
     copy: '适合重视亲友到场、接亲、会亲、回门和席位安排的山东家庭婚礼',
-    tier: 'premium',
-    commercial: {
-      tier: 'premium',
-      entitlement: 'premium_templates',
-      priceLabel: '高级模板',
-      unlockText: '适合作为地域习俗方案模板收费'
-    },
+    tier: themeTier('cinnabar'),
+    commercial: buildThemeCommercial('cinnabar', '适合作为地域习俗方案模板收费'),
     preset: {
       mainText: '喜期已定，敬备薄酌。诚邀亲友拨冗赴宴，见证新人礼成，同叙亲情，共贺良缘。',
       venueName: '喜宴大厅'
@@ -309,7 +307,7 @@ export const WEDDING_TEMPLATES = [
       posterStyle: {
         title: '家宴实用海报',
         composition: '清晰日期地点 + 家宴照片 + 醒目小程序码',
-        accent: '#A4783B'
+        accent: themeAccent('cinnabar')
       }
     }
   },
@@ -321,21 +319,17 @@ export const WEDDING_TEMPLATES = [
     desc: '把住宿、交通、停车和到达时间放在前面，适合外地亲友多的婚礼',
     kicker: '宾客路书',
     className: 'tpl-garden',
-    themeClass: 'theme-travel',
-    accent: '#506247',
+    theme: 'indigo',
+    themeClass: getThemeClass('indigo'),
+    accent: themeAccent('indigo'),
     surface: '#F5F6EF',
-    preview: 'linear-gradient(145deg, #E7EFE0 0%, #FFFFFF 50%, #506247 100%)',
+    preview: 'linear-gradient(145deg, #E5E7EA 0%, #FFFDF8 50%, #3A5068 100%)',
     defaultHero: TEMPLATE_HERO_IMAGES['travel-friendly'],
     photoMood: '建议使用城市、酒店、合影或旅拍照片，信息层要足够清楚',
     albumMood: '到场手册',
     copy: '适合异地宾客较多、需要重点说明住宿交通和时间安排的婚礼',
-    tier: 'premium',
-    commercial: {
-      tier: 'premium',
-      entitlement: 'premium_templates',
-      priceLabel: '高级模板',
-      unlockText: '适合作为路书方案模板收费'
-    },
+    tier: themeTier('indigo'),
+    commercial: buildThemeCommercial('indigo', '适合作为路书方案模板收费'),
     preset: {
       mainText: '为了让远道而来的亲友更安心，我们把时间、地点、路线和住宿整理成这本手册。期待您顺利抵达，与我们相聚。',
       venueName: '婚礼主场地'
@@ -359,7 +353,7 @@ export const WEDDING_TEMPLATES = [
       posterStyle: {
         title: '路书型分享海报',
         composition: '主场地信息前置 + 路线提示 + 小程序码',
-        accent: '#506247'
+        accent: themeAccent('indigo')
       }
     }
   }
@@ -376,7 +370,9 @@ export const DEFAULT_TIMELINE_ROLES = [
 
 export function normalizeTemplateId(id) {
   const target = WEDDING_TEMPLATES.find(t => t.id === id || t.legacyIds.includes(id))
-  return target?.id || DEFAULT_TEMPLATE_ID
+  if (target) return target.id
+  const theme = resolveTheme(id)
+  return WEDDING_TEMPLATES.find(t => t.theme === theme)?.id || DEFAULT_TEMPLATE_ID
 }
 
 export function getWeddingTemplate(id) {
@@ -386,7 +382,12 @@ export function getWeddingTemplate(id) {
 
 export function getTemplateClass(id) {
   const template = getWeddingTemplate(id)
-  return [template.className, template.themeClass].filter(Boolean).join(' ')
+  return [template.className, getThemeClass(template.theme || template.themeClass)].filter(Boolean).join(' ')
+}
+
+export function getTemplateTheme(id) {
+  const template = getWeddingTemplate(id)
+  return resolveTheme(template.theme || template.themeClass)
 }
 
 export function getTemplateHeroImage(id) {
@@ -394,82 +395,64 @@ export function getTemplateHeroImage(id) {
   return template.defaultHero || TEMPLATE_HERO_IMAGES[DEFAULT_TEMPLATE_ID]
 }
 
-const POSTER_THEME_MAP = {
-  'theme-rose': {
-    background: ['#4B111E', '#1A0A10', '#0D0507'],
-    photoOverlay: 'rgba(22, 6, 10, 0.58)',
-    text: '#FFFFFF',
-    muted: 'rgba(255, 255, 255, 0.58)',
-    faint: 'rgba(255, 255, 255, 0.18)',
-    line: 'rgba(255, 255, 255, 0.14)',
-    accent: '#C9A96E',
-    qrText: 'rgba(0, 0, 0, 0.34)'
+const MOOD_POSTER_THEME_MAP = {
+  'theme-wine': {
+    background: ['#6E2F38', '#8A3B45', '#2A231D'],
+    photoOverlay: 'rgba(42, 35, 29, 0.56)',
+    text: '#FFFDF8',
+    muted: 'rgba(255, 253, 248, 0.62)',
+    faint: 'rgba(255, 253, 248, 0.20)',
+    line: 'rgba(255, 253, 248, 0.16)',
+    accent: '#B08D57',
+    qrText: 'rgba(42, 35, 29, 0.38)'
   },
-  'theme-champagne': {
-    background: ['#FBF7F1', '#F7EEE4', '#E6D0B3'],
-    photoOverlay: 'rgba(251, 247, 241, 0.74)',
-    text: '#2A2118',
-    muted: 'rgba(42, 33, 24, 0.58)',
-    faint: 'rgba(42, 33, 24, 0.18)',
-    line: 'rgba(164, 120, 59, 0.22)',
-    accent: '#A4783B',
-    qrText: 'rgba(42, 33, 24, 0.46)'
+  'theme-cinnabar': {
+    background: ['#9E3322', '#C3402B', '#F7F2E9'],
+    photoOverlay: 'rgba(63, 18, 10, 0.56)',
+    text: '#FFFDF8',
+    muted: 'rgba(255, 253, 248, 0.64)',
+    faint: 'rgba(255, 253, 248, 0.20)',
+    line: 'rgba(176, 141, 87, 0.26)',
+    accent: '#B08D57',
+    qrText: 'rgba(42, 35, 29, 0.38)'
   },
-  'theme-noir': {
-    background: ['#050505', '#171717', '#050505'],
-    photoOverlay: 'rgba(0, 0, 0, 0.62)',
-    text: '#FFFFFF',
-    muted: 'rgba(255, 255, 255, 0.58)',
-    faint: 'rgba(255, 255, 255, 0.16)',
-    line: 'rgba(201, 169, 110, 0.22)',
-    accent: '#C9A96E',
-    qrText: 'rgba(0, 0, 0, 0.34)'
+  'theme-indigo': {
+    background: ['#2C3E52', '#3A5068', '#111820'],
+    photoOverlay: 'rgba(12, 22, 32, 0.60)',
+    text: '#FFFDF8',
+    muted: 'rgba(255, 253, 248, 0.62)',
+    faint: 'rgba(255, 253, 248, 0.18)',
+    line: 'rgba(176, 141, 87, 0.22)',
+    accent: '#B08D57',
+    qrText: 'rgba(42, 35, 29, 0.38)'
   },
-  'theme-garden': {
-    background: ['#F5F6EF', '#E9EFE2', '#506247'],
-    photoOverlay: 'rgba(245, 246, 239, 0.66)',
-    text: '#1F2B1F',
-    muted: 'rgba(31, 43, 31, 0.58)',
-    faint: 'rgba(31, 43, 31, 0.16)',
-    line: 'rgba(80, 98, 71, 0.22)',
-    accent: '#506247',
-    qrText: 'rgba(31, 43, 31, 0.44)'
-  },
-  'theme-heritage': {
-    background: ['#7D1F2B', '#2A090C', '#FAF6EF'],
-    photoOverlay: 'rgba(35, 9, 10, 0.58)',
-    text: '#FFFFFF',
-    muted: 'rgba(255, 255, 255, 0.64)',
-    faint: 'rgba(255, 255, 255, 0.18)',
-    line: 'rgba(201, 169, 110, 0.26)',
-    accent: '#C9A96E',
-    qrText: 'rgba(0, 0, 0, 0.34)'
-  },
-  'theme-shandong': {
-    background: ['#FBF7F1', '#F4E7D8', '#D7B98A'],
-    photoOverlay: 'rgba(251, 247, 241, 0.76)',
-    text: '#2B2118',
-    muted: 'rgba(43, 33, 24, 0.58)',
-    faint: 'rgba(43, 33, 24, 0.16)',
-    line: 'rgba(164, 120, 59, 0.24)',
-    accent: '#A4783B',
-    qrText: 'rgba(43, 33, 24, 0.46)'
-  },
-  'theme-travel': {
-    background: ['#F5F6EF', '#E9EFE2', '#354832'],
-    photoOverlay: 'rgba(245, 246, 239, 0.70)',
-    text: '#1D2A1F',
-    muted: 'rgba(29, 42, 31, 0.58)',
-    faint: 'rgba(29, 42, 31, 0.16)',
-    line: 'rgba(80, 98, 71, 0.24)',
-    accent: '#506247',
-    qrText: 'rgba(29, 42, 31, 0.44)'
+  'theme-pine': {
+    background: ['#F7F2E9', '#E5E9DF', '#3A4D40'],
+    photoOverlay: 'rgba(247, 242, 233, 0.68)',
+    text: '#2A231D',
+    muted: 'rgba(42, 35, 29, 0.58)',
+    faint: 'rgba(42, 35, 29, 0.18)',
+    line: 'rgba(74, 97, 81, 0.24)',
+    accent: '#4A6151',
+    qrText: 'rgba(42, 35, 29, 0.44)'
   }
+}
+
+const POSTER_THEME_MAP = {
+  ...MOOD_POSTER_THEME_MAP,
+  'theme-rose': MOOD_POSTER_THEME_MAP['theme-wine'],
+  'theme-champagne': MOOD_POSTER_THEME_MAP['theme-wine'],
+  'theme-noir': MOOD_POSTER_THEME_MAP['theme-indigo'],
+  'theme-garden': MOOD_POSTER_THEME_MAP['theme-pine'],
+  'theme-heritage': MOOD_POSTER_THEME_MAP['theme-cinnabar'],
+  'theme-shandong': MOOD_POSTER_THEME_MAP['theme-cinnabar'],
+  'theme-travel': MOOD_POSTER_THEME_MAP['theme-indigo']
 }
 
 export function getTemplatePosterTheme(id) {
   const template = getWeddingTemplate(id)
-  return POSTER_THEME_MAP[template.themeClass] || POSTER_THEME_MAP[template.className] || POSTER_THEME_MAP['theme-rose']
+  const themeClass = getThemeClass(template.theme || template.themeClass)
+  return POSTER_THEME_MAP[themeClass] || POSTER_THEME_MAP[template.themeClass] || POSTER_THEME_MAP['theme-wine']
 }
 
 const TEMPLATE_PREVIEW_EXAMPLES = {

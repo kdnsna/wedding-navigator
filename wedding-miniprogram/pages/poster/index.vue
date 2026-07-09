@@ -459,6 +459,10 @@ onLoad(async (options) => {
   color: $text-primary;
 }
 
+.theme-wine,
+.theme-cinnabar,
+.theme-indigo,
+.theme-pine,
 .theme-rose,
 .theme-champagne,
 .theme-noir,

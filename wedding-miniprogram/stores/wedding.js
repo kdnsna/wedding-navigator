@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { getWeddingTemplate, getTemplateClass, normalizeTemplateId } from '@/utils/templates.js'
+import { resolveTheme } from '@/utils/legacy-theme-map.js'
 
 const DEFAULT_FEATURES = {
   show_countdown: true,
@@ -26,6 +27,8 @@ export const useWeddingStore = defineStore('wedding', () => {
 
   const fallbackInvitation = {
     template: 'rose-couture',
+    theme: 'wine',
+    photo_treatment: 'original',
     couple: {
       groom: { name: '新郎' },
       bride: { name: '新娘' }
@@ -273,11 +276,13 @@ export const useWeddingStore = defineStore('wedding', () => {
 
   // Actions
   function setWeddingData(data, weddingId = '') {
+    const template = normalizeTemplateId(data.invitation?.template || fallbackInvitation.template)
     wedding.value = data.wedding || fallbackWedding
     invitation.value = {
       ...fallbackInvitation,
       ...(data.invitation || {}),
-      template: normalizeTemplateId(data.invitation?.template || fallbackInvitation.template)
+      template,
+      theme: resolveTheme(data.invitation?.theme || getWeddingTemplate(template).theme)
     }
     album.value = data.album || { photos: [] }
     venues.value = data.venues ? {
@@ -299,10 +304,12 @@ export const useWeddingStore = defineStore('wedding', () => {
   }
 
   function updateInvitation(data) {
+    const template = normalizeTemplateId(data?.template || invitation.value?.template)
     invitation.value = {
       ...invitation.value,
       ...data,
-      template: normalizeTemplateId(data?.template || invitation.value?.template)
+      template,
+      theme: resolveTheme(data?.theme || getWeddingTemplate(template).theme || invitation.value?.theme)
     }
   }
 

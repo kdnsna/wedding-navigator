@@ -3,7 +3,7 @@
     <view class="lux-hero-stage">
       <image
         class="lux-hero-image"
-        :class="{ default: isDefaultCover }"
+        :class="[{ default: isDefaultCover }, heroPhotoTreatmentClass]"
         :src="coverImage"
         :mode="coverImageMode"
       />
@@ -124,13 +124,21 @@
           <text class="lux-preview-more">查看全部</text>
         </view>
         <view class="lux-photo-strip">
-          <image
+          <view
             class="lux-photo-thumb"
-            v-for="photo in featuredPhotos"
+            v-for="(photo, index) in featuredPhotos"
             :key="photo.id || photo.url"
-            :src="photo.url"
-            mode="aspectFill"
-          />
+          >
+            <view class="lux-photo-frame">
+              <image
+                class="lux-photo-image"
+                :class="photoTreatmentClass(photo)"
+                :src="photo.url"
+                mode="aspectFill"
+              />
+            </view>
+            <text class="lux-photo-caption">{{ photoCaption(photo, index) }}</text>
+          </view>
         </view>
       </view>
       <view class="lux-preview-block" v-if="isBlessingEnabled && latestBlessings.length > 0" @click="goToBlessing">
@@ -231,12 +239,13 @@ function onPageTap() {
 const coverImage = computed(() => {
   const photos = store.album?.photos || []
   const cover = photos.find(p => p.type === 'cover')
-  return cover?.url || photos[0]?.url || getTemplateHeroImage(store.invitation?.template) || '/static/visuals/default-cover.png'
+  return cover?.url || photos[0]?.url || getTemplateHeroImage(store.invitation?.template) || '/static/visuals/hero/hero-signature-rose.jpg'
 })
 const isGeneratedTemplateCover = computed(() => String(coverImage.value || '').startsWith('/static/visuals/hero/'))
 const isLegacyDefaultCover = computed(() => coverImage.value === '/static/visuals/default-cover.png')
 const isDefaultCover = computed(() => isGeneratedTemplateCover.value || isLegacyDefaultCover.value)
 const coverImageMode = computed(() => 'aspectFill')
+const photoTreatment = computed(() => store.invitation?.photo_treatment || 'original')
 
 const groomName = computed(() => store.invitation?.couple?.groom?.name || '新郎')
 const brideName = computed(() => store.invitation?.couple?.bride?.name || '新娘')
@@ -253,6 +262,7 @@ const isTimelineEnabled = computed(() => store.isTimelineEnabled)
 const primaryVenue = computed(() => store.primaryVenue || { name: venueName.value || '婚礼场地', address: venueAddress.value })
 const latestBlessings = computed(() => store.latestBlessings || [])
 const featuredPhotos = computed(() => store.featuredPhotos || [])
+const heroPhotoTreatmentClass = computed(() => (isDefaultCover.value ? '' : photoTreatmentClass()))
 const hasSubmittedRsvp = computed(() => {
   if (!isRsvpEnabled.value) return false
   const list = store.guests?.guests || []
@@ -261,6 +271,21 @@ const hasSubmittedRsvp = computed(() => {
     return item.rsvp_status && item.rsvp_status !== 'pending'
   })
 })
+
+function photoCaption(photo, index) {
+  const custom = photo?.caption || photo?.title || photo?.desc || photo?.description
+  if (custom) return custom
+  const date = photo?.date || photo?.taken_at || photo?.upload_time || photo?.created_at
+  if (date) return formatDate(String(date).slice(0, 10))
+  return `PHOTO ${String(index + 1).padStart(2, '0')}`
+}
+
+function photoTreatmentClass(photo = null) {
+  const treatment = String(photo?.treatment || photo?.effect || photo?.filter || photoTreatment.value || '').toLowerCase()
+  if (['silver', 'silver-bw', 'black-white', 'bw'].includes(treatment)) return 'treatment-silver'
+  if (['soft-color', 'light-color', 'tint'].includes(treatment)) return 'treatment-tint'
+  return ''
+}
 const nextEventText = computed(() => {
   const event = store.nextTimelineEvent
   if (!event) return '待公布'
@@ -1399,7 +1424,7 @@ onUnmounted(() => {
   }
   .daypack-pill.primary,
   .float-btn.rsvp {
-    background: #A4783B;
+    background: var(--accent, $color-primary);
   }
 }
 
@@ -1454,7 +1479,7 @@ onUnmounted(() => {
   .hero-tag,
   .daypack-kicker,
   .preview-more {
-    color: #6F7E5D;
+    color: var(--accent, $color-primary);
   }
   .daypack-section,
   .info-section,
@@ -1463,13 +1488,17 @@ onUnmounted(() => {
   }
   .daypack-pill.primary,
   .float-btn.rsvp {
-    background: #506247;
+    background: var(--accent, $color-primary);
   }
   .photo-thumb {
     border-radius: 8rpx;
   }
 }
 
+.theme-wine,
+.theme-cinnabar,
+.theme-indigo,
+.theme-pine,
 .theme-rose,
 .theme-champagne,
 .theme-noir,
@@ -1604,65 +1633,85 @@ onUnmounted(() => {
 .lux-home {
   min-height: 100vh;
   background:
-    linear-gradient(180deg, rgba(255,248,245,0.98) 0%, rgba(255,255,255,1) 36%, rgba(255,248,245,1) 100%);
+    linear-gradient(180deg, var(--theme-page-soft, rgba(255,248,245,0.98)) 0%, var(--theme-page, #fff) 34%, var(--theme-page-soft, rgba(255,248,245,1)) 100%);
   color: var(--theme-ink, $text-primary);
   padding-bottom: calc(118rpx + env(safe-area-inset-bottom));
 }
 .lux-hero-stage {
   position: relative;
-  min-height: 1120rpx;
+  min-height: 1168rpx;
   overflow: visible;
   background: var(--theme-hero-bg, $color-primary-dark);
+}
+.lux-hero-stage::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2rpx;
+  height: 260rpx;
+  @include photo-hero-scrim;
+  pointer-events: none;
+  z-index: 3;
 }
 .lux-hero-image {
   position: absolute;
   inset: 0;
   width: 100%;
-  height: 930rpx;
-  filter: var(--theme-hero-filter, saturate(1.04) contrast(1.04));
+  height: 994rpx;
+  filter: var(--theme-hero-filter, none);
 }
 .lux-hero-image.default {
-  opacity: var(--theme-default-cover-opacity, 1);
+  opacity: 1;
+}
+.lux-hero-image.treatment-silver {
+  filter: grayscale(1) contrast(1.04);
+}
+.lux-hero-image.treatment-tint {
+  filter: saturate(0.86) contrast(0.96);
 }
 .lux-hero-overlay {
   position: absolute;
   inset: 0;
-  height: 930rpx;
-  background: var(--theme-hero-overlay, linear-gradient(180deg, rgba(16,5,8,0.06) 0%, rgba(16,5,8,0.22) 38%, rgba(16,5,8,0.74) 78%, rgba(255,248,245,0.98) 100%));
+  height: 994rpx;
+  background: var(--theme-hero-overlay, linear-gradient(to bottom, rgba(247, 242, 233, 0) 0%, rgba(247, 242, 233, 0.6) 55%, $paper-bg 100%));
 }
 .lux-hero-overlay.default {
-  background:
-    linear-gradient(180deg, rgba(30,8,13,0.04) 0%, rgba(30,8,13,0.20) 44%, rgba(36,10,16,0.72) 78%, rgba(255,248,245,0.99) 100%);
+  @include photo-hero-scrim;
 }
 .lux-xi-watermark {
   position: absolute;
-  top: 220rpx;
-  right: -26rpx;
-  z-index: 2;
-  color: rgba(255,255,255,0.10);
+  top: 596rpx;
+  right: 18rpx;
+  z-index: 3;
+  color: rgba(176, 141, 87, 0.10);
   font-family: $font-serif;
-  font-size: 360rpx;
+  font-size: 224rpx;
   font-weight: 900;
   line-height: 1;
 }
 .lux-hero-copy {
-  position: relative;
+  position: absolute;
   z-index: 4;
-  padding: 188rpx $page-gutter 0;
-  color: #fff;
+  left: $page-gutter;
+  right: $page-gutter;
+  bottom: 414rpx;
+  color: $ink;
+  text-shadow: none;
 }
 .lux-hero-kicker {
   display: block;
   margin-bottom: 22rpx;
-  color: rgba(255,255,255,0.74);
+  color: $gold;
   font-size: 20rpx;
   font-weight: 600;
-  letter-spacing: 0;
+  letter-spacing: $ls-wide;
+  text-transform: uppercase;
 }
 .lux-hero-names {
   display: block;
   max-width: 620rpx;
-  color: #fff;
+  color: var(--theme-accent-deep, $color-primary-dark);
   font-family: $font-serif;
   font-size: 72rpx;
   font-weight: 600;
@@ -1673,7 +1722,7 @@ onUnmounted(() => {
 .lux-hero-sub {
   display: block;
   margin-top: 26rpx;
-  color: rgba(255,255,255,0.84);
+  color: $ink-soft;
   font-size: 28rpx;
   line-height: 1.45;
 }
@@ -1683,11 +1732,23 @@ onUnmounted(() => {
   left: $page-gutter-sm;
   right: $page-gutter-sm;
   bottom: 0;
-  padding: 28rpx;
-  background: rgba(255,255,255,0.96);
-  border: 1rpx solid rgba(75,17,30,0.10);
+  padding: 30rpx;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.98) 0%, var(--theme-surface, #fff) 100%);
+  border: 1rpx solid var(--theme-border, rgba(75,17,30,0.10));
   border-radius: $card-radius;
-  box-shadow: $shadow-lg;
+  box-shadow: 0 18rpx 54rpx rgba(42,17,20,0.16);
+  backdrop-filter: blur(18rpx);
+}
+.lux-action-panel::before {
+  content: "";
+  display: block;
+  width: 92rpx;
+  height: 4rpx;
+  margin: 0 auto 22rpx;
+  border-radius: 2rpx;
+  background: var(--theme-accent, $color-primary);
+  opacity: 0.68;
 }
 .lux-countdown {
   display: flex;
@@ -1697,7 +1758,7 @@ onUnmounted(() => {
   border-bottom: 1rpx solid $border-light;
 }
 .lux-count-num {
-  color: $color-primary-dark;
+  color: var(--theme-accent-deep, $color-primary-dark);
   font-size: 54rpx;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
@@ -1719,7 +1780,7 @@ onUnmounted(() => {
 .lux-count-desc {
   display: block;
   margin-top: 6rpx;
-  color: $text-primary;
+  color: var(--theme-ink, $text-primary);
   font-size: 26rpx;
   overflow: hidden;
   white-space: nowrap;
@@ -1729,8 +1790,8 @@ onUnmounted(() => {
   flex-shrink: 0;
   padding: 9rpx 16rpx;
   border-radius: $radius-sm;
-  background: rgba(176,58,91,0.10);
-  color: $color-primary;
+  background: var(--theme-accent-soft, rgba(176,58,91,0.10));
+  color: var(--theme-accent, $color-primary);
   font-size: 22rpx;
   font-weight: 600;
 }
@@ -1743,9 +1804,11 @@ onUnmounted(() => {
   align-items: center;
   gap: 20rpx;
   margin-top: 22rpx;
-  padding: 24rpx;
-  background: $text-primary;
+  padding: 26rpx;
+  background:
+    linear-gradient(135deg, var(--theme-strong-bg, $text-primary) 0%, var(--theme-accent-deep, $color-primary-dark) 100%);
   border-radius: $card-radius;
+  box-shadow: inset 0 1rpx 0 rgba(255,255,255,0.10), 0 10rpx 24rpx rgba(20,9,12,0.14);
 }
 .lux-venue-main {
   flex: 1;
@@ -1774,8 +1837,8 @@ onUnmounted(() => {
   height: 76rpx;
   line-height: 76rpx;
   border-radius: $radius-sm;
-  background: $color-primary;
-  color: #fff;
+  background: var(--theme-accent, $color-primary);
+  color: var(--theme-on-accent, #fff);
   font-size: 26rpx;
   font-weight: 600;
   padding: 0;
@@ -1791,15 +1854,15 @@ onUnmounted(() => {
 }
 .lux-mini-cell {
   min-width: 0;
-  padding: 20rpx;
-  border: 1rpx solid $border-light;
+  padding: 22rpx;
+  border: 1rpx solid var(--theme-border, $border-light);
   border-radius: $radius-sm;
-  background: $bg-elevated;
+  background: var(--theme-panel-gradient, $bg-elevated);
 }
 .lux-mini-value {
   display: block;
   margin-top: 8rpx;
-  color: $text-primary;
+  color: var(--theme-ink, $text-primary);
   font-size: 26rpx;
   font-weight: 600;
   line-height: 1.35;
@@ -1818,15 +1881,15 @@ onUnmounted(() => {
   height: 78rpx;
   line-height: 78rpx;
   border-radius: $radius-sm;
-  background: $bg-muted;
-  color: $text-primary;
+  background: var(--theme-elevated, $bg-muted);
+  color: var(--theme-ink, $text-primary);
   font-size: 26rpx;
   font-weight: 600;
   padding: 0 10rpx;
 }
 .lux-panel-btn.primary {
-  background: $color-primary;
-  color: #fff;
+  background: var(--theme-accent, $color-primary);
+  color: var(--theme-on-accent, #fff);
 }
 .lux-panel-btn::after {
   border: none;
@@ -1838,15 +1901,16 @@ onUnmounted(() => {
 .lux-invite-card,
 .lux-preview-block {
   margin: 0 $page-gutter 28rpx;
-  padding: 30rpx;
-  background: #fff;
-  border: 1rpx solid $border-light;
+  padding: 32rpx;
+  background:
+    linear-gradient(180deg, var(--theme-surface, $paper-card) 0%, rgba(255,253,248,0.96) 100%);
+  border: 1rpx solid var(--theme-border, $border-light);
   border-radius: $card-radius;
-  box-shadow: $shadow-sm;
+  box-shadow: 0 10rpx 30rpx rgba(42,17,20,0.06);
 }
 .lux-invite-mark {
   display: block;
-  color: rgba(176,58,91,0.18);
+  color: var(--theme-accent-soft, rgba(176,58,91,0.18));
   font-family: $font-serif;
   font-size: 88rpx;
   line-height: 0.8;
@@ -1854,7 +1918,7 @@ onUnmounted(() => {
 .lux-invite-text {
   display: block;
   margin-top: 4rpx;
-  color: $text-primary;
+  color: var(--theme-ink, $text-primary);
   font-family: $font-serif;
   font-size: 32rpx;
   line-height: 1.85;
@@ -1888,7 +1952,8 @@ onUnmounted(() => {
 .lux-couple-line {
   width: 52rpx;
   height: 1rpx;
-  background: $border-gold;
+  background: var(--theme-accent, $color-primary);
+  opacity: 0.34;
   flex-shrink: 0;
 }
 .lux-action-list {
@@ -1911,7 +1976,7 @@ onUnmounted(() => {
 }
 .lux-preview-more {
   flex-shrink: 0;
-  color: $color-primary;
+  color: var(--theme-accent, $color-primary);
   font-size: 24rpx;
   font-weight: 600;
 }
@@ -1922,9 +1987,40 @@ onUnmounted(() => {
 }
 .lux-photo-thumb {
   width: 100%;
-  height: 156rpx;
-  border-radius: $radius-sm;
-  background: $bg-muted;
+  min-width: 0;
+  @include photo-mount;
+  box-sizing: border-box;
+}
+.lux-photo-frame {
+  position: relative;
+  width: 100%;
+  padding-top: $photo-ratio;
+  overflow: hidden;
+  background: $paper-deep;
+}
+.lux-photo-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  filter: none;
+}
+.lux-photo-image.treatment-silver {
+  filter: grayscale(1) contrast(1.04);
+}
+.lux-photo-image.treatment-tint {
+  filter: saturate(0.86) contrast(0.96);
+}
+.lux-photo-caption {
+  display: block;
+  margin-top: 10rpx;
+  color: $ink-soft;
+  font-family: $font-num;
+  font-size: 18rpx;
+  line-height: 1.35;
+  text-align: center;
+  word-break: break-word;
 }
 .lux-blessing-row {
   padding: 18rpx 0;
@@ -1935,7 +2031,7 @@ onUnmounted(() => {
 }
 .lux-blessing-name {
   display: block;
-  color: $color-primary;
+  color: var(--theme-accent, $color-primary);
   font-size: 24rpx;
   font-weight: 600;
 }
@@ -1954,7 +2050,8 @@ onUnmounted(() => {
   width: 56rpx;
   height: 2rpx;
   margin: 0 auto 22rpx;
-  background: $border-gold;
+  background: var(--theme-accent, $color-primary);
+  opacity: 0.34;
 }
 .lux-footer-title {
   display: block;
@@ -1992,13 +2089,13 @@ onUnmounted(() => {
   border: none;
 }
 .lux-float-btn.rsvp {
-  background: $text-primary;
-  color: #fff;
+  background: var(--theme-strong-bg, $text-primary);
+  color: var(--theme-strong-ink, #fff);
 }
 .lux-float-btn.share {
   background: rgba(255,255,255,0.94);
-  color: $text-primary;
-  border: 1rpx solid $border-color;
+  color: var(--theme-ink, $text-primary);
+  border: 1rpx solid var(--theme-border, $border-color);
 }
 .lux-music-control {
   right: $page-gutter;
