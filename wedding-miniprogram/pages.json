@@ -147,13 +147,13 @@
   "globalStyle": {
     "navigationBarTextStyle": "black",
     "navigationBarTitleText": "甜囍手册",
-    "navigationBarBackgroundColor": "#FFFFFF",
-    "backgroundColor": "#FFFFFF"
+    "navigationBarBackgroundColor": "#F7F2E9",
+    "backgroundColor": "#F7F2E9"
   },
   "tabBar": {
-    "color": "#999999",
-    "selectedColor": "#B03A5B",
-    "backgroundColor": "#FFFFFF",
+    "color": "#8C8072",
+    "selectedColor": "#8A3B45",
+    "backgroundColor": "#F7F2E9",
     "borderStyle": "black",
     "list": [
       {

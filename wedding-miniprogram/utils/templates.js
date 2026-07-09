@@ -382,7 +382,7 @@ export function getWeddingTemplate(id) {
 
 export function getTemplateClass(id) {
   const template = getWeddingTemplate(id)
-  return [template.className, getThemeClass(template.theme || template.themeClass)].filter(Boolean).join(' ')
+  return getThemeClass(template.theme || template.themeClass)
 }
 
 export function getTemplateTheme(id) {

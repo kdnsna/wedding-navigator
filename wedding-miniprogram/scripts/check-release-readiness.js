@@ -267,6 +267,24 @@ function checkDataContracts() {
 }
 
 function checkTemplateSystem() {
+  const pagesJson = readJson('pages.json')
+  assert(pagesJson.globalStyle.navigationBarBackgroundColor === '#F7F2E9', 'pages.json: global navigation bar must use paper background')
+  assert(pagesJson.globalStyle.backgroundColor === '#F7F2E9', 'pages.json: global page background must use paper background')
+  assert(pagesJson.tabBar.selectedColor === '#8A3B45', 'pages.json: tabBar selected color must use free wine accent')
+
+  for (const component of ['t-eyebrow', 't-section-title', 't-card', 't-photo', 't-seal', 't-btn', 't-field', 't-divider']) {
+    assert(fs.existsSync(path.join(root, 'components', component, `${component}.vue`)), `components/${component}/${component}.vue must exist for v2 token migration`)
+  }
+
+  const templateSource = read('utils/templates.js')
+  assert(!templateSource.includes('return [template.className'), 'getTemplateClass must not emit legacy tpl-* classes at runtime')
+
+  const legacyTemplateThemePattern = /\.theme-(?:rose|champagne|noir|garden|heritage|shandong|travel)\b/
+  for (const abs of walk(root).filter(file => file.endsWith('.vue'))) {
+    const rel = path.relative(root, abs)
+    assert(!legacyTemplateThemePattern.test(read(rel)), `${rel}: Vue styles must not keep legacy template theme aliases`)
+  }
+
   assertIncludes('utils/templates.js', 'rose-couture', 'templates must include rose couture as the default direction')
   assertIncludes('utils/templates.js', 'champagne-editorial', 'templates must include champagne editorial')
   assertIncludes('utils/templates.js', 'noir-banquet', 'templates must include noir banquet')

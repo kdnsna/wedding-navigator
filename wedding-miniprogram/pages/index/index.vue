@@ -1498,14 +1498,7 @@ onUnmounted(() => {
 .theme-wine,
 .theme-cinnabar,
 .theme-indigo,
-.theme-pine,
-.theme-rose,
-.theme-champagne,
-.theme-noir,
-.theme-garden,
-.theme-heritage,
-.theme-shandong,
-.theme-travel {
+.theme-pine {
   background: var(--theme-page, $bg-color);
 
   .hero,
