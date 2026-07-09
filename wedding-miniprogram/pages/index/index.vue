@@ -256,7 +256,7 @@ function navigateOrToast(url, label) {
 function goToGuide() { switchTabOrToast('/pages/guide/index', '打开路书') }
 function goToRSVP() {
   if (!isRsvpEnabled.value) {
-    uni.showToast({ title: '新人暂未开放在线回执', icon: 'none' })
+    uni.showToast({ title: '回执这一页暂未启封', icon: 'none' })
     return
   }
   navigateOrToast('/pages/rsvp/index', '打开回执')

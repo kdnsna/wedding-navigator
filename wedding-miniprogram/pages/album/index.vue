@@ -65,11 +65,11 @@ const templateClass = computed(() => store.templateClass)
 const photoTreatment = computed(() => store.invitation?.photo_treatment || 'original')
 const emptyText = computed(() => {
   if (!userStore.weddingId) return '这封信还没有抵达'
-  if (loadError.value) return '相册加载失败'
+  if (loadError.value) return '这一页暂时没翻开'
   return '影像这一章，留给相见时慢慢翻开'
 })
 const emptySub = computed(() => {
-  if (!userStore.weddingId) return '请从新人寄来的请柬进入'
+  if (!userStore.weddingId) return '从新人寄来的请柬进入后，这一章会铺开'
   if (loadError.value) return '稍后再翻，这一页会重新铺开'
   return ''
 })
@@ -136,8 +136,8 @@ async function loadAlbum(force = false) {
   try {
     await fetchWedding(userStore.weddingId, force)
   } catch (err) {
-    console.warn('相册加载失败:', err)
-    loadError.value = err?.message || '相册加载失败'
+    console.warn('相册读取受阻:', err)
+    loadError.value = '稍后再翻，这一页会重新铺开'
   } finally {
     loading.value = false
   }

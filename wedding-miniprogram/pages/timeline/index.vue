@@ -10,8 +10,8 @@
     <EmptyState
       v-if="!isTimelineEnabled"
       icon="/static/visuals/icon-timeline.svg"
-      title="新人暂未开放婚礼流程"
-      desc="您仍可查看婚礼时间、地点和到场路线。"
+      title="礼序这一章暂未启封"
+      desc="可先翻到路书，查看婚礼时间、地点和到场路线。"
       action-text="查看路线"
       @action="goToGuide"
     />
@@ -117,9 +117,9 @@ const activeRole = ref('all')
 const weddingDate = computed(() => store.weddingDate)
 const countdown = computed(() => store.countdown)
 const timelineDesc = computed(() => {
-  if (!userStore.weddingId) return '请从新人寄来的请柬进入'
+  if (!userStore.weddingId) return '这封信还没有抵达'
   if (loadError.value) return '稍后再翻，这一页会重新铺开'
-  if (!isTimelineEnabled.value) return '流程暂未开放，您仍可查看到场路书'
+  if (!isTimelineEnabled.value) return '礼序这一章暂未启封，可先查看到场路书'
   if (countdown.value?.isToday) return '今天是我们的婚礼日'
   if (countdown.value) return `距离婚礼还有 ${countdown.value.days} 天`
   return '按角色查看婚礼当天安排'
@@ -151,7 +151,7 @@ const emptyText = computed(() => {
   return '流程这一章，等新人落笔'
 })
 const emptySub = computed(() => {
-  if (!userStore.weddingId) return '请从新人寄来的请柬进入'
+  if (!userStore.weddingId) return '从新人寄来的请柬进入后，这一章会铺开'
   if (loadError.value) return '稍后再翻，这一页会重新铺开'
   if (activeRole.value !== 'all') return '可切回“全部”看整日礼序'
   return '请以现场安排为准'
@@ -237,8 +237,8 @@ async function loadTimeline(force = false) {
   try {
     await fetchWedding(userStore.weddingId, force)
   } catch (err) {
-    console.warn('流程加载失败:', err)
-    loadError.value = err?.message || '流程加载失败'
+    console.warn('流程读取受阻:', err)
+    loadError.value = '稍后再翻，这一页会重新铺开'
   } finally {
     loading.value = false
   }

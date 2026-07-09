@@ -10,8 +10,8 @@
     <EmptyState
       v-if="!isBlessingEnabled"
       icon="/static/visuals/icon-blessing.svg"
-      title="新人暂未开放祝福墙"
-      desc="您仍可查看婚礼时间、地点和到场路线。"
+      title="祝福这一章暂未启封"
+      desc="可先翻到路书，查看婚礼时间、地点和到场路线。"
       action-text="查看路线"
       @action="goToGuide"
     />
@@ -98,7 +98,7 @@ const isBlessingEnabled = computed(() => store.isBlessingEnabled)
 const blessingPublic = computed(() => store.blessingPublic)
 const allowAnonymousBlessing = computed(() => store.allowAnonymousBlessing)
 const blessingDesc = computed(() => {
-  if (!isBlessingEnabled.value) return '祝福墙暂未开放'
+  if (!isBlessingEnabled.value) return '祝福这一章暂未启封'
   const countText = blessings.value.length > 0 ? `${blessings.value.length} 条祝福` : '还在等待第一条祝福'
   return `${activeTemplate.value.shortName} · ${countText}`
 })
@@ -118,7 +118,7 @@ const emptyText = computed(() => {
   return '祝福这一章，等您轻轻落笔'
 })
 const emptySub = computed(() => {
-  if (!userStore.weddingId) return '请从新人寄来的请柬进入'
+  if (!userStore.weddingId) return '从新人寄来的请柬进入后，这一章会铺开'
   if (loadError.value) return '稍后再翻，这一页会重新铺开'
   return ''
 })
@@ -150,7 +150,7 @@ function handleEmptyAction() {
 async function sendTextBlessing() {
   const content = newBlessing.value.trim()
   if (!content) { showError('请输入祝福内容'); return }
-  if (!userStore.weddingId) { showError('未找到婚礼信息'); return }
+  if (!userStore.weddingId) { showError('这封信还没有抵达'); return }
   if (!allowAnonymousBlessing.value && !senderName.value.trim()) {
     showError('请输入您的称呼')
     return
@@ -201,8 +201,8 @@ async function loadBlessings(force = false) {
   try {
     await fetchWedding(userStore.weddingId, force)
   } catch (err) {
-    console.warn('祝福加载失败:', err)
-    loadError.value = err?.message || '祝福加载失败'
+    console.warn('祝福读取受阻:', err)
+    loadError.value = '稍后再翻，这一页会重新铺开'
   } finally {
     loading.value = false
   }

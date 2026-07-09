@@ -63,14 +63,14 @@ const isTimelineEnabled = computed(() => store.isTimelineEnabled)
 
 function goToRSVP() {
   if (!isRsvpEnabled.value) {
-    uni.showToast({ title: '新人暂未开放在线回执', icon: 'none' })
+    uni.showToast({ title: '回执这一页暂未启封', icon: 'none' })
     return
   }
   navigateOrToast('/pages/rsvp/index', '打开回执')
 }
 function goToBlessing() {
   if (!isBlessingEnabled.value) {
-    uni.showToast({ title: '新人暂未开放祝福墙', icon: 'none' })
+    uni.showToast({ title: '祝福这一章暂未启封', icon: 'none' })
     return
   }
   navigateOrToast('/pages/blessing/index', '打开祝福墙')
@@ -78,13 +78,13 @@ function goToBlessing() {
 function goToGuide() { switchTabOrToast('/pages/guide/index', '打开路书') }
 function goToTimeline() {
   if (!isTimelineEnabled.value) {
-    uni.showToast({ title: '新人暂未开放婚礼流程', icon: 'none' })
+    uni.showToast({ title: '礼序这一章暂未启封', icon: 'none' })
     return
   }
   switchTabOrToast('/pages/timeline/index', '打开流程')
 }
 function goToAlbum() { switchTabOrToast('/pages/album/index', '打开相册') }
-function goToManage() { navigateOrToast('/pages-owner/manage/index', '打开管理后台') }
+function goToManage() { navigateOrToast('/pages-owner/manage/index', '打开主人书案') }
 
 function routeFail(label, err) {
   console.warn(`${label}失败:`, err)
@@ -125,8 +125,8 @@ async function reloadWedding() {
     await fetchWedding(userStore.weddingId, true)
   } catch (err) {
     console.warn('更多页加载婚礼失败:', err)
-    loadError.value = err?.message || '婚礼信息加载失败，请稍后重试。'
-    uni.showToast({ title: '婚礼信息加载失败', icon: 'none' })
+    loadError.value = '这一页暂时没翻开，请稍后重试。'
+    uni.showToast({ title: '稍后再试', icon: 'none' })
   } finally {
     loading.value = false
   }

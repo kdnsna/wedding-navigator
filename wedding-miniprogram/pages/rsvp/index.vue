@@ -33,8 +33,8 @@
     <EmptyState
       v-if="loadError && !submitted"
       icon="/static/visuals/icon-warning.svg"
-      title="婚礼信息加载失败"
-      :desc="loadError"
+      title="这一页暂时没翻开"
+      desc="请稍后再试，回执会重新铺开。"
       action-text="重新加载"
       @action="reloadWedding"
     />
@@ -42,8 +42,8 @@
     <EmptyState
       v-else-if="!submitted && !isRsvpEnabled"
       icon="/static/visuals/icon-rsvp.svg"
-      title="新人暂未开放在线回执"
-      desc="您仍可查看婚礼时间、地点和到场路线。"
+      title="回执这一页暂未启封"
+      desc="可先翻到路书，查看婚礼时间、地点和到场路线。"
       action-text="查看路线"
       @action="goToGuide"
     />
@@ -315,12 +315,12 @@ const pageKicker = computed(() => (submitted.value ? '' : 'RSVP'))
 const pageTitle = computed(() => {
   if (submitted.value) return ''
   if (loadError.value) return '确认出席'
-  return isRsvpEnabled.value ? '确认出席' : '回执未开放'
+  return isRsvpEnabled.value ? '确认出席' : '回执未启封'
 })
 const pageDesc = computed(() => {
   if (submitted.value) return ''
-  if (loadError.value) return '请重新加载邀请信息后再提交回执。'
-  return isRsvpEnabled.value ? '请告诉我们是否能见证这美好时刻' : '新人暂未开放在线回执，路线和流程仍可查看。'
+  if (loadError.value) return '请稍后再试，回执会重新铺开。'
+  return isRsvpEnabled.value ? '请告诉我们是否能见证这美好时刻' : '回执这一页暂未启封，路线和礼序仍可查看。'
 })
 const requiredFieldsReady = computed(() => {
   if (loading.value || !userStore.weddingId) return false
@@ -601,8 +601,8 @@ async function loadWedding(force = false) {
     await fetchWedding(userStore.weddingId, force)
   } catch (err) {
     console.error('回执页加载婚礼失败:', err)
-    loadError.value = err?.message || '暂时无法读取婚礼信息，请检查网络后重试。'
-    uni.showToast({ title: '婚礼信息加载失败', icon: 'none' })
+    loadError.value = '请稍后再试，回执会重新铺开。'
+    uni.showToast({ title: '稍后再试', icon: 'none' })
   } finally {
     loading.value = false
   }

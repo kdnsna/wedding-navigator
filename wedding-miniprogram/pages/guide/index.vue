@@ -468,8 +468,8 @@ onShow(async () => {
       await fetchWedding(userStore.weddingId)
       syncMapCenter()
     } catch (err) {
-      console.warn('路书数据加载失败:', err)
-      uni.showToast({ title: '加载失败，下拉重试', icon: 'none' })
+      console.warn('路书读取受阻:', err)
+      uni.showToast({ title: '路书稍后再翻', icon: 'none' })
     }
   }
   syncMapCenter()

@@ -442,7 +442,7 @@ function checkOwnerDashboardFailureFeedback() {
 function checkGuestNavigationFailureFeedback() {
   const expectations = [
     ['pages/index/index.vue', 'routeFail(label, err)', '打开路书', '打开回执'],
-    ['pages/more/index.vue', 'routeFail(label, err)', '打开管理后台', '打开祝福墙'],
+    ['pages/more/index.vue', 'routeFail(label, err)', '打开主人书案', '打开祝福墙'],
     ['pages/rsvp/index.vue', 'routeFail(label, err)', '返回首页', '打开祝福墙'],
     ['pages/album/index.vue', '路书打开失败，请稍后重试'],
     ['pages/timeline/index.vue', '路书打开失败，请稍后重试'],

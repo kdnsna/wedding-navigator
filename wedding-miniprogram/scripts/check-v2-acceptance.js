@@ -160,15 +160,23 @@ function checkGuestToneAndAccentDiscipline() {
   const forbiddenGuestCopy = [
     '请在主人端',
     '请从有效婚礼邀请进入',
+    '请从新人寄来的请柬进入',
     '当前没有关联的婚礼信息',
+    '新人暂未开放',
     '待主人匹配地图',
     '待匹配',
     '建议使用竖版主封面',
     '主人正在',
     '主人尚未',
+    '管理后台',
     'API Key',
     '缺少婚礼 ID',
-    '无小程序码模式'
+    '无小程序码模式',
+    '婚礼信息加载失败',
+    '相册加载失败',
+    '祝福加载失败',
+    '流程加载失败',
+    '加载失败，下拉重试'
   ]
 
   for (const page of guestPages) {
