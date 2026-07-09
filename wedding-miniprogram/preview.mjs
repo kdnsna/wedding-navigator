@@ -15,6 +15,7 @@ const qrOutput = process.env.MINIPROGRAM_PREVIEW_QR_OUTPUT || path.join(__dirnam
 const infoOutput = process.env.MINIPROGRAM_PREVIEW_INFO_OUTPUT || path.join(__dirname, '.release', `preview-${version}.json`)
 const copyCloudfunctionsScript = path.join(__dirname, 'scripts/copy-cloudfunctions-to-dist.js')
 const skipBuild = process.env.MINIPROGRAM_PREVIEW_SKIP_BUILD === '1'
+const settleMs = Number(process.env.MINIPROGRAM_PREVIEW_SETTLE_MS || '2000')
 
 function assertConfig(condition, message) {
   if (!condition) {
@@ -63,6 +64,11 @@ function outputContainsCliError(result) {
   return output.includes('[error]') || output.includes('✖')
 }
 
+function sleep(ms) {
+  if (!ms) return
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms)
+}
+
 const args = [
   'preview',
   '--project', projectPath,
@@ -81,6 +87,8 @@ fs.rmSync(qrOutput, { force: true })
 fs.rmSync(infoOutput, { force: true })
 console.log(`开始使用微信开发者工具 CLI 生成 v${version} 预览码...`)
 const result = runCommand(cliPath, args)
+syncCloudfunctions()
+sleep(settleMs)
 syncCloudfunctions()
 
 if (result.status !== 0 || outputContainsCliError(result)) {

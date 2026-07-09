@@ -29,7 +29,31 @@ npm run preview:mp-weixin
 
 真机截图、录屏和朋友反馈截图统一放到 `.release/v2-evidence-<version>/`，表格里的“证据路径/截图编号”必须填写本地文件路径。最终检查器会验证这些文件真实存在，不能只写“已看过”。
 
-5. 记录自动门禁证据：
+5. 如果已经从手机导出了截图/录屏，可用脚本导入并自动改表：
+
+```bash
+npm run record:v2-manual-evidence -- \
+  --device="iPhone 15 / iOS 18 / WeChat 8.0.xx" \
+  --theme-switch=/path/to/theme-switch.mp4 \
+  --guest-scroll=/path/to/guest-scroll.mp4 \
+  --hero-photo=/path/to/hero-photo.png \
+  --mounted-photos=/path/to/mounted-photos.png \
+  --wizard-flow=/path/to/wizard-flow.mp4 \
+  --wizard-photo-preview=/path/to/wizard-photo-preview.png \
+  --premium-entitlement=/path/to/premium-entitlement.png \
+  --friend-quote="这是请柬" \
+  --no-errors
+```
+
+如果后续拿到真实旧库 `sakura-pink` weddingId，再追加：
+
+```bash
+npm run record:v2-manual-evidence -- \
+  --old-wedding-id=<真实weddingId> \
+  --legacy-sakura=/path/to/legacy-sakura.png
+```
+
+6. 记录自动门禁证据：
 
 ```bash
 npm run record:v2-automatic-evidence
@@ -37,7 +61,7 @@ npm run record:v2-automatic-evidence
 
 这个命令会运行微信小程序构建、release 检查和 v2 自动验收，并把通过结果写入 `.release/v2-real-device-acceptance-<version>.md`。
 
-6. 填完真机证据后运行最终判定：
+7. 填完真机证据后运行最终判定：
 
 ```bash
 npm run check:v2-real-device-record
@@ -45,7 +69,7 @@ npm run check:v2-real-device-record
 
 只有自动门禁、全部真机行和最终结论都勾选通过时，这个命令才会成功。
 
-7. 如果要找真实旧数据，先登录 CloudBase，再运行只读查询：
+8. 如果要找真实旧数据，先登录 CloudBase，再运行只读查询：
 
 ```bash
 npm exec --yes --package @cloudbase/cli -- tcb login

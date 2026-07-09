@@ -12,6 +12,7 @@
     "check:ui-polish": "node scripts/check-ui-polish.js",
     "create:v2-acceptance-record": "node scripts/create-v2-acceptance-record.js",
     "record:v2-automatic-evidence": "node scripts/record-v2-automatic-evidence.js",
+    "record:v2-manual-evidence": "node scripts/record-v2-manual-evidence.js",
     "check:v2-real-device-record": "node scripts/check-v2-real-device-record.js",
     "find:legacy-sakura": "node scripts/find-legacy-sakura-wedding.js",
     "preview:mp-weixin": "node preview.mjs",
