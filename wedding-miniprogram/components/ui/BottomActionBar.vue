@@ -56,8 +56,8 @@ defineEmits(['primary', 'secondary'])
   border: none;
 }
 .ui-bottom-btn.primary {
-  background: $text-primary;
-  color: $ink-inverse;
+  background: var(--theme-accent, $color-primary);
+  color: var(--theme-on-accent, $ink-inverse);
 }
 .ui-bottom-btn.secondary {
   background: $ink-inverse;

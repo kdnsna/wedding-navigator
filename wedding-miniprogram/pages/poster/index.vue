@@ -96,7 +96,7 @@ async function generateQRCode() {
   posterNotice.value = ''
   try {
     if (!userStore.weddingId) {
-      posterNotice.value = '缺少婚礼 ID，海报会先使用无小程序码模式'
+      posterNotice.value = '小程序码暂未生成，海报仍可保存'
       qrCodePath.value = ''
       return
     }
@@ -108,18 +108,18 @@ async function generateQRCode() {
 
     if (res.isConfigError) {
       qrCodePath.value = ''
-      posterNotice.value = res.message || '请发布小程序或配置体验版后再生成小程序码'
+      posterNotice.value = '小程序码暂未生成，海报仍可保存'
     } else if (res.success && res.data) {
       qrCodePath.value = res.data
       posterNotice.value = ''
     } else {
       qrCodePath.value = ''
-      posterNotice.value = res?.message || '小程序码生成失败，海报会先使用无小程序码模式'
+      posterNotice.value = '小程序码暂未生成，海报仍可保存'
     }
   } catch (err) {
     console.error('generateQRCode error:', err)
     qrCodePath.value = ''
-    posterNotice.value = err?.result?.message || err?.message || '小程序码生成失败，海报会先使用无小程序码模式'
+    posterNotice.value = '小程序码暂未生成，海报仍可保存'
   } finally {
     loading.value = false
   }
@@ -260,7 +260,7 @@ async function ensureWeddingLoaded(options = {}) {
     await fetchWedding(userStore.weddingId)
   } catch (err) {
     console.warn('海报页加载婚礼数据失败:', err)
-    posterNotice.value = err?.message || '婚礼数据加载失败，海报将使用默认信息'
+    posterNotice.value = '这张海报暂时没有完整婚礼信息'
   }
 }
 
@@ -373,7 +373,7 @@ onLoad(async (options) => {
   gap: 10rpx;
   padding: 16rpx 20rpx;
   border-radius: $card-radius;
-  background: rgba(249,171,0,0.12);
+  background: $gold-soft;
   color: $gold;
   font-size: 23rpx;
   line-height: 1.45;
@@ -410,9 +410,9 @@ onLoad(async (options) => {
 .action-btn::after { border: none; }
 .action-btn:active { transform: scale(0.97); }
 .action-btn.primary {
-  background: $text-primary;
-  color: $ink-inverse;
-  border-color: $text-primary;
+  background: var(--theme-accent, $color-primary);
+  color: var(--theme-on-accent, $ink-inverse);
+  border-color: var(--theme-accent, $color-primary);
 }
 .action-btn[disabled] { opacity: 0.4; }
 .action-visual-icon {
@@ -494,8 +494,8 @@ onLoad(async (options) => {
   }
 
   .action-btn.primary {
-    background: var(--theme-accent, $text-primary);
-    border-color: var(--theme-accent, $text-primary);
+    background: var(--theme-accent, $color-primary);
+    border-color: var(--theme-accent, $color-primary);
     color: var(--theme-on-accent, $ink-inverse);
   }
 

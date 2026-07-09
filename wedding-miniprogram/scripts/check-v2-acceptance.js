@@ -154,7 +154,8 @@ function checkGuestToneAndAccentDiscipline() {
     'pages/guide/index.vue',
     'pages/timeline/index.vue',
     'pages/blessing/index.vue',
-    'pages/more/index.vue'
+    'pages/more/index.vue',
+    'pages/poster/index.vue'
   ]
   const forbiddenGuestCopy = [
     '请在主人端',
@@ -165,7 +166,9 @@ function checkGuestToneAndAccentDiscipline() {
     '建议使用竖版主封面',
     '主人正在',
     '主人尚未',
-    'API Key'
+    'API Key',
+    '缺少婚礼 ID',
+    '无小程序码模式'
   ]
 
   for (const page of guestPages) {
@@ -201,6 +204,11 @@ function checkGuestToneAndAccentDiscipline() {
   assert(more.includes('more-seal'), 'pages/more/index.vue: share feature must use the paper card plus small seal treatment')
   assert(more.includes('more-contact-inline'), 'pages/more/index.vue: contact service must be downgraded to footer copy')
   assert(!more.includes('tone="primary"'), 'pages/more/index.vue: guide action must not be a large accent card')
+
+  const poster = read('pages/poster/index.vue')
+  assert(!poster.includes('rgba(249,171'), 'pages/poster/index.vue: poster notices must not introduce a yellow fifth-color label')
+  assert(poster.includes('$gold-soft'), 'pages/poster/index.vue: poster notices should use the paper/gold system')
+  assert(poster.includes('background: var(--theme-accent, $color-primary)'), 'pages/poster/index.vue: primary poster action should use the mood accent')
 }
 
 function checkManualAcceptanceArtifacts() {
