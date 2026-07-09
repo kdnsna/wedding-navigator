@@ -374,7 +374,7 @@ onLoad(async (options) => {
   padding: 16rpx 20rpx;
   border-radius: $card-radius;
   background: rgba(249,171,0,0.12);
-  color: #8F6100;
+  color: $gold;
   font-size: 23rpx;
   line-height: 1.45;
   box-sizing: border-box;
@@ -411,7 +411,7 @@ onLoad(async (options) => {
 .action-btn:active { transform: scale(0.97); }
 .action-btn.primary {
   background: $text-primary;
-  color: #fff;
+  color: $ink-inverse;
   border-color: $text-primary;
 }
 .action-btn[disabled] { opacity: 0.4; }
@@ -496,7 +496,7 @@ onLoad(async (options) => {
   .action-btn.primary {
     background: var(--theme-accent, $text-primary);
     border-color: var(--theme-accent, $text-primary);
-    color: var(--theme-on-accent, #fff);
+    color: var(--theme-on-accent, $ink-inverse);
   }
 
   .loading-spinner {

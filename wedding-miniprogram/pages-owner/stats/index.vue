@@ -274,7 +274,7 @@ onShow(refreshStats)
   padding: 30rpx;
   border-radius: $card-radius;
   background: $text-primary;
-  color: #fff;
+  color: $ink-inverse;
 }
 .ops-copy {
   min-width: 0;

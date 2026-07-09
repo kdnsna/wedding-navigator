@@ -66,7 +66,7 @@ function handleClick() {
   box-shadow: 0 14rpx 34rpx rgba(30, 8, 12, 0.16);
 }
 .ui-action-card.gold {
-  background: linear-gradient(135deg, #FFFDF8 0%, #FFF4DA 100%);
+  background: linear-gradient(135deg, $paper-card 0%, $gold-soft 100%);
   border-color: rgba(201, 169, 110, 0.30);
 }
 .ui-action-card.primary::before,
@@ -115,7 +115,7 @@ function handleClick() {
   text-overflow: ellipsis;
 }
 .ui-action-card.primary .ui-action-title {
-  color: var(--theme-strong-ink, #fff);
+  color: var(--theme-strong-ink, $ink-inverse);
 }
 .ui-action-status {
   flex-shrink: 0;
@@ -132,7 +132,7 @@ function handleClick() {
 }
 .ui-action-card.primary .ui-action-status {
   background: var(--theme-strong-soft, rgba(255,255,255,0.14));
-  color: var(--theme-strong-ink, #fff);
+  color: var(--theme-strong-ink, $ink-inverse);
 }
 .ui-action-desc {
   display: block;

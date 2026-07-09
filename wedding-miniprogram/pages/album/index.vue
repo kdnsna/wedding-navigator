@@ -289,7 +289,7 @@ onShow(() => loadAlbum(false))
   line-height: $control-height-sm;
   border-radius: $radius-full;
   background: $text-primary;
-  color: #fff;
+  color: $ink-inverse;
   font-size: 26rpx;
 }
 .empty-action::after { border: none; }
@@ -299,37 +299,6 @@ onShow(() => loadAlbum(false))
   padding: 120rpx;
   color: $text-muted;
   font-size: 28rpx;
-}
-
-.tpl-rose .photo-item {
-  box-shadow: $shadow-sm;
-}
-.tpl-champagne {
-  background: #fbf7f1;
-  .photo-item {
-    border-radius: $card-radius;
-    box-shadow: $shadow-sm;
-  }
-}
-.tpl-noir {
-  background: #111;
-  .page-title {
-    color: #fff;
-  }
-  .page-desc {
-    color: rgba(255,255,255,0.62);
-  }
-  .photo-item {
-    border: 1rpx solid rgba(201,169,110,0.18);
-    box-shadow: $shadow-sm;
-  }
-}
-.tpl-garden {
-  background: #f5f6ef;
-  .photo-item {
-    border-radius: 8rpx;
-    box-shadow: $shadow-sm;
-  }
 }
 
 .theme-wine,
@@ -359,7 +328,7 @@ onShow(() => loadAlbum(false))
 
   .empty-action {
     background: var(--theme-accent, $text-primary);
-    color: var(--theme-on-accent, #fff);
+    color: var(--theme-on-accent, $ink-inverse);
   }
 }
 </style>

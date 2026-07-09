@@ -57,10 +57,10 @@ defineEmits(['primary', 'secondary'])
 }
 .ui-bottom-btn.primary {
   background: $text-primary;
-  color: #fff;
+  color: $ink-inverse;
 }
 .ui-bottom-btn.secondary {
-  background: #fff;
+  background: $ink-inverse;
   color: $text-primary;
   border: 1rpx solid $border-color;
 }

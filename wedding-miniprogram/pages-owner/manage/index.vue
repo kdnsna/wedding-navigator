@@ -103,6 +103,7 @@ import { useUserStore } from '@/stores/user.js'
 import { formatDate, showError, showSuccess } from '@/utils/index.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
 import { deleteWedding, fetchWedding, getStats, syncOwnerProfile } from '@/composables/useCloud.js'
+import { getThemeTokens } from '@/utils/legacy-theme-map.js'
 import PageShell from '@/components/ui/PageShell.vue'
 import SectionHeader from '@/components/ui/SectionHeader.vue'
 import ActionCard from '@/components/ui/ActionCard.vue'
@@ -118,6 +119,7 @@ const loadError = ref('')
 const coupleName = computed(() => store.coupleName)
 const weddingDate = computed(() => store.weddingDate)
 const weddingStatus = computed(() => store.wedding?.status || 'draft')
+const deleteConfirmColor = computed(() => getThemeTokens(store.activeTemplate?.theme || store.invitation?.theme).accentInk)
 const checklist = computed(() => store.publishChecklist)
 const readinessSummary = computed(() => {
   const left = checklist.value.total - checklist.value.doneCount
@@ -269,7 +271,7 @@ function showDeleteModal(title, content, confirmText) {
       title,
       content,
       confirmText,
-      confirmColor: '#EA4335',
+      confirmColor: deleteConfirmColor.value,
       cancelText: '取消',
       success: (res) => resolve(Boolean(res.confirm)),
       fail: () => resolve(false)
@@ -352,7 +354,7 @@ onShow(() => refreshDashboard(false))
 }
 .status-tag.published {
   background: $color-success;
-  color: #fff;
+  color: $ink-inverse;
 }
 
 /* 发布准备 */
@@ -361,7 +363,7 @@ onShow(() => refreshDashboard(false))
   padding: 32rpx;
   border-radius: $card-radius;
   background: $text-primary;
-  color: #fff;
+  color: $ink-inverse;
 }
 .readiness-head {
   display: flex;
@@ -438,7 +440,7 @@ onShow(() => refreshDashboard(false))
 .readiness-item-title {
   display: block;
   font-size: 28rpx;
-  color: #fff;
+  color: $ink-inverse;
   font-weight: 500;
   margin-bottom: 4rpx;
   overflow: hidden;
@@ -554,7 +556,7 @@ onShow(() => refreshDashboard(false))
 .action-btn:active { opacity: 0.8; }
 .action-btn.primary {
   background: $text-primary;
-  color: #fff;
+  color: $ink-inverse;
 }
 
 .danger-zone {
@@ -574,7 +576,7 @@ onShow(() => refreshDashboard(false))
 .danger-title {
   display: block;
   font-size: 30rpx;
-  color: #9F2D26;
+  color: var(--accent-ink);
   font-weight: 600;
   margin-bottom: 10rpx;
 }
@@ -589,8 +591,8 @@ onShow(() => refreshDashboard(false))
   height: 82rpx;
   line-height: 82rpx;
   border-radius: $radius-full;
-  background: #EA4335;
-  color: #fff;
+  background: var(--accent-ink);
+  color: $ink-inverse;
   font-size: 28rpx;
   font-weight: 500;
 }
@@ -607,8 +609,8 @@ onShow(() => refreshDashboard(false))
   border-radius: $card-radius;
   overflow: hidden;
   background:
-    linear-gradient(135deg, #1A1A1A 0%, #4B111E 72%, #6B1829 100%);
-  color: #fff;
+    linear-gradient(135deg, $ink 0%, var(--accent-ink) 72%, var(--accent) 100%);
+  color: $ink-inverse;
   box-shadow: $shadow-lg;
 }
 .owner-hero-media,
@@ -651,7 +653,7 @@ onShow(() => refreshDashboard(false))
 .owner-hero-score {
   display: block;
   margin-top: 12rpx;
-  color: #fff;
+  color: $ink-inverse;
   font-size: 72rpx;
   font-weight: 800;
   line-height: 1;
@@ -679,7 +681,7 @@ onShow(() => refreshDashboard(false))
 }
 .owner-status-tag.ready {
   background: rgba(52,168,83,0.20);
-  color: #B9E8C7;
+  color: $ink-inverse;
 }
 .owner-readiness-bar {
   position: relative;
@@ -713,7 +715,7 @@ onShow(() => refreshDashboard(false))
 }
 .owner-alert-title {
   display: block;
-  color: #8F6100;
+  color: $gold;
   font-size: 26rpx;
   font-weight: 600;
   line-height: 1.35;
@@ -733,7 +735,7 @@ onShow(() => refreshDashboard(false))
   line-height: 62rpx;
   border-radius: $radius-sm;
   background: $text-primary;
-  color: #fff;
+  color: $ink-inverse;
   font-size: 24rpx;
   font-weight: 600;
 }

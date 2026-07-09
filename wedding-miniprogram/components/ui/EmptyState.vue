@@ -50,7 +50,7 @@ defineEmits(['action'])
   padding: 0 32rpx;
   border-radius: $radius-sm;
   background: var(--theme-accent, $text-primary);
-  color: var(--theme-on-accent, #fff);
+  color: var(--theme-on-accent, $ink-inverse);
   font-size: $font-body-sm;
   font-weight: 600;
 }

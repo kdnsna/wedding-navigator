@@ -48,7 +48,7 @@ function handlePreview() {
 
 <style lang="scss" scoped>
 .ui-template-card {
-  background: #fff;
+  background: $ink-inverse;
   border: 1rpx solid $border-light;
   border-radius: $card-radius;
   overflow: hidden;
@@ -96,7 +96,7 @@ function handlePreview() {
   left: 24rpx;
   right: 24rpx;
   bottom: 34rpx;
-  color: #fff;
+  color: $ink-inverse;
   font-family: $font-serif;
   font-size: 46rpx;
   font-weight: 600;
@@ -117,7 +117,7 @@ function handlePreview() {
   font-weight: 600;
 }
 .ui-template-tier.premium {
-  color: #8F6B2E;
+  color: $gold;
 }
 .ui-template-body {
   padding: 24rpx;
@@ -172,7 +172,7 @@ function handlePreview() {
 }
 .ui-template-btn.primary {
   background: $text-primary;
-  color: #fff;
+  color: $ink-inverse;
 }
 .ui-template-btn::after {
   border: none;

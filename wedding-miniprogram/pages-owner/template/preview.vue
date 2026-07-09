@@ -337,7 +337,7 @@ onLoad((options = {}) => {
   line-height: $control-height-sm;
   border-radius: $radius-full;
   background: var(--theme-accent, $text-primary);
-  color: var(--theme-on-accent, #fff);
+  color: var(--theme-on-accent, $ink-inverse);
   font-size: 26rpx;
   padding: 0;
   flex-shrink: 0;
@@ -366,7 +366,7 @@ onLoad((options = {}) => {
 }
 .mock-tab.active {
   background: var(--theme-accent, $text-primary);
-  color: var(--theme-on-accent, #fff);
+  color: var(--theme-on-accent, $ink-inverse);
 }
 
 .phone-shell {
@@ -395,7 +395,7 @@ onLoad((options = {}) => {
   position: relative;
   height: 660rpx;
   overflow: hidden;
-  background: var(--theme-hero-bg, #fcf6f0);
+  background: var(--theme-hero-bg, $paper-bg);
 }
 .mock-cover-bg,
 .mock-cover,
@@ -440,7 +440,7 @@ onLoad((options = {}) => {
   display: block;
   font-size: 42rpx;
   font-weight: 600;
-  color: #fff;
+  color: $ink-inverse;
   line-height: 1.2;
   margin-bottom: 10rpx;
 }
@@ -518,7 +518,7 @@ onLoad((options = {}) => {
   line-height: 1.35;
 }
 .strong .card-title {
-  color: var(--theme-strong-ink, #fff);
+  color: var(--theme-strong-ink, $ink-inverse);
 }
 .card-sub {
   display: block;
@@ -534,7 +534,7 @@ onLoad((options = {}) => {
   padding: 12rpx 22rpx;
   border-radius: $radius-full;
   background: var(--theme-accent, $color-primary);
-  color: var(--theme-on-accent, #fff);
+  color: var(--theme-on-accent, $ink-inverse);
   font-size: 22rpx;
 }
 .mini-grid,
@@ -596,7 +596,7 @@ onLoad((options = {}) => {
 .role-pill.active,
 .choice.active {
   background: var(--theme-accent, $color-primary);
-  color: var(--theme-on-accent, #fff);
+  color: var(--theme-on-accent, $ink-inverse);
 }
 .timeline-row {
   display: grid;
@@ -629,7 +629,7 @@ onLoad((options = {}) => {
 .brief-title {
   display: block;
   font-size: 34rpx;
-  color: var(--theme-strong-ink, #fff);
+  color: var(--theme-strong-ink, $ink-inverse);
   font-weight: 600;
   margin-bottom: 20rpx;
 }
@@ -709,7 +709,7 @@ onLoad((options = {}) => {
   height: 780rpx;
   border-radius: $card-radius;
   overflow: hidden;
-  background: var(--theme-hero-bg, #111);
+  background: var(--theme-hero-bg, $ink);
 }
 .poster-bg,
 .poster-overlay,
@@ -741,7 +741,7 @@ onLoad((options = {}) => {
 }
 .poster-names {
   display: block;
-  color: #fff;
+  color: $ink-inverse;
   font-size: 44rpx;
   font-weight: 600;
   margin: 28rpx 0 16rpx;
@@ -755,7 +755,7 @@ onLoad((options = {}) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #333;
+  color: $ink;
   font-size: 22rpx;
 }
 

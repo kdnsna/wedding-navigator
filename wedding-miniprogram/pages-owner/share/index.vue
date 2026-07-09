@@ -489,6 +489,6 @@ onShow(async () => {
 .share-btn:active { opacity: 0.8; }
 .share-btn.primary {
   background: $text-primary;
-  color: #fff;
+  color: $ink-inverse;
 }
 </style>

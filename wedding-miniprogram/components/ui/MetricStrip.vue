@@ -18,7 +18,7 @@ defineProps({
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   margin: 0 $page-gutter 34rpx;
-  background: #fff;
+  background: $ink-inverse;
   border: 1rpx solid $border-light;
   border-radius: $card-radius;
   overflow: hidden;

@@ -253,8 +253,8 @@ onShow(refreshDiagnostics)
   margin: 0 $page-gutter 32rpx;
   padding: 34rpx;
   border-radius: $card-radius;
-  background: #9F2D26;
-  color: #fff;
+  background: var(--accent-ink);
+  color: $ink-inverse;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -359,7 +359,7 @@ onShow(refreshDiagnostics)
   background: rgba(52,168,83,0.1);
 }
 .diagnostic-status.warning {
-  color: #A76E00;
+  color: $gold;
   background: rgba(249,171,0,0.12);
 }
 .diagnostic-status.blocker {

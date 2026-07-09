@@ -290,7 +290,7 @@ onShow(() => loadBlessings(false))
   padding: 0 32rpx;
   border-radius: $radius-full;
   background: $text-primary;
-  color: #fff;
+  color: $ink-inverse;
   font-size: 26rpx;
   font-weight: 500;
   transition: opacity 0.2s ease;
@@ -330,7 +330,7 @@ onShow(() => loadBlessings(false))
   line-height: $control-height-sm;
   border-radius: $radius-full;
   background: $text-primary;
-  color: #fff;
+  color: $ink-inverse;
   font-size: 26rpx;
 }
 .feature-action::after { border: none; }
@@ -387,7 +387,7 @@ onShow(() => loadBlessings(false))
   right: $page-gutter;
   padding: 4rpx 12rpx;
   background: $text-primary;
-  color: #fff;
+  color: $ink-inverse;
   font-size: 18rpx;
   border-radius: 4rpx;
   font-weight: 500;
@@ -399,7 +399,7 @@ onShow(() => loadBlessings(false))
   line-height: $control-height-sm;
   border-radius: $radius-full;
   background: $text-primary;
-  color: #fff;
+  color: $ink-inverse;
   font-size: 26rpx;
 }
 .empty-action::after { border: none; }
@@ -419,60 +419,6 @@ onShow(() => loadBlessings(false))
   margin-top: 12rpx;
   font-size: 24rpx;
   color: $text-placeholder;
-}
-
-.tpl-champagne {
-  background: #fbf7f1;
-  .send-btn,
-  .feature-action,
-  .pinned-tag,
-  .empty-action {
-    background: var(--accent, $color-primary);
-  }
-  .blessing-item.pinned {
-    background: #f7eee4;
-  }
-}
-.tpl-noir {
-  background: #111;
-  .page-title,
-  .feature-title,
-  .item-name,
-  .item-content,
-  .sender-input,
-  .send-input {
-    color: #fff;
-  }
-  .page-count,
-  .feature-desc,
-  .page-template {
-    color: rgba(255,255,255,0.62);
-  }
-  .send-btn,
-  .feature-action,
-  .pinned-tag,
-  .empty-action {
-    background: $color-gold;
-    color: #111;
-  }
-  .blessing-item {
-    border-bottom-color: rgba(201,169,110,0.16);
-  }
-  .blessing-item.pinned {
-    background: #191919;
-  }
-}
-.tpl-garden {
-  background: #f5f6ef;
-  .send-btn,
-  .feature-action,
-  .pinned-tag,
-  .empty-action {
-    background: var(--accent, $color-primary);
-  }
-  .blessing-item.pinned {
-    background: #eef2e7;
-  }
 }
 
 .theme-wine,
@@ -512,7 +458,7 @@ onShow(() => loadBlessings(false))
   .pinned-tag,
   .empty-action {
     background: var(--theme-accent, $text-primary);
-    color: var(--theme-on-accent, #fff);
+    color: var(--theme-on-accent, $ink-inverse);
   }
 
   .blessing-item {

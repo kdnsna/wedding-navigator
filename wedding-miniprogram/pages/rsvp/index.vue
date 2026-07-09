@@ -656,7 +656,7 @@ async function reloadWedding() {
   padding: 32rpx;
   border-radius: $card-radius;
   background: $text-primary;
-  color: #fff;
+  color: $ink-inverse;
   box-shadow: $shadow-sm;
   position: relative;
   overflow: hidden;
@@ -797,7 +797,7 @@ async function reloadWedding() {
   line-height: $control-height-sm;
   border-radius: $radius-full;
   background: $text-primary;
-  color: #fff;
+  color: $ink-inverse;
   font-size: 26rpx;
 }
 .feature-action::after { border: none; }
@@ -836,8 +836,8 @@ async function reloadWedding() {
   transition: all 0.25s ease;
 }
 .radio-item.active .radio-dot {
-  border-color: #fff;
-  background: #fff;
+  border-color: $ink-inverse;
+  background: $ink-inverse;
 }
 .radio-label {
   max-width: 100%;
@@ -849,7 +849,7 @@ async function reloadWedding() {
   text-overflow: ellipsis;
 }
 .radio-item.active .radio-label {
-  color: #fff;
+  color: $ink-inverse;
 }
 
 /* 步进器 */
@@ -908,7 +908,7 @@ async function reloadWedding() {
 }
 .tag-item.active {
   background: $text-primary;
-  color: #fff;
+  color: $ink-inverse;
   border-color: $text-primary;
 }
 
@@ -940,7 +940,7 @@ async function reloadWedding() {
   text-align: center;
   border-radius: $radius-full;
   background: $text-primary;
-  color: #fff;
+  color: $ink-inverse;
   font-size: 30rpx;
   font-weight: 500;
   transition: all 0.2s ease;
@@ -953,89 +953,6 @@ async function reloadWedding() {
 }
 .submit-btn[disabled] {
   opacity: 0.5;
-}
-
-.tpl-rose .rsvp-brief::before {
-  background: $color-primary;
-}
-.tpl-champagne {
-  background: #fbf7f1;
-  .rsvp-brief {
-    background: #fff;
-    color: #1a1a1a;
-    border: 1rpx solid rgba(164,120,59,0.16);
-    box-shadow: $shadow-sm;
-  }
-  .rsvp-brief::before {
-    background: var(--accent, $color-primary);
-  }
-  .brief-kicker,
-  .brief-label {
-    color: var(--accent, $color-primary);
-  }
-  .brief-title,
-  .brief-value {
-    color: #1a1a1a;
-  }
-  .brief-item {
-    border-top-color: rgba(164,120,59,0.16);
-  }
-  .feature-action,
-  .submit-btn,
-  .radio-item.active,
-  .tag-item.active {
-    background: var(--accent, $color-primary);
-    border-color: var(--accent, $color-primary);
-  }
-}
-.tpl-noir {
-  background: #111;
-  .page-title,
-  .feature-title,
-  .label-text,
-  .radio-label,
-  .step-icon,
-  .step-value {
-    color: #fff;
-  }
-  .page-desc,
-  .feature-desc,
-  .label-en,
-  .tag-item,
-  .form-input,
-  .picker-value,
-  .form-textarea {
-    color: rgba(255,255,255,0.72);
-  }
-  .rsvp-brief,
-  .radio-item,
-  .tag-item {
-    background: #191919;
-    border-color: rgba(201,169,110,0.18);
-  }
-  .rsvp-brief::before,
-  .feature-action,
-  .submit-btn,
-  .radio-item.active,
-  .tag-item.active {
-    background: $color-gold;
-    color: #111;
-    border-color: $color-gold;
-  }
-}
-.tpl-garden {
-  background: #f5f6ef;
-  .rsvp-brief {
-    background: var(--accent, $color-primary);
-  }
-  .rsvp-brief::before,
-  .feature-action,
-  .submit-btn,
-  .radio-item.active,
-  .tag-item.active {
-    background: var(--accent, $color-primary);
-    border-color: var(--accent, $color-primary);
-  }
 }
 
 /* ========== 成功页 ========== */
@@ -1084,7 +1001,7 @@ async function reloadWedding() {
 }
 .success-icon {
   font-size: 72rpx;
-  color: #fff;
+  color: $ink-inverse;
   font-weight: 700;
 }
 
@@ -1172,7 +1089,7 @@ async function reloadWedding() {
 .success-action::after { border: none; }
 .success-action:active {
   background: $text-primary;
-  color: #fff;
+  color: $ink-inverse;
 }
 
 .theme-wine,
@@ -1216,7 +1133,7 @@ async function reloadWedding() {
   .rsvp-brief {
     background: var(--theme-strong-bg, $text-primary);
     border: 1rpx solid var(--theme-strong-border, transparent);
-    color: var(--theme-strong-ink, #fff);
+    color: var(--theme-strong-ink, $ink-inverse);
   }
 
   .rsvp-brief::before {
@@ -1225,7 +1142,7 @@ async function reloadWedding() {
 
   .brief-title,
   .brief-value {
-    color: var(--theme-strong-ink, #fff);
+    color: var(--theme-strong-ink, $ink-inverse);
   }
 
   .brief-kicker,
@@ -1251,7 +1168,7 @@ async function reloadWedding() {
   .submit-btn {
     background: var(--theme-accent, $text-primary);
     border-color: var(--theme-accent, $text-primary);
-    color: var(--theme-on-accent, #fff);
+    color: var(--theme-on-accent, $ink-inverse);
   }
 
   .form-input,

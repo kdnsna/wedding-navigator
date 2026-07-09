@@ -267,7 +267,7 @@ onShow(async () => {
   text-align: center;
   border-radius: $radius-full;
   background: $text-primary;
-  color: #fff;
+  color: $ink-inverse;
   font-size: 30rpx;
   font-weight: 500;
   transition: opacity 0.2s ease;
@@ -290,7 +290,7 @@ onShow(async () => {
   margin: 0 $page-gutter 24rpx;
   padding: 18rpx 20rpx;
   border-radius: $card-radius;
-  background: #FFF7E6;
+  background: $gold-soft;
   border: 1rpx solid rgba(201,169,110,0.24);
 }
 .more-alert-icon {
@@ -301,7 +301,7 @@ onShow(async () => {
 .more-alert-copy {
   flex: 1;
   min-width: 0;
-  color: #8F6100;
+  color: $gold;
   font-size: 23rpx;
   line-height: 1.45;
 }
@@ -313,53 +313,11 @@ onShow(async () => {
   padding: 0 18rpx;
   border-radius: $radius-sm;
   background: $text-primary;
-  color: #fff;
+  color: $ink-inverse;
   font-size: 23rpx;
 }
 .more-alert-btn::after {
   border: none;
-}
-
-.tpl-champagne {
-  background: #fbf7f1;
-  .menu-group {
-    border: 1rpx solid rgba(164,120,59,0.14);
-  }
-  .share-btn {
-    background: var(--accent, $color-primary);
-  }
-}
-.tpl-noir {
-  background: #111;
-  .page-title,
-  .couple-name,
-  .menu-title {
-    color: #fff;
-  }
-  .couple-date,
-  .promo-link {
-    color: rgba(255,255,255,0.62);
-  }
-  .menu-group {
-    background: #191919;
-    border: 1rpx solid rgba(201,169,110,0.16);
-  }
-  .divider {
-    background: rgba(201,169,110,0.12);
-  }
-  .share-btn {
-    background: $color-gold;
-    color: #111;
-  }
-}
-.tpl-garden {
-  background: #f5f6ef;
-  .menu-group {
-    border: 1rpx solid rgba(80,98,71,0.12);
-  }
-  .share-btn {
-    background: var(--accent, $color-primary);
-  }
 }
 
 .theme-wine,
@@ -397,7 +355,7 @@ onShow(async () => {
 
   .share-btn {
     background: var(--theme-accent, $text-primary);
-    color: var(--theme-on-accent, #fff);
+    color: var(--theme-on-accent, $ink-inverse);
   }
 }
 
@@ -406,7 +364,7 @@ onShow(async () => {
   padding: 32rpx;
   border-radius: $card-radius;
   background: $text-primary;
-  color: #fff;
+  color: $ink-inverse;
   box-shadow: $shadow-lg;
 }
 .more-feature-kicker {
@@ -439,7 +397,7 @@ onShow(async () => {
   height: $control-height-sm;
   line-height: $control-height-sm;
   border-radius: $radius-sm;
-  background: #fff;
+  background: $ink-inverse;
   color: $text-primary;
   font-size: 26rpx;
   font-weight: 600;
@@ -462,7 +420,7 @@ onShow(async () => {
   padding: 24rpx;
   border-radius: $card-radius;
   border: 1rpx solid $border-light;
-  background: #fff;
+  background: $ink-inverse;
   box-shadow: $shadow-sm;
   line-height: 1;
   text-align: left;

@@ -311,7 +311,7 @@ onShow(() => loadTimeline(false))
   line-height: $control-height-sm;
   border-radius: $radius-full;
   background: $text-primary;
-  color: #fff;
+  color: $ink-inverse;
   font-size: 26rpx;
 }
 .feature-action::after { border: none; }
@@ -378,7 +378,7 @@ onShow(() => loadTimeline(false))
 }
 .role-pill.active {
   background: $text-primary;
-  color: #fff;
+  color: $ink-inverse;
 }
 .timeline-item {
   display: flex;
@@ -568,70 +568,6 @@ onShow(() => loadTimeline(false))
   color: $text-muted;
 }
 
-.tpl-champagne {
-  background: #fbf7f1;
-  .date-banner,
-  .timeline-content {
-    background: #fff;
-    border-color: rgba(164,120,59,0.14);
-  }
-  .feature-action,
-  .timeline-dot,
-  .timeline-item.current .timeline-dot {
-    background: var(--accent, $color-primary);
-  }
-  .timeline-item.current .timeline-time {
-    color: var(--accent, $color-primary);
-  }
-}
-.tpl-noir {
-  background: #111;
-  .page-title,
-  .feature-title,
-  .date-num,
-  .content-title {
-    color: #fff;
-  }
-  .page-desc,
-  .feature-desc,
-  .date-month,
-  .date-week,
-  .meta-text,
-  .content-notes,
-  .footer-text {
-    color: rgba(255,255,255,0.62);
-  }
-  .date-banner,
-  .timeline-content {
-    background: #191919;
-    border-color: rgba(201,169,110,0.16);
-  }
-  .feature-action,
-  .timeline-dot,
-  .timeline-item.current .timeline-dot {
-    background: $color-gold;
-  }
-  .timeline-item.current .timeline-time {
-    color: $color-gold;
-  }
-}
-.tpl-garden {
-  background: #f5f6ef;
-  .date-banner,
-  .timeline-content {
-    background: #fff;
-    border-color: rgba(80,98,71,0.14);
-  }
-  .feature-action,
-  .timeline-dot,
-  .timeline-item.current .timeline-dot {
-    background: var(--accent, $color-primary);
-  }
-  .timeline-item.current .timeline-time {
-    color: var(--accent, $color-primary);
-  }
-}
-
 .theme-wine,
 .theme-cinnabar,
 .theme-indigo,
@@ -670,7 +606,7 @@ onShow(() => loadTimeline(false))
   .feature-action,
   .role-pill.active {
     background: var(--theme-accent, $color-primary);
-    color: var(--theme-on-accent, #fff);
+    color: var(--theme-on-accent, $ink-inverse);
   }
 
   .date-banner,
@@ -711,8 +647,8 @@ onShow(() => loadTimeline(false))
   .timeline-line.dashed {
     background: repeating-linear-gradient(
       to bottom,
-      var(--theme-border, #F0F0F0) 0rpx,
-      var(--theme-border, #F0F0F0) 8rpx,
+      var(--theme-border, $line) 0rpx,
+      var(--theme-border, $line) 8rpx,
       transparent 8rpx,
       transparent 16rpx
     );

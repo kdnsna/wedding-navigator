@@ -280,9 +280,14 @@ function checkTemplateSystem() {
   assert(!templateSource.includes('return [template.className'), 'getTemplateClass must not emit legacy tpl-* classes at runtime')
 
   const legacyTemplateThemePattern = /\.theme-(?:rose|champagne|noir|garden|heritage|shandong|travel)\b/
+  const legacyTemplateClassPattern = /\.tpl-(?:rose|champagne|noir|garden)\b/
+  const vueHexColorPattern = /#[0-9a-fA-F]{3,8}\b/
   for (const abs of walk(root).filter(file => file.endsWith('.vue'))) {
     const rel = path.relative(root, abs)
-    assert(!legacyTemplateThemePattern.test(read(rel)), `${rel}: Vue styles must not keep legacy template theme aliases`)
+    const source = read(rel)
+    assert(!legacyTemplateThemePattern.test(source), `${rel}: Vue styles must not keep legacy template theme aliases`)
+    assert(!legacyTemplateClassPattern.test(source), `${rel}: Vue styles must not keep legacy tpl-* template classes`)
+    assert(!vueHexColorPattern.test(source), `${rel}: Vue files must not contain hardcoded hex colors`)
   }
 
   assertIncludes('utils/templates.js', 'rose-couture', 'templates must include rose couture as the default direction')
@@ -303,12 +308,19 @@ function checkTemplateSystem() {
   assertIncludes('uni.scss', '@mixin photo-hero-scrim', 'design tokens must define paper hero photo scrim')
   assertIncludes('utils/legacy-theme-map.js', 'LEGACY_THEME_MAP', 'theme resolver must preserve old theme keys during migration')
   assertIncludes('utils/templates.js', "theme: 'wine'", 'templates must bind to the default free wine mood')
-  assertIncludes('pages-owner/wizard/index.vue', 'WEDDING_TEMPLATES', 'wizard must use shared template definitions')
-  assertIncludes('pages-owner/wizard/index.vue', '先选择婚礼模板', 'wizard must show templates before asking for details')
-  assertIncludes('pages-owner/wizard/index.vue', 'selectedTemplate', 'wizard must derive preset copy from the selected template')
-  assertIncludes('pages-owner/wizard/index.vue', 'template-visual', 'wizard template choices must include rich visual previews')
-  assertIncludes('pages-owner/wizard/index.vue', '完整预览', 'wizard must let owners inspect filled template previews before choosing')
-  assertIncludes('pages-owner/wizard/index.vue', 'preset?.mainText', 'wizard must use template preset invitation copy')
+  assertIncludes('pages-owner/wizard/index.vue', '具名', 'wizard must start with named couple and date')
+  assertIncludes('pages-owner/wizard/index.vue', '择地', 'wizard must collect venue before creation')
+  assertIncludes('pages-owner/wizard/index.vue', '选照', 'wizard must include photo selection as the third act')
+  assertIncludes('pages-owner/wizard/index.vue', '定色', 'wizard must end with mood color selection')
+  assertIncludes('pages-owner/wizard/index.vue', 'MAX_ALBUM_PHOTOS = 9', 'wizard must limit curated photos to nine')
+  assertIncludes('pages-owner/wizard/index.vue', 'chooseWizardImages', 'wizard must let owners pick photos inline')
+  assertIncludes('pages-owner/wizard/index.vue', '@include photo-mount', 'wizard photo preview must use the mounted photo system')
+  assertIncludes('pages-owner/wizard/index.vue', '@include photo-hero-scrim', 'wizard hero preview must show the paper scrim')
+  assertIncludes('pages-owner/wizard/index.vue', 'persistWizardPhotos', 'wizard must persist selected photos after creation')
+  assertIncludes('pages-owner/wizard/index.vue', "updateWedding(weddingId, 'albums'", 'wizard must write uploaded photos into albums')
+  assertIncludes('pages-owner/wizard/index.vue', 'THEME_TEMPLATE_MAP', 'wizard must map mood colors to shared template presets')
+  assertIncludes('pages-owner/wizard/index.vue', 'canUseTemplate', 'wizard mood switching must check commercial entitlements')
+  assertIncludes('pages-owner/wizard/index.vue', 'getThemeTokens', 'wizard native mood swatches must use resolved theme tokens')
   assertIncludes('pages-owner/invitation/edit.vue', 'WEDDING_TEMPLATES', 'invitation editor must use shared template definitions')
   assertIncludes('pages-owner/invitation/edit.vue', 'previewTemplate', 'invitation editor must preview the currently selected template before saving')
   assertIncludes('pages-owner/invitation/edit.vue', 'photoToneOptions', 'invitation editor must expose opt-in photo tone controls')
@@ -396,7 +408,7 @@ function checkCommercializationFoundations() {
   assertIncludes('utils/templates.js', "themeTier('cinnabar')", 'templates must derive premium candidates from non-wine mood colors')
   assertIncludes('utils/templates.js', 'premium_templates', 'templates must bind premium moods to entitlement keys')
   assertIncludes('utils/commercial.js', 'isPremiumTheme', 'commercial helper must use theme premium rules')
-  assertIncludes('pages-owner/wizard/index.vue', 'getTemplateTierLabel', 'wizard must show template tier labels')
+  assertIncludes('pages-owner/wizard/index.vue', 'moodOptions', 'wizard must expose mood color choices and premium state')
   assertIncludes('pages-owner/wizard/index.vue', 'buildTemplateCommercialState', 'wizard must persist template commercial state')
   assertIncludes('pages-owner/invitation/edit.vue', 'getCommercialHint', 'invitation editor must explain commercial template state')
   assertIncludes('pages-owner/invitation/edit.vue', 'buildTemplateCommercialState', 'invitation editor must persist template commercial state')

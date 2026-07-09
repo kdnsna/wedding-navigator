@@ -308,6 +308,8 @@ const accommodations = computed(() => store.venues?.accommodations || [])
 const routeTips = computed(() => transportInfo.value.route_tips || [])
 const mapReady = computed(() => geocodedVenues.value.length > 0)
 const mapAccent = computed(() => getThemeTokens(activeTemplate.value?.theme).accent)
+const mapInk = computed(() => getThemeTokens(activeTemplate.value?.theme).accentInk)
+const mapPaper = computed(() => getThemeTokens(activeTemplate.value?.theme).onAccent)
 const weatherHint = computed(() => {
   if (weatherLoading.value) return '加载中'
   if (weatherError.value) return '待配置'
@@ -326,8 +328,8 @@ const markers = computed(() => {
       width: 30,
       height: 30,
       callout: {
-        content: v.name, color: '#333', fontSize: 14,
-        borderRadius: 8, bgColor: '#fff', padding: 10, display: 'BYCLICK'
+        content: v.name, color: mapInk.value, fontSize: 14,
+        borderRadius: 8, bgColor: mapPaper.value, padding: 10, display: 'BYCLICK'
       }
     }
     if (MARKER_ICON) marker.iconPath = MARKER_ICON
@@ -551,7 +553,7 @@ onShow(async () => {
 .arrival-name {
   display: block;
   font-size: 32rpx;
-  color: var(--theme-strong-ink, #fff);
+  color: var(--theme-strong-ink, $ink-inverse);
   font-weight: 600;
   margin-bottom: 8rpx;
   line-height: 1.35;
@@ -579,12 +581,12 @@ onShow(async () => {
   line-height: $control-height-sm;
   border-radius: $radius-full;
   background: var(--theme-strong-soft, rgba(255,255,255,0.12));
-  color: var(--theme-strong-ink, #fff);
+  color: var(--theme-strong-ink, $ink-inverse);
   font-size: 24rpx;
   padding: 0;
 }
 .arrival-btn.primary {
-  background: var(--theme-accent, #fff);
+  background: var(--theme-accent, $ink-inverse);
   color: var(--theme-on-accent, $text-primary);
 }
 .arrival-btn::after { border: none; }
@@ -808,7 +810,7 @@ onShow(async () => {
 }
 .venue-geo.missing {
   background: rgba(249,171,0,0.12);
-  color: #A66A00;
+  color: $gold;
 }
 .venue-actions {
   display: flex;
@@ -828,7 +830,7 @@ onShow(async () => {
 }
 .action-btn.primary {
   background: var(--theme-accent, $color-primary);
-  color: var(--theme-on-accent, #fff);
+  color: var(--theme-on-accent, $ink-inverse);
 }
 .action-btn.disabled {
   background: $bg-muted;
@@ -839,7 +841,7 @@ onShow(async () => {
 /* 天气 */
 .weather-banner {
   padding: $page-gutter;
-  background: var(--theme-panel-gradient, linear-gradient(135deg, #fef9f3 0%, #fdf2eb 100%));
+  background: var(--theme-panel-gradient, linear-gradient(135deg, $paper-card 0%, $paper-deep 100%));
   margin: 24rpx;
   border-radius: $card-radius;
 }
@@ -903,7 +905,7 @@ onShow(async () => {
   border-radius: $radius-full;
 }
 .weather-tag-icon { flex-shrink: 0; }
-.weather-tag.rain { color: #4a90d9; }
+.weather-tag.rain { color: var(--accent); }
 
 .weather-details {
   margin: 24rpx;
@@ -948,11 +950,11 @@ onShow(async () => {
   gap: 10rpx;
   margin: 24rpx;
   padding: 20rpx 24rpx;
-  background: #FFF7E6;
+  background: $gold-soft;
   border-radius: $card-radius;
 }
 .note-icon { flex-shrink: 0; }
-.note-text { font-size: 22rpx; color: #B8860B; }
+.note-text { font-size: 22rpx; color: $gold; }
 
 /* 交通 / 住宿 */
 .info-tab {
@@ -1064,7 +1066,7 @@ onShow(async () => {
   height: $control-height-sm;
   padding: 0 32rpx;
   background: var(--theme-accent, $text-primary);
-  color: var(--theme-on-accent, #fff);
+  color: var(--theme-on-accent, $ink-inverse);
   border-radius: $radius-full;
   font-size: 24rpx;
   border: none;
@@ -1108,73 +1110,11 @@ onShow(async () => {
   line-height: $control-height-sm;
   border-radius: $radius-full;
   background: var(--theme-accent, $text-primary);
-  color: var(--theme-on-accent, #fff);
+  color: var(--theme-on-accent, $ink-inverse);
   font-size: 26rpx;
 }
 .retry-btn::after {
   border: none;
-}
-
-.tpl-champagne {
-  background: #fbf7f1;
-  .arrival-pack {
-    background: #f7eee4;
-  }
-  .arrival-btn.primary,
-  .action-btn.primary,
-  .hotel-btn {
-    background: var(--accent, $color-primary);
-  }
-}
-.tpl-noir {
-  background: #111;
-  .arrival-pack,
-  .venue-card,
-  .info-card,
-  .hotel-card,
-  .weather-banner,
-  .weather-details {
-    background: #191919;
-    border-color: rgba(201,169,110,0.16);
-  }
-  .arrival-title,
-  .arrival-name,
-  .summary-value,
-  .venue-name,
-  .section-title,
-  .info-value,
-  .hotel-name,
-  .weather-text,
-  .temp-max,
-  .temp-min {
-    color: #fff;
-  }
-  .arrival-date,
-  .arrival-address,
-  .summary-label,
-  .venue-address,
-  .section-date,
-  .info-label,
-  .hotel-notes {
-    color: rgba(255,255,255,0.62);
-  }
-  .arrival-btn.primary,
-  .action-btn.primary,
-  .hotel-btn {
-    background: $color-gold;
-    color: #111;
-  }
-}
-.tpl-garden {
-  background: #f5f6ef;
-  .arrival-pack {
-    background: #eef2e7;
-  }
-  .arrival-btn.primary,
-  .action-btn.primary,
-  .hotel-btn {
-    background: var(--accent, $color-primary);
-  }
 }
 
 .theme-wine,
@@ -1202,7 +1142,7 @@ onShow(async () => {
   }
 
   .arrival-name {
-    color: var(--theme-strong-ink, #fff);
+    color: var(--theme-strong-ink, $ink-inverse);
   }
 
   .venue-card.active .venue-name {
@@ -1264,12 +1204,12 @@ onShow(async () => {
   .hotel-btn,
   .retry-btn {
     background: var(--theme-accent, $color-primary);
-    color: var(--theme-on-accent, #fff);
+    color: var(--theme-on-accent, $ink-inverse);
   }
 
   .arrival-btn {
     background: var(--theme-strong-soft, rgba(255,255,255,0.12));
-    color: var(--theme-strong-ink, #fff);
+    color: var(--theme-strong-ink, $ink-inverse);
   }
 
   .arrival-summary-item,

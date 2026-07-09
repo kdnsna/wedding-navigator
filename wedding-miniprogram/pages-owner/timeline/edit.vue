@@ -100,7 +100,7 @@
           </view>
           <view class="form-group">
             <label class="checkbox-label">
-              <checkbox :checked="modalForm.isImportant" @click="modalForm.isImportant = !modalForm.isImportant" color="#1A1A1A" />
+              <checkbox :checked="modalForm.isImportant" :color="nativeAccentColor" @click="modalForm.isImportant = !modalForm.isImportant" />
               <text>重要节点</text>
             </label>
           </view>
@@ -136,6 +136,7 @@ import { generateId, showSuccess, showError } from '@/utils/index.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
 import { fetchWedding, generateAiSuggestions, updateWedding } from '@/composables/useCloud.js'
 import { DEFAULT_TIMELINE_ROLES } from '@/utils/templates.js'
+import { getThemeTokens } from '@/utils/legacy-theme-map.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
@@ -158,6 +159,7 @@ const venueNames = computed(() => ['无', ...venues.value.map(v => v.name)])
 const timelineRoles = computed(() => store.timeline?.roles?.length ? store.timeline.roles : DEFAULT_TIMELINE_ROLES)
 const canSaveEvent = computed(() => Boolean(modalForm.value.time && modalForm.value.title.trim()))
 const timelineBusy = computed(() => saving.value || refreshing.value)
+const nativeAccentColor = computed(() => getThemeTokens(store.activeTemplate?.theme || store.invitation?.theme).accent)
 
 function getVenueName(venueId) {
   if (!venueId) return ''
@@ -556,7 +558,7 @@ onShow(refreshTimeline)
   font-weight: 500;
 }
 .event-badge.muted {
-  background: #fff8f1;
+  background: $paper-card;
   color: $color-primary;
 }
 .event-venue,
@@ -613,7 +615,7 @@ onShow(refreshTimeline)
   text-align: center;
   border-radius: $radius-full;
   background: $text-primary;
-  color: #fff;
+  color: $ink-inverse;
   font-size: 30rpx;
   font-weight: 500;
 }
@@ -696,7 +698,7 @@ onShow(refreshTimeline)
 }
 .role-tag.active {
   background: $text-primary;
-  color: #fff;
+  color: $ink-inverse;
 }
 .checkbox-label {
   display: flex;
@@ -725,7 +727,7 @@ onShow(refreshTimeline)
 .modal-btn:active { opacity: 0.8; }
 .modal-btn.primary {
   background: $text-primary;
-  color: #fff;
+  color: $ink-inverse;
 }
 .modal-btn.secondary {
   background: $bg-muted;

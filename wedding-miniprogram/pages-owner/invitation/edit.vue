@@ -137,35 +137,35 @@
       <view class="switch-list">
         <view class="switch-item">
           <text class="switch-label">显示倒计时</text>
-          <switch :checked="form.showCountdown" :disabled="saving" @change="form.showCountdown = $event.detail.value" color="#1A1A1A" />
+          <switch :checked="form.showCountdown" :disabled="saving" :color="nativeAccentColor" @change="form.showCountdown = $event.detail.value" />
         </view>
         <view class="switch-item">
           <text class="switch-label">显示RSVP</text>
-          <switch :checked="form.showRsvp" :disabled="saving" @change="form.showRsvp = $event.detail.value" color="#1A1A1A" />
+          <switch :checked="form.showRsvp" :disabled="saving" :color="nativeAccentColor" @change="form.showRsvp = $event.detail.value" />
         </view>
         <view class="switch-item sub" v-if="form.showRsvp">
           <text class="switch-label">RSVP联系电话必填</text>
-          <switch :checked="form.rsvpPhoneRequired" :disabled="saving" @change="form.rsvpPhoneRequired = $event.detail.value" color="#1A1A1A" />
+          <switch :checked="form.rsvpPhoneRequired" :disabled="saving" :color="nativeAccentColor" @change="form.rsvpPhoneRequired = $event.detail.value" />
         </view>
         <view class="switch-item sub" v-if="form.showRsvp">
           <text class="switch-label">允许宾客修改回执</text>
-          <switch :checked="form.allowRsvpUpdate" :disabled="saving" @change="form.allowRsvpUpdate = $event.detail.value" color="#1A1A1A" />
+          <switch :checked="form.allowRsvpUpdate" :disabled="saving" :color="nativeAccentColor" @change="form.allowRsvpUpdate = $event.detail.value" />
         </view>
         <view class="switch-item">
           <text class="switch-label">显示祝福墙</text>
-          <switch :checked="form.showBlessing" :disabled="saving" @change="form.showBlessing = $event.detail.value" color="#1A1A1A" />
+          <switch :checked="form.showBlessing" :disabled="saving" :color="nativeAccentColor" @change="form.showBlessing = $event.detail.value" />
         </view>
         <view class="switch-item sub" v-if="form.showBlessing">
           <text class="switch-label">祝福公开展示</text>
-          <switch :checked="form.blessingPublic" :disabled="saving" @change="form.blessingPublic = $event.detail.value" color="#1A1A1A" />
+          <switch :checked="form.blessingPublic" :disabled="saving" :color="nativeAccentColor" @change="form.blessingPublic = $event.detail.value" />
         </view>
         <view class="switch-item sub" v-if="form.showBlessing">
           <text class="switch-label">允许匿名祝福</text>
-          <switch :checked="form.allowAnonymousBlessing" :disabled="saving" @change="form.allowAnonymousBlessing = $event.detail.value" color="#1A1A1A" />
+          <switch :checked="form.allowAnonymousBlessing" :disabled="saving" :color="nativeAccentColor" @change="form.allowAnonymousBlessing = $event.detail.value" />
         </view>
         <view class="switch-item">
           <text class="switch-label">显示流程</text>
-          <switch :checked="form.showTimeline" :disabled="saving" @change="form.showTimeline = $event.detail.value" color="#1A1A1A" />
+          <switch :checked="form.showTimeline" :disabled="saving" :color="nativeAccentColor" @change="form.showTimeline = $event.detail.value" />
         </view>
       </view>
     </view>
@@ -175,7 +175,7 @@
       <SectionHeader title="背景音乐" kicker="MUSIC" desc="开启后会随首页互动播放，仍遵守小程序音频触发限制。" compact />
       <view class="switch-item">
         <text class="switch-label">开启背景音乐</text>
-        <switch :checked="form.bgMusicEnabled" :disabled="saving" @change="form.bgMusicEnabled = $event.detail.value" color="#1A1A1A" />
+        <switch :checked="form.bgMusicEnabled" :disabled="saving" :color="nativeAccentColor" @change="form.bgMusicEnabled = $event.detail.value" />
       </view>
       <view class="music-presets" v-if="form.bgMusicEnabled">
         <view
@@ -219,6 +219,7 @@ import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
 import { generateAiSuggestions, updateWedding } from '@/composables/useCloud.js'
 import { WEDDING_TEMPLATES, getWeddingTemplate, normalizeTemplateId } from '@/utils/templates.js'
 import { buildTemplateCommercialState, getCommercialHint, getTemplateTierLabel, isTemplatePremium } from '@/utils/commercial.js'
+import { getThemeTokens } from '@/utils/legacy-theme-map.js'
 import PageShell from '@/components/ui/PageShell.vue'
 import SectionHeader from '@/components/ui/SectionHeader.vue'
 import TemplateCard from '@/components/ui/TemplateCard.vue'
@@ -232,6 +233,7 @@ const saving = ref(false)
 const templates = WEDDING_TEMPLATES
 const activeTemplate = computed(() => getWeddingTemplate(form.value.template))
 const activeTemplateHint = computed(() => getCommercialHint(activeTemplate.value, userStore.entitlements))
+const nativeAccentColor = computed(() => getThemeTokens(activeTemplate.value?.theme).accent)
 const aiLoading = ref(false)
 const aiError = ref('')
 const aiWarnings = ref([])
@@ -619,7 +621,7 @@ onShow(async () => {
 <style lang="scss" scoped>
 .page {
   background:
-    linear-gradient(180deg, rgba(255,248,245,0.98) 0%, #fff 46%, rgba(255,248,245,1) 100%);
+    linear-gradient(180deg, rgba(255,248,245,0.98) 0%, $ink-inverse 46%, rgba(255,248,245,1) 100%);
   min-height: 100vh;
   padding-bottom: calc(160rpx + env(safe-area-inset-bottom));
 }
@@ -735,7 +737,7 @@ onShow(async () => {
   z-index: 2;
   font-size: 30rpx;
   font-weight: 600;
-  color: #fff;
+  color: $ink-inverse;
   text-align: center;
 }
 .template-tier {
@@ -751,7 +753,7 @@ onShow(async () => {
   line-height: 1.2;
 }
 .template-tier.premium {
-  color: #8F6B2E;
+  color: $gold;
 }
 .template-desc {
   display: block;
@@ -766,7 +768,7 @@ onShow(async () => {
   padding: 28rpx;
   border-radius: $card-radius;
   background: $text-primary;
-  color: #fff;
+  color: $ink-inverse;
   box-shadow: $shadow-sm;
 }
 .template-panel-head {
@@ -786,7 +788,7 @@ onShow(async () => {
 .template-panel-title {
   display: block;
   font-size: 34rpx;
-  color: #fff;
+  color: $ink-inverse;
   font-weight: 600;
   overflow: hidden;
   white-space: nowrap;
@@ -803,13 +805,13 @@ onShow(async () => {
   padding: 8rpx 16rpx;
   border-radius: $radius-full;
   background: rgba(52,168,83,0.16);
-  color: #A6E2B9;
+  color: $ink-inverse;
   font-size: 22rpx;
   line-height: 1.2;
 }
 .template-panel-tier.premium {
   background: rgba(201,169,110,0.18);
-  color: #F0D49A;
+  color: $gold;
 }
 .template-panel-status {
   padding: 8rpx 16rpx;
@@ -845,12 +847,12 @@ onShow(async () => {
   line-height: $control-height-sm;
   border-radius: $radius-full;
   background: rgba(255,255,255,0.1);
-  color: #fff;
+  color: $ink-inverse;
   font-size: 26rpx;
   padding: 0;
 }
 .template-panel-btn.primary {
-  background: #fff;
+  background: $ink-inverse;
   color: $text-primary;
 }
 .template-panel-btn::after {
@@ -963,7 +965,7 @@ onShow(async () => {
 .action-btn:active { opacity: 0.8; }
 .action-btn.primary {
   background: $text-primary;
-  color: #fff;
+  color: $ink-inverse;
 }
 
 /* 音乐预设 */
@@ -987,7 +989,7 @@ onShow(async () => {
   border-color: $text-primary;
   background: $text-primary;
 }
-.music-item.active .music-name { color: #fff; }
+.music-item.active .music-name { color: $ink-inverse; }
 .music-item.disabled {
   opacity: 0.62;
   pointer-events: none;

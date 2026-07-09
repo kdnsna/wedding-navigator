@@ -481,7 +481,7 @@ onShow(refreshGuests)
 }
 .filter-pill.active {
   background: $text-primary;
-  color: #fff;
+  color: $ink-inverse;
 }
 
 /* 宾客列表 */
@@ -592,7 +592,7 @@ onShow(refreshGuests)
   text-align: center;
   border-radius: $radius-full;
   background: $text-primary;
-  color: #fff;
+  color: $ink-inverse;
   font-size: 30rpx;
   font-weight: 500;
 }
@@ -707,7 +707,7 @@ onShow(refreshGuests)
 .modal-btn:active { opacity: 0.8; }
 .modal-btn.primary {
   background: $text-primary;
-  color: #fff;
+  color: $ink-inverse;
 }
 .modal-btn.secondary {
   background: $bg-muted;

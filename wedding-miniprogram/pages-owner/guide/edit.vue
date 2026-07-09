@@ -1016,7 +1016,7 @@ onShow(async () => {
 }
 .venue-geo.missing {
   background: rgba(249,171,0,0.12);
-  color: #A66A00;
+  color: $gold;
 }
 .venue-actions, .hotel-actions {
   display: flex;
@@ -1203,7 +1203,7 @@ onShow(async () => {
 }
 .modal-btn.primary {
   background: $text-primary;
-  color: #fff;
+  color: $ink-inverse;
 }
 .modal-btn:active { transform: scale(0.98); opacity: 0.85; }
 
@@ -1243,7 +1243,7 @@ onShow(async () => {
 }
 .geo-btn.primary {
   background: $text-primary;
-  color: #fff;
+  color: $ink-inverse;
 }
 .geo-btn::after { border: none; }
 .geo-btn[disabled] {
@@ -1285,7 +1285,7 @@ onShow(async () => {
   line-height: $control-height-sm;
   border-radius: $radius-full;
   background: $text-primary;
-  color: #fff;
+  color: $ink-inverse;
   font-size: 26rpx;
 }
 .coordinate-apply::after {

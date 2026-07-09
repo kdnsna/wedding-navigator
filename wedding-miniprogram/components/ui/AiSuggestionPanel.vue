@@ -122,7 +122,7 @@ const labelMap = {
   line-height: $control-height-sm;
   border-radius: $radius-full;
   background: $text-primary;
-  color: #fff;
+  color: $ink-inverse;
   font-size: 24rpx;
   flex-shrink: 0;
 }
@@ -145,7 +145,7 @@ const labelMap = {
 }
 .ai-error {
   background: rgba(159,45,38,0.08);
-  color: #9F2D26;
+  color: var(--accent-ink);
 }
 .ai-warning {
   background: rgba(201,169,110,0.14);
@@ -164,7 +164,7 @@ const labelMap = {
 .ai-suggestion {
   padding: 22rpx;
   border-radius: $radius-md;
-  background: #fff;
+  background: $ink-inverse;
   border: 1rpx solid $border-color;
 }
 .ai-suggestion-head {
@@ -187,7 +187,7 @@ const labelMap = {
   line-height: 52rpx;
   border-radius: $radius-full;
   background: $color-primary;
-  color: #fff;
+  color: $ink-inverse;
   font-size: 24rpx;
   flex-shrink: 0;
 }

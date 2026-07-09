@@ -558,7 +558,7 @@ onUnmounted(() => {
   min-height: 940rpx;
   max-height: 1220rpx;
   overflow: hidden;
-  background: var(--theme-hero-bg, #fcf6f0);
+  background: var(--theme-hero-bg, $paper-bg);
 }
 .hero-image {
   position: absolute;
@@ -566,7 +566,7 @@ onUnmounted(() => {
   left: 0;
   width: 100%;
   height: 100%;
-  background: var(--theme-hero-bg, #fcf6f0);
+  background: var(--theme-hero-bg, $paper-bg);
 }
 .hero-image-main {
   z-index: 0;
@@ -594,7 +594,7 @@ onUnmounted(() => {
 }
 .hero-gradient.default {
   background:
-    linear-gradient(to bottom, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.08) 28%, rgba(48,22,28,0.16) 48%, rgba(58,24,32,0.48) 72%, rgba(255,255,255,0.96) 96%, #fff 100%);
+    linear-gradient(to bottom, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.08) 28%, rgba(48,22,28,0.16) 48%, rgba(58,24,32,0.48) 72%, rgba(255,255,255,0.96) 96%, $ink-inverse 100%);
 }
 .xi-watermark {
   position: absolute;
@@ -639,7 +639,7 @@ onUnmounted(() => {
   max-width: 560rpx;
   font-size: 56rpx;
   font-weight: 700;
-  color: #fff;
+  color: $ink-inverse;
   letter-spacing: 0;
   margin-bottom: 12rpx;
   text-shadow: 0 4rpx 24rpx rgba(0,0,0,0.3);
@@ -705,7 +705,7 @@ onUnmounted(() => {
 .countdown-num {
   font-size: 104rpx;
   font-weight: 400;
-  color: #fff;
+  color: $ink-inverse;
   font-variant-numeric: tabular-nums;
   text-shadow: 0 4rpx 24rpx rgba(0,0,0,0.35), 0 1rpx 2rpx rgba(0,0,0,0.2);
   line-height: 1;
@@ -750,7 +750,7 @@ onUnmounted(() => {
 .today-label {
   font-size: 72rpx;
   font-weight: 400;
-  color: #fff;
+  color: $ink-inverse;
   letter-spacing: 0;
   text-shadow: 0 4rpx 24rpx rgba(0,0,0,0.35), 0 1rpx 2rpx rgba(0,0,0,0.2);
   line-height: 1;
@@ -857,7 +857,7 @@ onUnmounted(() => {
 .daypack-value {
   display: block;
   font-size: 34rpx;
-  color: var(--theme-strong-ink, #fff);
+  color: var(--theme-strong-ink, $ink-inverse);
   font-weight: 600;
   margin-bottom: 8rpx;
   line-height: 1.35;
@@ -875,7 +875,7 @@ onUnmounted(() => {
   height: $control-height-sm;
   line-height: $control-height-sm;
   border-radius: $radius-full;
-  background: var(--theme-strong-soft, #fff);
+  background: var(--theme-strong-soft, $ink-inverse);
   color: var(--theme-strong-ink, $text-primary);
   font-size: 26rpx;
   padding: 0;
@@ -926,7 +926,7 @@ onUnmounted(() => {
 }
 .daypack-pill.primary {
   background: var(--theme-accent, $color-primary);
-  color: var(--theme-on-accent, #fff);
+  color: var(--theme-on-accent, $ink-inverse);
 }
 .daypack-pill::after { border: none; }
 
@@ -1315,7 +1315,7 @@ onUnmounted(() => {
   flex: 1;
   min-width: 0;
   background: var(--theme-accent, $text-primary);
-  color: var(--theme-on-accent, #fff);
+  color: var(--theme-on-accent, $ink-inverse);
   box-shadow: $shadow-sm;
 }
 .float-btn.share {
@@ -1364,137 +1364,6 @@ onUnmounted(() => {
 }
 
 /* ========== 内置模板氛围 ========== */
-.tpl-rose {
-  .hero-gradient {
-    background:
-      radial-gradient(circle at 50% 34%, rgba(176,58,91,0.08), transparent 42%),
-      linear-gradient(to bottom, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0.05) 28%, rgba(24,8,12,0.68) 72%, rgba(255,255,255,0.98) 94%, #fff 100%);
-  }
-  .hero-divider,
-  .daypack-pill.primary,
-  .couple-heart,
-  .couple-heart::before,
-  .couple-heart::after {
-    background: $color-primary;
-  }
-  .hero-tag,
-  .daypack-kicker,
-  .preview-more {
-    color: $color-gold;
-  }
-}
-
-.tpl-champagne {
-  background: #fbf7f1;
-  .hero-image.default {
-    background: #f7eee4;
-  }
-  .hero-gradient {
-    background: linear-gradient(to bottom, rgba(255,255,255,0.08), rgba(255,255,255,0.12) 38%, rgba(247,238,228,0.84) 82%, #fbf7f1 100%);
-  }
-  .hero-content,
-  .hero-names,
-  .hero-date,
-  .countdown-num {
-    color: #1a1a1a;
-    text-shadow: none;
-  }
-  .hero-sub,
-  .hero-tag,
-  .countdown-label,
-  .countdown-desc,
-  .today-label,
-  .today-desc {
-    color: rgba(26,26,26,0.62);
-  }
-  .hero-divider,
-  .countdown-divider,
-  .scroll-line {
-    background: rgba(164,120,59,0.42);
-  }
-  .hero-meta-line {
-    color: #7c5725;
-    background: rgba(255,255,255,0.6);
-    border-color: rgba(164,120,59,0.22);
-  }
-  .daypack-section,
-  .info-section,
-  .preview-section {
-    background: #f7eee4;
-  }
-  .daypack-pill.primary,
-  .float-btn.rsvp {
-    background: var(--accent, $color-primary);
-  }
-}
-
-.tpl-noir {
-  background: #111;
-  .hero-gradient {
-    background:
-      radial-gradient(circle at 50% 18%, rgba(201,169,110,0.20), transparent 35%),
-      linear-gradient(to bottom, rgba(0,0,0,0.10), rgba(0,0,0,0.35) 34%, rgba(3,3,3,0.92) 88%, #111 100%);
-  }
-  .section,
-  .preview-section,
-  .info-section {
-    background: #111;
-  }
-  .daypack-section,
-  .preview-block,
-  .info-list,
-  .quick-item,
-  .invitation-section {
-    background: #191919;
-    border-color: rgba(201,169,110,0.16);
-  }
-  .daypack-title,
-  .mini-value,
-  .preview-title,
-  .blessing-text,
-  .invitation-text,
-  .couple-name,
-  .info-title,
-  .info-value,
-  .quick-title,
-  .quick-label,
-  .footer-text {
-    color: #fff;
-  }
-  .daypack-pill.primary,
-  .float-btn.rsvp {
-    background: $color-gold;
-    color: #111;
-  }
-}
-
-.tpl-garden {
-  background: #f5f6ef;
-  .hero-image.default {
-    background: #eef2e7;
-  }
-  .hero-gradient {
-    background: linear-gradient(to bottom, rgba(255,255,255,0.04), rgba(255,255,255,0.08) 40%, rgba(38,55,42,0.54) 76%, #f5f6ef 100%);
-  }
-  .hero-tag,
-  .daypack-kicker,
-  .preview-more {
-    color: var(--accent, $color-primary);
-  }
-  .daypack-section,
-  .info-section,
-  .preview-section {
-    background: #eef2e7;
-  }
-  .daypack-pill.primary,
-  .float-btn.rsvp {
-    background: var(--accent, $color-primary);
-  }
-  .photo-thumb {
-    border-radius: 8rpx;
-  }
-}
-
 .theme-wine,
 .theme-cinnabar,
 .theme-indigo,
@@ -1503,7 +1372,7 @@ onUnmounted(() => {
 
   .hero,
   .hero-image.default {
-    background: var(--theme-hero-bg, #fcf6f0);
+    background: var(--theme-hero-bg, $paper-bg);
     opacity: 1;
   }
 
@@ -1517,7 +1386,7 @@ onUnmounted(() => {
 
   .hero-gradient.default {
     background:
-      linear-gradient(to bottom, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.08) 28%, rgba(48,22,28,0.16) 48%, rgba(58,24,32,0.48) 72%, rgba(255,255,255,0.96) 96%, #fff 100%);
+      linear-gradient(to bottom, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.08) 28%, rgba(48,22,28,0.16) 48%, rgba(58,24,32,0.48) 72%, rgba(255,255,255,0.96) 96%, $ink-inverse 100%);
   }
 
   .daypack-section,
@@ -1573,7 +1442,7 @@ onUnmounted(() => {
   .couple-heart::before,
   .couple-heart::after {
     background: var(--theme-accent, $color-primary);
-    color: var(--theme-on-accent, #fff);
+    color: var(--theme-on-accent, $ink-inverse);
   }
 
   .daypack-card.primary {
@@ -1587,12 +1456,12 @@ onUnmounted(() => {
   }
 
   .daypack-value {
-    color: var(--theme-strong-ink, #fff);
+    color: var(--theme-strong-ink, $ink-inverse);
   }
 
   .daypack-action {
     background: var(--theme-strong-soft, rgba(255,255,255,0.14));
-    color: var(--theme-strong-ink, #fff);
+    color: var(--theme-strong-ink, $ink-inverse);
   }
 
   .daypack-mini,
@@ -1626,7 +1495,7 @@ onUnmounted(() => {
 .lux-home {
   min-height: 100vh;
   background:
-    linear-gradient(180deg, var(--theme-page-soft, rgba(255,248,245,0.98)) 0%, var(--theme-page, #fff) 34%, var(--theme-page-soft, rgba(255,248,245,1)) 100%);
+    linear-gradient(180deg, var(--theme-page-soft, rgba(255,248,245,0.98)) 0%, var(--theme-page, $ink-inverse) 34%, var(--theme-page-soft, rgba(255,248,245,1)) 100%);
   color: var(--theme-ink, $text-primary);
   padding-bottom: calc(118rpx + env(safe-area-inset-bottom));
 }
@@ -1727,7 +1596,7 @@ onUnmounted(() => {
   bottom: 0;
   padding: 30rpx;
   background:
-    linear-gradient(180deg, rgba(255,255,255,0.98) 0%, var(--theme-surface, #fff) 100%);
+    linear-gradient(180deg, rgba(255,255,255,0.98) 0%, var(--theme-surface, $ink-inverse) 100%);
   border: 1rpx solid var(--theme-border, rgba(75,17,30,0.10));
   border-radius: $card-radius;
   box-shadow: 0 18rpx 54rpx rgba(42,17,20,0.16);
@@ -1810,7 +1679,7 @@ onUnmounted(() => {
 .lux-venue-name {
   display: block;
   margin-top: 8rpx;
-  color: #fff;
+  color: $ink-inverse;
   font-family: $font-serif;
   font-size: 34rpx;
   font-weight: 600;
@@ -1831,7 +1700,7 @@ onUnmounted(() => {
   line-height: 76rpx;
   border-radius: $radius-sm;
   background: var(--theme-accent, $color-primary);
-  color: var(--theme-on-accent, #fff);
+  color: var(--theme-on-accent, $ink-inverse);
   font-size: 26rpx;
   font-weight: 600;
   padding: 0;
@@ -1882,7 +1751,7 @@ onUnmounted(() => {
 }
 .lux-panel-btn.primary {
   background: var(--theme-accent, $color-primary);
-  color: var(--theme-on-accent, #fff);
+  color: var(--theme-on-accent, $ink-inverse);
 }
 .lux-panel-btn::after {
   border: none;
@@ -2083,7 +1952,7 @@ onUnmounted(() => {
 }
 .lux-float-btn.rsvp {
   background: var(--theme-strong-bg, $text-primary);
-  color: var(--theme-strong-ink, #fff);
+  color: var(--theme-strong-ink, $ink-inverse);
 }
 .lux-float-btn.share {
   background: rgba(255,255,255,0.94);

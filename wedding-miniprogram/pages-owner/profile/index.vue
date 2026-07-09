@@ -202,7 +202,7 @@ onShow(async () => {
   padding: 32rpx;
   border-radius: $card-radius;
   background: $text-primary;
-  color: #fff;
+  color: $ink-inverse;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -235,7 +235,7 @@ onShow(async () => {
   padding: 8rpx 16rpx;
   border-radius: $radius-full;
   background: rgba(201,169,110,0.18);
-  color: #F0D49A;
+  color: $gold;
   font-size: 22rpx;
 }
 .section {
