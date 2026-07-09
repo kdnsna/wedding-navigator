@@ -23,9 +23,11 @@ npm run create:v2-acceptance-record
 npm run preview:mp-weixin
 ```
 
-这个命令会把当前构建产物生成到 `.release/preview-<version>.png`，用于真机扫码验收。
+这个命令会先构建微信小程序产物，再把预览码生成到 `.release/preview-<version>.png`，用于真机扫码验收。
 
 4. 用 `.release/v2-real-device-acceptance-<version>.md` 记录真机证据。
+
+真机截图、录屏和朋友反馈截图统一放到 `.release/v2-evidence-<version>/`，表格里的“证据路径/截图编号”必须填写本地文件路径。最终检查器会验证这些文件真实存在，不能只写“已看过”。
 
 5. 记录自动门禁证据：
 
@@ -69,4 +71,4 @@ npm run find:legacy-sakura
 
 ## 完成标准
 
-全部必填证据填写为通过，且没有未解释的运行时报错时，才可以把 v2.0 目标标记为完成。
+全部必填证据填写为通过，本地证据文件存在，朋友反馈原话已填写，且没有未解释的运行时报错时，才可以把 v2.0 目标标记为完成。

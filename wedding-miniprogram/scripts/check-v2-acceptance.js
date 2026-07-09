@@ -150,6 +150,7 @@ function checkManualAcceptanceArtifacts() {
   assert(fs.existsSync(path.join(root, 'preview.mjs')), 'preview.mjs: real-device preview QR generator must exist')
   assertIncludes('docs/v2-real-device-acceptance.md', '朋友第一反应', 'manual checklist must capture the uninformed friend reaction')
   assertIncludes('docs/v2-real-device-acceptance.md', 'theme=sakura-pink', 'manual checklist must capture old sakura-pink data validation')
+  assertIncludes('docs/v2-real-device-acceptance.md', '.release/v2-evidence-<version>/', 'manual checklist must require local evidence files')
   assertIncludes('docs/v2-real-device-acceptance.md', 'npm run preview:mp-weixin', 'manual checklist must document preview QR generation')
   assertIncludes('docs/v2-real-device-acceptance.md', 'npm run record:v2-automatic-evidence', 'manual checklist must document automatic evidence recording')
   assertIncludes('docs/v2-real-device-acceptance.md', 'npm run find:legacy-sakura', 'manual checklist must document the old-data query command')
@@ -157,8 +158,12 @@ function checkManualAcceptanceArtifacts() {
   assertIncludes('scripts/create-v2-acceptance-record.js', 'v2-real-device-acceptance-', 'record generator must write versioned release evidence')
   assertIncludes('scripts/record-v2-automatic-evidence.js', 'Automatic v2 evidence recorded', 'automatic evidence recorder must update the release record')
   assertIncludes('scripts/check-v2-real-device-record.js', 'v2 real-device acceptance is not complete', 'final real-device checker must fail while evidence is pending')
+  assertIncludes('scripts/check-v2-real-device-record.js', '证据文件不存在', 'final real-device checker must verify local evidence files')
+  assertIncludes('scripts/check-v2-real-device-record.js', '必须填写朋友反馈原话', 'final real-device checker must verify friend feedback text')
   assertIncludes('scripts/find-legacy-sakura-wedding.js', "'sakura-pink'", 'legacy query helper must search for sakura-pink')
   assertIncludes('preview.mjs', 'preview-${version}.png', 'preview QR generator must write a versioned QR image')
+  assertIncludes('preview.mjs', "npm', ['run', 'build:mp-weixin']", 'preview QR generator must build before preview by default')
+  assertIncludes('preview.mjs', 'outputContainsCliError', 'preview QR generator must fail on WeChat CLI error output')
 }
 
 function runAutomaticChecks() {
