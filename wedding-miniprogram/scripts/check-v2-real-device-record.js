@@ -100,7 +100,6 @@ function main() {
       if (!friendQuoteIsFilled(markdown)) {
         evidenceIssues.push(`${item}: 必须填写朋友反馈原话`)
       }
-      continue
     }
 
     const paths = evidencePaths(evidence)

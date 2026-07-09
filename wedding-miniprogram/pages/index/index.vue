@@ -23,29 +23,15 @@
             <text class="lux-count-label">{{ countdown.isToday ? '就是今天' : 'DAYS TO GO' }}</text>
             <text class="lux-count-desc">{{ formatDate(weddingDate) }} {{ weddingTime || '12:00' }}</text>
           </view>
-          <view class="lux-rsvp-chip" v-if="isRsvpEnabled" :class="{ done: hasSubmittedRsvp }" @click="goToRSVP">
-            <text>{{ hasSubmittedRsvp ? '已回执' : '待回执' }}</text>
-          </view>
         </view>
 
-        <view class="lux-venue-card" @click="goToGuide">
+        <view class="lux-venue-card" v-if="hasVenueInfo" @click="goToGuide">
           <view class="lux-venue-main">
             <text class="lux-label">主场地</text>
             <text class="lux-venue-name">{{ primaryVenue.name }}</text>
-            <text class="lux-venue-address">{{ primaryVenue.address || venueAddress || '主人正在补充详细地址' }}</text>
+            <text class="lux-venue-address" v-if="primaryVenue.address || venueAddress">{{ primaryVenue.address || venueAddress }}</text>
           </view>
           <button class="lux-nav-btn" @click.stop="openNavigation">导航</button>
-        </view>
-
-        <view class="lux-mini-grid">
-          <view class="lux-mini-cell" @click="openCalendar">
-            <text class="lux-mini-label">日期</text>
-            <text class="lux-mini-value">{{ formatDate(weddingDate) || '待公布' }}</text>
-          </view>
-          <view class="lux-mini-cell" v-if="isTimelineEnabled" @click="goToTimeline">
-            <text class="lux-mini-label">最近流程</text>
-            <text class="lux-mini-value">{{ nextEventText }}</text>
-          </view>
         </view>
 
         <view class="lux-panel-actions">
@@ -59,7 +45,7 @@
     <view class="lux-invite-section">
       <SectionHeader
         title="婚书请柬"
-        :kicker="activeTemplate.shortName + ' INVITATION'"
+        kicker="INVITATION"
         desc="愿这一天，被您和我们一起记住"
       />
       <view class="lux-invite-card">
@@ -70,49 +56,12 @@
             <text class="lux-couple-label">GROOM</text>
             <text class="lux-couple-name">{{ groomName }}</text>
           </view>
-          <view class="lux-couple-line" />
+          <text class="lux-couple-amp">&amp;</text>
           <view class="lux-couple-side">
             <text class="lux-couple-label">BRIDE</text>
             <text class="lux-couple-name">{{ brideName }}</text>
           </view>
         </view>
-      </view>
-    </view>
-
-    <view class="lux-section">
-      <SectionHeader title="宾客行动" kicker="GUEST ACTIONS" desc="到场、回执、流程和祝福都在这里" />
-      <view class="lux-action-list">
-        <ActionCard
-          title="婚礼路书"
-          :desc="primaryVenue.address || venueAddress || '查看主场地、停车、住宿与天气提醒'"
-          icon="/static/visuals/icon-guide.svg"
-          tone="primary"
-          status="必看"
-          @click="goToGuide"
-        />
-        <ActionCard
-          v-if="isTimelineEnabled"
-          title="婚礼流程"
-          :desc="nextEventText"
-          icon="/static/visuals/icon-timeline.svg"
-          status="当天安排"
-          @click="goToTimeline"
-        />
-        <ActionCard
-          v-if="isRsvpEnabled"
-          title="出席回执"
-          :desc="hasSubmittedRsvp ? '已收到您的回执，可随时修改' : '请帮新人确认人数与到达信息'"
-          icon="/static/visuals/icon-rsvp.svg"
-          :status="hasSubmittedRsvp ? '已完成' : '待确认'"
-          @click="goToRSVP"
-        />
-        <ActionCard
-          v-if="isBlessingEnabled"
-          title="祝福墙"
-          desc="写一句会被新人第一眼看到的祝福"
-          icon="/static/visuals/icon-blessing.svg"
-          @click="goToBlessing"
-        />
       </view>
     </view>
 
@@ -159,11 +108,6 @@
       <text class="lux-footer-sub">Looking forward to seeing you</text>
     </view>
 
-    <view class="lux-float-actions">
-      <button class="lux-float-btn rsvp" v-if="isRsvpEnabled" @click="goToRSVP">回执</button>
-      <button class="lux-float-btn share" open-type="share">分享</button>
-    </view>
-
     <view class="music-control lux-music-control" v-if="bgMusicEnabled" @click="toggleMusic">
       <image
         class="music-icon"
@@ -184,7 +128,6 @@ import { fetchWedding, recordShare, recordView } from '@/composables/useCloud.js
 import { formatDate, getWeekDay } from '@/utils/index.js'
 import { getTemplateHeroImage } from '@/utils/templates.js'
 import SectionHeader from '@/components/ui/SectionHeader.vue'
-import ActionCard from '@/components/ui/ActionCard.vue'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
@@ -260,6 +203,7 @@ const isRsvpEnabled = computed(() => store.isRsvpEnabled)
 const isBlessingEnabled = computed(() => store.isBlessingEnabled)
 const isTimelineEnabled = computed(() => store.isTimelineEnabled)
 const primaryVenue = computed(() => store.primaryVenue || { name: venueName.value || '婚礼场地', address: venueAddress.value })
+const hasVenueInfo = computed(() => Boolean(primaryVenue.value?.name || primaryVenue.value?.address || venueAddress.value))
 const latestBlessings = computed(() => store.latestBlessings || [])
 const featuredPhotos = computed(() => store.featuredPhotos || [])
 const heroPhotoTreatmentClass = computed(() => (isDefaultCover.value ? '' : photoTreatmentClass()))
@@ -292,7 +236,7 @@ const nextEventText = computed(() => {
   return event.time ? `${event.time} ${event.title}` : event.title
 })
 const invitationText = computed(() => {
-  return store.invitation?.content?.main_text || '诚挚邀请您参加我们的婚礼，见证我们的幸福时刻。'
+  return store.invitation?.content?.main_text || '盼与您共赴这一日的约。'
 })
 
 function updateCountdown() {
@@ -551,946 +495,6 @@ onUnmounted(() => {
   padding-bottom: calc(96rpx + env(safe-area-inset-bottom));
 }
 
-/* ========== 封面大图 ========== */
-.hero {
-  position: relative;
-  height: 80vh;
-  min-height: 940rpx;
-  max-height: 1220rpx;
-  overflow: hidden;
-  background: var(--theme-hero-bg, $paper-bg);
-}
-.hero-image {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: var(--theme-hero-bg, $paper-bg);
-}
-.hero-image-main {
-  z-index: 0;
-  filter: var(--theme-hero-filter, none);
-}
-.hero-image.default {
-  padding: 0;
-  opacity: 1;
-}
-.hero-gradient {
-  position: absolute;
-  z-index: 2;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: var(--theme-hero-overlay, linear-gradient(
-    to bottom,
-    rgba(0,0,0,0.25) 0%,
-    rgba(0,0,0,0.05) 25%,
-    rgba(0,0,0,0.15) 60%,
-    rgba(255,255,255,0.95) 90%,
-    rgba(255,255,255,1) 100%
-  ));
-}
-.hero-gradient.default {
-  background:
-    linear-gradient(to bottom, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.08) 28%, rgba(48,22,28,0.16) 48%, rgba(58,24,32,0.48) 72%, rgba(255,255,255,0.96) 96%, $ink-inverse 100%);
-}
-.xi-watermark {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 600rpx;
-  font-weight: 900;
-  color: rgba(255,255,255,0.04);
-  pointer-events: none;
-  z-index: 3;
-}
-.hero-content {
-  position: relative;
-  z-index: 4;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  height: 100%;
-  padding: 60rpx $page-gutter 86rpx;
-  text-align: center;
-}
-
-.hero-tag {
-  font-size: 22rpx;
-  color: rgba(255,255,255,0.65);
-  letter-spacing: 0;
-  font-weight: 300;
-  margin-bottom: 20rpx;
-}
-.hero-divider {
-  width: 40rpx;
-  height: 1rpx;
-  background: rgba(255,255,255,0.5);
-  margin-bottom: 32rpx;
-}
-
-.hero-names {
-  display: block;
-  width: 100%;
-  max-width: 560rpx;
-  font-size: 56rpx;
-  font-weight: 700;
-  color: $ink-inverse;
-  letter-spacing: 0;
-  margin-bottom: 12rpx;
-  text-shadow: 0 4rpx 24rpx rgba(0,0,0,0.3);
-  line-height: 1.2;
-  white-space: normal;
-  overflow-wrap: anywhere;
-}
-.hero-sub {
-  font-size: 24rpx;
-  color: rgba(255,255,255,0.7);
-  letter-spacing: 0;
-  font-weight: 300;
-  margin-bottom: 20rpx;
-  font-style: italic;
-}
-.hero-date {
-  font-size: 28rpx;
-  color: rgba(255,255,255,0.95);
-  letter-spacing: 0;
-  margin-bottom: 18rpx;
-  text-shadow: 0 2rpx 12rpx rgba(0,0,0,0.25);
-}
-.hero-meta-line {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16rpx;
-  min-height: 48rpx;
-  margin-bottom: 42rpx;
-  padding: 0 22rpx;
-  border-radius: $radius-full;
-  border: 1rpx solid rgba(255,255,255,0.26);
-  color: rgba(255,255,255,0.86);
-  font-size: 22rpx;
-  letter-spacing: 0;
-  background: rgba(20,20,20,0.18);
-  backdrop-filter: blur(12rpx);
-  max-width: 100%;
-}
-.hero-meta-line text {
-  max-width: 280rpx;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-.hero-meta-dot {
-  width: 6rpx;
-  height: 6rpx;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.58);
-  flex-shrink: 0;
-}
-
-.hero-countdown {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 24rpx;
-  margin-bottom: 58rpx;
-  width: 100%;
-  max-width: 560rpx;
-}
-.countdown-num {
-  font-size: 104rpx;
-  font-weight: 400;
-  color: $ink-inverse;
-  font-variant-numeric: tabular-nums;
-  text-shadow: 0 4rpx 24rpx rgba(0,0,0,0.35), 0 1rpx 2rpx rgba(0,0,0,0.2);
-  line-height: 1;
-}
-.countdown-divider {
-  width: 1rpx;
-  height: 80rpx;
-  background: rgba(255,255,255,0.4);
-}
-.countdown-info {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8rpx;
-  min-width: 0;
-  max-width: 220rpx;
-}
-.countdown-label {
-  font-size: 26rpx;
-  color: rgba(255,255,255,0.75);
-  letter-spacing: 0;
-  font-weight: 400;
-}
-.countdown-desc {
-  font-size: 24rpx;
-  color: rgba(255,255,255,0.92);
-  letter-spacing: 0;
-  max-width: 100%;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-/* 婚礼当天 */
-.hero-today {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8rpx;
-  margin-bottom: 58rpx;
-}
-.today-label {
-  font-size: 72rpx;
-  font-weight: 400;
-  color: $ink-inverse;
-  letter-spacing: 0;
-  text-shadow: 0 4rpx 24rpx rgba(0,0,0,0.35), 0 1rpx 2rpx rgba(0,0,0,0.2);
-  line-height: 1;
-}
-.today-desc {
-  font-size: 32rpx;
-  color: rgba(255,255,255,0.95);
-  letter-spacing: 0;
-  text-shadow: 0 2rpx 12rpx rgba(0,0,0,0.25);
-}
-
-/* 滚动提示 */
-.scroll-hint {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.scroll-line {
-  width: 1rpx;
-  height: 60rpx;
-  background: linear-gradient(to bottom, rgba(255,255,255,0.5), transparent);
-  margin-bottom: 16rpx;
-  animation: float 2s ease-in-out infinite;
-}
-.scroll-text {
-  font-size: 20rpx;
-  color: rgba(255,255,255,0.4);
-  letter-spacing: 0;
-}
-
-/* ========== 通用 section ========== */
-.section {
-  padding: 80rpx $page-gutter;
-}
-
-/* ========== 宾客行动台 ========== */
-.daypack-section {
-  padding-top: 52rpx;
-  padding-bottom: calc(80rpx + env(safe-area-inset-bottom));
-}
-.daypack-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 24rpx;
-  margin-bottom: 28rpx;
-}
-.daypack-kicker {
-  display: block;
-  font-size: 20rpx;
-  color: var(--theme-accent, $color-primary);
-  letter-spacing: 0;
-  margin-bottom: 8rpx;
-  font-weight: 600;
-}
-.daypack-title {
-  display: block;
-  font-size: 40rpx;
-  color: var(--theme-ink, $text-primary);
-  font-weight: 600;
-}
-.daypack-template {
-  display: block;
-  margin-top: 8rpx;
-  font-size: 22rpx;
-  color: var(--theme-muted, $text-muted);
-  letter-spacing: 0;
-}
-.daypack-status {
-  padding: 10rpx 20rpx;
-  border-radius: $radius-full;
-  background: var(--theme-accent-soft, rgba(176,58,91,0.08));
-  color: var(--theme-accent, $color-primary);
-  font-size: 24rpx;
-  flex-shrink: 0;
-}
-.daypack-status.done {
-  background: rgba(52,168,83,0.1);
-  color: $color-success;
-}
-.daypack-card {
-  display: flex;
-  align-items: center;
-  gap: 24rpx;
-  padding: 32rpx;
-  border-radius: $card-radius;
-  border: 1rpx solid var(--theme-border, $border-color);
-  margin-bottom: 16rpx;
-}
-.daypack-card.primary {
-  background: var(--theme-strong-bg, $text-primary);
-  border-color: var(--theme-strong-border, transparent);
-}
-.daypack-card-main {
-  flex: 1;
-  min-width: 0;
-}
-.daypack-label {
-  display: block;
-  font-size: 22rpx;
-  color: var(--theme-strong-muted, rgba(255,255,255,0.52));
-  margin-bottom: 8rpx;
-}
-.daypack-value {
-  display: block;
-  font-size: 34rpx;
-  color: var(--theme-strong-ink, $ink-inverse);
-  font-weight: 600;
-  margin-bottom: 8rpx;
-  line-height: 1.35;
-  word-break: break-word;
-}
-.daypack-sub {
-  display: block;
-  font-size: 24rpx;
-  color: var(--theme-strong-muted, rgba(255,255,255,0.7));
-  line-height: 1.5;
-  word-break: break-word;
-}
-.daypack-action {
-  width: 116rpx;
-  height: $control-height-sm;
-  line-height: $control-height-sm;
-  border-radius: $radius-full;
-  background: var(--theme-strong-soft, $ink-inverse);
-  color: var(--theme-strong-ink, $text-primary);
-  font-size: 26rpx;
-  padding: 0;
-  flex-shrink: 0;
-}
-.daypack-action::after { border: none; }
-.daypack-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16rpx;
-  margin-bottom: 20rpx;
-}
-.daypack-mini {
-  padding: 28rpx;
-  background: var(--theme-elevated, $bg-muted);
-  border-radius: $card-radius;
-  min-height: 132rpx;
-}
-.mini-label {
-  display: block;
-  font-size: 22rpx;
-  color: var(--theme-muted, $text-muted);
-  margin-bottom: 10rpx;
-}
-.mini-value {
-  display: block;
-  font-size: 28rpx;
-  color: var(--theme-ink, $text-primary);
-  font-weight: 600;
-  line-height: 1.35;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
-.daypack-actions {
-  display: flex;
-  gap: 16rpx;
-}
-.daypack-pill {
-  flex: 1;
-  height: 84rpx;
-  line-height: 84rpx;
-  border-radius: $radius-full;
-  background: var(--theme-elevated, $bg-muted);
-  color: var(--theme-ink, $text-primary);
-  font-size: 28rpx;
-}
-.daypack-pill.primary {
-  background: var(--theme-accent, $color-primary);
-  color: var(--theme-on-accent, $ink-inverse);
-}
-.daypack-pill::after { border: none; }
-
-.preview-section {
-  padding-top: 32rpx;
-  padding-bottom: 32rpx;
-  background: var(--theme-page-soft, $bg-muted);
-}
-.preview-block {
-  background: var(--theme-surface, $bg-surface);
-  border-radius: $card-radius;
-  padding: 28rpx;
-  margin-bottom: 20rpx;
-  border: 1rpx solid var(--theme-border, $border-color);
-}
-.preview-block:last-child {
-  margin-bottom: 0;
-}
-.preview-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 22rpx;
-}
-.preview-title {
-  display: block;
-  font-size: 30rpx;
-  font-weight: 600;
-  color: var(--theme-ink, $text-primary);
-}
-.preview-sub {
-  display: block;
-  max-width: 470rpx;
-  margin-top: 6rpx;
-  font-size: 22rpx;
-  line-height: 1.45;
-  color: var(--theme-muted, $text-muted);
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
-.preview-more {
-  font-size: 24rpx;
-  color: var(--theme-accent, $color-primary);
-}
-.photo-strip {
-  display: flex;
-  gap: 12rpx;
-}
-.photo-thumb {
-  flex: 1;
-  min-width: 0;
-  width: 100%;
-  height: 168rpx;
-  border-radius: $radius-md;
-  background: $bg-muted;
-  display: block;
-  overflow: hidden;
-}
-.blessing-preview {
-  padding: 20rpx 0;
-  border-top: 1rpx solid var(--theme-border, $border-color);
-}
-.blessing-preview:first-of-type {
-  border-top: none;
-  padding-top: 0;
-}
-.blessing-name {
-  display: block;
-  font-size: 24rpx;
-  color: var(--theme-muted, $text-muted);
-  margin-bottom: 8rpx;
-}
-.blessing-text {
-  display: block;
-  font-size: 28rpx;
-  color: var(--theme-ink, $text-primary);
-  line-height: 1.6;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
-
-/* ========== 婚书正文 ========== */
-.invitation-section {
-  text-align: center;
-  position: relative;
-  padding-top: 100rpx;
-  padding-bottom: 100rpx;
-}
-.quote-top {
-  margin-bottom: 24rpx;
-}
-.quote-bottom {
-  margin-top: 24rpx;
-  transform: rotate(180deg);
-}
-.quote-mark {
-  font-size: 80rpx;
-  line-height: 1;
-  color: var(--theme-border, $border-color);
-  font-family: $font-serif;
-}
-.invitation-body {
-  max-width: 560rpx;
-  margin: 0 auto;
-}
-.invitation-text {
-  font-size: 32rpx;
-  line-height: 2.2;
-  color: var(--theme-ink, $text-primary);
-  letter-spacing: 0;
-  font-weight: 400;
-}
-.invitation-couple {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 48rpx;
-  margin-top: 64rpx;
-}
-.couple-side {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8rpx;
-}
-.couple-label {
-  font-size: 18rpx;
-  color: var(--theme-muted, $text-muted);
-  letter-spacing: 0;
-}
-.couple-name {
-  font-size: 36rpx;
-  font-weight: 600;
-  letter-spacing: 0;
-  color: var(--theme-ink, $text-primary);
-}
-.couple-divider {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8rpx;
-}
-.couple-line {
-  width: 1rpx;
-  height: 20rpx;
-  background: var(--theme-border, $border-color);
-}
-.couple-heart {
-  width: 10rpx;
-  height: 10rpx;
-  background: var(--theme-accent, $color-primary);
-  transform: rotate(45deg);
-  position: relative;
-}
-.couple-heart::before,
-.couple-heart::after {
-  content: '';
-  position: absolute;
-  width: 10rpx;
-  height: 10rpx;
-  background: var(--theme-accent, $color-primary);
-  border-radius: 50%;
-}
-.couple-heart::before { left: -5rpx; top: 0; }
-.couple-heart::after { left: 0; top: -5rpx; }
-
-/* ========== 婚礼信息 ========== */
-.info-section {
-  background: var(--theme-page-soft, $bg-muted);
-  padding-top: 80rpx;
-  padding-bottom: calc(80rpx + env(safe-area-inset-bottom));
-}
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 24rpx;
-  margin-bottom: 48rpx;
-}
-.header-line {
-  flex: 1;
-  max-width: 80rpx;
-  height: 1rpx;
-  background: var(--theme-border, $border-color);
-}
-.header-text {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8rpx;
-}
-.info-title {
-  font-size: 36rpx;
-  font-weight: 600;
-  color: var(--theme-ink, $text-primary);
-  letter-spacing: 0;
-}
-.info-sub {
-  font-size: 20rpx;
-  color: var(--theme-muted, $text-muted);
-  letter-spacing: 0;
-}
-
-.info-list {
-  background: var(--theme-surface, $bg-surface);
-  border-radius: $card-radius;
-  overflow: hidden;
-}
-.info-row {
-  display: flex;
-  align-items: center;
-  padding: 36rpx 32rpx;
-  transition: background 0.15s ease;
-}
-.info-row:active {
-  background: var(--theme-elevated, $bg-muted);
-}
-.info-icon-wrap {
-  width: 72rpx;
-  height: $control-height-sm;
-  border-radius: 50%;
-  background: var(--theme-elevated, $bg-muted);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 24rpx;
-  flex-shrink: 0;
-}
-.info-icon {
-  font-size: 32rpx;
-}
-.info-meta {
-  flex: 1;
-  min-width: 0;
-}
-.info-label {
-  display: block;
-  font-size: 20rpx;
-  color: var(--theme-muted, $text-muted);
-  margin-bottom: 6rpx;
-  letter-spacing: 0;
-}
-.info-value {
-  display: block;
-  font-size: 30rpx;
-  color: var(--theme-ink, $text-primary);
-  font-weight: 500;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-.info-address {
-  display: block;
-  font-size: 24rpx;
-  color: var(--theme-muted, $text-secondary);
-  margin-top: 4rpx;
-  line-height: 1.5;
-  word-break: break-word;
-}
-.info-action {
-  font-size: 32rpx;
-  color: var(--theme-muted, $text-muted);
-  padding: 16rpx;
-}
-.info-divider {
-  height: 1rpx;
-  background: var(--theme-border, $border-color);
-  margin: 0 32rpx;
-}
-
-/* ========== 快速入口 ========== */
-.quick-section {
-  padding-top: 80rpx;
-}
-.quick-title {
-  font-size: 36rpx;
-  font-weight: 600;
-  color: var(--theme-ink, $text-primary);
-  letter-spacing: 0;
-}
-.quick-sub {
-  font-size: 20rpx;
-  color: var(--theme-muted, $text-muted);
-  letter-spacing: 0;
-}
-.quick-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20rpx;
-  margin-top: 8rpx;
-}
-.quick-item {
-  display: flex;
-  align-items: center;
-  gap: 20rpx;
-  padding: 32rpx 24rpx;
-  background: var(--theme-surface, $bg-surface);
-  border-radius: $card-radius;
-  border: 1rpx solid var(--theme-border, $border-color);
-  transition: all 0.25s ease;
-}
-.quick-item:active {
-  background: var(--theme-elevated, $bg-muted);
-  transform: scale(0.98);
-}
-.quick-icon {
-  font-size: 40rpx;
-  flex-shrink: 0;
-}
-.quick-meta {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4rpx;
-}
-.quick-label {
-  display: block;
-  font-size: 28rpx;
-  color: var(--theme-ink, $text-primary);
-  font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.quick-en {
-  font-size: 18rpx;
-  color: var(--theme-muted, $text-muted);
-  letter-spacing: 0;
-}
-.quick-arrow {
-  font-size: 28rpx;
-  color: var(--theme-muted, $text-muted);
-}
-
-/* ========== 底部 ========== */
-.footer-section {
-  text-align: center;
-  padding-top: 40rpx;
-  padding-bottom: 40rpx;
-}
-.footer-line {
-  width: 40rpx;
-  height: 1rpx;
-  background: var(--theme-border, $border-color);
-  margin: 0 auto 32rpx;
-}
-.footer-text {
-  display: block;
-  font-size: 28rpx;
-  color: var(--theme-ink, $text-primary);
-  letter-spacing: 0;
-  margin-bottom: 12rpx;
-  font-weight: 500;
-}
-.footer-sub {
-  display: block;
-  font-size: 22rpx;
-  color: var(--theme-muted, $text-muted);
-  letter-spacing: 0;
-  font-weight: 300;
-}
-
-/* ========== 悬浮操作 ========== */
-.float-actions {
-  margin: 16rpx $page-gutter calc(36rpx + env(safe-area-inset-bottom));
-  display: flex;
-  gap: 16rpx;
-}
-.float-btn {
-  height: $control-height;
-  line-height: $control-height;
-  text-align: center;
-  border-radius: $radius-full;
-  font-size: 30rpx;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-.float-btn::after { border: none; }
-.float-btn:active { transform: scale(0.96); opacity: 0.85; }
-.float-btn.rsvp {
-  flex: 1;
-  min-width: 0;
-  background: var(--theme-accent, $text-primary);
-  color: var(--theme-on-accent, $ink-inverse);
-  box-shadow: $shadow-sm;
-}
-.float-btn.share {
-  width: 88rpx;
-  background: var(--theme-surface, $bg-surface);
-  color: var(--theme-ink, $text-primary);
-  border: 1rpx solid var(--theme-border, $border-color);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-}
-.share-icon {
-  font-size: 28rpx;
-}
-
-/* 背景音乐控制 */
-.music-control {
-  position: fixed;
-  top: calc(80rpx + env(safe-area-inset-top));
-  right: 32rpx;
-  width: $tap-min-height;
-  height: $tap-min-height;
-  border-radius: 50%;
-  background: var(--theme-surface, rgba(255,255,255,0.9));
-  border: 1rpx solid var(--theme-border, $border-color);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 200;
-  box-shadow: $shadow-xs;
-  transition: all 0.2s ease;
-}
-.music-control:active { transform: scale(0.92); }
-.music-icon {
-  width: 46rpx;
-  height: 46rpx;
-  transition: transform 0.3s ease;
-}
-.music-icon.playing {
-  animation: musicPulse 2.4s ease-in-out infinite;
-}
-@keyframes musicPulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.08); }
-}
-
-/* ========== 内置模板氛围 ========== */
-.theme-wine,
-.theme-cinnabar,
-.theme-indigo,
-.theme-pine {
-  background: var(--theme-page, $bg-color);
-
-  .hero,
-  .hero-image.default {
-    background: var(--theme-hero-bg, $paper-bg);
-    opacity: 1;
-  }
-
-  .hero-image-main {
-    filter: var(--theme-hero-filter, none);
-  }
-
-  .hero-gradient {
-    background: var(--theme-hero-overlay);
-  }
-
-  .hero-gradient.default {
-    background:
-      linear-gradient(to bottom, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.08) 28%, rgba(48,22,28,0.16) 48%, rgba(58,24,32,0.48) 72%, rgba(255,255,255,0.96) 96%, $ink-inverse 100%);
-  }
-
-  .daypack-section,
-  .preview-section,
-  .info-section {
-    background: var(--theme-page-soft, $bg-muted);
-  }
-
-  .invitation-section,
-  .quick-section,
-  .footer-section {
-    background: var(--theme-page, $bg-color);
-  }
-
-  .daypack-title,
-  .mini-value,
-  .preview-title,
-  .blessing-text,
-  .invitation-text,
-  .couple-name,
-  .info-title,
-  .info-value,
-  .quick-title,
-  .quick-label,
-  .footer-text {
-    color: var(--theme-ink, $text-primary);
-  }
-
-  .daypack-template,
-  .mini-label,
-  .preview-sub,
-  .blessing-name,
-  .couple-label,
-  .info-sub,
-  .info-label,
-  .info-address,
-  .quick-sub,
-  .quick-en,
-  .footer-sub,
-  .quick-arrow {
-    color: var(--theme-muted, $text-muted);
-  }
-
-  .daypack-kicker,
-  .preview-more {
-    color: var(--theme-accent, $color-primary);
-  }
-
-  .hero-divider,
-  .daypack-pill.primary,
-  .float-btn.rsvp,
-  .couple-heart,
-  .couple-heart::before,
-  .couple-heart::after {
-    background: var(--theme-accent, $color-primary);
-    color: var(--theme-on-accent, $ink-inverse);
-  }
-
-  .daypack-card.primary {
-    background: var(--theme-strong-bg, $text-primary);
-    border-color: var(--theme-strong-border, transparent);
-  }
-
-  .daypack-label,
-  .daypack-sub {
-    color: var(--theme-strong-muted, rgba(255,255,255,0.68));
-  }
-
-  .daypack-value {
-    color: var(--theme-strong-ink, $ink-inverse);
-  }
-
-  .daypack-action {
-    background: var(--theme-strong-soft, rgba(255,255,255,0.14));
-    color: var(--theme-strong-ink, $ink-inverse);
-  }
-
-  .daypack-mini,
-  .daypack-pill,
-  .info-icon-wrap {
-    background: var(--theme-elevated, $bg-muted);
-  }
-
-  .preview-block,
-  .info-list,
-  .quick-item,
-  .float-btn.share,
-  .music-control {
-    background: var(--theme-surface, $bg-surface);
-    border-color: var(--theme-border, $border-color);
-  }
-
-  .header-line,
-  .footer-line,
-  .couple-line,
-  .info-divider {
-    background: var(--theme-border, $border-color);
-  }
-
-  .blessing-preview {
-    border-top-color: var(--theme-border, $border-color);
-  }
-}
-
 /* ========== 高级礼宴首页 v4 ========== */
 .lux-home {
   min-height: 100vh;
@@ -1557,7 +561,7 @@ onUnmounted(() => {
   z-index: 4;
   left: $page-gutter;
   right: $page-gutter;
-  bottom: 414rpx;
+  bottom: 500rpx;
   color: $ink;
   text-shadow: none;
 }
@@ -1609,8 +613,8 @@ onUnmounted(() => {
   height: 4rpx;
   margin: 0 auto 22rpx;
   border-radius: 2rpx;
-  background: var(--theme-accent, $color-primary);
-  opacity: 0.68;
+  background: $gold;
+  opacity: 0.72;
 }
 .lux-countdown {
   display: flex;
@@ -1621,6 +625,7 @@ onUnmounted(() => {
 }
 .lux-count-num {
   color: var(--theme-accent-deep, $color-primary-dark);
+  font-family: $font-num;
   font-size: 54rpx;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
@@ -1631,7 +636,6 @@ onUnmounted(() => {
   min-width: 0;
 }
 .lux-count-label,
-.lux-mini-label,
 .lux-label {
   display: block;
   color: $text-muted;
@@ -1648,29 +652,28 @@ onUnmounted(() => {
   white-space: nowrap;
   text-overflow: ellipsis;
 }
-.lux-rsvp-chip {
-  flex-shrink: 0;
-  padding: 9rpx 16rpx;
-  border-radius: $radius-sm;
-  background: var(--theme-accent-soft, rgba(176,58,91,0.10));
-  color: var(--theme-accent, $color-primary);
-  font-size: 22rpx;
-  font-weight: 600;
-}
-.lux-rsvp-chip.done {
-  background: rgba(52,168,83,0.12);
-  color: $color-success;
-}
 .lux-venue-card {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 20rpx;
   margin-top: 22rpx;
   padding: 26rpx;
-  background:
-    linear-gradient(135deg, var(--theme-strong-bg, $text-primary) 0%, var(--theme-accent-deep, $color-primary-dark) 100%);
+  background: var(--theme-surface, $paper-card);
+  border: 1rpx solid var(--theme-border, $border-light);
   border-radius: $card-radius;
-  box-shadow: inset 0 1rpx 0 rgba(255,255,255,0.10), 0 10rpx 24rpx rgba(20,9,12,0.14);
+  box-shadow: 0 8rpx 28rpx rgba(42,17,20,0.055);
+  overflow: hidden;
+}
+.lux-venue-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 24rpx;
+  bottom: 24rpx;
+  width: 4rpx;
+  border-radius: 2rpx;
+  background: var(--theme-accent, $color-primary);
 }
 .lux-venue-main {
   flex: 1;
@@ -1679,7 +682,7 @@ onUnmounted(() => {
 .lux-venue-name {
   display: block;
   margin-top: 8rpx;
-  color: $ink-inverse;
+  color: var(--theme-ink, $text-primary);
   font-family: $font-serif;
   font-size: 34rpx;
   font-weight: 600;
@@ -1689,7 +692,7 @@ onUnmounted(() => {
 .lux-venue-address {
   display: block;
   margin-top: 8rpx;
-  color: rgba(255,255,255,0.68);
+  color: var(--theme-muted, $text-muted);
   font-size: 24rpx;
   line-height: 1.45;
   word-break: break-word;
@@ -1699,38 +702,15 @@ onUnmounted(() => {
   height: 76rpx;
   line-height: 76rpx;
   border-radius: $radius-sm;
-  background: var(--theme-accent, $color-primary);
-  color: var(--theme-on-accent, $ink-inverse);
+  background: var(--theme-accent-soft, rgba(176,58,91,0.08));
+  color: var(--theme-accent, $color-primary);
+  border: 1rpx solid var(--theme-accent-line, rgba(176,58,91,0.28));
   font-size: 26rpx;
   font-weight: 600;
   padding: 0;
 }
 .lux-nav-btn::after {
   border: none;
-}
-.lux-mini-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16rpx;
-  margin-top: 16rpx;
-}
-.lux-mini-cell {
-  min-width: 0;
-  padding: 22rpx;
-  border: 1rpx solid var(--theme-border, $border-light);
-  border-radius: $radius-sm;
-  background: var(--theme-panel-gradient, $bg-elevated);
-}
-.lux-mini-value {
-  display: block;
-  margin-top: 8rpx;
-  color: var(--theme-ink, $text-primary);
-  font-size: 26rpx;
-  font-weight: 600;
-  line-height: 1.35;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
 }
 .lux-panel-actions {
   display: flex;
@@ -1811,18 +791,14 @@ onUnmounted(() => {
   white-space: nowrap;
   text-overflow: ellipsis;
 }
-.lux-couple-line {
+.lux-couple-amp {
   width: 52rpx;
-  height: 1rpx;
-  background: var(--theme-accent, $color-primary);
-  opacity: 0.34;
+  color: $gold;
+  font-family: $font-num;
+  font-size: 34rpx;
+  line-height: 1;
+  text-align: center;
   flex-shrink: 0;
-}
-.lux-action-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16rpx;
-  padding: 0 $page-gutter;
 }
 .lux-preview-block .preview-header {
   display: flex;
@@ -1926,38 +902,6 @@ onUnmounted(() => {
   margin-top: 10rpx;
   color: $text-muted;
   font-size: 22rpx;
-}
-.lux-float-actions {
-  position: fixed;
-  z-index: 50;
-  left: $page-gutter;
-  right: $page-gutter;
-  bottom: calc(18rpx + env(safe-area-inset-bottom));
-  display: flex;
-  gap: 14rpx;
-  pointer-events: none;
-}
-.lux-float-btn {
-  flex: 1;
-  height: 82rpx;
-  line-height: 82rpx;
-  border-radius: $radius-sm;
-  font-size: 26rpx;
-  font-weight: 600;
-  pointer-events: auto;
-  padding: 0;
-}
-.lux-float-btn::after {
-  border: none;
-}
-.lux-float-btn.rsvp {
-  background: var(--theme-strong-bg, $text-primary);
-  color: var(--theme-strong-ink, $ink-inverse);
-}
-.lux-float-btn.share {
-  background: rgba(255,255,255,0.94);
-  color: var(--theme-ink, $text-primary);
-  border: 1rpx solid var(--theme-border, $border-color);
 }
 .lux-music-control {
   right: $page-gutter;

@@ -61,9 +61,9 @@ function handleClick() {
 }
 .ui-action-card.primary {
   background:
-    linear-gradient(135deg, var(--theme-strong-bg, $text-primary) 0%, var(--theme-accent-deep, $color-primary-dark) 100%);
-  border-color: var(--theme-strong-border, transparent);
-  box-shadow: 0 14rpx 34rpx rgba(30, 8, 12, 0.16);
+    linear-gradient(180deg, var(--theme-surface, $paper-card) 0%, var(--theme-accent-soft, rgba(176, 58, 91, 0.08)) 100%);
+  border-color: var(--theme-accent-line, rgba(176, 58, 91, 0.24));
+  box-shadow: 0 8rpx 28rpx rgba(42, 17, 20, 0.055);
 }
 .ui-action-card.gold {
   background: linear-gradient(135deg, $paper-card 0%, $gold-soft 100%);
@@ -89,7 +89,7 @@ function handleClick() {
   box-shadow: inset 0 0 0 1rpx rgba(255,255,255,0.56);
 }
 .ui-action-card.primary .ui-action-icon-wrap {
-  background: var(--theme-strong-soft, rgba(255,255,255,0.13));
+  background: var(--theme-accent-soft, rgba(176, 58, 91, 0.10));
 }
 .ui-action-icon {
   width: 34rpx;
@@ -115,7 +115,7 @@ function handleClick() {
   text-overflow: ellipsis;
 }
 .ui-action-card.primary .ui-action-title {
-  color: var(--theme-strong-ink, $ink-inverse);
+  color: var(--theme-ink, $text-primary);
 }
 .ui-action-status {
   flex-shrink: 0;
@@ -131,8 +131,8 @@ function handleClick() {
   text-overflow: ellipsis;
 }
 .ui-action-card.primary .ui-action-status {
-  background: var(--theme-strong-soft, rgba(255,255,255,0.14));
-  color: var(--theme-strong-ink, $ink-inverse);
+  background: var(--theme-accent-soft, rgba(176, 58, 91, 0.10));
+  color: var(--theme-accent, $color-primary);
 }
 .ui-action-desc {
   display: block;
@@ -147,7 +147,7 @@ function handleClick() {
   -webkit-box-orient: vertical;
 }
 .ui-action-card.primary .ui-action-desc {
-  color: var(--theme-strong-muted, rgba(255, 255, 255, 0.70));
+  color: var(--theme-muted, $text-secondary);
 }
 .ui-action-arrow {
   width: 30rpx;

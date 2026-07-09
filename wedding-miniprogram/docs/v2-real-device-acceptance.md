@@ -42,6 +42,7 @@ npm run record:v2-manual-evidence -- \
   --wizard-photo-preview=/path/to/wizard-photo-preview.png \
   --premium-entitlement=/path/to/premium-entitlement.png \
   --friend-quote="这是请柬" \
+  --friend-evidence=/path/to/friend-feedback.png \
   --no-errors
 ```
 

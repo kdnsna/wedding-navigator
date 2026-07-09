@@ -2,10 +2,11 @@
   <PageShell
     title="更多"
     kicker="WEDDING MENU"
-    :desc="`${coupleName || '新人婚礼'} · ${formatDate(weddingDate) || '婚期待公布'}`"
+    :desc="`${coupleName || '新人婚礼'} · ${formatDate(weddingDate) || '良辰待定'}`"
     :theme-class="templateClass"
   >
     <view class="more-feature">
+      <view class="more-seal">囍</view>
       <text class="more-feature-kicker">甜囍手册</text>
       <text class="more-feature-title">{{ coupleName || '我们的婚礼' }}</text>
       <text class="more-feature-desc">请柬、路书、流程、回执和祝福都已经为宾客整理好。</text>
@@ -21,19 +22,16 @@
     <view class="more-group">
       <ActionCard v-if="isRsvpEnabled" title="出席回执" desc="确认是否到场、人数、到达时间和饮食偏好" icon="/static/visuals/icon-rsvp.svg" @click="goToRSVP" />
       <ActionCard v-if="isBlessingEnabled" title="祝福墙" desc="留下给新人的祝福，也可以查看公开留言" icon="/static/visuals/icon-blessing.svg" @click="goToBlessing" />
-      <ActionCard title="婚礼路书" desc="主场地、停车、住宿、天气和导航入口" icon="/static/visuals/icon-guide.svg" tone="primary" status="到场必看" @click="goToGuide" />
+      <ActionCard title="婚礼路书" desc="主场地、停车、住宿、天气和导航入口" icon="/static/visuals/icon-guide.svg" status="到场必看" @click="goToGuide" />
       <ActionCard v-if="isTimelineEnabled" title="婚礼流程" desc="按角色查看当天时间安排和正在进行的节点" icon="/static/visuals/icon-timeline.svg" @click="goToTimeline" />
       <ActionCard title="婚纱相册" desc="查看新人精选影像和婚礼封面照片" icon="/static/visuals/icon-album.svg" @click="goToAlbum" />
     </view>
 
     <view class="more-group">
-      <ActionCard v-if="userStore.canEdit" title="管理后台" desc="返回主人端编辑、发布、分享和查看统计" icon="/static/visuals/icon-manage.svg" status="主人" @click="goToManage" />
-      <button class="more-contact" open-type="contact">
-        <image class="more-contact-icon" src="/static/visuals/icon-phone.svg" mode="aspectFit" />
-        <text class="more-contact-title">联系客服</text>
-        <image class="more-contact-arrow" src="/static/visuals/icon-chevron-right.svg" mode="aspectFit" />
-      </button>
+      <ActionCard v-if="userStore.canEdit" title="主人书案" desc="编辑请柬、查看回执和整理分享" icon="/static/visuals/icon-manage.svg" status="主人" @click="goToManage" />
     </view>
+
+    <button class="more-contact-inline" open-type="contact">需要协助，可联系甜囍手册</button>
 
     <navigator class="promo-link" url="/pages-owner/wizard/index" open-type="navigate">
       <text>由甜囍手册生成 · 我也要制作</text>
@@ -360,19 +358,49 @@ onShow(async () => {
 }
 
 .more-feature {
+  position: relative;
   margin: 0 $page-gutter 28rpx;
-  padding: 32rpx;
+  padding: 34rpx 32rpx 32rpx;
   border-radius: $card-radius;
-  background: $text-primary;
-  color: $ink-inverse;
-  box-shadow: $shadow-lg;
+  background: var(--theme-surface, $paper-card);
+  color: var(--theme-ink, $text-primary);
+  border: 1rpx solid var(--theme-border, $border-light);
+  box-shadow: $shadow-sm;
+  overflow: hidden;
+}
+.more-feature::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 28rpx;
+  bottom: 28rpx;
+  width: 4rpx;
+  background: var(--theme-accent, $color-primary);
+  border-radius: 2rpx;
+}
+.more-seal {
+  position: absolute;
+  right: 28rpx;
+  top: 26rpx;
+  width: 54rpx;
+  height: 54rpx;
+  border-radius: $radius-full;
+  background: var(--theme-accent, $color-primary);
+  color: var(--theme-on-accent, $ink-inverse);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: $font-serif;
+  font-size: 24rpx;
+  box-shadow: 0 4rpx 16rpx var(--theme-accent-glow, rgba(176,58,91,0.26));
 }
 .more-feature-kicker {
   display: block;
-  color: rgba(255,255,255,0.54);
+  color: $gold;
   font-size: 20rpx;
   font-weight: 600;
-  letter-spacing: 0;
+  letter-spacing: $ls-wide;
+  text-transform: uppercase;
 }
 .more-feature-title {
   display: block;
@@ -381,6 +409,7 @@ onShow(async () => {
   font-size: 42rpx;
   font-weight: 600;
   line-height: 1.2;
+  color: var(--theme-ink, $text-primary);
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -388,17 +417,18 @@ onShow(async () => {
 .more-feature-desc {
   display: block;
   margin-top: 14rpx;
-  color: rgba(255,255,255,0.72);
+  color: var(--theme-muted, $text-muted);
   font-size: 26rpx;
   line-height: 1.5;
+  padding-right: 74rpx;
 }
 .more-share-btn {
   margin-top: 26rpx;
   height: $control-height-sm;
   line-height: $control-height-sm;
   border-radius: $radius-sm;
-  background: $ink-inverse;
-  color: $text-primary;
+  background: var(--theme-accent, $color-primary);
+  color: var(--theme-on-accent, $ink-inverse);
   font-size: 26rpx;
   font-weight: 600;
 }
@@ -412,37 +442,18 @@ onShow(async () => {
   padding: 0 $page-gutter;
   margin-bottom: 28rpx;
 }
-.more-contact {
-  display: flex;
-  align-items: center;
-  gap: 20rpx;
-  min-height: 112rpx;
-  padding: 24rpx;
-  border-radius: $card-radius;
-  border: 1rpx solid $border-light;
-  background: $ink-inverse;
-  box-shadow: $shadow-sm;
-  line-height: 1;
-  text-align: left;
-  box-sizing: border-box;
+.more-contact-inline {
+  display: block;
+  margin: 4rpx auto 16rpx;
+  padding: 0;
+  width: auto;
+  background: transparent;
+  color: var(--theme-muted, $ink-faint);
+  font-size: 22rpx;
+  line-height: 1.6;
+  text-align: center;
 }
-.more-contact::after {
+.more-contact-inline::after {
   border: none;
-}
-.more-contact-icon {
-  width: 42rpx;
-  height: 42rpx;
-  flex-shrink: 0;
-}
-.more-contact-title {
-  flex: 1;
-  color: $text-primary;
-  font-size: 28rpx;
-  font-weight: 600;
-}
-.more-contact-arrow {
-  width: 30rpx;
-  height: 30rpx;
-  opacity: 0.56;
 }
 </style>

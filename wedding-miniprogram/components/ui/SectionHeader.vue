@@ -47,10 +47,11 @@ defineProps({
 .ui-section-kicker {
   display: block;
   margin-bottom: 7rpx;
-  color: var(--theme-accent, $color-primary);
+  color: $gold;
   font-size: 18rpx;
   font-weight: 600;
-  letter-spacing: 0;
+  letter-spacing: $ls-wide;
+  text-transform: uppercase;
 }
 .ui-section-title {
   display: block;

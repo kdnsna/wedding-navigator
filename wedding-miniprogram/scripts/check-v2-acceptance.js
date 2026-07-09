@@ -134,11 +134,60 @@ function checkTemplateRuntimeClasses() {
   assertIncludes('utils/templates.js', 'return getThemeClass(template.theme || template.themeClass)', 'runtime templates must emit mood theme classes only')
   assert(!read('utils/templates.js').includes('return [template.className'), 'utils/templates.js: must not emit legacy tpl-* classes at runtime')
   for (const page of ['pages/index/index.vue', 'pages/album/index.vue', 'pages/rsvp/index.vue', 'pages/guide/index.vue', 'pages/timeline/index.vue', 'pages/blessing/index.vue', 'pages/more/index.vue']) {
-    assertIncludes(page, 'theme-wine', 'guest pages must style the v2 mood classes')
-    assertIncludes(page, 'theme-cinnabar', 'guest pages must style the v2 mood classes')
-    assertIncludes(page, 'theme-indigo', 'guest pages must style the v2 mood classes')
-    assertIncludes(page, 'theme-pine', 'guest pages must style the v2 mood classes')
+    const source = read(page)
+    assert(source.includes('templateClass'), `${page}: guest pages must bind the resolved v2 mood class`)
+    assert(
+      source.includes(':class="templateClass"') || source.includes(':theme-class="templateClass"'),
+      `${page}: guest pages must apply the resolved v2 mood class at runtime`
+    )
   }
+}
+
+function checkGuestToneAndAccentDiscipline() {
+  const guestPages = [
+    'pages/index/index.vue',
+    'pages/album/index.vue',
+    'pages/rsvp/index.vue',
+    'pages/guide/index.vue',
+    'pages/timeline/index.vue',
+    'pages/blessing/index.vue',
+    'pages/more/index.vue'
+  ]
+  const forbiddenGuestCopy = [
+    '请在主人端',
+    '请从有效婚礼邀请进入',
+    '当前没有关联的婚礼信息',
+    '待主人匹配地图',
+    '待匹配',
+    '建议使用竖版主封面',
+    '主人正在',
+    '主人尚未',
+    'API Key'
+  ]
+
+  for (const page of guestPages) {
+    const source = read(page)
+    for (const copy of forbiddenGuestCopy) {
+      assert(!source.includes(copy), `${page}: guest-facing pages must not leak backend/admin copy: ${copy}`)
+    }
+  }
+
+  const home = read('pages/index/index.vue')
+  for (const text of ['GUEST ACTIONS', '宾客行动', 'lux-float-actions', 'lux-rsvp-chip', 'lux-mini-grid', '待回执', '最近流程']) {
+    assert(!home.includes(text), `pages/index/index.vue: home must not keep dashboard/action residue: ${text}`)
+  }
+  assert(home.includes('kicker="INVITATION"'), 'pages/index/index.vue: invitation section must use a pure English gold kicker')
+  assert(home.includes('lux-couple-amp'), 'pages/index/index.vue: couple names must be joined by a gold ampersand')
+
+  const guide = read('pages/guide/index.vue')
+  assert(guide.includes('suggestedArrivalTime'), 'pages/guide/index.vue: suggested arrival must be derived or hidden')
+  assert(guide.includes("return '以当日为准'"), 'pages/guide/index.vue: weather fallback must be guest-facing')
+  assert(guide.includes('v-if="hasCoordinate(primaryVenue)"'), 'pages/guide/index.vue: navigation button must not render as a disabled pseudo button')
+
+  const more = read('pages/more/index.vue')
+  assert(more.includes('more-seal'), 'pages/more/index.vue: share feature must use the paper card plus small seal treatment')
+  assert(more.includes('more-contact-inline'), 'pages/more/index.vue: contact service must be downgraded to footer copy')
+  assert(!more.includes('tone="primary"'), 'pages/more/index.vue: guide action must not be a large accent card')
 }
 
 function checkManualAcceptanceArtifacts() {
@@ -150,6 +199,7 @@ function checkManualAcceptanceArtifacts() {
   assert(fs.existsSync(path.join(root, 'scripts', 'find-legacy-sakura-wedding.js')), 'scripts/find-legacy-sakura-wedding.js: legacy sakura-pink query helper must exist')
   assert(fs.existsSync(path.join(root, 'preview.mjs')), 'preview.mjs: real-device preview QR generator must exist')
   assertIncludes('docs/v2-real-device-acceptance.md', '朋友第一反应', 'manual checklist must capture the uninformed friend reaction')
+  assertIncludes('docs/v2-real-device-acceptance.md', '--friend-evidence', 'manual checklist must require friend feedback evidence')
   assertIncludes('docs/v2-real-device-acceptance.md', 'theme=sakura-pink', 'manual checklist must capture old sakura-pink data validation')
   assertIncludes('docs/v2-real-device-acceptance.md', '.release/v2-evidence-<version>/', 'manual checklist must require local evidence files')
   assertIncludes('docs/v2-real-device-acceptance.md', 'npm run preview:mp-weixin', 'manual checklist must document preview QR generation')
@@ -161,6 +211,7 @@ function checkManualAcceptanceArtifacts() {
   assertIncludes('scripts/record-v2-automatic-evidence.js', 'Automatic v2 evidence recorded', 'automatic evidence recorder must update the release record')
   assertIncludes('scripts/record-v2-manual-evidence.js', 'Manual v2 evidence recorded', 'manual evidence recorder must update the release record')
   assertIncludes('scripts/record-v2-manual-evidence.js', 'friend-quote', 'manual evidence recorder must capture friend feedback')
+  assertIncludes('scripts/record-v2-manual-evidence.js', 'friend-evidence', 'manual evidence recorder must require friend feedback evidence')
   assertIncludes('scripts/check-v2-real-device-record.js', 'v2 real-device acceptance is not complete', 'final real-device checker must fail while evidence is pending')
   assertIncludes('scripts/check-v2-real-device-record.js', '证据文件不存在', 'final real-device checker must verify local evidence files')
   assertIncludes('scripts/check-v2-real-device-record.js', '必须填写朋友反馈原话', 'final real-device checker must verify friend feedback text')
@@ -179,6 +230,7 @@ function runAutomaticChecks() {
   checkFourActWizard()
   checkPremiumThemeEntitlements()
   checkTemplateRuntimeClasses()
+  checkGuestToneAndAccentDiscipline()
   checkManualAcceptanceArtifacts()
   console.log('v2 automatic acceptance checks passed')
 }

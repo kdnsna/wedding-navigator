@@ -10,13 +10,13 @@
 
     <view class="rsvp-brief" v-if="!submitted && isRsvpEnabled">
       <view>
-        <text class="brief-kicker">{{ activeTemplate.shortName }} RSVP CARD</text>
+        <text class="brief-kicker">RSVP CARD</text>
         <text class="brief-title">{{ store.coupleName || '新人婚礼' }}</text>
       </view>
       <view class="brief-grid">
         <view class="brief-item">
           <text class="brief-label">DATE</text>
-          <text class="brief-value">{{ formatDate(store.weddingDate) || '待公布' }}</text>
+          <text class="brief-value">{{ formatDate(store.weddingDate) || '良辰待定' }}</text>
         </view>
         <view class="brief-item">
           <text class="brief-label">TIME</text>
@@ -655,8 +655,9 @@ async function reloadWedding() {
   margin: 0 auto 44rpx;
   padding: 32rpx;
   border-radius: $card-radius;
-  background: $text-primary;
-  color: $ink-inverse;
+  background: $paper-card;
+  color: $text-primary;
+  border: 1rpx solid $line;
   box-shadow: $shadow-sm;
   position: relative;
   overflow: hidden;
@@ -667,15 +668,16 @@ async function reloadWedding() {
   left: 0;
   top: 0;
   bottom: 0;
-  width: 8rpx;
-  background: $color-primary;
+  width: 4rpx;
+  background: var(--theme-accent, $color-primary);
 }
 .brief-kicker {
   display: block;
   font-size: 18rpx;
-  color: rgba(255,255,255,0.56);
-  letter-spacing: 0;
+  color: $gold;
+  letter-spacing: $ls-wide;
   margin-bottom: 10rpx;
+  text-transform: uppercase;
 }
 .brief-title {
   display: block;
@@ -694,7 +696,7 @@ async function reloadWedding() {
 }
 .brief-item {
   padding-top: 18rpx;
-  border-top: 1rpx solid rgba(255,255,255,0.12);
+  border-top: 1rpx solid $line-soft;
 }
 .brief-item.wide {
   grid-column: 1 / -1;
@@ -703,13 +705,13 @@ async function reloadWedding() {
   display: block;
   font-size: 18rpx;
   letter-spacing: 0;
-  color: rgba(255,255,255,0.45);
+  color: $text-muted;
   margin-bottom: 6rpx;
 }
 .brief-value {
   display: block;
   font-size: 26rpx;
-  color: rgba(255,255,255,0.92);
+  color: $text-primary;
   line-height: 1.4;
   overflow: hidden;
   white-space: nowrap;
@@ -1131,9 +1133,9 @@ async function reloadWedding() {
   }
 
   .rsvp-brief {
-    background: var(--theme-strong-bg, $text-primary);
-    border: 1rpx solid var(--theme-strong-border, transparent);
-    color: var(--theme-strong-ink, $ink-inverse);
+    background: var(--theme-surface, $paper-card);
+    border: 1rpx solid var(--theme-border, $line);
+    color: var(--theme-ink, $text-primary);
   }
 
   .rsvp-brief::before {
@@ -1142,12 +1144,11 @@ async function reloadWedding() {
 
   .brief-title,
   .brief-value {
-    color: var(--theme-strong-ink, $ink-inverse);
+    color: var(--theme-ink, $text-primary);
   }
 
-  .brief-kicker,
   .brief-label {
-    color: var(--theme-strong-muted, rgba(255,255,255,0.56));
+    color: var(--theme-muted, $text-muted);
   }
 
   .brief-item {

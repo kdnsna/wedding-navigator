@@ -159,9 +159,9 @@ function checkLongUserContentCanWrap() {
     ['pages-owner/guests/manage.vue', '.guest-name'],
     ['pages-owner/guide/edit.vue', '.venue-address'],
     ['pages-owner/guide/edit.vue', '.info-row-value'],
-    ['pages/index/index.vue', '.daypack-value'],
-    ['pages/index/index.vue', '.daypack-sub'],
-    ['pages/index/index.vue', '.info-address'],
+    ['pages/index/index.vue', '.lux-venue-name'],
+    ['pages/index/index.vue', '.lux-invite-text'],
+    ['pages/index/index.vue', '.lux-blessing-text'],
     ['pages/index/index.vue', '.lux-venue-address']
   ]
   for (const [file, selector] of checks) {

@@ -65,18 +65,18 @@ const activeTemplate = computed(() => store.activeTemplate)
 const templateClass = computed(() => store.templateClass)
 const photoTreatment = computed(() => store.invitation?.photo_treatment || 'original')
 const emptyText = computed(() => {
-  if (!userStore.weddingId) return '请从有效婚礼邀请进入'
+  if (!userStore.weddingId) return '这封信还没有抵达'
   if (loadError.value) return '相册加载失败'
-  return '暂无照片'
+  return '影像这一章，留给相见时慢慢翻开'
 })
 const emptySub = computed(() => {
-  if (!userStore.weddingId) return '当前没有关联的婚礼信息'
-  if (loadError.value) return '网络或云端暂时不可用，请重新加载或联系新人'
-  return '新人还在准备婚纱照'
+  if (!userStore.weddingId) return '请从新人寄来的请柬进入'
+  if (loadError.value) return '稍后再翻，这一页会重新铺开'
+  return ''
 })
 const albumActionText = computed(() => {
   if (!userStore.weddingId) return ''
-  return loadError.value ? '重新加载' : '先看婚礼路书'
+  return loadError.value ? '重新加载' : ''
 })
 
 function previewImage(index) {
@@ -126,9 +126,7 @@ function goToGuide() {
 function handleEmptyAction() {
   if (loadError.value) {
     loadAlbum(true)
-    return
   }
-  goToGuide()
 }
 
 async function loadAlbum(force = false) {

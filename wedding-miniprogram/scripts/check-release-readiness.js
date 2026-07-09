@@ -577,7 +577,7 @@ function checkVisualAssets() {
   }
 
   assertIncludes('pages/index/index.vue', 'coverImageMode', 'home hero must use a stable full-bleed image mode')
-  assertIncludes('pages/index/index.vue', 'hero-gradient.default', 'home hero must soften the default cover overlay separately')
+  assertIncludes('pages/index/index.vue', 'lux-hero-overlay.default', 'home hero must soften the default cover overlay separately')
 }
 
 checkPagesExist()

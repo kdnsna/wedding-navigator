@@ -169,10 +169,13 @@ function main() {
     markdown = replaceMeta(markdown, '旧数据婚礼 ID', args['old-wedding-id'])
   }
   if (args['friend-quote']) {
+    if (!args['friend-evidence']) {
+      throw new Error('朋友反馈需要同时传入 --friend-evidence=<截图或记录文件>')
+    }
     markdown = replaceSection(markdown, '朋友反馈原话', `> ${args['friend-quote']}`)
     markdown = updateRow(markdown, '不知情朋友第一反应是请柬/邀请函', {
       result: '通过',
-      evidence: args['friend-evidence'] ? copyEvidence(args['friend-evidence'], evidenceDir, 'friend-feedback') : '',
+      evidence: copyEvidence(args['friend-evidence'], evidenceDir, 'friend-feedback'),
       note: '记录原话'
     })
   }

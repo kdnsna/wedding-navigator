@@ -143,16 +143,16 @@ const visibleEvents = computed(() => {
   })
 })
 const emptyText = computed(() => {
-  if (!userStore.weddingId) return '请从有效婚礼邀请进入'
-  if (loadError.value) return '流程加载失败'
+  if (!userStore.weddingId) return '这封信还没有抵达'
+  if (loadError.value) return '这一页暂时没翻开'
   if (activeRole.value !== 'all') return '当前角色暂无专属安排'
-  return '暂无流程安排'
+  return '流程这一章，等新人落笔'
 })
 const emptySub = computed(() => {
-  if (!userStore.weddingId) return '当前没有关联的婚礼信息'
-  if (loadError.value) return '网络或云端暂时不可用，请重新加载或联系新人'
+  if (!userStore.weddingId) return '请从新人寄来的请柬进入'
+  if (loadError.value) return '稍后再翻，这一页会重新铺开'
   if (activeRole.value !== 'all') return '可以切回“全部”查看完整婚礼流程'
-  return '婚礼当天的时间表将在这里展示'
+  return '请以现场安排为准'
 })
 const timelineActionText = computed(() => {
   if (!userStore.weddingId) return ''
@@ -361,7 +361,7 @@ onShow(() => loadTimeline(false))
 .role-filter {
   display: flex;
   gap: 12rpx;
-  padding: 0 $page-gutter 32rpx;
+  padding: 0 80rpx 32rpx $page-gutter;
   overflow-x: auto;
 }
 .role-pill {

@@ -4,7 +4,7 @@
     <view class="arrival-pack">
       <view class="arrival-head">
         <view>
-          <text class="arrival-kicker">{{ activeTemplate.shortName }} ARRIVAL PACK</text>
+          <text class="arrival-kicker">ARRIVAL PACK</text>
           <text class="arrival-title">到场助手</text>
         </view>
         <text class="arrival-date">{{ formatDate(store.weddingDate) }}</text>
@@ -13,17 +13,17 @@
         <view class="arrival-main">
           <text class="arrival-label">主场地</text>
           <text class="arrival-name">{{ primaryVenue.name }}</text>
-          <text class="arrival-address">{{ primaryVenue.address || '主人正在补充详细地址' }}</text>
+          <text class="arrival-address" v-if="primaryVenue.address">{{ primaryVenue.address }}</text>
         </view>
         <view class="arrival-actions">
-          <button class="arrival-btn primary" @click="navigateTo(primaryVenue)">导航</button>
+          <button class="arrival-btn primary" v-if="hasCoordinate(primaryVenue)" @click="navigateTo(primaryVenue)">导航</button>
           <button class="arrival-btn" v-if="primaryVenue.contact_phone" @click="callPhone(primaryVenue.contact_phone)">电话</button>
         </view>
       </view>
       <view class="arrival-summary">
-        <view class="arrival-summary-item">
+        <view class="arrival-summary-item" v-if="suggestedArrivalTime">
           <text class="summary-label">建议到达</text>
-          <text class="summary-value">{{ primaryVenue.arrival_time || store.weddingTime || '以邀请为准' }}</text>
+          <text class="summary-value">{{ suggestedArrivalTime }}</text>
         </view>
         <view class="arrival-summary-item" @click="activeTab = 'weather'">
           <text class="summary-label">天气提醒</text>
@@ -73,8 +73,8 @@
         />
         <view class="map-empty" v-else>
           <image class="empty-visual compact" src="/static/visuals/empty-guide.svg" mode="aspectFit" />
-          <text class="map-empty-title">主场地还未匹配地图</text>
-          <text class="map-empty-sub">主人补充场地地址或地图选点后，这里会自动显示路线和当地天气</text>
+          <text class="map-empty-title">路线尚未落笔</text>
+          <text class="map-empty-sub">请以请柬上的场地信息赴约</text>
         </view>
       </view>
 
@@ -92,14 +92,9 @@
           </view>
           <text class="venue-name">{{ venue.name }}</text>
           <text class="venue-address">{{ venue.address }}</text>
-          <text class="venue-geo" :class="{ missing: !hasCoordinate(venue) }">
-            {{ hasCoordinate(venue) ? '地图已匹配' : '待主人匹配地图' }}
-          </text>
           <view class="venue-actions">
             <button class="action-btn" @click.stop="callPhone(venue.contact_phone)" v-if="venue.contact_phone">电话</button>
-            <button class="action-btn primary" :class="{ disabled: !hasCoordinate(venue) }" @click.stop="navigateTo(venue)">
-              {{ hasCoordinate(venue) ? '导航' : '待匹配' }}
-            </button>
+            <button class="action-btn primary" v-if="hasCoordinate(venue)" @click.stop="navigateTo(venue)">导航</button>
           </view>
         </view>
       </scroll-view>
@@ -137,8 +132,8 @@
       <!-- 无天气数据 -->
       <view class="empty-state" v-if="!weatherLoading && !weatherData">
         <image class="empty-visual" src="/static/visuals/empty-weather.svg" mode="aspectFit" />
-        <text class="empty-text">暂无天气数据</text>
-        <text class="empty-sub">{{ weatherError || '请在主人端填写场地地址或地图选点后自动获取' }}</text>
+        <text class="empty-text">天气这一页，等清风送来</text>
+        <text class="empty-sub" v-if="weatherEmptySub">{{ weatherEmptySub }}</text>
         <button class="retry-btn" v-if="weatherError" @click="loadWeather">重新获取</button>
       </view>
 
@@ -166,10 +161,6 @@
       </view>
 
       <!-- 无天气 API 说明 -->
-      <view class="api-note" v-if="weatherData?.isMock">
-        <image class="visual-icon-xs note-icon" src="/static/visuals/icon-warning.svg" mode="aspectFit" />
-        <text class="note-text">当前为模拟数据，请配置天气 API Key 以获取真实天气</text>
-      </view>
     </view>
 
     <!-- 交通 Tab -->
@@ -215,8 +206,8 @@
 
       <view class="empty-state" v-if="!transportInfo.transport && !transportInfo.parking">
         <image class="empty-visual" src="/static/visuals/empty-transport.svg" mode="aspectFit" />
-        <text class="empty-text">暂无交通指引</text>
-        <text class="empty-sub">主人尚未添加交通信息</text>
+        <text class="empty-text">到场路上，愿一路顺遂</text>
+        <text class="empty-sub">请以请柬上的场地信息赴约</text>
       </view>
     </view>
 
@@ -248,8 +239,8 @@
 
       <view class="empty-state" v-if="accommodations.length === 0">
         <image class="empty-visual" src="/static/visuals/empty-hotel.svg" mode="aspectFit" />
-        <text class="empty-text">暂无推荐住宿</text>
-        <text class="empty-sub">主人尚未添加住宿推荐</text>
+        <text class="empty-text">夜宿安排，请随心而定</text>
+        <text class="empty-sub">若需协助，可与新人联系</text>
       </view>
     </view>
   </view>
@@ -312,10 +303,22 @@ const mapInk = computed(() => getThemeTokens(activeTemplate.value?.theme).accent
 const mapPaper = computed(() => getThemeTokens(activeTemplate.value?.theme).onAccent)
 const weatherHint = computed(() => {
   if (weatherLoading.value) return '加载中'
-  if (weatherError.value) return '待配置'
-  if (!weatherData.value) return '点此查看'
+  if (weatherError.value || !weatherData.value) return '以当日为准'
   if (weatherData.value.precip > 30) return `可能降雨 ${weatherData.value.precip}%`
   return `${weatherData.value.text || '适合出行'} ${weatherData.value.temp_min || ''}-${weatherData.value.temp_max || ''}°`
+})
+const weatherEmptySub = computed(() => {
+  if (!weatherError.value) return ''
+  return '请以当日天气为准'
+})
+const suggestedArrivalTime = computed(() => {
+  if (primaryVenue.value?.arrival_time) return primaryVenue.value.arrival_time
+  const time = store.weddingTime
+  if (!/^\d{1,2}:\d{2}$/.test(String(time || ''))) return ''
+  const [hour, minute] = String(time).split(':').map(Number)
+  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return ''
+  const total = Math.max(0, hour * 60 + minute - 30)
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
 })
 
 const markers = computed(() => {
@@ -509,10 +512,11 @@ onShow(async () => {
 .arrival-kicker {
   display: block;
   font-size: 18rpx;
-  color: var(--theme-accent, $color-primary);
-  letter-spacing: 0;
+  color: $gold;
+  letter-spacing: $ls-wide;
   margin-bottom: 8rpx;
   font-weight: 600;
+  text-transform: uppercase;
 }
 .arrival-title {
   display: block;
@@ -523,22 +527,35 @@ onShow(async () => {
 .arrival-date {
   font-size: 24rpx;
   color: var(--theme-muted, $text-muted);
+  font-family: $font-num;
   padding-top: 8rpx;
 }
 .arrival-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 24rpx;
   align-items: stretch;
   padding: 28rpx;
-  background: var(--theme-strong-bg, $text-primary);
-  border: 1rpx solid var(--theme-strong-border, transparent);
+  background: var(--theme-surface, $paper-card);
+  border: 1rpx solid var(--theme-border, $border-light);
   border-radius: $card-radius;
+  box-shadow: $shadow-sm;
   margin-bottom: 16rpx;
   width: calc(100vw - 64rpx);
   margin-left: auto;
   margin-right: auto;
   overflow: hidden;
+}
+.arrival-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 24rpx;
+  bottom: 24rpx;
+  width: 4rpx;
+  border-radius: 2rpx;
+  background: var(--theme-accent, $color-primary);
 }
 .arrival-main {
   flex: 1;
@@ -547,13 +564,13 @@ onShow(async () => {
 .arrival-label {
   display: block;
   font-size: 22rpx;
-  color: var(--theme-strong-muted, rgba(255,255,255,0.55));
+  color: var(--theme-muted, $text-muted);
   margin-bottom: 8rpx;
 }
 .arrival-name {
   display: block;
   font-size: 32rpx;
-  color: var(--theme-strong-ink, $ink-inverse);
+  color: var(--theme-ink, $text-primary);
   font-weight: 600;
   margin-bottom: 8rpx;
   line-height: 1.35;
@@ -562,7 +579,7 @@ onShow(async () => {
 .arrival-address {
   display: block;
   font-size: 24rpx;
-  color: var(--theme-strong-muted, rgba(255,255,255,0.72));
+  color: var(--theme-muted, $text-muted);
   line-height: 1.5;
   word-break: break-word;
 }
@@ -580,8 +597,8 @@ onShow(async () => {
   height: $control-height-sm;
   line-height: $control-height-sm;
   border-radius: $radius-full;
-  background: var(--theme-strong-soft, rgba(255,255,255,0.12));
-  color: var(--theme-strong-ink, $ink-inverse);
+  background: var(--theme-elevated, $bg-muted);
+  color: var(--theme-ink, $text-primary);
   font-size: 24rpx;
   padding: 0;
 }
@@ -664,9 +681,24 @@ onShow(async () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20rpx 0;
+  padding: 20rpx 0 24rpx;
   position: relative;
   gap: 6rpx;
+}
+.tab-item::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 8rpx;
+  width: 0;
+  height: 3rpx;
+  border-radius: 2rpx;
+  background: var(--theme-accent, $color-primary);
+  transform: translateX(-50%);
+  transition: width 0.2s ease;
+}
+.tab-item.active::after {
+  width: 36rpx;
 }
 .tab-label {
   font-size: 26rpx;
@@ -798,19 +830,6 @@ onShow(async () => {
   margin-bottom: 8rpx;
   line-height: 1.5;
   word-break: break-word;
-}
-.venue-geo {
-  display: inline-block;
-  margin-bottom: 16rpx;
-  padding: 4rpx 12rpx;
-  border-radius: 6rpx;
-  background: rgba(52,168,83,0.08);
-  color: $color-success;
-  font-size: 20rpx;
-}
-.venue-geo.missing {
-  background: rgba(249,171,0,0.12);
-  color: $gold;
 }
 .venue-actions {
   display: flex;
@@ -1132,17 +1151,8 @@ onShow(async () => {
   }
 
   .arrival-card {
-    background: var(--theme-strong-bg, $text-primary);
-    border-color: var(--theme-strong-border, transparent);
-  }
-
-  .venue-card.active {
-    background: var(--theme-accent-soft, rgba(176,58,91,0.08));
-    border-color: var(--theme-accent, $color-primary);
-  }
-
-  .arrival-name {
-    color: var(--theme-strong-ink, $ink-inverse);
+    background: var(--theme-surface, $paper-card);
+    border-color: var(--theme-border, $border-light);
   }
 
   .venue-card.active .venue-name {
@@ -1155,13 +1165,9 @@ onShow(async () => {
     color: var(--theme-muted, $text-secondary);
   }
 
-  .venue-card.active .venue-geo {
-    color: $color-success;
-  }
-
   .arrival-label,
   .arrival-address {
-    color: var(--theme-strong-muted, rgba(255,255,255,0.68));
+    color: var(--theme-muted, $text-muted);
   }
 
   .arrival-title,
@@ -1193,7 +1199,6 @@ onShow(async () => {
     color: var(--theme-muted, $text-muted);
   }
 
-  .arrival-kicker,
   .tab-item.active .tab-label {
     color: var(--theme-accent, $color-primary);
   }
@@ -1205,11 +1210,6 @@ onShow(async () => {
   .retry-btn {
     background: var(--theme-accent, $color-primary);
     color: var(--theme-on-accent, $ink-inverse);
-  }
-
-  .arrival-btn {
-    background: var(--theme-strong-soft, rgba(255,255,255,0.12));
-    color: var(--theme-strong-ink, $ink-inverse);
   }
 
   .arrival-summary-item,

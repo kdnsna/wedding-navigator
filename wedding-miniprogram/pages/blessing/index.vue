@@ -112,14 +112,14 @@ const blessings = computed(() => {
   })
 })
 const emptyText = computed(() => {
-  if (!userStore.weddingId) return '请从有效婚礼邀请进入'
-  if (loadError.value) return '祝福加载失败'
+  if (!userStore.weddingId) return '这封信还没有抵达'
+  if (loadError.value) return '这一页暂时没翻开'
   if (!blessingPublic.value) return '祝福已提交给新人查看'
-  return '暂无祝福，来做第一个祝福的人吧'
+  return '祝福这一章，等您轻轻落笔'
 })
 const emptySub = computed(() => {
-  if (!userStore.weddingId) return '当前没有关联的婚礼信息'
-  if (loadError.value) return '网络或云端暂时不可用，请重新加载或联系新人'
+  if (!userStore.weddingId) return '请从新人寄来的请柬进入'
+  if (loadError.value) return '稍后再翻，这一页会重新铺开'
   return ''
 })
 const emptyActionText = computed(() => {

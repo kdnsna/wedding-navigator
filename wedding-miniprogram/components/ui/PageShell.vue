@@ -30,17 +30,18 @@ defineProps({
   padding-bottom: calc(72rpx + env(safe-area-inset-bottom));
 }
 .ui-page-head {
-  padding: $page-header-top $page-gutter $page-header-bottom;
+  padding: calc(#{$page-header-top} + env(safe-area-inset-top)) $page-gutter $page-header-bottom;
   background:
     linear-gradient(180deg, rgba(255,255,255,0.34) 0%, rgba(255,255,255,0) 100%);
 }
 .ui-kicker {
   display: block;
   margin-bottom: 12rpx;
-  color: var(--theme-accent, $color-primary);
+  color: $gold;
   font-size: 20rpx;
   font-weight: 600;
-  letter-spacing: 0;
+  letter-spacing: $ls-wide;
+  text-transform: uppercase;
   line-height: 1.2;
 }
 .ui-title {
