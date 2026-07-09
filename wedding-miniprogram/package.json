@@ -11,6 +11,7 @@
     "check:v2-acceptance": "node scripts/check-v2-acceptance.js",
     "check:ui-polish": "node scripts/check-ui-polish.js",
     "create:v2-acceptance-record": "node scripts/create-v2-acceptance-record.js",
+    "check:v2-real-device-record": "node scripts/check-v2-real-device-record.js",
     "find:legacy-sakura": "node scripts/find-legacy-sakura-wedding.js",
     "dev:app": "uni",
     "dev:custom": "uni -p",

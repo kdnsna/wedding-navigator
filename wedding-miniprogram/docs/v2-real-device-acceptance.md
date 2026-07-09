@@ -19,7 +19,15 @@ npm run create:v2-acceptance-record
 
 3. 用 `.release/v2-real-device-acceptance-<version>.md` 记录真机证据。
 
-4. 如果要找真实旧数据，先登录 CloudBase，再运行只读查询：
+4. 填完证据后运行最终判定：
+
+```bash
+npm run check:v2-real-device-record
+```
+
+只有自动门禁、全部真机行和最终结论都勾选通过时，这个命令才会成功。
+
+5. 如果要找真实旧数据，先登录 CloudBase，再运行只读查询：
 
 ```bash
 npm exec --yes --package @cloudbase/cli -- tcb login
