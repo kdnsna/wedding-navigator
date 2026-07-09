@@ -55,7 +55,7 @@ function handlePreview() {
   box-shadow: $shadow-sm;
 }
 .ui-template-card.selected {
-  border-color: $color-primary;
+  border-color: var(--theme-accent, $color-primary);
   box-shadow: $shadow-gold;
 }
 .ui-template-card.disabled {
@@ -66,7 +66,7 @@ function handlePreview() {
   position: relative;
   height: 360rpx;
   overflow: hidden;
-  background: $color-primary-dark;
+  background: $paper-deep;
 }
 .ui-template-card.compact .ui-template-visual {
   height: 220rpx;
@@ -86,10 +86,11 @@ function handlePreview() {
   left: 24rpx;
   right: 24rpx;
   bottom: 96rpx;
-  color: rgba(255, 255, 255, 0.72);
+  color: $gold;
   font-size: 18rpx;
   font-weight: 600;
-  letter-spacing: 0;
+  letter-spacing: $ls-wide;
+  text-transform: uppercase;
 }
 .ui-template-name {
   position: absolute;

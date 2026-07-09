@@ -32,45 +32,61 @@
             <image class="mock-cover" :src="previewHeroImage" mode="aspectFill" />
             <view class="mock-hero-overlay" />
             <view class="mock-hero-text">
-              <text class="mock-kicker">{{ preview.template.kicker }}</text>
+              <text class="mock-kicker">THE WEDDING OF</text>
               <text class="mock-names">{{ preview.couple.groom }} & {{ preview.couple.bride }}</text>
               <text class="mock-date">{{ formatDate(preview.date) }}</text>
-              <text class="mock-cover-line">{{ preview.coverLine }}</text>
             </view>
           </view>
           <view class="mock-section">
             <view class="mock-section-head">
-              <text class="section-kicker">GUEST PACK</text>
-              <text class="section-title">宾客行动台</text>
+              <text class="section-kicker">INVITATION</text>
+              <text class="section-title">卷首语</text>
             </view>
-            <view class="action-card strong">
-              <view>
-                <text class="card-label">主场地</text>
+            <view class="letter-card">
+              <text class="letter-mark">"</text>
+              <text class="letter-copy">{{ preview.invitationText }}</text>
+            </view>
+          </view>
+          <view class="mock-section">
+            <view class="mock-section-head">
+              <text class="section-kicker">DETAILS</text>
+              <text class="section-title">囍事详情</text>
+            </view>
+            <view class="action-card detail-card">
+              <view class="detail-line">
+                <text class="card-label">DATE</text>
+                <text class="card-title">{{ formatDate(preview.date) }}</text>
+              </view>
+              <view class="detail-line">
+                <text class="card-label">TIME</text>
+                <text class="card-title">{{ preview.time }}</text>
+              </view>
+              <view class="detail-line">
+                <text class="card-label">VENUE</text>
                 <text class="card-title">{{ preview.venueName }}</text>
                 <text class="card-sub">{{ preview.address }}</text>
               </view>
-              <text class="card-pill">导航</text>
             </view>
-            <view class="mini-grid">
-              <view class="mini-card">
-                <text class="card-label">婚礼时间</text>
-                <text class="mini-value">{{ preview.time }}</text>
-              </view>
-              <view class="mini-card">
-                <text class="card-label">最近流程</text>
-                <text class="mini-value">{{ preview.timeline[0]?.title }}</text>
-              </view>
+          </view>
+          <view class="mock-section">
+            <view class="mock-section-head">
+              <text class="section-kicker">RSVP</text>
+              <text class="section-title">赴约</text>
+            </view>
+            <view class="action-card rsvp-callout">
+              <text class="card-sub">若您愿意赴这一日之约，请为新人留下一份回音。</text>
+              <text class="card-pill">确认出席</text>
             </view>
           </view>
         </view>
 
         <view v-if="activeTab === 'guide'" class="mock-page">
           <view class="mock-title-block">
-            <text class="section-kicker">{{ preview.template.shortName }} ARRIVAL PACK</text>
+            <text class="section-kicker">ARRIVAL PACK</text>
             <text class="section-title">到场助手</text>
             <text class="section-desc">{{ preview.transport }}</text>
           </view>
-          <view class="action-card strong">
+          <view class="action-card detail-card">
             <view>
               <text class="card-label">主场地</text>
               <text class="card-title">{{ preview.venueName }}</text>
@@ -117,7 +133,7 @@
 
         <view v-if="activeTab === 'rsvp'" class="mock-page">
           <view class="rsvp-brief">
-            <text class="section-kicker">{{ preview.template.shortName }} RSVP CARD</text>
+            <text class="section-kicker">RSVP CARD</text>
             <text class="brief-title">{{ preview.couple.groom }} & {{ preview.couple.bride }}</text>
             <view class="brief-grid">
               <view>
@@ -163,8 +179,8 @@
         <view v-if="activeTab === 'album'" class="mock-page">
           <view class="mock-title-block">
             <text class="section-kicker">PHOTO STORY</text>
-            <text class="section-title">{{ preview.template.albumMood }}</text>
-            <text class="section-desc">{{ preview.template.photoMood }}</text>
+            <text class="section-title">银盐相册</text>
+            <text class="section-desc">精选影像 · 装裱留白</text>
           </view>
           <view class="album-grid">
             <view class="photo-tile" v-for="(item, index) in preview.gallery" :key="item" :class="'tile-' + index">
@@ -315,7 +331,9 @@ onLoad((options = {}) => {
 .page-kicker {
   display: block;
   font-size: 20rpx;
-  color: var(--theme-accent, $color-primary);
+  color: $gold;
+  letter-spacing: $ls-wide;
+  text-transform: uppercase;
   margin-bottom: 8rpx;
 }
 .page-title {
@@ -365,8 +383,8 @@ onLoad((options = {}) => {
   font-size: 24rpx;
 }
 .mock-tab.active {
-  background: var(--theme-accent, $text-primary);
-  color: var(--theme-on-accent, $ink-inverse);
+  background: var(--theme-accent-soft, rgba(176,58,91,0.10));
+  color: var(--theme-accent, $color-primary);
 }
 
 .phone-shell {
@@ -428,19 +446,21 @@ onLoad((options = {}) => {
   left: 28rpx;
   right: 28rpx;
   bottom: 46rpx;
-  text-align: center;
+  text-align: left;
 }
 .mock-kicker {
   display: block;
   font-size: 18rpx;
-  color: rgba(255,255,255,0.68);
+  color: $gold;
+  letter-spacing: $ls-wide;
+  text-transform: uppercase;
   margin-bottom: 12rpx;
 }
 .mock-names {
   display: block;
   font-size: 42rpx;
   font-weight: 600;
-  color: $ink-inverse;
+  color: var(--theme-ink, $text-primary);
   line-height: 1.2;
   margin-bottom: 10rpx;
 }
@@ -448,7 +468,7 @@ onLoad((options = {}) => {
 .mock-cover-line {
   display: block;
   font-size: 22rpx;
-  color: rgba(255,255,255,0.82);
+  color: $ink-soft;
   line-height: 1.45;
 }
 
@@ -462,7 +482,9 @@ onLoad((options = {}) => {
 .section-kicker {
   display: block;
   font-size: 18rpx;
-  color: var(--theme-accent, $color-primary);
+  color: $gold;
+  letter-spacing: $ls-wide;
+  text-transform: uppercase;
   margin-bottom: 8rpx;
 }
 .section-title {
@@ -480,6 +502,7 @@ onLoad((options = {}) => {
 }
 
 .action-card,
+.letter-card,
 .weather-card,
 .blessing-card,
 .rsvp-brief,
@@ -496,9 +519,54 @@ onLoad((options = {}) => {
   justify-content: space-between;
   gap: 20rpx;
 }
+.letter-card,
+.detail-card,
+.rsvp-callout,
+.rsvp-brief {
+  position: relative;
+  overflow: hidden;
+}
+.detail-card::before,
+.rsvp-callout::before,
+.rsvp-brief::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 22rpx;
+  bottom: 22rpx;
+  width: 4rpx;
+  border-radius: 2rpx;
+  background: var(--theme-accent, $color-primary);
+}
+.letter-mark {
+  display: block;
+  color: var(--theme-accent-soft, rgba(176,58,91,0.18));
+  font-family: $font-serif;
+  font-size: 68rpx;
+  line-height: 0.8;
+}
+.letter-copy {
+  display: block;
+  margin-top: 4rpx;
+  color: var(--theme-ink, $text-primary);
+  font-family: $font-serif;
+  font-size: 26rpx;
+  line-height: 1.7;
+}
+.detail-line {
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid var(--theme-border, $border-color);
+}
+.detail-line:first-child {
+  padding-top: 0;
+}
+.detail-line:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
 .action-card.strong {
-  background: var(--theme-strong-bg, $text-primary);
-  border-color: var(--theme-strong-border, transparent);
+  background: var(--theme-surface, $bg-surface);
+  border-color: var(--theme-border, $border-color);
 }
 .card-label {
   display: block;
@@ -508,7 +576,7 @@ onLoad((options = {}) => {
 }
 .strong .card-label,
 .strong .card-sub {
-  color: var(--theme-strong-muted, rgba(255,255,255,0.68));
+  color: var(--theme-muted, $text-muted);
 }
 .card-title {
   display: block;
@@ -518,7 +586,7 @@ onLoad((options = {}) => {
   line-height: 1.35;
 }
 .strong .card-title {
-  color: var(--theme-strong-ink, $ink-inverse);
+  color: var(--theme-ink, $text-primary);
 }
 .card-sub {
   display: block;
@@ -595,8 +663,8 @@ onLoad((options = {}) => {
 }
 .role-pill.active,
 .choice.active {
-  background: var(--theme-accent, $color-primary);
-  color: var(--theme-on-accent, $ink-inverse);
+  background: var(--theme-accent-soft, rgba(176,58,91,0.10));
+  color: var(--theme-accent, $color-primary);
 }
 .timeline-row {
   display: grid;
@@ -623,19 +691,19 @@ onLoad((options = {}) => {
 }
 
 .rsvp-brief {
-  background: var(--theme-strong-bg, $text-primary);
-  border-color: var(--theme-strong-border, transparent);
+  background: var(--theme-surface, $bg-surface);
+  border-color: var(--theme-border, $border-color);
 }
 .brief-title {
   display: block;
   font-size: 34rpx;
-  color: var(--theme-strong-ink, $ink-inverse);
+  color: var(--theme-ink, $text-primary);
   font-weight: 600;
   margin-bottom: 20rpx;
 }
 .rsvp-brief .brief-value,
 .rsvp-brief .card-label {
-  color: var(--theme-strong-muted, rgba(255,255,255,0.72));
+  color: var(--theme-muted, $text-muted);
 }
 .form-label {
   display: block;

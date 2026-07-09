@@ -133,6 +133,9 @@ function checkPremiumThemeEntitlements() {
 function checkTemplateRuntimeClasses() {
   assertIncludes('utils/templates.js', 'return getThemeClass(template.theme || template.themeClass)', 'runtime templates must emit mood theme classes only')
   assert(!read('utils/templates.js').includes('return [template.className'), 'utils/templates.js: must not emit legacy tpl-* classes at runtime')
+  const templatesSource = read('utils/templates.js')
+  const mixedKicker = templatesSource.match(/kicker:\s*'[^']*[\u4e00-\u9fff][^']*'/)
+  assert(!mixedKicker, `utils/templates.js: template kickers must be pure English, found ${mixedKicker?.[0] || ''}`)
   for (const page of ['pages/index/index.vue', 'pages/album/index.vue', 'pages/rsvp/index.vue', 'pages/guide/index.vue', 'pages/timeline/index.vue', 'pages/blessing/index.vue', 'pages/more/index.vue']) {
     const source = read(page)
     assert(source.includes('templateClass'), `${page}: guest pages must bind the resolved v2 mood class`)
@@ -182,6 +185,11 @@ function checkGuestToneAndAccentDiscipline() {
   assert(home.includes('lux-detail-section'), 'pages/index/index.vue: home must include the wedding details chapter')
   assert(home.includes('lux-rsvp-section'), 'pages/index/index.vue: home must end the guest action as an RSVP chapter')
   assert(!read('stores/wedding.js').includes('请在主人端填写婚礼地址'), 'stores/wedding.js: fallback data must not leak admin copy into guest pages')
+
+  const preview = read('pages-owner/template/preview.vue')
+  for (const text of ['GUEST PACK', '宾客行动台', 'preview.template.shortName }} ARRIVAL PACK', 'preview.template.shortName }} RSVP CARD', 'theme-strong-bg']) {
+    assert(!preview.includes(text), `pages-owner/template/preview.vue: template preview must not preserve old dashboard mock: ${text}`)
+  }
 
   const guide = read('pages/guide/index.vue')
   assert(guide.includes('suggestedArrivalTime'), 'pages/guide/index.vue: suggested arrival must be derived or hidden')
