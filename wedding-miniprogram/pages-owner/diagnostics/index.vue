@@ -9,7 +9,7 @@
     <view class="summary-card" :class="{ ready: diagnostics.ready }">
       <view>
         <text class="summary-kicker">READINESS</text>
-        <text class="summary-title">{{ diagnostics.ready ? '可发布' : '需补齐' }}</text>
+        <text class="summary-title">{{ summaryTitle }}</text>
         <text class="summary-desc">{{ summaryText }}</text>
       </view>
       <text class="summary-score">{{ diagnostics.percent }}%</text>
@@ -68,7 +68,7 @@
 
     <view class="note-card">
       <text class="note-title">上线前人工验收</text>
-      <text class="note-copy">建议最后用真机完整走一遍：创建婚礼、上传封面、补场地坐标、提交 RSVP、写祝福、分享好友、生成海报、删除婚礼后旧链接失效。</text>
+      <text class="note-copy">先在微信公众平台完成选中照片或视频信息声明，再用真机完整走一遍：创建婚礼、上传封面、补场地坐标、提交 RSVP、写祝福、分享好友、生成海报、删除婚礼后旧链接失效。</text>
     </view>
 
     <BottomActionBar
@@ -113,8 +113,14 @@ const diagnosticMetrics = computed(() => [
   { label: '人工', value: diagnostics.value.manual },
   { label: '已完成', value: diagnostics.value.done }
 ])
+const summaryTitle = computed(() => {
+  if (diagnostics.value.blockers > 0) return '需补齐'
+  if (diagnostics.value.manual > 0) return '待确认'
+  return '可发布'
+})
 const summaryText = computed(() => {
   if (diagnostics.value.blockers > 0) return `还有 ${diagnostics.value.blockers} 个阻断项，补齐后再分享更稳`
+  if (diagnostics.value.manual > 0) return `主链路已具备，还需人工确认 ${diagnostics.value.manual} 项云端或真机能力`
   if (diagnostics.value.warnings > 0) return `主链路可用，还有 ${diagnostics.value.warnings} 个建议项可优化`
   return '基础发布项完整，建议真机再走一遍分享和海报'
 })

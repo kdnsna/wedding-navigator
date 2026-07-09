@@ -20,7 +20,7 @@ export function buildReleaseDiagnostics(store) {
   const venueHasCoordinate = Boolean(primaryVenue?.coordinate?.latitude && primaryVenue?.coordinate?.longitude)
   const venueHasAddress = isReady(primaryVenue?.address || invitation.wedding?.venue_address)
   const timelineReady = !features.show_timeline || Boolean((store.timeline?.events || []).length)
-  const privacyConfigured = features.rsvp_phone_required === false ||
+  const guestRulesCustomized = features.rsvp_phone_required === false ||
     features.blessing_public === false ||
     features.allow_anonymous_blessing === false ||
     features.allow_rsvp_update === false
@@ -97,14 +97,22 @@ export function buildReleaseDiagnostics(store) {
       actionText: '去编辑'
     }),
     statusItem({
-      key: 'privacy',
-      title: '隐私与权限',
-      desc: privacyConfigured
+      key: 'guest-rules',
+      title: '宾客信息规则',
+      desc: guestRulesCustomized
         ? '已调整至少一项宾客隐私/权限策略'
         : '当前为默认开放策略，建议确认手机号、祝福公开和回执修改规则',
-      status: privacyConfigured ? 'done' : 'warning',
+      status: guestRulesCustomized ? 'done' : 'warning',
       route: '/pages-owner/invitation/edit',
       actionText: '去确认'
+    }),
+    statusItem({
+      key: 'platform-privacy',
+      title: '微信隐私声明',
+      desc: '需在微信公众平台声明“收集你选中的照片或视频信息”，保存约 5 分钟后真机重测上传',
+      status: 'manual',
+      route: '/pages/privacy/index',
+      actionText: '查看说明'
     }),
     statusItem({
       key: 'share',
@@ -148,7 +156,7 @@ export function buildReleaseDiagnostics(store) {
     manual,
     done,
     total: items.length,
-    ready: blockers === 0,
+    ready: blockers === 0 && manual === 0,
     percent: Math.round((done / items.length) * 100)
   }
 }

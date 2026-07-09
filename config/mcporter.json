@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "cloudbase": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@cloudbase/cloudbase-mcp@latest"
+      ],
+      "description": "甜囍手册 CloudBase 资源巡检与部署管理"
+    }
+  }
+}

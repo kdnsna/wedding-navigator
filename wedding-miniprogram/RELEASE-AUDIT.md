@@ -1,6 +1,6 @@
 # 甜囍手册上线前全功能审查报告
 
-审查日期：2026-06-05
+审查日期：2026-07-10
 小程序 AppID：`wx2477cb578d01e89f`  
 云环境：`cloud1-d5gqyur7g5a4d3c8d`
 
@@ -8,9 +8,9 @@
 
 本轮按“代码 + 云函数 + 主链路 + 上线配置 + H5 视觉冒烟”的口径完成审查，并在原有绿色基线上完成“甜囍手册”全链路高级礼宴重设计。当前代码侧最主要的阻断项已经清理：16 个云函数全部写入 `cloudbaserc.json`，内容安全接口权限补齐，上传脚本移除本机私钥路径，上传版本改为优先读取 `manifest.versionName`，RSVP/祝福提交增加服务端必填和长度校验。
 
-2026-06-05 复验结论：`npm run check:release`、`npm run build:mp-weixin`、`npm run build:h5`、`git diff --check` 均通过；H5 使用 Chrome/Playwright 对 375px、390px、430px 的 13 条关键路由完成 39 组 smoke，未发现 pageerror、主体空白或横向溢出。
+2026-07-10 复验结论：`npm run check:release`、`npm run build:mp-weixin`、`git diff --check` 均通过；相册隐私授权已改为用户点击上传时调用微信官方授权，发布诊断已把微信平台隐私声明与宾客信息规则拆开，并禁止在仍有人工项时显示“可发布”。
 
-真云部署状态仍需要在微信开发者工具或云开发控制台做最后确认。本机未发现 `tcb` / `cloudbase` CLI，也没有可用的 CloudBase 管理 MCP；微信开发者工具 CLI 当前 `islogin --port 59321` 返回 `{"login":false}`，执行 `open --project dist/build/mp-weixin` 返回 `#initialize-error: wait IDE port timeout`。因此本轮无法从终端完成模拟器打开、预览二维码、云端已部署函数、环境变量、数据库索引和小程序码权限校验。下面的“真云必验清单”是上线前必须逐项点亮的人工检查。
+真云部署状态仍需要在微信开发者工具或云开发控制台做最后确认。本机已安装 CloudBase CLI，并在仓库根目录补充 `config/mcporter.json` 接入 CloudBase MCP；当前 MCP 与 CLI 均未完成登录授权，因此本轮只能确认本地 16 个云函数及构建产物完整，不能把云端已部署函数、环境变量、数据库索引或小程序码权限误报为已验证。下面的“真云必验清单”仍需逐项点亮。
 
 ## 本轮已修复
 
@@ -25,6 +25,7 @@
 | 构建产物 | `postbuild:mp-weixin` 按 `cloudbaserc.json` 白名单同步 16 个云函数和 `cloudbaserc.json` 到 `dist/build/mp-weixin` | 避免开发者工具打开构建目录时看不到云函数，且不会带入 `* 2` 重复目录 |
 | AI 主人发布助手 | 新增 `aiPublishAssistant`，主人端婚书、分享、流程、路书和诊断只生成候选，应用后再走现有保存逻辑 | 提升主人端筹备效率，同时避免 AI 直接写库或自动发布 |
 | 发布检查 | `npm run check:release` 新增云函数全量部署、构建产物云函数一致性、OpenAPI 权限、CI 上传脚本安全和当前宾客回执断言 | 后续迭代更难漏掉上线关键配置 |
+| 发布诊断真实性 | 微信平台隐私声明与宾客信息规则独立展示；存在人工确认项时显示“待确认”而不是“可发布” | 避免相册仍被平台拦截时主人端给出虚假发布绿灯 |
 | 设计系统 | 重整 `uni.scss` 色彩、字号、圆角、表单、按钮、卡片和全局字体栈，并新增 `components/ui` 共享组件 | 全链路保持高级礼宴视觉，不再散落重复 header/card/bottom-action 写法 |
 | 宾客端重设计 | 首页、相册、路书、流程、RSVP、祝福墙、更多页、海报页和隐私页统一为“第一眼能行动”的婚礼手册 | 宾客打开后可直接看日期地点、导航、回执、流程和分享入口 |
 | 主人端重设计 | 管理台、婚书、路书、相册、流程、宾客、祝福、分享、统计、诊断、权益页统一为发布作战台体系 | 主人端不再是纯菜单后台，发布准备度、数据、快捷任务和底部操作更清晰 |
@@ -77,13 +78,13 @@
 上线前请在微信开发者工具或云开发控制台完成以下检查：
 
 1. 运行 `npm run build:mp-weixin` 后，确认 `dist/build/mp-weixin/cloudfunctions` 中存在 16 个云函数目录。
-2. 在云开发环境 `cloud1-d5gqyur7g5a4d3c8d` 中确认 16 个云函数全部已部署，并选择“云端安装依赖”。
+2. 在仓库根目录完成 CloudBase MCP 设备授权并绑定 `cloud1-d5gqyur7g5a4d3c8d`，或登录云开发控制台；确认 16 个云函数全部已部署，并选择“云端安装依赖”。
 3. 确认 `submitRSVP`、`submitBlessing` 云函数权限包含 `security.msgSecCheck`，`generatePoster` 包含 `wxacode.getUnlimited`。
 4. 为 `geocodeVenue` 和 `getWeather` 配置 `TENCENT_MAP_KEY`；为真实天气配置 `HEFENG_KEY`，也可用 `QWEATHER_KEY` / `WEATHER_KEY`。
 5. 按需为 `submitRSVP`、`submitBlessing` 配置 `CONTENT_SAFETY_MODE=strict`；不配置时为“接口不可用则降级放行”。
 6. 确认数据库集合存在：`owners`、`weddings`、`invitations`、`albums`、`venues`、`timelines`、`guests`、`blessings`、`share_stats`、`viewers`。
 7. 确认索引存在：`viewers.wedding_id + viewers.openid`、`guests.guests.phone`、`blessings.blessings.id`。
-8. 用微信开发者工具打开 `dist/build/mp-weixin`，完整跑通：创建婚礼 -> 选模板 -> 编辑婚书 -> 上传照片 -> 配路书坐标 -> 提交 RSVP -> 写祝福 -> 生成小程序码/海报 -> 分享进入 -> 删除婚礼后旧链接失效。
+8. 在微信公众平台声明“收集你选中的照片或视频信息”，保存约 5 分钟后，用微信开发者工具打开 `dist/build/mp-weixin`，完整跑通：创建婚礼 -> 选模板 -> 编辑婚书 -> 上传照片 -> 配路书坐标 -> 提交 RSVP -> 写祝福 -> 生成小程序码/海报 -> 分享进入 -> 删除婚礼后旧链接失效。
 9. 确认 `aiPublishAssistant` 已安装 `@cloudbase/node-sdk` 依赖，并已启用 CloudBase AI 模型服务；未启用时主人端应显示“AI 暂不可用”，手动编辑不受影响。
 10. 在真机上检查 375px、390px、430px 常见宽度：无文字重叠、无按钮截断、无底部按钮遮挡、模板预览图片主体不被顶部裁掉。
 

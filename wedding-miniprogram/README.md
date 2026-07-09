@@ -266,6 +266,17 @@ npm run build:mp-weixin
 构建完成后，在微信开发者工具中打开 `dist/build/mp-weixin` 目录进行模拟器预览。
 构建脚本会自动把 `cloudfunctions/` 和 `cloudbaserc.json` 同步到该目录，便于在开发者工具里直接查看和部署云函数。
 
+### CloudBase 只读巡检
+
+仓库根目录的 `config/mcporter.json` 已配置 CloudBase MCP，不包含 API Key 或其他密钥。首次使用时在仓库根目录完成设备授权并绑定正式环境：
+
+```bash
+npx mcporter call 'cloudbase.auth(action: "start_auth", authMode: "device")'
+npx mcporter call 'cloudbase.auth(action: "set_env", envId: "cloud1-d5gqyur7g5a4d3c8d")'
+```
+
+授权后可用 `cloudbase.queryEnv`、`cloudbase.queryFunctions`、`cloudbase.queryLogs` 做只读巡检。未完成授权时，发布诊断中的云函数、天气、AI 和小程序码仍应保持“人工确认”，不得仅凭本地配置显示“可发布”。
+
 ## 部署
 
 ### 1. 开通微信云开发
@@ -368,6 +379,7 @@ MINIPROGRAM_PRIVATE_KEY_PATH=/path/to/private.key node upload-ci.mjs
 - 已部署 `geocodeVenue`，并为 `geocodeVenue`、`getWeather` 配置 `TENCENT_MAP_KEY` 后验证场地能自动匹配地图和天气
 - 已部署 `generatePoster`，并在主人端“分享设置”验证小程序码能展示，扫码能进入对应婚礼
 - 已在主人端相册页验证选择照片、云存储上传、相册数据保存和失败回滚；如失败，应能看到明确的云开发/权限/网络错误提示
+- 已在微信公众平台“设置 → 服务内容声明 → 用户隐私保护指引”声明“收集你选中的照片或视频信息”，保存约 5 分钟后重新真机验证相册上传
 - 如自动地理编码不可用，已在主人端路书手动填写经纬度并验证宾客端导航可打开
 - 数据库集合已创建：`owners`、`weddings`、`invitations`、`albums`、`venues`、`timelines`、`guests`、`blessings`、`share_stats`、`viewers`
 - 数据库索引已创建：`viewers.wedding_id + viewers.openid`、`guests.guests.phone`、`blessings.blessings.id`
@@ -376,7 +388,7 @@ MINIPROGRAM_PRIVATE_KEY_PATH=/path/to/private.key node upload-ci.mjs
 - 已确认 7 张写实模板主图存在于 `static/visuals/hero/`，首页、模板预览和分享海报在未上传相册封面时能正常兜底展示
 - 如使用 CLI 上传，已设置 `MINIPROGRAM_PRIVATE_KEY_PATH`，且未把上传密钥路径写入仓库
 - 在微信开发者工具中完成首页宾客行动台、RSVP 新字段、祝福墙、到场助手、管理后台发布准备度、宾客管理、统计页的模拟器检查
-- 在主人端“发布诊断”页确认无阻断项；天气 Key、小程序码、内容安全策略等人工项已真机验证
+- 在主人端“发布诊断”页确认无阻断项，并逐一人工核对天气 Key、微信隐私声明、小程序码、内容安全策略等“待确认”项目
 
 ## 设计系统
 

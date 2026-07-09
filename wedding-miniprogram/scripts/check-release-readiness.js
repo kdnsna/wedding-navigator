@@ -168,6 +168,30 @@ function checkPrivacyAuthorizationFlow() {
   assert(!app.includes('checkPrivacySetting()'), 'App.vue must not interrupt every launch with a non-authorizing privacy modal')
 }
 
+function checkReleaseDiagnosticsTruthfulness() {
+  const source = read('utils/releaseDiagnostics.js')
+  const page = read('pages-owner/diagnostics/index.vue')
+
+  assert(source.includes("key: 'platform-privacy'"), 'release diagnostics must track WeChat platform privacy separately')
+  assert(source.includes('收集你选中的照片或视频信息'), 'release diagnostics must name the exact WeChat image privacy declaration')
+  assert(source.includes("key: 'guest-rules'"), 'release diagnostics must keep guest data rules separate from platform privacy')
+  assert(source.includes('ready: blockers === 0 && manual === 0'), 'release diagnostics must not claim ready while manual checks remain')
+  assert(page.includes('summaryTitle'), 'diagnostics page must derive a truthful release state title')
+  assert(page.includes("return '待确认'"), 'diagnostics page must show a pending state for unresolved manual checks')
+}
+
+function checkCloudbaseInspectionConfig() {
+  const configPath = path.resolve(root, '..', 'config', 'mcporter.json')
+  assert(fs.existsSync(configPath), 'config/mcporter.json must expose the project CloudBase inspection entry')
+  const source = fs.readFileSync(configPath, 'utf8')
+  const config = JSON.parse(source)
+  const server = config.mcpServers?.cloudbase || {}
+
+  assert(server.command === 'npx', 'config/mcporter.json must run CloudBase MCP through npx')
+  assert((server.args || []).includes('@cloudbase/cloudbase-mcp@latest'), 'config/mcporter.json must use the CloudBase MCP package')
+  assert(!/(secretId|secretKey|apiKey|token)\s*[":=]/i.test(source), 'config/mcporter.json must not contain CloudBase credentials')
+}
+
 function checkCloudSafety() {
   const weatherSource = stripComments(read('cloudfunctions/getWeather/index.js'))
   assert(!weatherSource.includes('ea363fcdd56742fa84a17c4b11b37bdc'), 'getWeather must not hardcode a production API key')
@@ -602,6 +626,8 @@ checkNavigationTargets()
 checkRsvpContract()
 checkOwnerGuard()
 checkPrivacyAuthorizationFlow()
+checkReleaseDiagnosticsTruthfulness()
+checkCloudbaseInspectionConfig()
 checkCloudSafety()
 checkCloudFunctionDeployConfig()
 checkBuildCloudfunctionsOutputIfPresent()
