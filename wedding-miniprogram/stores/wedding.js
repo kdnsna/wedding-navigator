@@ -176,6 +176,11 @@ export const useWeddingStore = defineStore('wedding', () => {
   const blessingPublic = computed(() => features.value.blessing_public !== false)
   const allowAnonymousBlessing = computed(() => features.value.allow_anonymous_blessing !== false)
 
+  const currentGuestRsvp = computed(() => {
+    const list = guests.value?.guests || []
+    return list.find(guest => guest?.is_current_user === true) || null
+  })
+
   const publishChecklist = computed(() => {
     const coverReady = Boolean(album.value?.photos?.some(p => p.type === 'cover') || album.value?.photos?.[0]?.url)
     const primary = primaryVenue.value
@@ -353,15 +358,21 @@ export const useWeddingStore = defineStore('wedding', () => {
     guests.value.guests.push(guest)
   }
 
-  function updateGuestRSVP(phone, rsvpData) {
-    if (!guests.value?.guests) return
-    const idx = guests.value.guests.findIndex(g => g.phone === phone)
+  function updateGuestRSVP(identity, rsvpData) {
+    if (!guests.value) guests.value = { guests: [] }
+    if (!Array.isArray(guests.value.guests)) guests.value.guests = []
+    const idx = guests.value.guests.findIndex(guest => {
+      if (rsvpData?.is_current_user && guest?.is_current_user) return true
+      if (rsvpData?.openid && guest?.openid === rsvpData.openid) return true
+      if (rsvpData?.phone && guest?.phone === rsvpData.phone) return true
+      return Boolean(identity && guest?._local_identity === identity)
+    })
     if (idx >= 0) {
-      guests.value.guests[idx] = { ...guests.value.guests[idx], ...rsvpData }
+      guests.value.guests[idx] = { ...guests.value.guests[idx], ...rsvpData, _local_identity: identity }
     } else {
       guests.value.guests.push({
         id: Date.now().toString(),
-        phone,
+        _local_identity: identity,
         ...rsvpData,
         created_at: Date.now(),
         updated_at: Date.now()
@@ -417,6 +428,7 @@ export const useWeddingStore = defineStore('wedding', () => {
     allowRsvpUpdate,
     blessingPublic,
     allowAnonymousBlessing,
+    currentGuestRsvp,
     publishChecklist,
     countdown,
     getLiveCountdown,

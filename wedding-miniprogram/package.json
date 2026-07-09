@@ -7,7 +7,7 @@
     "node": "20.x"
   },
   "scripts": {
-    "check:release": "node scripts/check-v2-acceptance.js --automatic && node scripts/check-release-readiness.js && node scripts/check-ui-polish.js",
+    "check:release": "node scripts/check-v2-acceptance.js --automatic && node scripts/check-release-readiness.js && node scripts/check-ui-polish.js && node scripts/check-weather-forecast.js",
     "check:v2-acceptance": "node scripts/check-v2-acceptance.js",
     "check:ui-polish": "node scripts/check-ui-polish.js",
     "create:v2-acceptance-record": "node scripts/create-v2-acceptance-record.js",

@@ -452,6 +452,7 @@ async function handleSubmit() {
       name: form.name.trim(),
       phone: form.phone.trim(),
       openid: userStore.openid,
+      is_current_user: true,
       rsvp_status: form.status,
       attending_count: attendingCount,
       diet_preference: getDietPreference(),

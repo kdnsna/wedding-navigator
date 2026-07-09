@@ -30,6 +30,22 @@
           <text class="summary-value">{{ weatherHint }}</text>
         </view>
       </view>
+      <view class="guest-pass" v-if="currentGuestRsvp && currentGuestStatus !== 'pending'">
+        <view class="guest-pass-head">
+          <view class="guest-pass-heading">
+            <text class="guest-pass-kicker">MY RSVP</text>
+            <text class="guest-pass-title">{{ guestPassTitle }}</text>
+          </view>
+          <text class="guest-pass-status" :class="currentGuestStatus">{{ guestStatusLabel }}</text>
+        </view>
+        <text class="guest-pass-name">{{ currentGuestRsvp.name || '您的回执' }}</text>
+        <view class="guest-pass-meta" v-if="currentGuestStatus !== 'declined'">
+          <text v-if="guestCountText">{{ guestCountText }}</text>
+          <text v-if="currentGuestRsvp.arrival_time">预计 {{ currentGuestRsvp.arrival_time }} 到达</text>
+          <text v-if="currentGuestRsvp.transport_mode">{{ currentGuestRsvp.transport_mode }}</text>
+        </view>
+        <button class="guest-pass-action" v-if="store.allowRsvpUpdate" @click="openRsvp">修改回执</button>
+      </view>
       <view class="parking-note" v-if="transportInfo.parking">
         <image class="visual-icon-xs parking-icon" src="/static/visuals/icon-parking.svg" mode="aspectFit" />
         <text>{{ transportInfo.parking }}</text>
@@ -49,7 +65,7 @@
         @click="activeTab = tab.key"
       >
         <text class="tab-label">{{ tab.label }}</text>
-        <view class="tab-dot" v-if="tab.key === 'weather' && weatherData" />
+        <view class="tab-dot" v-if="tab.key === 'weather' && weatherReady" />
       </view>
     </view>
 
@@ -102,7 +118,7 @@
 
     <!-- 天气 Tab -->
     <view class="tab-content info-tab" v-show="activeTab === 'weather'">
-      <view class="weather-banner" v-if="weatherData && !weatherLoading">
+      <view class="weather-banner" v-if="weatherReady && !weatherLoading">
         <view class="weather-main">
           <image class="weather-icon" :src="weatherIcon" mode="aspectFit" />
           <view class="weather-temp">
@@ -123,6 +139,14 @@
         </view>
       </view>
 
+      <view class="weather-pending" v-if="weatherPending && !weatherLoading">
+        <image class="weather-pending-icon" src="/static/visuals/empty-weather.svg" mode="aspectFit" />
+        <text class="weather-pending-kicker">FORECAST WINDOW</text>
+        <text class="weather-pending-title">婚期临近后更新</text>
+        <text class="weather-pending-date" v-if="weatherData.date">{{ formatWeatherDate(weatherData.date) }}</text>
+        <text class="weather-pending-copy">{{ weatherData.tips || '婚礼前 7 天将自动更新当地天气' }}</text>
+      </view>
+
       <!-- 天气加载中 -->
       <view class="weather-loading" v-if="weatherLoading">
         <view class="loading-spinner" />
@@ -138,7 +162,7 @@
       </view>
 
       <!-- 天气详情 -->
-      <view class="weather-details" v-if="weatherData && !weatherLoading">
+      <view class="weather-details" v-if="weatherReady && !weatherLoading">
         <view class="detail-row">
           <image class="visual-icon-sm detail-icon" src="/static/visuals/icon-weather-wind.svg" mode="aspectFit" />
           <text class="detail-text">{{ weatherData.wind }}</text>
@@ -276,6 +300,8 @@ const selectedVenue = ref(null)
 const weatherData = ref(null)
 const weatherLoading = ref(false)
 const weatherError = ref('')
+const weatherPending = computed(() => Boolean(weatherData.value?.isPending))
+const weatherReady = computed(() => Boolean(weatherData.value && !weatherData.value.isPending))
 const weatherIcon = computed(() => {
   const iconMap = {
     sunny: '/static/visuals/icon-weather-sunny.svg',
@@ -299,12 +325,32 @@ const transportInfo = computed(() => store.venues?.transportation || {})
 const accommodations = computed(() => store.venues?.accommodations || [])
 const routeTips = computed(() => transportInfo.value.route_tips || [])
 const mapReady = computed(() => geocodedVenues.value.length > 0)
+const currentGuestRsvp = computed(() => store.currentGuestRsvp)
+const currentGuestStatus = computed(() => currentGuestRsvp.value?.rsvp_status || currentGuestRsvp.value?.status || 'pending')
+const guestStatusLabel = computed(() => ({
+  attending: '确认赴约',
+  uncertain: '暂待确认',
+  declined: '无法出席'
+}[currentGuestStatus.value] || '已回执'))
+const guestPassTitle = computed(() => ({
+  attending: '已为您留席',
+  uncertain: '等您最后确认',
+  declined: '这份心意已收到'
+}[currentGuestStatus.value] || '已收到您的回音'))
+const guestCountText = computed(() => {
+  if (currentGuestStatus.value === 'declined') return ''
+  const count = Number(currentGuestRsvp.value?.attending_count ?? currentGuestRsvp.value?.guest_count ?? 0)
+  return Number.isFinite(count) && count > 0 ? `${count} 位赴约` : ''
+})
 const mapAccent = computed(() => getThemeTokens(activeTemplate.value?.theme).accent)
 const mapInk = computed(() => getThemeTokens(activeTemplate.value?.theme).accentInk)
 const mapPaper = computed(() => getThemeTokens(activeTemplate.value?.theme).onAccent)
 const weatherHint = computed(() => {
   if (weatherLoading.value) return '加载中'
   if (weatherError.value || !weatherData.value) return '以当日为准'
+  if (weatherPending.value) {
+    return weatherData.value.reason === 'FORECAST_TOO_EARLY' ? '婚礼前 7 天更新' : '稍后更新'
+  }
   if (weatherData.value.precip > 30) return `可能降雨 ${weatherData.value.precip}%`
   return `${weatherData.value.text || '适合出行'} ${weatherData.value.temp_min || ''}-${weatherData.value.temp_max || ''}°`
 })
@@ -422,6 +468,16 @@ function callHotel(phone) {
         console.warn('拨打酒店电话失败:', err)
         uni.showToast({ title: '拨打电话失败', icon: 'none' })
       }
+    }
+  })
+}
+
+function openRsvp() {
+  uni.navigateTo({
+    url: '/pages/rsvp/index',
+    fail: (err) => {
+      console.warn('路书打开回执失败:', err)
+      uni.showToast({ title: '回执页打开失败', icon: 'none' })
     }
   })
 }
@@ -629,6 +685,93 @@ onShow(async () => {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+.guest-pass {
+  position: relative;
+  margin-top: 16rpx;
+  padding: 22rpx 24rpx 22rpx 30rpx;
+  border: 1rpx solid var(--theme-border, $border-color);
+  border-radius: $card-radius;
+  background: var(--theme-surface, $bg-surface);
+  overflow: hidden;
+}
+.guest-pass::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 6rpx;
+  background: var(--theme-accent, $color-primary);
+}
+.guest-pass-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+.guest-pass-heading {
+  min-width: 0;
+}
+.guest-pass-kicker {
+  display: block;
+  margin-bottom: 5rpx;
+  color: $gold;
+  font-size: 17rpx;
+  font-family: $font-sans;
+  font-weight: 600;
+  letter-spacing: $ls-wide;
+}
+.guest-pass-title {
+  display: block;
+  color: var(--theme-ink, $text-primary);
+  font-size: 26rpx;
+  font-weight: 600;
+}
+.guest-pass-status {
+  flex-shrink: 0;
+  padding: 7rpx 12rpx;
+  border-radius: $radius-full;
+  background: var(--theme-accent-soft, $bg-muted);
+  color: var(--theme-accent, $color-primary);
+  font-family: $font-sans;
+  font-size: 19rpx;
+}
+.guest-pass-status.declined {
+  background: var(--theme-elevated, $bg-muted);
+  color: var(--theme-muted, $text-muted);
+}
+.guest-pass-name {
+  display: block;
+  margin-top: 14rpx;
+  color: var(--theme-ink, $text-primary);
+  font-size: 30rpx;
+  font-weight: 600;
+  line-height: 1.35;
+  word-break: break-word;
+}
+.guest-pass-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx 18rpx;
+  margin-top: 10rpx;
+  color: var(--theme-muted, $text-secondary);
+  font-family: $font-sans;
+  font-size: 22rpx;
+}
+.guest-pass-action {
+  width: auto;
+  margin: 16rpx 0 0;
+  padding: 0;
+  background: transparent;
+  color: var(--theme-accent, $color-primary);
+  font-family: $font-sans;
+  font-size: 22rpx;
+  line-height: 1.4;
+  text-align: left;
+}
+.guest-pass-action::after {
+  border: 0;
 }
 .parking-note {
   display: flex;
@@ -920,6 +1063,51 @@ onShow(async () => {
 }
 .weather-tag-icon { flex-shrink: 0; }
 .weather-tag.rain { color: var(--accent); }
+
+.weather-pending {
+  margin: 24rpx;
+  padding: 42rpx 32rpx;
+  border: 1rpx solid var(--theme-border, $border-color);
+  border-radius: $card-radius;
+  background: var(--theme-surface, $bg-surface);
+  text-align: center;
+}
+.weather-pending-icon {
+  display: block;
+  width: 132rpx;
+  height: 132rpx;
+  margin: 0 auto 16rpx;
+}
+.weather-pending-kicker {
+  display: block;
+  margin-bottom: 8rpx;
+  color: $gold;
+  font-family: $font-sans;
+  font-size: 17rpx;
+  font-weight: 600;
+  letter-spacing: $ls-wide;
+}
+.weather-pending-title {
+  display: block;
+  color: var(--theme-ink, $text-primary);
+  font-size: 32rpx;
+  font-weight: 600;
+}
+.weather-pending-date {
+  display: block;
+  margin-top: 8rpx;
+  color: var(--theme-accent, $color-primary);
+  font-family: $font-sans;
+  font-size: 23rpx;
+}
+.weather-pending-copy {
+  display: block;
+  max-width: 500rpx;
+  margin: 14rpx auto 0;
+  color: var(--theme-muted, $text-secondary);
+  font-size: 24rpx;
+  line-height: 1.6;
+}
 
 .weather-details {
   margin: 24rpx;

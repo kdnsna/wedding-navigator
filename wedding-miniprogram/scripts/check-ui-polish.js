@@ -491,6 +491,23 @@ function checkCloudSuccessLogsDoNotExposePayloads() {
   assert(!source.includes('[cloud] ${name} success'), 'composables/useCloud.js: cloud success logs must not expose full response payloads')
 }
 
+function checkPersonalArrivalPlan() {
+  const store = read(path.join(root, 'stores/wedding.js'))
+  const guide = read(path.join(root, 'pages/guide/index.vue'))
+  const rsvp = read(path.join(root, 'pages/rsvp/index.vue'))
+  const home = read(path.join(root, 'pages/index/index.vue'))
+
+  assert(store.includes('currentGuestRsvp'), 'stores/wedding.js: store must expose the current guest RSVP safely')
+  assert(store.includes('guest?.is_current_user === true'), 'stores/wedding.js: current guest selection must use the server privacy marker')
+  assert(guide.includes('class="guest-pass"'), 'pages/guide/index.vue: guide must render the personal RSVP arrival pass')
+  assert(guide.includes('currentGuestRsvp.arrival_time'), 'pages/guide/index.vue: arrival pass must show the guest arrival time')
+  assert(guide.includes('currentGuestRsvp.transport_mode'), 'pages/guide/index.vue: arrival pass must show the guest transport mode')
+  assert(rsvp.includes('is_current_user: true'), 'pages/rsvp/index.vue: local RSVP updates must immediately identify the current guest')
+  assert(store.includes("if (!guests.value) guests.value = { guests: [] }"), 'stores/wedding.js: first RSVP must initialize a missing guest document locally')
+  assert(store.includes('guest?.is_current_user'), 'stores/wedding.js: RSVP updates must deduplicate phone-optional guests by current-user identity')
+  assert(home.includes('const guest = store.currentGuestRsvp'), 'pages/index/index.vue: home RSVP state must never use another guest response')
+}
+
 checkNoSilentCatch()
 checkNoUnregisteredPageFiles()
 checkNoDirectModalDismiss()
@@ -524,5 +541,6 @@ checkGuestAccentSolidDiscipline()
 checkOwnerNavigationFailureFeedback()
 checkWeddingDateDefaults()
 checkCloudSuccessLogsDoNotExposePayloads()
+checkPersonalArrivalPlan()
 
 console.log('ui polish checks passed')

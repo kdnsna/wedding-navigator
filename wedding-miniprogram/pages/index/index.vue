@@ -205,11 +205,9 @@ const countdownDesc = computed(() => {
 const hasWeddingDetails = computed(() => Boolean(formattedWeddingDate.value || weddingTime.value || hasVenueInfo.value || countdown.value))
 const hasSubmittedRsvp = computed(() => {
   if (!isRsvpEnabled.value) return false
-  const list = store.guests?.guests || []
-  return list.some(item => {
-    if (userStore.openid && item.openid === userStore.openid) return true
-    return item.rsvp_status && item.rsvp_status !== 'pending'
-  })
+  const guest = store.currentGuestRsvp
+  const status = guest?.rsvp_status || guest?.status || 'pending'
+  return status !== 'pending'
 })
 
 function photoTreatmentClass(photo = null) {

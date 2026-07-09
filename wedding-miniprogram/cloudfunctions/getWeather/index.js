@@ -1,6 +1,7 @@
 const cloud = require('wx-server-sdk')
 const https = require('https')
 const zlib = require('zlib')
+const { getForecastWindow, selectWeddingForecast } = require('./weather-utils')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
 const db = cloud.database()
@@ -26,7 +27,7 @@ function requestJson(baseUrl, params) {
 
 function requestWeather(key, lon, lat) {
   const host = normalizeWeatherHost(process.env.QWEATHER_API_HOST || process.env.HEFENG_API_HOST || process.env.WEATHER_API_HOST || 'devapi.qweather.com')
-  const url = `https://${host}/v7/weather/3d?key=${encodeURIComponent(key)}&location=${encodeURIComponent(`${lon},${lat}`)}`
+  const url = `https://${host}/v7/weather/7d?key=${encodeURIComponent(key)}&location=${encodeURIComponent(`${lon},${lat}`)}`
 
   return new Promise((resolve, reject) => {
     const req = https.get(url, { headers: { 'Accept-Encoding': 'gzip,deflate,br' } }, (res) => {
@@ -104,25 +105,27 @@ function readJsonResponse(res, resolve, reject) {
   })
 }
 
-function buildMockWeather(weddingDate, tips = '天气服务暂时不可用，先为您展示模拟天气', reason = 'WEATHER_FALLBACK') {
+function buildPendingWeather(weddingDate, tips = '天气将在婚期临近后更新', reason = 'WEATHER_PENDING', extra = {}) {
   return {
     success: true,
-    isMock: true,
+    isPending: true,
     reason,
     data: {
-      isMock: true,
+      isPending: true,
       reason,
-      text: '晴',
-      temp_max: '28',
-      temp_min: '18',
-      wind: '东南风 2级',
-      humidity: '65%',
-      precip: '0',
-      icon: 'sunny',
+      text: '待更新',
       date: weddingDate,
-      tips
+      tips,
+      ...extra
     }
   }
+}
+
+function pendingForecastCopy(window) {
+  if (window.state === 'missing') return ['婚期确定后，将在这里更新当地天气', 'MISSING_WEDDING_DATE']
+  if (window.state === 'invalid') return ['婚礼日期需要重新确认，确认后将自动更新天气', 'INVALID_WEDDING_DATE']
+  if (window.state === 'past') return ['婚礼日期已过，天气预报不再更新', 'FORECAST_EXPIRED']
+  return ['婚礼前 7 天将自动更新当地天气', 'FORECAST_TOO_EARLY']
 }
 
 async function geocodeVenue(venue) {
@@ -161,6 +164,13 @@ exports.main = async (event, context) => {
       db.collection('venues').doc(weddingId).get().catch(() => ({ data: null }))
     ])
 
+    const weddingDate = wedding.data?.basic_info?.date || ''
+    const forecastWindow = getForecastWindow(weddingDate)
+    if (forecastWindow.state !== 'available') {
+      const [tips, reason] = pendingForecastCopy(forecastWindow)
+      return buildPendingWeather(forecastWindow.weddingDate || weddingDate, tips, reason)
+    }
+
     const venues = venuesRes.data?.venues || []
     const venue = venues.find(item => item.coordinate?.latitude && item.coordinate?.longitude) || venues[0]
     let coordinate = venue?.coordinate
@@ -170,10 +180,11 @@ exports.main = async (event, context) => {
     }
 
     if (!coordinate?.latitude || !coordinate?.longitude) {
-      return buildMockWeather(
-        wedding.data?.basic_info?.date || '',
-        '请在主人端为主场地匹配地图坐标，或为 geocodeVenue 配置腾讯地图 Key',
-        'MISSING_COORDINATE'
+      return buildPendingWeather(
+        weddingDate,
+        '路线坐标落定后，将自动更新当地天气',
+        'MISSING_COORDINATE',
+        { venue_name: venue?.name || '' }
       )
     }
 
@@ -181,17 +192,17 @@ exports.main = async (event, context) => {
     const WEATHER_KEY = process.env.HEFENG_KEY || process.env.QWEATHER_KEY || process.env.WEATHER_KEY || ''
     const lat = coordinate.latitude
     const lon = coordinate.longitude
-    const weddingDate = wedding.data?.basic_info?.date || ''
 
     if (!WEATHER_KEY) {
-      return buildMockWeather(weddingDate, '请配置 HEFENG_KEY / QWEATHER_KEY / WEATHER_KEY 以获取真实天气', 'MISSING_WEATHER_KEY')
+      return buildPendingWeather(weddingDate, '天气服务暂时没有回应，请稍后再看', 'MISSING_WEATHER_KEY')
     }
 
     const res = await requestWeather(WEATHER_KEY, lon, lat)
-    const daily = res.daily?.[0]
+    const daily = selectWeddingForecast(res.daily, weddingDate)
     if (!daily) {
       const error = getWeatherApiError(res)
-      return buildMockWeather(weddingDate, error.message, error.reason)
+      console.warn('[getWeather] forecast unavailable:', error.reason, error.message)
+      return buildPendingWeather(weddingDate, '天气服务暂时没有回应，请稍后再看', error.reason)
     }
 
     const weatherMap = {
@@ -287,6 +298,6 @@ exports.main = async (event, context) => {
     }
   } catch (err) {
     console.error('getWeather error:', err)
-    return buildMockWeather('', err.message || '天气服务暂时不可用，先为您展示模拟天气', 'WEATHER_ERROR')
+    return buildPendingWeather('', '天气服务暂时没有回应，请稍后再看', 'WEATHER_ERROR')
   }
 }
