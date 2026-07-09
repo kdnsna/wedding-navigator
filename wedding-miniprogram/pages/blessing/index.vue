@@ -224,80 +224,111 @@ onShow(() => loadBlessings(false))
   padding: $page-header-top $page-gutter $page-header-bottom;
 }
 .page-tag {
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  gap: 10rpx;
   font-size: 22rpx;
   color: $text-muted;
-  letter-spacing: 0;
-  margin-bottom: 12rpx;
+  letter-spacing: $tracking-kicker;
+  text-transform: uppercase;
+  margin-bottom: 18rpx;
+  font-weight: 500;
+}
+.page-tag::before {
+  content: '';
+  width: 24rpx;
+  height: 1rpx;
+  background: currentColor;
+  opacity: 0.5;
 }
 .page-title {
   display: block;
   font-size: $font-h1;
   font-weight: 600;
   color: $text-primary;
-  margin-bottom: 8rpx;
+  margin-bottom: 12rpx;
+  letter-spacing: $tracking-cn;
+  line-height: 1.25;
 }
 .page-count {
   display: block;
   font-size: $font-body;
   color: $text-secondary;
+  letter-spacing: $tracking-cn-soft;
+  line-height: 1.6;
 }
 .page-template {
   display: block;
-  margin-top: 12rpx;
+  margin-top: 14rpx;
   font-size: 24rpx;
   color: $text-muted;
-  line-height: 1.5;
+  line-height: 1.6;
+  letter-spacing: $tracking-cn-soft;
 }
 
 /* 发送区域 */
 .send-area {
-  padding: 0 $page-gutter 36rpx;
+  padding: 0 $page-gutter 40rpx;
 }
 .sender-row {
-  margin-bottom: 16rpx;
+  margin-bottom: 20rpx;
 }
 .sender-input {
   height: $control-height-sm;
   font-size: 28rpx;
   color: $text-primary;
-  border-bottom: 2rpx solid $border-color;
+  border-bottom: 2rpx solid $hairline-medium;
   padding: 0;
+  transition: border-color 0.4s $ease-editorial;
+  letter-spacing: $tracking-cn-soft;
 }
+.sender-input:focus { border-color: $text-primary; }
 .send-input {
   width: 100%;
   height: 160rpx;
   padding: 24rpx 0;
-  border-bottom: 2rpx solid $border-color;
+  border-bottom: 2rpx solid $hairline-medium;
   font-size: 28rpx;
   background: transparent;
   box-sizing: border-box;
+  line-height: 1.7;
+  transition: border-color 0.4s $ease-editorial;
+  letter-spacing: $tracking-cn-soft;
 }
+.send-input:focus { border-color: $text-primary; }
 .send-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 20rpx;
+  padding-top: 24rpx;
 }
 .char-count {
-  font-size: 22rpx;
+  font-size: 20rpx;
   color: $text-muted;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
 }
 .send-btn {
-  min-width: 160rpx;
+  min-width: 168rpx;
   height: $control-height-sm;
   line-height: $control-height-sm;
-  padding: 0 32rpx;
+  padding: 0 36rpx;
   border-radius: $radius-full;
   background: $text-primary;
   color: $ink-inverse;
   font-size: 26rpx;
   font-weight: 500;
-  transition: opacity 0.2s ease;
+  letter-spacing: $tracking-cn-soft;
+  transition: all 0.3s $ease-editorial;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
 }
 .send-btn::after { border: none; }
-.send-btn:active { opacity: 0.8; }
-.send-btn[disabled] { opacity: 0.55; }
+.send-btn:active {
+  opacity: 0.9;
+  transform: scale(0.98);
+  box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.06);
+}
+.send-btn[disabled] { opacity: 0.45; box-shadow: none; }
 
 .loading-state {
   text-align: center;
@@ -315,42 +346,79 @@ onShow(() => loadBlessings(false))
   font-size: 34rpx;
   color: $text-primary;
   font-weight: 600;
-  margin-bottom: 14rpx;
+  margin-bottom: 16rpx;
+  letter-spacing: $tracking-cn-soft;
+  position: relative;
+}
+.feature-title::after {
+  content: '';
+  display: block;
+  width: 32rpx;
+  height: 2rpx;
+  background: $text-primary;
+  margin: 18rpx auto 0;
+  border-radius: 2rpx;
+  opacity: 0.6;
 }
 .feature-desc {
   display: block;
   font-size: 26rpx;
   color: $text-secondary;
-  line-height: 1.6;
-  margin-bottom: 36rpx;
+  line-height: 1.7;
+  margin-bottom: 40rpx;
+  letter-spacing: $tracking-cn-soft;
 }
 .feature-action {
-  width: 260rpx;
+  width: 280rpx;
   height: $control-height-sm;
   line-height: $control-height-sm;
   border-radius: $radius-full;
   background: $text-primary;
   color: $ink-inverse;
   font-size: 26rpx;
+  letter-spacing: $tracking-cn-soft;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+  transition: all 0.3s $ease-editorial;
 }
 .feature-action::after { border: none; }
+.feature-action:active { transform: scale(0.98); opacity: 0.9; }
 
 /* 祝福列表 */
 .blessing-list {
   padding: 0 $page-gutter;
 }
 .blessing-item {
-  padding: 32rpx 0;
-  border-bottom: 1rpx solid $border-color;
+  padding: 36rpx 0;
+  border-bottom: 1rpx solid $hairline-soft;
   position: relative;
+  animation: fadeInUp 0.6s $ease-editorial both;
 }
+.blessing-item:nth-child(2) { animation-delay: 0.05s; }
+.blessing-item:nth-child(3) { animation-delay: 0.1s; }
+.blessing-item:nth-child(4) { animation-delay: 0.15s; }
+.blessing-item:nth-child(5) { animation-delay: 0.2s; }
+.blessing-item:nth-child(n+6) { animation-delay: 0.25s; }
 .blessing-item:last-child {
   border-bottom: none;
 }
 .blessing-item.pinned {
-  background: $bg-muted;
+  background: var(--theme-elevated, $bg-muted);
   margin: 0 (-$page-gutter);
   padding: 32rpx $page-gutter;
+  border-radius: $card-radius;
+  border: 1rpx solid $hairline-soft;
+  border-bottom-width: 1rpx !important;
+  position: relative;
+}
+.blessing-item.pinned::before {
+  content: '';
+  position: absolute;
+  top: 32rpx;
+  left: $page-gutter;
+  width: 1rpx;
+  height: calc(100% - 64rpx);
+  background: $text-primary;
+  opacity: 0.18;
 }
 
 .item-header {
@@ -370,16 +438,39 @@ onShow(() => loadBlessings(false))
   word-break: break-word;
 }
 .item-time {
-  font-size: 22rpx;
+  font-size: 20rpx;
   color: $text-muted;
   flex-shrink: 0;
+
 }
 .item-content {
   display: block;
   font-size: 28rpx;
   color: $text-primary;
-  line-height: 1.7;
+  line-height: 1.75;
   word-break: break-word;
+  letter-spacing: $tracking-cn-soft;
+  position: relative;
+}
+.item-content::before {
+  content: '“';
+  font-size: 36rpx;
+  line-height: 1;
+  color: $text-primary;
+  opacity: 0.16;
+  margin-right: 4rpx;
+  font-family: $font-serif;
+  vertical-align: -8rpx;
+}
+.item-content::after {
+  content: '”';
+  font-size: 36rpx;
+  line-height: 1;
+  color: $text-primary;
+  opacity: 0.16;
+  margin-left: 4rpx;
+  font-family: $font-serif;
+  vertical-align: -8rpx;
 }
 .pinned-tag {
   position: absolute;
@@ -389,36 +480,55 @@ onShow(() => loadBlessings(false))
   background: var(--theme-accent-soft, $gold-soft);
   color: var(--theme-accent, $color-primary);
   font-size: 18rpx;
+  letter-spacing: $tracking-kicker;
+  text-transform: uppercase;
   border-radius: 4rpx;
   font-weight: 500;
+  opacity: 0.92;
 }
 .empty-action {
   margin-top: 32rpx;
-  width: 260rpx;
+  width: 280rpx;
   height: $control-height-sm;
   line-height: $control-height-sm;
   border-radius: $radius-full;
   background: $text-primary;
   color: $ink-inverse;
   font-size: 26rpx;
+  letter-spacing: $tracking-cn-soft;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+  transition: all 0.3s $ease-editorial;
 }
 .empty-action::after { border: none; }
+.empty-action:active { transform: scale(0.98); opacity: 0.9; }
 
 /* 空状态 */
 .empty-state {
   text-align: center;
-  padding: 160rpx 60rpx;
+  padding: 180rpx 60rpx;
+}
+.empty-state::before {
+  content: '';
+  display: block;
+  width: 1rpx;
+  height: 56rpx;
+  background: $hairline-strong;
+  margin: 0 auto 32rpx;
+  opacity: 0.5;
 }
 .empty-text {
   display: block;
   font-size: 28rpx;
   color: $text-muted;
+  letter-spacing: $tracking-cn-soft;
 }
 .empty-sub {
   display: block;
-  margin-top: 12rpx;
+  margin-top: 14rpx;
   font-size: 24rpx;
   color: $text-placeholder;
+  letter-spacing: $tracking-cn-soft;
+  line-height: 1.7;
 }
 
 .theme-wine,

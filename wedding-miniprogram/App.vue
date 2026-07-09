@@ -6,8 +6,6 @@ import { useUserStore } from '@/stores/user.js'
 onLaunch(() => {
   useUserStore().loadFromStorage()
   initCloud()
-  setupPrivacyAuthorization()
-  checkPrivacySetting()
   checkUpdate()
 })
 
@@ -57,58 +55,6 @@ function checkUpdate() {
   }
 }
 
-// 隐私保护指引检查
-let privacyAuthorizationReady = false
-
-function setupPrivacyAuthorization() {
-  if (privacyAuthorizationReady) return
-  if (typeof wx === 'undefined' || typeof wx.onNeedPrivacyAuthorization !== 'function') return
-  privacyAuthorizationReady = true
-
-  wx.onNeedPrivacyAuthorization((resolve) => {
-    uni.showModal({
-      title: '隐私保护指引',
-      content: '上传照片、地图导航和婚礼邀请功能需要使用相册照片和位置信息。请同意《隐私保护指引》后继续。',
-      confirmText: '同意并继续',
-      cancelText: '暂不同意',
-      success: (modalRes) => {
-        resolve({
-          event: modalRes.confirm ? 'agree' : 'disagree',
-          buttonId: modalRes.confirm ? 'agree-btn' : 'disagree-btn'
-        })
-      },
-      fail: () => {
-        resolve({ event: 'disagree', buttonId: 'modal-fail' })
-      }
-    })
-  })
-}
-
-function checkPrivacySetting() {
-  if (typeof wx !== 'undefined' && wx.getPrivacySetting) {
-    wx.getPrivacySetting({
-      success: (res) => {
-        if (res.needAuthorization) {
-          // 需要弹出隐私协议
-          wx.showModal({
-            title: '隐私保护指引',
-            content: '使用本小程序需要您同意《隐私保护指引》，我们仅收集必要的信息用于婚礼邀请功能。',
-            confirmText: '同意',
-            cancelText: '不同意',
-            success: (modalRes) => {
-              if (modalRes.confirm) {
-                wx.openPrivacyContract()
-              } else {
-                // 用户不同意，提示功能受限
-                uni.showToast({ title: '未同意隐私指引，部分功能受限', icon: 'none', duration: 3000 })
-              }
-            }
-          })
-        }
-      }
-    })
-  }
-}
 </script>
 
 <style lang="scss">
@@ -216,6 +162,8 @@ uni-image {
   height: 52rpx;
   display: block;
   flex-shrink: 0;
+  opacity: 0.85;
+  transition: opacity 0.25s $ease-editorial;
 }
 
 .visual-icon-sm {
@@ -223,6 +171,7 @@ uni-image {
   height: 36rpx;
   display: block;
   flex-shrink: 0;
+  opacity: 0.85;
 }
 
 .visual-icon-xs {
@@ -230,6 +179,7 @@ uni-image {
   height: 28rpx;
   display: block;
   flex-shrink: 0;
+  opacity: 0.85;
 }
 
 .empty-visual {
@@ -237,6 +187,8 @@ uni-image {
   height: 220rpx;
   display: block;
   margin: 0 auto 24rpx;
+  opacity: 0.72;
+  filter: grayscale(0.08);
 }
 
 /* ========== 间距工具 ========== */
@@ -359,10 +311,11 @@ uni-image {
   color: $text-inverse;
   font-size: $font-h4;
   font-weight: 500;
-  transition: opacity 0.2s ease;
+  letter-spacing: $tracking-kicker;
+  transition: opacity 0.25s $ease-editorial, transform 0.25s $ease-editorial;
 }
 .btn-primary::after { border: none; }
-.btn-primary:active { opacity: 0.8; }
+.btn-primary:active { opacity: 0.85; transform: scale(0.99); }
 
 /* 次要按钮：无边框文字 */
 .btn-text {
@@ -373,6 +326,7 @@ uni-image {
   color: $color-primary;
   font-size: $font-h4;
   font-weight: 500;
+  letter-spacing: $tracking-kicker;
 }
 .btn-text::after { border: none; }
 
@@ -387,8 +341,11 @@ uni-image {
   color: $text-inverse;
   font-size: $font-body;
   font-weight: 500;
+  letter-spacing: $tracking-kicker;
+  transition: opacity 0.25s $ease-editorial, transform 0.25s $ease-editorial;
 }
 .btn-pill::after { border: none; }
+.btn-pill:active { opacity: 0.85; transform: scale(0.99); }
 .btn-pill-outline {
   display: inline-flex;
   align-items: center;
@@ -399,14 +356,17 @@ uni-image {
   color: $text-primary;
   font-size: $font-body;
   font-weight: 500;
-  border: 2rpx solid $border-color;
+  border: 1rpx solid $hairline-medium;
+  letter-spacing: $tracking-kicker;
+  transition: background 0.25s $ease-editorial, color 0.25s $ease-editorial;
 }
 .btn-pill-outline::after { border: none; }
+.btn-pill-outline:active { background: $text-primary; color: $text-inverse; }
 
 /* ========== 分割线（极简） ========== */
 .divider {
   height: 1rpx;
-  background: $border-color;
+  background: $hairline-soft;
 }
 
 /* ========== 页面标题（大字排版） ========== */
@@ -414,7 +374,7 @@ uni-image {
   font-size: $font-h1;
   font-weight: 600;
   color: $text-primary;
-  letter-spacing: 0;
+  letter-spacing: $tracking-cn;
 }
 
 .page-subtitle {
@@ -429,36 +389,47 @@ uni-image {
 /* 细横线装饰 */
 .deco-line {
   width: 48rpx;
-  height: 2rpx;
+  height: 1rpx;
   background: $text-muted;
   display: inline-block;
+  opacity: 0.45;
+  vertical-align: middle;
 }
 
 /* 小圆点装饰 */
 .deco-dot {
-  width: 6rpx;
-  height: 6rpx;
+  width: 5rpx;
+  height: 5rpx;
   border-radius: 50%;
   background: $text-muted;
   display: inline-block;
+  opacity: 0.45;
+  vertical-align: middle;
 }
 
 /* 引号装饰 */
 .quote-mark {
   font-size: 72rpx;
   line-height: 1;
-  color: $border-color;
+  color: $hairline-medium;
   font-family: $font-serif;
+  font-weight: 400;
+  letter-spacing: 0;
+  display: inline-block;
+  transform: translateY(8rpx);
 }
 
 /* 囍字水印 */
 .xi-watermark {
-  font-size: 400rpx;
-  color: rgba(255,255,255,0.03);
+  font-size: 420rpx;
+  color: rgba(255,255,255,0.04);
   position: absolute;
   font-weight: 900;
   pointer-events: none;
   user-select: none;
+  line-height: 1;
+  letter-spacing: 0;
+  font-family: $font-serif;
 }
 
 /* ========== 动效类扩展 ========== */

@@ -155,6 +155,19 @@ function checkOwnerGuard() {
   assert(source.includes('navigateTo'), 'useOwnerGuard must redirect users without owner access')
 }
 
+function checkPrivacyAuthorizationFlow() {
+  const manifest = readJson('manifest.json')
+  const weixin = manifest['mp-weixin'] || {}
+  const app = read('App.vue')
+  const album = read('pages-owner/album/manage.vue')
+
+  assert(weixin.__usePrivacyCheck__ === true, 'manifest.json must keep WeChat privacy checks enabled')
+  assert(album.includes('requirePrivacyAuthorize'), 'album upload must request privacy authorization at the point of use')
+  assert(album.includes('收集你选中的照片或视频信息'), 'album upload must identify the exact WeChat privacy declaration required by image pickers')
+  assert(!app.includes('onNeedPrivacyAuthorization'), 'App.vue must not intercept WeChat privacy authorization without a native agreePrivacyAuthorization button')
+  assert(!app.includes('checkPrivacySetting()'), 'App.vue must not interrupt every launch with a non-authorizing privacy modal')
+}
+
 function checkCloudSafety() {
   const weatherSource = stripComments(read('cloudfunctions/getWeather/index.js'))
   assert(!weatherSource.includes('ea363fcdd56742fa84a17c4b11b37bdc'), 'getWeather must not hardcode a production API key')
@@ -361,7 +374,7 @@ function checkTemplateSystem() {
   assertIncludes('composables/useCloud.js', "getCloudApi('uploadFile')", 'uploadFile must use the shared CloudBase API resolver')
   assertIncludes('composables/useCloud.js', "targets.push({ name: 'wx.cloud'", 'cloud init must initialize native wx.cloud when available')
   assertIncludes('composables/useCloud.js', 'deleteFiles', 'useCloud must expose cloud storage cleanup for failed album transactions')
-  assertIncludes('App.vue', 'onNeedPrivacyAuthorization', 'app must resolve WeChat privacy authorization for album and map APIs')
+  assertIncludes('pages-owner/album/manage.vue', 'requirePrivacyAuthorize', 'album manager must trigger WeChat privacy authorization only when uploading')
   assertIncludes('pages/guide/index.vue', 'snow', 'guide weather icons must handle weather types returned by getWeather')
   assertIncludes('pages/guide/index.vue', 'geocodedVenues', 'guide map must only render venues with real coordinates')
   assertIncludes('pages/guide/index.vue', 'height: 420rpx', 'guide map must have a stable explicit native map height')
@@ -588,6 +601,7 @@ checkPagesExist()
 checkNavigationTargets()
 checkRsvpContract()
 checkOwnerGuard()
+checkPrivacyAuthorizationFlow()
 checkCloudSafety()
 checkCloudFunctionDeployConfig()
 checkBuildCloudfunctionsOutputIfPresent()

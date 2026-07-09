@@ -22,7 +22,7 @@
         <text class="list-item">• RSVP 信息：宾客填写的出席状态、联系电话、饮食偏好等</text>
         <text class="list-item">• 祝福留言：宾客在祝福墙发表的文本内容</text>
         <text class="list-item">• 位置信息：仅在您使用地图导航功能时，经您授权后获取</text>
-        <text class="list-item">• 照片或视频信息：仅在您主动从相册选择婚礼相关图片并上传到相册时使用</text>
+        <text class="list-item">• 您选中的照片或视频信息：仅在您主动选择婚礼照片时使用，用于制作婚礼相册、请柬封面与分享海报</text>
       </view>
 
       <text class="section-title">三、信息的使用</text>
@@ -57,7 +57,7 @@
         如您对本隐私保护指引有任何疑问，可通过小程序内的客服功能与我们联系。
       </text>
 
-      <text class="update-time">更新日期：2026年5月19日</text>
+      <text class="update-time">更新日期：2026年7月10日</text>
     </view>
   </PageShell>
 </template>

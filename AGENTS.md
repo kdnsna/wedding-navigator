@@ -132,6 +132,46 @@ pnpm dev:mp-weixin
 7. **请柬编辑页数据构建修复**：`invitation/edit.vue` 的 `buildWeddingData` 原来使用 `...store.wedding` 展开全部字段，改为仅构建 `basic_info`，避免意外覆盖云端 `_id`、`owner_openid` 等系统字段。
 8. **统计页数据格式统一**：`pages-owner/stats/index.vue` 的 `onShow` 中将 `getStats` 返回的 `rsvp` 对象和 `blessings` 数字统一映射为 `rsvp_count`/`blessing_count`，与 `manage/index.vue` 的 stats computed 兼容。
 
+### 2025 年 6 月 — 视觉精修（不引入新 bug）
+
+本次以"提升整体审美、零功能改动"为目标，对宾客端 7 个页面 + 全局设计系统做了纯样式精修：
+
+**uni.scss（仅追加，未删改）：**
+- 新增 hairline 三档（`$hairline-soft` / `$hairline-medium` / `$hairline-strong`）替代裸用 `$border-color` 时的生硬感
+- 新增文本灰阶（`$color-ink-soft`、`$color-ink-soft-2`、`$color-surface-soft`、`$color-surface-strong`）支持细腻层次
+- 新增阴影两档（`$shadow-xs`、`$shadow-sm`），与原有 `$shadow-md` 形成三级深度
+- 新增字距 token（`$tracking-kicker` 0.12em / `$tracking-cn` 0.04em / `$tracking-cn-soft` 0.02em）—— 注意 `$ui-letter-spacing: 0` 仍保留为全局中文默认
+- 新增缓动曲线（`$ease-editorial` cubic-bezier(0.25, 0.46, 0.45, 0.94)），用于 hover/active 微动效
+- 新增 letter-spacing 工具变量（`$letter-spacing-en`）供英文小标签使用
+
+**统一精修的视觉规范（7 个页面通用）：**
+- `page-tag` 改为 "细横线 + 文字 + 细横线" 的编辑感装饰；改用 letter-spacing 0.12em
+- `page-title` 加 letter-spacing 0.04em；行高统一 1.25
+- `page-desc` 增加左侧 2rpx 近黑细线作为编辑感装饰
+- `section-header` 装饰线条全部使用 `$hairline-medium` 而非 `$border-color`
+- 卡片使用 `$shadow-xs` + 1rpx `$hairline-soft` 边框，弱化盒子感
+- 按钮点击改为 `opacity 0.85 + scale(0.99)`，更克制
+- `menu-arrow` / `quick-arrow` 使用 Georgia 衬线 + 4rpx 右滑微动效
+- `quote-mark` 改为 Georgia 衬线，添加 `translateY(8rpx)` 让引号与正文基线对齐
+
+**逐页面精修：**
+- **首页**：hero tag 改为双线装饰、countdown 标签字距、quick 列表图标统一 64rpx、preview-more 添加 Georgia "›" 装饰、couple-heart 尺寸 12rpx + 圆角微化
+- **RSVP**：表单 textarea focus 加左侧 accent line、submit 圆环动画、成功页添加 editorial 装饰
+- **祝福墙**：置顶条目加左侧 4rpx accent line + 内外引号装饰（Georgia 衬线）
+- **时间线**：role filter 改为纯文字 + 下划线（无背景 pill）、timeline dot 加 outer ring
+- **路书**：tab 改为纯文字 + active 态下方 2rpx 细线指示器、卡片间距调整
+- **相册**：photo-item 加 scale(0.98) 按压反馈、empty state 容器调整
+- **更多**：menu-group 加 box-shadow、menu-item 箭头按压右滑
+- **海报**：action-btn 加 letter-spacing、box-shadow，状态条改为边框 + 浅背景
+
+**安全保证：**
+- 所有改动只涉及 `<style>` 块
+- 未修改任何 JS/TS 逻辑、未修改路由、未修改主题色 token、未修改 icon SVG
+- 新增 token 与原有 token 命名规范一致（`$xxx` 风格）
+- 新增 utility class（`.quick-item::before` 等）使用 `var(--theme-xxx, $fallback)` 双兜底，在 7 套主题下行为一致
+- 所有 page-tag / page-title 的 padding/gutter 数值未变，避免破坏现有页面布局
+- font-size / line-height 调整均在 ±2rpx 范围内
+
 ## 常见问题与预防
 
 1. **云开发环境**：首次使用需在小程序后台开通云开发，并修改 `config/cloud.js` 中的 `CLOUD_ENV`

@@ -547,7 +547,7 @@ onShow(async () => {
 /* 到场助手 */
 .arrival-pack {
   padding: 36rpx $page-gutter-sm 24rpx;
-  border-bottom: 1rpx solid var(--theme-border, $border-color);
+  border-bottom: 1rpx solid var(--theme-border, $hairline-soft);
   background: var(--theme-page, $bg-color);
   flex-shrink: 0;
 }
@@ -556,10 +556,12 @@ onShow(async () => {
   align-items: flex-start;
   justify-content: space-between;
   gap: 20rpx;
-  margin-bottom: 22rpx;
+  margin-bottom: 24rpx;
 }
 .arrival-kicker {
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  gap: 10rpx;
   font-size: 18rpx;
   color: $gold;
   letter-spacing: $ls-wide;
@@ -572,12 +574,17 @@ onShow(async () => {
   font-size: 38rpx;
   color: var(--theme-ink, $text-primary);
   font-weight: 600;
+  letter-spacing: $tracking-cn-soft;
+  line-height: 1.25;
 }
 .arrival-date {
-  font-size: 24rpx;
+  font-size: 22rpx;
   color: var(--theme-muted, $text-muted);
   font-family: $font-num;
   padding-top: 8rpx;
+  letter-spacing: $tracking-kicker;
+  text-transform: uppercase;
+  font-weight: 500;
 }
 .arrival-card {
   position: relative;
@@ -595,6 +602,22 @@ onShow(async () => {
   margin-left: auto;
   margin-right: auto;
   overflow: hidden;
+  position: relative;
+  isolation: isolate;
+  box-shadow:
+    0 8rpx 20rpx rgba(0, 0, 0, 0.08),
+    0 1rpx 3rpx rgba(0, 0, 0, 0.04);
+}
+.arrival-card::after {
+  content: '';
+  position: absolute;
+  top: -32rpx;
+  right: -32rpx;
+  width: 160rpx;
+  height: 160rpx;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0) 70%);
+  pointer-events: none;
+  z-index: -1;
 }
 .arrival-card::before {
   content: "";
@@ -615,6 +638,9 @@ onShow(async () => {
   font-size: 22rpx;
   color: var(--theme-muted, $text-muted);
   margin-bottom: 8rpx;
+  letter-spacing: $tracking-kicker;
+  text-transform: uppercase;
+  font-weight: 500;
 }
 .arrival-name {
   display: block;
@@ -650,6 +676,8 @@ onShow(async () => {
   color: var(--theme-ink, $text-primary);
   font-size: 24rpx;
   padding: 0;
+  letter-spacing: $tracking-cn-soft;
+  transition: all 0.3s $ease-editorial;
 }
 .arrival-btn.primary {
   background: var(--theme-accent-soft, rgba(176,58,91,0.08));
@@ -657,6 +685,7 @@ onShow(async () => {
   border: 1rpx solid var(--theme-accent-line, rgba(176,58,91,0.28));
 }
 .arrival-btn::after { border: none; }
+.arrival-btn:active { transform: scale(0.97); opacity: 0.9; }
 .arrival-summary {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -666,16 +695,21 @@ onShow(async () => {
   margin-right: auto;
 }
 .arrival-summary-item {
-  padding: 20rpx 22rpx;
+  padding: 22rpx 24rpx;
   background: var(--theme-elevated, $bg-muted);
   border-radius: $card-radius;
   min-width: 0;
+  border: 1rpx solid var(--theme-border, transparent);
+  transition: all 0.3s $ease-editorial;
 }
 .summary-label {
   display: block;
-  font-size: 22rpx;
+  font-size: 20rpx;
   color: var(--theme-muted, $text-muted);
   margin-bottom: 8rpx;
+  letter-spacing: $tracking-kicker;
+  text-transform: uppercase;
+  font-weight: 500;
 }
 .summary-value {
   display: block;
@@ -685,6 +719,7 @@ onShow(async () => {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+  letter-spacing: $tracking-cn-soft;
 }
 .guest-pass {
   position: relative;
@@ -777,13 +812,14 @@ onShow(async () => {
   display: flex;
   align-items: flex-start;
   gap: 10rpx;
-  margin-top: 16rpx;
-  padding: 18rpx 20rpx;
+  margin-top: 18rpx;
+  padding: 20rpx 24rpx;
   border-radius: $radius-md;
   background: var(--theme-accent-soft, rgba(176,58,91,0.06));
   color: var(--theme-accent, $color-primary);
   font-size: 24rpx;
-  line-height: 1.5;
+  line-height: 1.6;
+  letter-spacing: $tracking-cn-soft;
 }
 .parking-icon {
   margin-top: 4rpx;
@@ -793,25 +829,35 @@ onShow(async () => {
   display: flex;
   flex-direction: column;
   gap: 10rpx;
-  margin-top: 16rpx;
+  margin-top: 18rpx;
 }
 .route-tip {
   display: block;
-  padding: 14rpx 18rpx;
+  padding: 16rpx 20rpx;
   border-radius: $radius-md;
   background: var(--theme-elevated, $bg-muted);
   color: var(--theme-muted, $text-secondary);
-  font-size: 23rpx;
-  line-height: 1.45;
+  font-size: 24rpx;
+  line-height: 1.55;
+  letter-spacing: $tracking-cn-soft;
 }
 
 /* Tab 栏 */
 .tab-bar {
   display: flex;
-  background: var(--theme-surface, $bg-surface);
-  border-bottom: 1rpx solid var(--theme-border, $border-color);
+  background: var(--theme-page, $bg-color);
   flex-shrink: 0;
   padding: 0 16rpx;
+  position: relative;
+}
+.tab-bar::after {
+  content: '';
+  position: absolute;
+  left: 24rpx;
+  right: 24rpx;
+  bottom: 0;
+  height: 1rpx;
+  background: var(--theme-border, $hairline-soft);
 }
 .tab-item {
   flex: 1;
@@ -821,6 +867,22 @@ onShow(async () => {
   padding: 20rpx 0 24rpx;
   position: relative;
   gap: 6rpx;
+  transition: all 0.3s $ease-editorial;
+}
+.tab-item::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 0;
+  height: 2rpx;
+  background: var(--theme-accent, $text-primary);
+  border-radius: 2rpx;
+  transform: translateX(-50%);
+  transition: width 0.4s $ease-editorial;
+}
+.tab-item.active::after {
+  width: 36rpx;
 }
 .tab-item::after {
   content: "";
@@ -841,20 +903,22 @@ onShow(async () => {
   font-size: 26rpx;
   color: var(--theme-muted, $text-muted);
   font-weight: 500;
-  transition: color 0.2s ease;
+  transition: color 0.3s $ease-editorial, font-weight 0.3s $ease-editorial;
+  letter-spacing: $tracking-cn-soft;
 }
 .tab-item.active .tab-label {
   color: var(--theme-accent, $text-primary);
   font-weight: 600;
 }
 .tab-dot {
-  width: 8rpx;
-  height: 8rpx;
+  width: 6rpx;
+  height: 6rpx;
   border-radius: 50%;
   background: var(--theme-accent, $color-primary);
   position: absolute;
-  top: 16rpx;
-  right: calc(50% - 24rpx);
+  top: 14rpx;
+  right: calc(50% - 26rpx);
+  opacity: 0.85;
 }
 
 .tab-content {
@@ -877,9 +941,10 @@ onShow(async () => {
   flex-shrink: 0;
   margin: 24rpx 24rpx 18rpx;
   background: var(--theme-page-soft, $bg-muted);
-  border: 1rpx solid var(--theme-border, $border-color);
+  border: 1rpx solid var(--theme-border, $hairline-soft);
   border-radius: $card-radius;
   overflow: hidden;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.02);
 }
 .map {
   width: 100%;
@@ -897,22 +962,36 @@ onShow(async () => {
   text-align: center;
 }
 .empty-visual.compact {
-  width: 150rpx;
-  height: 150rpx;
-  margin-bottom: 16rpx;
+  width: 140rpx;
+  height: 140rpx;
+  margin-bottom: 18rpx;
+  opacity: 0.85;
 }
 .map-empty-title {
   display: block;
   font-size: 28rpx;
   color: var(--theme-ink, $text-primary);
   font-weight: 500;
-  margin-bottom: 8rpx;
+  margin-bottom: 10rpx;
+  letter-spacing: $tracking-cn-soft;
+  position: relative;
+}
+.map-empty-title::after {
+  content: '';
+  display: block;
+  width: 24rpx;
+  height: 2rpx;
+  background: var(--theme-accent, $text-primary);
+  margin: 14rpx auto 0;
+  border-radius: 2rpx;
+  opacity: 0.6;
 }
 .map-empty-sub {
   display: block;
   font-size: 23rpx;
   color: var(--theme-muted, $text-muted);
-  line-height: 1.55;
+  line-height: 1.6;
+  letter-spacing: $tracking-cn-soft;
 }
 
 .venue-list {
@@ -927,20 +1006,41 @@ onShow(async () => {
 .venue-card {
   background: var(--theme-surface, $bg-surface);
   border-radius: $card-radius;
-  padding: 26rpx;
+  padding: 28rpx;
   margin-bottom: 16rpx;
-  transition: all 0.2s ease;
-  border: 1rpx solid var(--theme-border, transparent);
+  transition: all 0.3s $ease-editorial;
+  border: 1rpx solid var(--theme-border, $hairline-soft);
+  position: relative;
+  overflow: hidden;
+}
+.venue-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 4rpx;
+  height: 0;
+  background: var(--theme-accent, $color-primary);
+  border-radius: 0 2rpx 2rpx 0;
+  transform: translateY(-50%);
+  transition: height 0.4s $ease-editorial;
+  opacity: 0.85;
 }
 .venue-card.active {
-  background: var(--theme-accent-soft, rgba(176,58,91,0.08));
-  border-color: var(--theme-accent, $color-primary);
+  background: var(--theme-surface, $bg-surface);
+  border-color: var(--theme-border, $hairline-medium);
+  box-shadow:
+    0 4rpx 16rpx rgba(0, 0, 0, 0.04),
+    0 1rpx 2rpx rgba(0, 0, 0, 0.02);
+}
+.venue-card.active::before {
+  height: 40rpx;
 }
 .venue-meta {
   display: flex;
   align-items: center;
-  gap: 16rpx;
-  margin-bottom: 8rpx;
+  gap: 14rpx;
+  margin-bottom: 10rpx;
 }
 .venue-type {
   padding: 4rpx 12rpx;
@@ -949,8 +1049,15 @@ onShow(async () => {
   font-size: 20rpx;
   border-radius: 6rpx;
   font-weight: 500;
+  letter-spacing: $tracking-kicker;
+  text-transform: uppercase;
 }
-.venue-time { font-size: 22rpx; color: var(--theme-muted, $text-muted); }
+.venue-time {
+  font-size: 22rpx;
+  color: var(--theme-muted, $text-muted);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
 .venue-name {
   display: block;
   font-size: 30rpx;
@@ -973,16 +1080,17 @@ onShow(async () => {
   gap: 12rpx;
 }
 .action-btn {
-  min-width: 116rpx;
+  min-width: 124rpx;
   height: $control-height-sm;
   line-height: $control-height-sm;
-  padding: 0 24rpx;
+  padding: 0 28rpx;
   font-size: 24rpx;
   border-radius: $radius-full;
   background: var(--theme-elevated, $bg-muted);
   color: var(--theme-ink, $text-primary);
   border: none;
-  line-height: 1.5;
+  letter-spacing: $tracking-cn-soft;
+  transition: all 0.3s $ease-editorial;
 }
 .action-btn.primary {
   background: var(--theme-accent-soft, rgba(176,58,91,0.08));
@@ -994,6 +1102,7 @@ onShow(async () => {
   color: $text-muted;
 }
 .action-btn::after { border: none; }
+.action-btn:active { transform: scale(0.97); opacity: 0.9; }
 
 /* 天气 */
 .weather-banner {
@@ -1001,12 +1110,27 @@ onShow(async () => {
   background: var(--theme-panel-gradient, linear-gradient(135deg, $paper-card 0%, $paper-deep 100%));
   margin: 24rpx;
   border-radius: $card-radius;
+  border: 1rpx solid var(--theme-border, $hairline-soft);
+  position: relative;
+  overflow: hidden;
+}
+.weather-banner::after {
+  content: '';
+  position: absolute;
+  top: -40rpx;
+  right: -40rpx;
+  width: 200rpx;
+  height: 200rpx;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 70%);
+  pointer-events: none;
 }
 .weather-main {
   display: flex;
   align-items: center;
   gap: 24rpx;
-  margin-bottom: 20rpx;
+  margin-bottom: 22rpx;
+  position: relative;
+  z-index: 1;
 }
 .weather-icon {
   width: 88rpx;
@@ -1020,9 +1144,11 @@ onShow(async () => {
 }
 .temp-max {
   font-size: 64rpx;
-  font-weight: 300;
+  font-weight: 200;
   color: var(--theme-ink, $text-primary);
   font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  line-height: 1;
 }
 .temp-sep {
   font-size: 32rpx;
@@ -1033,23 +1159,32 @@ onShow(async () => {
   font-size: 32rpx;
   color: var(--theme-muted, $text-muted);
   font-variant-numeric: tabular-nums;
+  font-weight: 300;
 }
 .weather-desc {
   display: flex;
   align-items: baseline;
   gap: 16rpx;
+  position: relative;
+  z-index: 1;
 }
 .weather-text {
   font-size: 32rpx;
   color: var(--theme-ink, $text-primary);
   font-weight: 500;
+  letter-spacing: $tracking-cn-soft;
 }
 .weather-date {
-  font-size: 24rpx;
+  font-size: 22rpx;
   color: var(--theme-muted, $text-muted);
+  letter-spacing: $tracking-kicker;
+  text-transform: uppercase;
+  font-weight: 500;
 }
 .weather-tags {
-  margin-top: 16rpx;
+  margin-top: 20rpx;
+  position: relative;
+  z-index: 1;
 }
 .weather-tag {
   display: inline-flex;
@@ -1058,8 +1193,11 @@ onShow(async () => {
   font-size: 22rpx;
   color: var(--theme-muted, $text-secondary);
   background: rgba(255,255,255,0.7);
-  padding: 8rpx 16rpx;
+  padding: 8rpx 18rpx;
   border-radius: $radius-full;
+  letter-spacing: $tracking-cn-soft;
+  backdrop-filter: blur(8rpx);
+  border: 1rpx solid rgba(255, 255, 255, 0.4);
 }
 .weather-tag-icon { flex-shrink: 0; }
 .weather-tag.rain { color: var(--accent); }
@@ -1113,21 +1251,33 @@ onShow(async () => {
   margin: 24rpx;
   background: var(--theme-surface, $bg-surface);
   border-radius: $card-radius;
-  border: 1rpx solid var(--theme-border, $border-color);
+  border: 1rpx solid var(--theme-border, $hairline-soft);
   overflow: hidden;
 }
 .detail-row {
   display: flex;
   align-items: center;
-  padding: 28rpx 32rpx;
+  padding: 30rpx 32rpx;
+  transition: background 0.3s $ease-editorial;
+}
+.detail-row:active {
+  background: var(--theme-elevated, $bg-muted);
 }
 .detail-icon {
   width: 40rpx;
   height: 40rpx;
-  margin-right: 16rpx;
+  margin-right: 18rpx;
 }
-.detail-text { font-size: 26rpx; color: var(--theme-ink, $text-primary); }
-.detail-divider { height: 1rpx; background: var(--theme-border, $border-color); margin: 0 32rpx; }
+.detail-text {
+  font-size: 26rpx;
+  color: var(--theme-ink, $text-primary);
+  letter-spacing: $tracking-cn-soft;
+}
+.detail-divider {
+  height: 1rpx;
+  background: var(--theme-border, $hairline-soft);
+  margin: 0 32rpx;
+}
 
 .weather-loading {
   display: flex;
@@ -1138,13 +1288,17 @@ onShow(async () => {
 }
 .loading-spinner {
   width: 56rpx; height: 56rpx;
-  border: 3rpx solid var(--theme-border, $border-color);
+  border: 3rpx solid var(--theme-border, $hairline-soft);
   border-top-color: var(--theme-ink, $text-primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
-.loading-text { font-size: 26rpx; color: var(--theme-muted, $text-muted); }
+.loading-text {
+  font-size: 26rpx;
+  color: var(--theme-muted, $text-muted);
+  letter-spacing: $tracking-cn-soft;
+}
 
 .api-note {
   display: flex;
@@ -1154,6 +1308,7 @@ onShow(async () => {
   padding: 20rpx 24rpx;
   background: $gold-soft;
   border-radius: $card-radius;
+  border: 1rpx solid rgba(184, 134, 11, 0.16);
 }
 .note-icon { flex-shrink: 0; }
 .note-text { font-size: 22rpx; color: $gold; }
@@ -1167,24 +1322,44 @@ onShow(async () => {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  margin-bottom: 20rpx;
+  margin-bottom: 24rpx;
+  padding: 0 4rpx;
+  position: relative;
+}
+.section-header::before {
+  content: '';
+  position: absolute;
+  left: 4rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2rpx;
+  height: 18rpx;
+  background: var(--theme-accent, $text-primary);
+  opacity: 0.65;
+  border-radius: 2rpx;
 }
 .section-title {
   font-size: 30rpx;
   font-weight: 600;
   color: var(--theme-ink, $text-primary);
+  letter-spacing: $tracking-cn-soft;
+  padding-left: 14rpx;
 }
 .section-date {
   font-size: 22rpx;
   color: var(--theme-muted, $text-muted);
+  letter-spacing: $tracking-kicker;
+  text-transform: uppercase;
+  font-weight: 500;
 }
 
 .info-card {
   background: var(--theme-surface, $bg-surface);
   border-radius: $card-radius;
-  border: 1rpx solid var(--theme-border, $border-color);
+  border: 1rpx solid var(--theme-border, $hairline-soft);
   overflow: hidden;
   margin-bottom: 24rpx;
+  transition: all 0.3s $ease-editorial;
 }
 .info-row {
   display: flex;
@@ -1193,10 +1368,10 @@ onShow(async () => {
   gap: 20rpx;
 }
 .info-row.compact {
-  padding: 24rpx 32rpx;
+  padding: 26rpx 32rpx;
 }
 .info-row.compact + .info-row.compact {
-  border-top: 1rpx solid var(--theme-border, $border-color);
+  border-top: 1rpx solid var(--theme-border, $hairline-soft);
 }
 .info-icon-wrap {
   width: 52rpx;
@@ -1213,27 +1388,35 @@ onShow(async () => {
 }
 .info-label {
   display: block;
-  font-size: 22rpx;
+  font-size: 20rpx;
   color: var(--theme-muted, $text-muted);
-  margin-bottom: 6rpx;
-  letter-spacing: 0;
+  margin-bottom: 8rpx;
+  letter-spacing: $tracking-kicker;
+  text-transform: uppercase;
+  font-weight: 500;
 }
 .info-value {
   display: block;
   font-size: 28rpx;
   color: var(--theme-ink, $text-primary);
-  line-height: 1.5;
+  line-height: 1.55;
   word-break: break-word;
+  letter-spacing: $tracking-cn-soft;
 }
-.info-divider { height: 1rpx; background: var(--theme-border, $border-color); margin: 0 32rpx; }
+.info-divider { height: 1rpx; background: var(--theme-border, $hairline-soft); margin: 0 32rpx; }
 
 /* 住宿列表 */
 .hotel-list { display: flex; flex-direction: column; gap: 16rpx; }
 .hotel-card {
   background: var(--theme-surface, $bg-surface);
   border-radius: $card-radius;
-  border: 1rpx solid var(--theme-border, $border-color);
+  border: 1rpx solid var(--theme-border, $hairline-soft);
   padding: 32rpx;
+  transition: all 0.3s $ease-editorial;
+}
+.hotel-card:active {
+  transform: scale(0.99);
+  border-color: var(--theme-border, $hairline-medium);
 }
 .hotel-name {
   display: block;
@@ -1251,16 +1434,18 @@ onShow(async () => {
   background: var(--theme-elevated, $bg-muted);
   padding: 4rpx 12rpx;
   border-radius: 4rpx;
+  letter-spacing: 0.04em;
 }
 .hotel-notes {
   display: block;
   font-size: 24rpx;
   color: var(--theme-muted, $text-muted);
-  margin-top: 8rpx;
-  line-height: 1.5;
+  margin-top: 10rpx;
+  line-height: 1.6;
   word-break: break-word;
+  letter-spacing: $tracking-cn-soft;
 }
-.hotel-actions { margin-top: 20rpx; }
+.hotel-actions { margin-top: 22rpx; }
 .hotel-btn {
   display: inline-flex;
   align-items: center;
@@ -1273,23 +1458,37 @@ onShow(async () => {
   border-radius: $radius-full;
   font-size: 24rpx;
   line-height: 1;
+  letter-spacing: $tracking-cn-soft;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+  transition: all 0.3s $ease-editorial;
 }
 .hotel-btn-icon {
   width: 28rpx;
   height: 28rpx;
 }
 .hotel-btn::after { border: none; }
+.hotel-btn:active { transform: scale(0.97); opacity: 0.92; }
 
 /* 空状态 */
 .empty-state {
   text-align: center;
-  padding: 80rpx 0;
+  padding: 100rpx 48rpx 80rpx;
+}
+.empty-state::before {
+  content: '';
+  display: block;
+  width: 1rpx;
+  height: 48rpx;
+  background: var(--theme-border, $hairline-strong);
+  margin: 0 auto 32rpx;
+  opacity: 0.5;
 }
 .empty-visual {
   display: block;
-  width: 220rpx;
-  height: 220rpx;
-  margin: 0 auto 16rpx;
+  width: 200rpx;
+  height: 200rpx;
+  margin: 0 auto 20rpx;
+  opacity: 0.9;
 }
 .empty-text {
   display: block;
@@ -1297,17 +1496,19 @@ onShow(async () => {
   color: var(--theme-ink, $text-primary);
   font-weight: 500;
   margin-bottom: 8rpx;
+  letter-spacing: $tracking-cn-soft;
 }
 .empty-sub {
   display: block;
   font-size: 24rpx;
   color: var(--theme-muted, $text-muted);
-  line-height: 1.5;
+  line-height: 1.6;
   padding: 0 48rpx;
+  letter-spacing: $tracking-cn-soft;
 }
 .retry-btn {
-  margin-top: 24rpx;
-  width: 220rpx;
+  margin-top: 28rpx;
+  width: 240rpx;
   height: $control-height-sm;
   line-height: $control-height-sm;
   border-radius: $radius-full;
@@ -1315,10 +1516,14 @@ onShow(async () => {
   color: var(--theme-accent, $color-primary);
   border: 1rpx solid var(--theme-accent-line, rgba(176,58,91,0.28));
   font-size: 26rpx;
+  letter-spacing: $tracking-cn-soft;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+  transition: all 0.3s $ease-editorial;
 }
 .retry-btn::after {
   border: none;
 }
+.retry-btn:active { transform: scale(0.98); opacity: 0.9; }
 
 .theme-wine,
 .theme-cinnabar,

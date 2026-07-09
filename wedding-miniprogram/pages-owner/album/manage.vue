@@ -328,7 +328,7 @@ function extractChosenImagePaths(res = {}) {
 function normalizeChooseImageError(message = '') {
   const raw = String(message || '')
   if (raw.includes('api scope is not declared') || raw.includes('privacy agreement')) {
-    return '上传照片前，请先在微信公众平台隐私保护指引中声明“照片或视频信息”用途'
+    return '请在微信公众平台声明“收集你选中的照片或视频信息”，约 5 分钟后再上传'
   }
   if (/privacy|隐私/i.test(raw)) {
     return '请先同意小程序隐私保护指引后再上传照片'
@@ -344,6 +344,15 @@ function normalizeChooseImageError(message = '') {
 
 function showUploadError(err) {
   const message = err?.message || '上传失败，请重试'
+  if (message.includes('微信公众平台')) {
+    uni.showModal({
+      title: '需完成平台声明',
+      content: `${message}。用途建议填写：用于新人上传婚礼照片并制作婚礼相册、请柬封面与分享海报。`,
+      showCancel: false,
+      confirmText: '知道了'
+    })
+    return
+  }
   if (message.includes('微信设置')) {
     uni.showModal({
       title: '无法选择照片',

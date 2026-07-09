@@ -272,17 +272,35 @@ onShow(() => loadTimeline(false))
   font-weight: 600;
   color: $text-primary;
   margin-bottom: 16rpx;
+  letter-spacing: $tracking-cn;
+  line-height: 1.25;
 }
 .page-divider {
   width: 32rpx;
   height: 2rpx;
+  background: $text-primary;
+  margin-bottom: 20rpx;
+  border-radius: 2rpx;
+  position: relative;
+}
+.page-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 12rpx);
+  width: 6rpx;
+  height: 6rpx;
+  border-radius: 50%;
   background: $text-muted;
-  margin-bottom: 16rpx;
+  opacity: 0.4;
+  transform: translateY(-50%);
 }
 .page-desc {
   display: block;
   font-size: $font-body;
   color: $text-secondary;
+  letter-spacing: $tracking-cn-soft;
+  line-height: 1.7;
 }
 .page-desc.today {
   color: $color-primary;
@@ -298,25 +316,42 @@ onShow(() => loadTimeline(false))
   font-size: 34rpx;
   color: $text-primary;
   font-weight: 600;
-  margin-bottom: 14rpx;
+  margin-bottom: 16rpx;
+  letter-spacing: $tracking-cn-soft;
+  position: relative;
+}
+.feature-title::after {
+  content: '';
+  display: block;
+  width: 32rpx;
+  height: 2rpx;
+  background: $text-primary;
+  margin: 18rpx auto 0;
+  border-radius: 2rpx;
+  opacity: 0.6;
 }
 .feature-desc {
   display: block;
   font-size: 26rpx;
   color: $text-secondary;
-  line-height: 1.6;
-  margin-bottom: 36rpx;
+  line-height: 1.7;
+  margin-bottom: 40rpx;
+  letter-spacing: $tracking-cn-soft;
 }
 .feature-action {
-  width: 260rpx;
+  width: 280rpx;
   height: $control-height-sm;
   line-height: $control-height-sm;
   border-radius: $radius-full;
   background: $text-primary;
   color: $ink-inverse;
   font-size: 26rpx;
+  letter-spacing: $tracking-cn-soft;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+  transition: all 0.3s $ease-editorial;
 }
 .feature-action::after { border: none; }
+.feature-action:active { transform: scale(0.98); opacity: 0.9; }
 
 .loading-state {
   text-align: center;
@@ -330,30 +365,46 @@ onShow(() => loadTimeline(false))
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 20rpx;
-  padding: 24rpx $page-gutter 48rpx;
+  gap: 28rpx;
+  padding: 32rpx $page-gutter 56rpx;
+  position: relative;
+}
+.date-banner::before,
+.date-banner::after {
+  content: '';
+  width: 48rpx;
+  height: 1rpx;
+  background: $hairline-strong;
+  opacity: 0.6;
 }
 .date-num {
-  font-size: 80rpx;
+  font-size: 88rpx;
   font-weight: 200;
   color: $text-primary;
   line-height: 1;
   font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
 }
 .date-meta {
   display: flex;
   flex-direction: column;
-  gap: 4rpx;
+  gap: 6rpx;
+  align-items: flex-start;
+  border-left: 1rpx solid $hairline-medium;
+  padding-left: 20rpx;
 }
 .date-month {
   font-size: 24rpx;
   color: $text-primary;
-  letter-spacing: 0;
+  letter-spacing: $tracking-cn-soft;
   font-weight: 500;
 }
 .date-week {
-  font-size: 22rpx;
+  font-size: 20rpx;
   color: $text-muted;
+  letter-spacing: $tracking-kicker;
+  text-transform: uppercase;
+  font-weight: 500;
 }
 
 /* 时间轴 */
@@ -366,9 +417,10 @@ onShow(() => loadTimeline(false))
   padding: 0 80rpx 32rpx $page-gutter;
   overflow-x: auto;
 }
+.role-filter::-webkit-scrollbar { display: none; }
 .role-pill {
   min-height: $control-height-sm;
-  padding: 0 26rpx;
+  padding: 0 28rpx;
   border-radius: $radius-full;
   background: $bg-muted;
   color: $text-secondary;
@@ -377,6 +429,12 @@ onShow(() => loadTimeline(false))
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 1rpx solid transparent;
+  transition: all 0.3s $ease-editorial;
+  letter-spacing: $tracking-cn-soft;
+}
+.role-pill:active {
+  transform: scale(0.97);
 }
 .role-pill.active {
   background: var(--theme-accent-soft, rgba(176,58,91,0.10));
@@ -386,7 +444,7 @@ onShow(() => loadTimeline(false))
   display: flex;
   gap: 32rpx;
   padding-bottom: 48rpx;
-  animation: fadeInUp 0.6s $ease-out both;
+  animation: fadeInUp 0.7s $ease-editorial both;
   opacity: 0;
 }
 
@@ -402,14 +460,16 @@ onShow(() => loadTimeline(false))
   font-size: 24rpx;
   color: $text-muted;
   font-weight: 500;
-  margin-bottom: 16rpx;
+  margin-bottom: 18rpx;
   font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  text-align: center;
 }
 
 .timeline-dot-wrap {
   position: relative;
-  width: 24rpx;
-  height: 24rpx;
+  width: 28rpx;
+  height: 28rpx;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -418,10 +478,11 @@ onShow(() => loadTimeline(false))
   width: 12rpx;
   height: 12rpx;
   border-radius: 50%;
-  background: $border-color;
+  background: $hairline-strong;
   position: relative;
   z-index: 2;
-  transition: all 0.3s ease;
+  transition: all 0.3s $ease-editorial;
+  box-shadow: 0 0 0 6rpx var(--theme-page, $bg-color);
 }
 .timeline-dot-ring {
   position: absolute;
@@ -435,18 +496,18 @@ onShow(() => loadTimeline(false))
 
 .timeline-line {
   position: absolute;
-  top: 76rpx;
+  top: 82rpx;
   bottom: 0;
   width: 1rpx;
-  background: $border-color;
+  background: $hairline-medium;
 }
 .timeline-line.dashed {
   background: repeating-linear-gradient(
     to bottom,
-    $border-color 0rpx,
-    $border-color 8rpx,
-    transparent 8rpx,
-    transparent 16rpx
+    $hairline-medium 0rpx,
+    $hairline-medium 6rpx,
+    transparent 6rpx,
+    transparent 14rpx
   );
 }
 
@@ -459,7 +520,7 @@ onShow(() => loadTimeline(false))
   align-items: flex-start;
   justify-content: space-between;
   gap: 16rpx;
-  margin-bottom: 12rpx;
+  margin-bottom: 14rpx;
 }
 .content-title {
   font-size: 32rpx;
@@ -476,13 +537,15 @@ onShow(() => loadTimeline(false))
   font-size: 18rpx;
   font-weight: 500;
   white-space: nowrap;
+  letter-spacing: $tracking-kicker;
+  text-transform: uppercase;
 }
 .status-badge.past {
-  background: rgba(153,153,153,0.1);
+  background: rgba(153,153,153,0.10);
   color: $text-muted;
 }
 .status-badge.current {
-  background: rgba(176,58,91,0.1);
+  background: rgba(176,58,91,0.10);
   color: $color-primary;
 }
 .status-badge.upcoming {
@@ -494,22 +557,25 @@ onShow(() => loadTimeline(false))
   display: flex;
   align-items: center;
   gap: 8rpx;
-  margin-top: 8rpx;
+  margin-top: 10rpx;
 }
 .meta-icon {
   font-size: 22rpx;
+  opacity: 0.7;
 }
 .meta-text {
   font-size: 24rpx;
   color: $text-secondary;
+  letter-spacing: $tracking-cn-soft;
 }
 .content-notes {
   display: block;
   font-size: 24rpx;
   color: $text-muted;
-  margin-top: 8rpx;
-  line-height: 1.5;
+  margin-top: 10rpx;
+  line-height: 1.6;
   word-break: break-word;
+  letter-spacing: $tracking-cn-soft;
 }
 
 /* 状态样式 */
@@ -517,6 +583,7 @@ onShow(() => loadTimeline(false))
   width: 14rpx;
   height: 14rpx;
   background: $color-primary;
+  box-shadow: 0 0 0 6rpx var(--theme-page, $bg-color);
 }
 .timeline-item.current .timeline-time {
   color: $color-primary;
@@ -535,23 +602,35 @@ onShow(() => loadTimeline(false))
   text-align: center;
   padding: 200rpx 60rpx;
 }
+.empty-state::before {
+  content: '';
+  display: block;
+  width: 1rpx;
+  height: 56rpx;
+  background: $hairline-strong;
+  margin: 0 auto 32rpx;
+  opacity: 0.5;
+}
 .empty-icon {
-  width: 220rpx;
-  height: 220rpx;
+  width: 200rpx;
+  height: 200rpx;
   font-size: 0;
   display: block;
   margin: 0 auto 24rpx;
+  opacity: 0.85;
 }
 .empty-text {
   display: block;
   font-size: 30rpx;
   color: $text-primary;
-  margin-bottom: 8rpx;
+  margin-bottom: 10rpx;
   font-weight: 500;
+  letter-spacing: $tracking-cn-soft;
 }
 .empty-sub {
   font-size: 24rpx;
   color: $text-muted;
+  letter-spacing: $tracking-cn-soft;
 }
 
 /* 底部 */
@@ -560,14 +639,32 @@ onShow(() => loadTimeline(false))
   padding: 40rpx;
 }
 .footer-line {
-  width: 32rpx;
+  width: 40rpx;
   height: 1rpx;
-  background: $border-color;
+  background: $hairline-medium;
   margin: 0 auto 20rpx;
+  position: relative;
 }
+.footer-line::before,
+.footer-line::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 4rpx;
+  height: 4rpx;
+  background: $text-muted;
+  opacity: 0.4;
+  border-radius: 50%;
+  transform: translateY(-50%);
+}
+.footer-line::before { left: -16rpx; }
+.footer-line::after { right: -16rpx; }
 .footer-text {
   font-size: 22rpx;
   color: $text-muted;
+  letter-spacing: $tracking-kicker;
+  text-transform: uppercase;
+  font-weight: 500;
 }
 
 .theme-wine,

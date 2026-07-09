@@ -220,6 +220,13 @@ const invitationText = computed(() => {
   return store.invitation?.content?.main_text || '盼与您共赴这一日的约。'
 })
 
+function formatWeddingYear(dateStr) {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  if (Number.isNaN(d.getTime())) return ''
+  return String(d.getFullYear())
+}
+
 function updateCountdown() {
   const cd = store.getLiveCountdown(Date.now())
   if (!cd) return
@@ -431,6 +438,8 @@ onUnmounted(() => {
   @include photo-hero-scrim;
   pointer-events: none;
   z-index: 3;
+  letter-spacing: -0.04em;
+  user-select: none;
 }
 .lux-hero-image {
   position: absolute;
@@ -701,6 +710,7 @@ onUnmounted(() => {
 }
 .lux-rsvp-copy {
   display: block;
+
   color: var(--theme-ink, $text-primary);
   font-family: $font-serif;
   font-size: $fs-body;
