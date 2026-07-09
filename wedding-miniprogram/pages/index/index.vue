@@ -11,40 +11,19 @@
       <text class="lux-xi-watermark">囍</text>
 
       <view class="lux-hero-copy">
-        <text class="lux-hero-kicker">{{ activeTemplate.kicker }}</text>
-        <text class="lux-hero-names">{{ groomName }} & {{ brideName }}</text>
-        <text class="lux-hero-sub">诚邀您见证我们的婚礼</text>
-      </view>
-
-      <view class="lux-action-panel">
-        <view class="lux-countdown" v-if="showCountdown && countdown">
-          <text class="lux-count-num">{{ countdown.isToday ? 'TODAY' : countdown.days }}</text>
-          <view class="lux-count-copy">
-            <text class="lux-count-label">{{ countdown.isToday ? '就是今天' : 'DAYS TO GO' }}</text>
-            <text class="lux-count-desc">{{ formatDate(weddingDate) }} {{ weddingTime || '12:00' }}</text>
-          </view>
+        <text class="lux-hero-kicker">THE WEDDING OF</text>
+        <view class="lux-hero-names">
+          <text>{{ groomName }}</text>
+          <text class="lux-hero-amp">&amp;</text>
+          <text>{{ brideName }}</text>
         </view>
-
-        <view class="lux-venue-card" v-if="hasVenueInfo" @click="goToGuide">
-          <view class="lux-venue-main">
-            <text class="lux-label">主场地</text>
-            <text class="lux-venue-name">{{ primaryVenue.name }}</text>
-            <text class="lux-venue-address" v-if="primaryVenue.address || venueAddress">{{ primaryVenue.address || venueAddress }}</text>
-          </view>
-          <button class="lux-nav-btn" @click.stop="openNavigation">导航</button>
-        </view>
-
-        <view class="lux-panel-actions">
-          <button class="lux-panel-btn primary" v-if="isRsvpEnabled" @click="goToRSVP">{{ hasSubmittedRsvp ? '修改回执' : '确认出席' }}</button>
-          <button class="lux-panel-btn" v-if="isBlessingEnabled" @click="goToBlessing">写祝福</button>
-          <button class="lux-panel-btn" open-type="share">分享请柬</button>
-        </view>
+        <text class="lux-hero-sub" v-if="formattedWeddingDate">{{ formattedWeddingDate }}</text>
       </view>
     </view>
 
     <view class="lux-invite-section">
       <SectionHeader
-        title="婚书请柬"
+        title="卷首语"
         kicker="INVITATION"
         desc="愿这一天，被您和我们一起记住"
       />
@@ -65,40 +44,51 @@
       </view>
     </view>
 
-    <view class="lux-section" v-if="featuredPhotos.length > 0 || latestBlessings.length > 0">
-      <SectionHeader title="婚礼预览" kicker="MEMORIES" :desc="activeTemplate.albumMood + ' · ' + activeTemplate.photoMood" />
-      <view class="lux-preview-block" v-if="featuredPhotos.length > 0" @click="goToAlbum">
-        <view class="preview-header">
-          <text class="lux-preview-title">{{ activeTemplate.albumMood }}</text>
-          <text class="lux-preview-more">查看全部</text>
+    <view class="lux-detail-section" v-if="hasWeddingDetails">
+      <SectionHeader
+        title="囍事详情"
+        kicker="DETAILS"
+        desc="时间、地点与赴约提示"
+      />
+      <view class="lux-detail-card">
+        <view class="lux-countdown" v-if="showCountdown && countdown">
+          <text class="lux-count-num">{{ countdown.isToday ? 'TODAY' : countdown.days }}</text>
+          <view class="lux-count-copy">
+            <text class="lux-count-label">{{ countdown.isToday ? '就是今天' : 'DAYS TO GO' }}</text>
+            <text class="lux-count-desc">{{ countdownDesc }}</text>
+          </view>
         </view>
-        <view class="lux-photo-strip">
-          <view
-            class="lux-photo-thumb"
-            v-for="(photo, index) in featuredPhotos"
-            :key="photo.id || photo.url"
-          >
-            <view class="lux-photo-frame">
-              <image
-                class="lux-photo-image"
-                :class="photoTreatmentClass(photo)"
-                :src="photo.url"
-                mode="aspectFill"
-              />
+
+        <view class="lux-detail-list">
+          <view class="lux-detail-row" v-if="formattedWeddingDate">
+            <text class="lux-detail-label">DATE</text>
+            <text class="lux-detail-value">{{ formattedWeddingDate }}</text>
+          </view>
+          <view class="lux-detail-row" v-if="weddingTime">
+            <text class="lux-detail-label">TIME</text>
+            <text class="lux-detail-value num">{{ weddingTime }}</text>
+          </view>
+          <view class="lux-detail-row venue" v-if="hasVenueInfo" @click="goToGuide">
+            <view class="lux-detail-main">
+              <text class="lux-detail-label">VENUE</text>
+              <text class="lux-venue-name">{{ primaryVenue.name || venueName }}</text>
+              <text class="lux-venue-address" v-if="primaryVenue.address || venueAddress">{{ primaryVenue.address || venueAddress }}</text>
             </view>
-            <text class="lux-photo-caption">{{ photoCaption(photo, index) }}</text>
+            <button class="lux-nav-btn" v-if="hasNavigableVenue" @click.stop="openNavigation">导航</button>
           </view>
         </view>
       </view>
-      <view class="lux-preview-block" v-if="isBlessingEnabled && latestBlessings.length > 0" @click="goToBlessing">
-        <view class="preview-header">
-          <text class="lux-preview-title">最近祝福</text>
-          <text class="lux-preview-more">去祝福墙</text>
-        </view>
-        <view class="lux-blessing-row" v-for="item in latestBlessings" :key="item.id">
-          <text class="lux-blessing-name">{{ item.sender?.name || '宾客' }}</text>
-          <text class="lux-blessing-text">{{ item.content }}</text>
-        </view>
+    </view>
+
+    <view class="lux-rsvp-section" v-if="isRsvpEnabled">
+      <SectionHeader
+        title="赴约"
+        kicker="RSVP"
+        desc="愿在这一日与您相见"
+      />
+      <view class="lux-rsvp-card">
+        <text class="lux-rsvp-copy">{{ hasSubmittedRsvp ? '已收到您的回执，如需调整仍可重新填写。' : '若您愿意赴这一日之约，请为新人留下一份回音。' }}</text>
+        <button class="lux-rsvp-btn" @click="goToRSVP">{{ hasSubmittedRsvp ? '修改回执' : '确认出席' }}</button>
       </view>
     </view>
 
@@ -125,7 +115,7 @@ import { onLoad, onShareAppMessage, onShareTimeline, onShow } from '@dcloudio/un
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { fetchWedding, recordShare, recordView } from '@/composables/useCloud.js'
-import { formatDate, getWeekDay } from '@/utils/index.js'
+import { formatDate } from '@/utils/index.js'
 import { getTemplateHeroImage } from '@/utils/templates.js'
 import SectionHeader from '@/components/ui/SectionHeader.vue'
 
@@ -196,17 +186,23 @@ const weddingDate = computed(() => store.weddingDate)
 const weddingTime = computed(() => store.weddingTime)
 const venueName = computed(() => store.venueName)
 const venueAddress = computed(() => store.invitation?.wedding?.venue_address || '')
-const activeTemplate = computed(() => store.activeTemplate)
 const templateClass = computed(() => store.templateClass)
 const showCountdown = computed(() => store.showCountdown)
 const isRsvpEnabled = computed(() => store.isRsvpEnabled)
-const isBlessingEnabled = computed(() => store.isBlessingEnabled)
-const isTimelineEnabled = computed(() => store.isTimelineEnabled)
 const primaryVenue = computed(() => store.primaryVenue || { name: venueName.value || '婚礼场地', address: venueAddress.value })
 const hasVenueInfo = computed(() => Boolean(primaryVenue.value?.name || primaryVenue.value?.address || venueAddress.value))
-const latestBlessings = computed(() => store.latestBlessings || [])
-const featuredPhotos = computed(() => store.featuredPhotos || [])
+const hasNavigableVenue = computed(() => {
+  const latitude = Number(primaryVenue.value?.coordinate?.latitude)
+  const longitude = Number(primaryVenue.value?.coordinate?.longitude)
+  return Number.isFinite(latitude) && Number.isFinite(longitude)
+})
 const heroPhotoTreatmentClass = computed(() => (isDefaultCover.value ? '' : photoTreatmentClass()))
+const formattedWeddingDate = computed(() => formatDate(weddingDate.value))
+const countdownDesc = computed(() => {
+  if (formattedWeddingDate.value && weddingTime.value) return `${formattedWeddingDate.value} ${weddingTime.value}`
+  return formattedWeddingDate.value || weddingTime.value || '婚期将至'
+})
+const hasWeddingDetails = computed(() => Boolean(formattedWeddingDate.value || weddingTime.value || hasVenueInfo.value || countdown.value))
 const hasSubmittedRsvp = computed(() => {
   if (!isRsvpEnabled.value) return false
   const list = store.guests?.guests || []
@@ -216,25 +212,12 @@ const hasSubmittedRsvp = computed(() => {
   })
 })
 
-function photoCaption(photo, index) {
-  const custom = photo?.caption || photo?.title || photo?.desc || photo?.description
-  if (custom) return custom
-  const date = photo?.date || photo?.taken_at || photo?.upload_time || photo?.created_at
-  if (date) return formatDate(String(date).slice(0, 10))
-  return `PHOTO ${String(index + 1).padStart(2, '0')}`
-}
-
 function photoTreatmentClass(photo = null) {
   const treatment = String(photo?.treatment || photo?.effect || photo?.filter || photoTreatment.value || '').toLowerCase()
   if (['silver', 'silver-bw', 'black-white', 'bw'].includes(treatment)) return 'treatment-silver'
   if (['soft-color', 'light-color', 'tint'].includes(treatment)) return 'treatment-tint'
   return ''
 }
-const nextEventText = computed(() => {
-  const event = store.nextTimelineEvent
-  if (!event) return '待公布'
-  return event.time ? `${event.time} ${event.title}` : event.title
-})
 const invitationText = computed(() => {
   return store.invitation?.content?.main_text || '盼与您共赴这一日的约。'
 })
@@ -270,28 +253,13 @@ function navigateOrToast(url, label) {
   })
 }
 
-function goToAlbum() { switchTabOrToast('/pages/album/index', '打开相册') }
 function goToGuide() { switchTabOrToast('/pages/guide/index', '打开路书') }
-function goToTimeline() {
-  if (!isTimelineEnabled.value) {
-    uni.showToast({ title: '新人暂未开放婚礼流程', icon: 'none' })
-    return
-  }
-  switchTabOrToast('/pages/timeline/index', '打开流程')
-}
 function goToRSVP() {
   if (!isRsvpEnabled.value) {
     uni.showToast({ title: '新人暂未开放在线回执', icon: 'none' })
     return
   }
   navigateOrToast('/pages/rsvp/index', '打开回执')
-}
-function goToBlessing() {
-  if (!isBlessingEnabled.value) {
-    uni.showToast({ title: '新人暂未开放祝福墙', icon: 'none' })
-    return
-  }
-  navigateOrToast('/pages/blessing/index', '打开祝福墙')
 }
 
 function openNavigation() {
@@ -315,60 +283,7 @@ function openNavigation() {
       }
     })
   } else {
-    uni.showToast({ title: '暂无地址信息', icon: 'none' })
-  }
-}
-
-function openCalendar() {
-  const date = store.weddingDate
-  const time = store.weddingTime || '12:00'
-  const venue = store.venues?.venues?.[0]
-  if (!date) {
-    uni.showToast({ title: '暂无婚礼日期信息', icon: 'none' })
-    return
-  }
-
-  const startTime = Math.floor(new Date(`${date}T${time}`).getTime() / 1000)
-  if (!Number.isFinite(startTime)) {
-    uni.showToast({ title: '婚礼日期格式有误', icon: 'none' })
-    return
-  }
-  const endTime = startTime + 4 * 3600 // 默认婚礼持续4小时
-
-  if (typeof wx !== 'undefined' && wx.addPhoneCalendar) {
-    wx.addPhoneCalendar({
-      title: `${groomName.value} & ${brideName.value} 的婚礼`,
-      startTime,
-      endTime,
-      location: venue?.name || store.venueName || '',
-      description: `诚挚邀请您参加${groomName.value} & ${brideName.value}的婚礼，期待您的到来。`,
-      success: () => {
-        uni.showToast({ title: '已添加到日历', icon: 'success' })
-      },
-      fail: (err) => {
-        if (err.errMsg?.includes('auth deny')) {
-          uni.showModal({
-            title: '需要授权',
-            content: '请允许添加到日历权限',
-            confirmText: '去设置',
-            success: (res) => {
-              if (res.confirm) {
-                uni.openSetting({
-                  fail: (settingErr) => {
-                    console.warn('打开设置失败:', settingErr)
-                    uni.showToast({ title: '打开设置失败', icon: 'none' })
-                  }
-                })
-              }
-            }
-          })
-        } else {
-          uni.showToast({ title: '添加失败，请手动添加', icon: 'none' })
-        }
-      }
-    })
-  } else {
-    uni.showToast({ title: '请手动添加到日历', icon: 'none' })
+    uni.showToast({ title: '路线尚未落笔', icon: 'none' })
   }
 }
 
@@ -495,19 +410,18 @@ onUnmounted(() => {
   padding-bottom: calc(96rpx + env(safe-area-inset-bottom));
 }
 
-/* ========== 高级礼宴首页 v4 ========== */
+/* ========== 信笺首页 v2 ========== */
 .lux-home {
   min-height: 100vh;
-  background:
-    linear-gradient(180deg, var(--theme-page-soft, rgba(255,248,245,0.98)) 0%, var(--theme-page, $ink-inverse) 34%, var(--theme-page-soft, rgba(255,248,245,1)) 100%);
+  background: var(--theme-page, $paper-bg);
   color: var(--theme-ink, $text-primary);
   padding-bottom: calc(118rpx + env(safe-area-inset-bottom));
 }
 .lux-hero-stage {
   position: relative;
-  min-height: 1168rpx;
-  overflow: visible;
-  background: var(--theme-hero-bg, $color-primary-dark);
+  min-height: 1120rpx;
+  overflow: hidden;
+  background: var(--theme-hero-bg, $paper-bg);
 }
 .lux-hero-stage::after {
   content: "";
@@ -515,7 +429,7 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   bottom: -2rpx;
-  height: 260rpx;
+  height: 360rpx;
   @include photo-hero-scrim;
   pointer-events: none;
   z-index: 3;
@@ -524,7 +438,7 @@ onUnmounted(() => {
   position: absolute;
   inset: 0;
   width: 100%;
-  height: 994rpx;
+  height: 100%;
   filter: var(--theme-hero-filter, none);
 }
 .lux-hero-image.default {
@@ -539,17 +453,17 @@ onUnmounted(() => {
 .lux-hero-overlay {
   position: absolute;
   inset: 0;
-  height: 994rpx;
-  background: var(--theme-hero-overlay, linear-gradient(to bottom, rgba(247, 242, 233, 0) 0%, rgba(247, 242, 233, 0.6) 55%, $paper-bg 100%));
+  background: var(--theme-hero-overlay, linear-gradient(to bottom, rgba(247, 242, 233, 0) 0%, rgba(247, 242, 233, 0.6) 58%, $paper-bg 100%));
+  z-index: 2;
 }
 .lux-hero-overlay.default {
   @include photo-hero-scrim;
 }
 .lux-xi-watermark {
   position: absolute;
-  top: 596rpx;
-  right: 18rpx;
-  z-index: 3;
+  right: 20rpx;
+  bottom: 218rpx;
+  z-index: 4;
   color: rgba(176, 141, 87, 0.10);
   font-family: $font-serif;
   font-size: 224rpx;
@@ -558,10 +472,10 @@ onUnmounted(() => {
 }
 .lux-hero-copy {
   position: absolute;
-  z-index: 4;
+  z-index: 5;
   left: $page-gutter;
   right: $page-gutter;
-  bottom: 500rpx;
+  bottom: 132rpx;
   color: $ink;
   text-shadow: none;
 }
@@ -569,186 +483,66 @@ onUnmounted(() => {
   display: block;
   margin-bottom: 22rpx;
   color: $gold;
-  font-size: 20rpx;
+  font-size: $fs-cap;
   font-weight: 600;
   letter-spacing: $ls-wide;
   text-transform: uppercase;
 }
 .lux-hero-names {
-  display: block;
-  max-width: 620rpx;
-  color: var(--theme-accent-deep, $color-primary-dark);
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  max-width: 640rpx;
+  color: var(--theme-ink, $text-primary);
   font-family: $font-serif;
-  font-size: 72rpx;
+  font-size: $fs-hero;
   font-weight: 600;
-  line-height: 1.06;
+  line-height: 1.18;
   letter-spacing: 0;
   word-break: break-word;
+}
+.lux-hero-amp {
+  color: $gold;
+  font-family: $font-num;
+  font-size: 48rpx;
+  font-weight: 400;
 }
 .lux-hero-sub {
   display: block;
-  margin-top: 26rpx;
+  margin-top: 24rpx;
   color: $ink-soft;
-  font-size: 28rpx;
+  font-family: $font-num;
+  font-size: $fs-note;
   line-height: 1.45;
 }
-.lux-action-panel {
-  position: absolute;
-  z-index: 6;
-  left: $page-gutter-sm;
-  right: $page-gutter-sm;
-  bottom: 0;
-  padding: 30rpx;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,0.98) 0%, var(--theme-surface, $ink-inverse) 100%);
-  border: 1rpx solid var(--theme-border, rgba(75,17,30,0.10));
-  border-radius: $card-radius;
-  box-shadow: 0 18rpx 54rpx rgba(42,17,20,0.16);
-  backdrop-filter: blur(18rpx);
+.lux-invite-section,
+.lux-detail-section,
+.lux-rsvp-section {
+  margin-top: $sp-7;
 }
-.lux-action-panel::before {
-  content: "";
-  display: block;
-  width: 92rpx;
-  height: 4rpx;
-  margin: 0 auto 22rpx;
-  border-radius: 2rpx;
-  background: $gold;
-  opacity: 0.72;
-}
-.lux-countdown {
-  display: flex;
-  align-items: center;
-  gap: 18rpx;
-  padding-bottom: 22rpx;
-  border-bottom: 1rpx solid $border-light;
-}
-.lux-count-num {
-  color: var(--theme-accent-deep, $color-primary-dark);
-  font-family: $font-num;
-  font-size: 54rpx;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-}
-.lux-count-copy {
-  flex: 1;
-  min-width: 0;
-}
-.lux-count-label,
-.lux-label {
-  display: block;
-  color: $text-muted;
-  font-size: 20rpx;
-  font-weight: 600;
-  letter-spacing: 0;
-}
-.lux-count-desc {
-  display: block;
-  margin-top: 6rpx;
-  color: var(--theme-ink, $text-primary);
-  font-size: 26rpx;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-.lux-venue-card {
+.lux-invite-card,
+.lux-detail-card,
+.lux-rsvp-card {
   position: relative;
-  display: flex;
-  align-items: center;
-  gap: 20rpx;
-  margin-top: 22rpx;
-  padding: 26rpx;
+  margin: 0 $page-gutter $sp-4;
+  padding: $sp-4;
   background: var(--theme-surface, $paper-card);
-  border: 1rpx solid var(--theme-border, $border-light);
-  border-radius: $card-radius;
-  box-shadow: 0 8rpx 28rpx rgba(42,17,20,0.055);
+  border: 1rpx solid var(--theme-border, $line);
+  border-radius: $r-md;
+  box-shadow: $shadow-card;
   overflow: hidden;
 }
-.lux-venue-card::before {
+.lux-detail-card::before,
+.lux-rsvp-card::before {
   content: "";
   position: absolute;
   left: 0;
-  top: 24rpx;
-  bottom: 24rpx;
+  top: $sp-4;
+  bottom: $sp-4;
   width: 4rpx;
   border-radius: 2rpx;
   background: var(--theme-accent, $color-primary);
-}
-.lux-venue-main {
-  flex: 1;
-  min-width: 0;
-}
-.lux-venue-name {
-  display: block;
-  margin-top: 8rpx;
-  color: var(--theme-ink, $text-primary);
-  font-family: $font-serif;
-  font-size: 34rpx;
-  font-weight: 600;
-  line-height: 1.35;
-  word-break: break-word;
-}
-.lux-venue-address {
-  display: block;
-  margin-top: 8rpx;
-  color: var(--theme-muted, $text-muted);
-  font-size: 24rpx;
-  line-height: 1.45;
-  word-break: break-word;
-}
-.lux-nav-btn {
-  width: 132rpx;
-  height: 76rpx;
-  line-height: 76rpx;
-  border-radius: $radius-sm;
-  background: var(--theme-accent-soft, rgba(176,58,91,0.08));
-  color: var(--theme-accent, $color-primary);
-  border: 1rpx solid var(--theme-accent-line, rgba(176,58,91,0.28));
-  font-size: 26rpx;
-  font-weight: 600;
-  padding: 0;
-}
-.lux-nav-btn::after {
-  border: none;
-}
-.lux-panel-actions {
-  display: flex;
-  gap: 14rpx;
-  margin-top: 20rpx;
-}
-.lux-panel-btn {
-  flex: 1;
-  min-width: 0;
-  height: 78rpx;
-  line-height: 78rpx;
-  border-radius: $radius-sm;
-  background: var(--theme-elevated, $bg-muted);
-  color: var(--theme-ink, $text-primary);
-  font-size: 26rpx;
-  font-weight: 600;
-  padding: 0 10rpx;
-}
-.lux-panel-btn.primary {
-  background: var(--theme-accent, $color-primary);
-  color: var(--theme-on-accent, $ink-inverse);
-}
-.lux-panel-btn::after {
-  border: none;
-}
-.lux-invite-section,
-.lux-section {
-  margin-top: 58rpx;
-}
-.lux-invite-card,
-.lux-preview-block {
-  margin: 0 $page-gutter 28rpx;
-  padding: 32rpx;
-  background:
-    linear-gradient(180deg, var(--theme-surface, $paper-card) 0%, rgba(255,253,248,0.96) 100%);
-  border: 1rpx solid var(--theme-border, $border-light);
-  border-radius: $card-radius;
-  box-shadow: 0 10rpx 30rpx rgba(42,17,20,0.06);
 }
 .lux-invite-mark {
   display: block;
@@ -764,6 +558,7 @@ onUnmounted(() => {
   font-family: $font-serif;
   font-size: 32rpx;
   line-height: 1.85;
+  word-break: break-word;
 }
 .lux-couple-row {
   display: flex;
@@ -780,6 +575,7 @@ onUnmounted(() => {
   color: $text-muted;
   font-size: 18rpx;
   font-weight: 600;
+  letter-spacing: $ls-wide;
 }
 .lux-couple-name {
   display: block;
@@ -800,85 +596,132 @@ onUnmounted(() => {
   text-align: center;
   flex-shrink: 0;
 }
-.lux-preview-block .preview-header {
+.lux-countdown {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 18rpx;
-  margin-bottom: 20rpx;
+  padding-bottom: $sp-3;
+  border-bottom: 1rpx solid $line-soft;
 }
-.lux-preview-title {
-  color: $text-primary;
-  font-size: 30rpx;
-  font-weight: 600;
-}
-.lux-preview-more {
-  flex-shrink: 0;
-  color: var(--theme-accent, $color-primary);
-  font-size: 24rpx;
-  font-weight: 600;
-}
-.lux-photo-strip {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12rpx;
-}
-.lux-photo-thumb {
-  width: 100%;
-  min-width: 0;
-  @include photo-mount;
-  box-sizing: border-box;
-}
-.lux-photo-frame {
-  position: relative;
-  width: 100%;
-  padding-top: $photo-ratio;
-  overflow: hidden;
-  background: $paper-deep;
-}
-.lux-photo-image {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  display: block;
-  filter: none;
-}
-.lux-photo-image.treatment-silver {
-  filter: grayscale(1) contrast(1.04);
-}
-.lux-photo-image.treatment-tint {
-  filter: saturate(0.86) contrast(0.96);
-}
-.lux-photo-caption {
-  display: block;
-  margin-top: 10rpx;
-  color: $ink-soft;
+.lux-count-num {
+  color: var(--theme-accent-deep, $color-primary-dark);
   font-family: $font-num;
-  font-size: 18rpx;
-  line-height: 1.35;
-  text-align: center;
+  font-size: 56rpx;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.lux-count-copy {
+  flex: 1;
+  min-width: 0;
+}
+.lux-count-label,
+.lux-detail-label {
+  display: block;
+  color: $gold;
+  font-size: $fs-cap;
+  font-weight: 600;
+  letter-spacing: $ls-wide;
+  text-transform: uppercase;
+}
+.lux-count-desc {
+  display: block;
+  margin-top: 6rpx;
+  color: var(--theme-ink, $text-primary);
+  font-size: $fs-note;
+  line-height: 1.45;
   word-break: break-word;
 }
-.lux-blessing-row {
-  padding: 18rpx 0;
-  border-top: 1rpx solid $border-light;
+.lux-detail-list {
+  display: flex;
+  flex-direction: column;
 }
-.lux-blessing-row:first-of-type {
-  border-top: none;
+.lux-detail-row {
+  display: flex;
+  flex-direction: column;
+  gap: $sp-1;
+  padding: $sp-3 0;
+  border-bottom: 1rpx solid $line-soft;
 }
-.lux-blessing-name {
+.lux-detail-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.lux-detail-row.venue {
+  flex-direction: row;
+  align-items: center;
+  gap: $sp-3;
+}
+.lux-detail-main {
+  flex: 1;
+  min-width: 0;
+}
+.lux-detail-value {
+  color: var(--theme-ink, $text-primary);
+  font-family: $font-serif;
+  font-size: $fs-body;
+  line-height: 1.45;
+  word-break: break-word;
+}
+.lux-detail-value.num {
+  font-family: $font-num;
+  font-size: 34rpx;
+}
+.lux-venue-name {
   display: block;
-  color: var(--theme-accent, $color-primary);
-  font-size: 24rpx;
+  margin-top: $sp-1;
+  color: var(--theme-ink, $text-primary);
+  font-family: $font-serif;
+  font-size: 34rpx;
   font-weight: 600;
+  line-height: 1.35;
+  word-break: break-word;
 }
-.lux-blessing-text {
+.lux-venue-address {
   display: block;
-  margin-top: 8rpx;
-  color: $text-secondary;
-  font-size: 26rpx;
-  line-height: 1.52;
+  margin-top: $sp-1;
+  color: var(--theme-muted, $text-muted);
+  font-size: $fs-note;
+  line-height: 1.45;
+  word-break: break-word;
+}
+.lux-nav-btn {
+  width: 132rpx;
+  height: 76rpx;
+  line-height: 76rpx;
+  border-radius: $r-sm;
+  background: var(--theme-accent-soft, rgba(176,58,91,0.08));
+  color: var(--theme-accent, $color-primary);
+  border: 1rpx solid var(--theme-accent-line, rgba(176,58,91,0.28));
+  font-size: $fs-note;
+  font-weight: 600;
+  padding: 0;
+  flex-shrink: 0;
+}
+.lux-nav-btn::after {
+  border: none;
+}
+.lux-rsvp-copy {
+  display: block;
+  color: var(--theme-ink, $text-primary);
+  font-family: $font-serif;
+  font-size: $fs-body;
+  line-height: 1.75;
+  word-break: break-word;
+}
+.lux-rsvp-btn {
+  margin-top: $sp-4;
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: $r-sm;
+  background: var(--theme-accent, $color-primary);
+  color: var(--theme-on-accent, $ink-inverse);
+  font-size: $fs-body;
+  font-weight: 600;
+  padding: 0;
+}
+.lux-rsvp-btn::after {
+  border: none;
 }
 .lux-footer-section {
   padding: 70rpx $page-gutter 40rpx;
@@ -888,8 +731,8 @@ onUnmounted(() => {
   width: 56rpx;
   height: 2rpx;
   margin: 0 auto 22rpx;
-  background: var(--theme-accent, $color-primary);
-  opacity: 0.34;
+  background: $gold;
+  opacity: 0.74;
 }
 .lux-footer-title {
   display: block;

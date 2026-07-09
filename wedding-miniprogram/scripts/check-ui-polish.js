@@ -160,8 +160,9 @@ function checkLongUserContentCanWrap() {
     ['pages-owner/guide/edit.vue', '.venue-address'],
     ['pages-owner/guide/edit.vue', '.info-row-value'],
     ['pages/index/index.vue', '.lux-venue-name'],
+    ['pages/index/index.vue', '.lux-detail-value'],
     ['pages/index/index.vue', '.lux-invite-text'],
-    ['pages/index/index.vue', '.lux-blessing-text'],
+    ['pages/index/index.vue', '.lux-rsvp-copy'],
     ['pages/index/index.vue', '.lux-venue-address']
   ]
   for (const [file, selector] of checks) {
@@ -192,7 +193,7 @@ function checkNativeFailureFeedback() {
 }
 
 function checkCalendarDateGuard() {
-  const calendarPages = ['pages/index/index.vue', 'pages/rsvp/index.vue']
+  const calendarPages = ['pages/rsvp/index.vue']
   for (const file of calendarPages) {
     const source = read(path.join(root, file))
     assert(source.includes('Number.isFinite(startTime)'), `${file}: calendar actions must validate parsed startTime before calling wx.addPhoneCalendar`)
@@ -440,7 +441,7 @@ function checkOwnerDashboardFailureFeedback() {
 
 function checkGuestNavigationFailureFeedback() {
   const expectations = [
-    ['pages/index/index.vue', 'routeFail(label, err)', '打开相册', '打开回执'],
+    ['pages/index/index.vue', 'routeFail(label, err)', '打开路书', '打开回执'],
     ['pages/more/index.vue', 'routeFail(label, err)', '打开管理后台', '打开祝福墙'],
     ['pages/rsvp/index.vue', 'routeFail(label, err)', '返回首页', '打开祝福墙'],
     ['pages/album/index.vue', '路书打开失败，请稍后重试'],
@@ -473,7 +474,7 @@ function checkOwnerNavigationFailureFeedback() {
 
 function checkWeddingDateDefaults() {
   assert(read(path.join(root, 'pages-owner/wizard/index.vue')).includes("date: '2026-11-14'"), 'pages-owner/wizard/index.vue: creation wizard default date must match the 2026-11-14 wedding brief')
-  assert(read(path.join(root, 'stores/wedding.js')).includes("date: '2026-11-14'"), 'stores/wedding.js: guest fallback wedding date must match the 2026-11-14 wedding brief')
+  assert(read(path.join(root, 'stores/wedding.js')).includes("date: ''"), 'stores/wedding.js: guest fallback wedding date must stay empty until real invitation data loads')
 }
 
 function checkCloudSuccessLogsDoNotExposePayloads() {

@@ -9,7 +9,7 @@
         </view>
         <text class="arrival-date">{{ formatDate(store.weddingDate) }}</text>
       </view>
-      <view class="arrival-card">
+      <view class="arrival-card" v-if="hasPrimaryVenue">
         <view class="arrival-main">
           <text class="arrival-label">主场地</text>
           <text class="arrival-name">{{ primaryVenue.name }}</text>
@@ -294,6 +294,7 @@ const weatherIcon = computed(() => {
 const venues = computed(() => store.venues?.venues || [])
 const geocodedVenues = computed(() => venues.value.filter(hasCoordinate))
 const primaryVenue = computed(() => store.primaryVenue || venues.value[0] || {})
+const hasPrimaryVenue = computed(() => Boolean(primaryVenue.value?.name || primaryVenue.value?.address))
 const transportInfo = computed(() => store.venues?.transportation || {})
 const accommodations = computed(() => store.venues?.accommodations || [])
 const routeTips = computed(() => transportInfo.value.route_tips || [])
@@ -311,15 +312,7 @@ const weatherEmptySub = computed(() => {
   if (!weatherError.value) return ''
   return '请以当日天气为准'
 })
-const suggestedArrivalTime = computed(() => {
-  if (primaryVenue.value?.arrival_time) return primaryVenue.value.arrival_time
-  const time = store.weddingTime
-  if (!/^\d{1,2}:\d{2}$/.test(String(time || ''))) return ''
-  const [hour, minute] = String(time).split(':').map(Number)
-  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return ''
-  const total = Math.max(0, hour * 60 + minute - 30)
-  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
-})
+const suggestedArrivalTime = computed(() => store.suggestedArrivalTime)
 
 const markers = computed(() => {
   return geocodedVenues.value.map((v, i) => {
@@ -603,8 +596,9 @@ onShow(async () => {
   padding: 0;
 }
 .arrival-btn.primary {
-  background: var(--theme-accent, $ink-inverse);
-  color: var(--theme-on-accent, $text-primary);
+  background: var(--theme-accent-soft, rgba(176,58,91,0.08));
+  color: var(--theme-accent, $color-primary);
+  border: 1rpx solid var(--theme-accent-line, rgba(176,58,91,0.28));
 }
 .arrival-btn::after { border: none; }
 .arrival-summary {
@@ -848,8 +842,9 @@ onShow(async () => {
   line-height: 1.5;
 }
 .action-btn.primary {
-  background: var(--theme-accent, $color-primary);
-  color: var(--theme-on-accent, $ink-inverse);
+  background: var(--theme-accent-soft, rgba(176,58,91,0.08));
+  color: var(--theme-accent, $color-primary);
+  border: 1rpx solid var(--theme-accent-line, rgba(176,58,91,0.28));
 }
 .action-btn.disabled {
   background: $bg-muted;
@@ -1084,11 +1079,11 @@ onShow(async () => {
   gap: 10rpx;
   height: $control-height-sm;
   padding: 0 32rpx;
-  background: var(--theme-accent, $text-primary);
-  color: var(--theme-on-accent, $ink-inverse);
+  background: var(--theme-accent-soft, rgba(176,58,91,0.08));
+  color: var(--theme-accent, $color-primary);
+  border: 1rpx solid var(--theme-accent-line, rgba(176,58,91,0.28));
   border-radius: $radius-full;
   font-size: 24rpx;
-  border: none;
   line-height: 1;
 }
 .hotel-btn-icon {
@@ -1128,8 +1123,9 @@ onShow(async () => {
   height: $control-height-sm;
   line-height: $control-height-sm;
   border-radius: $radius-full;
-  background: var(--theme-accent, $text-primary);
-  color: var(--theme-on-accent, $ink-inverse);
+  background: var(--theme-accent-soft, rgba(176,58,91,0.08));
+  color: var(--theme-accent, $color-primary);
+  border: 1rpx solid var(--theme-accent-line, rgba(176,58,91,0.28));
   font-size: 26rpx;
 }
 .retry-btn::after {
@@ -1203,13 +1199,18 @@ onShow(async () => {
     color: var(--theme-accent, $color-primary);
   }
 
-  .tab-dot,
+  .tab-dot {
+    background: var(--theme-accent, $color-primary);
+    color: var(--theme-on-accent, $ink-inverse);
+  }
+
   .arrival-btn.primary,
   .action-btn.primary,
   .hotel-btn,
   .retry-btn {
-    background: var(--theme-accent, $color-primary);
-    color: var(--theme-on-accent, $ink-inverse);
+    background: var(--theme-accent-soft, rgba(176,58,91,0.08));
+    color: var(--theme-accent, $color-primary);
+    border-color: var(--theme-accent-line, rgba(176,58,91,0.28));
   }
 
   .arrival-summary-item,

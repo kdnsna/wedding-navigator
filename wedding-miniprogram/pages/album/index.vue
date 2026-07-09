@@ -2,7 +2,7 @@
   <PageShell
     title="婚纱相册"
     kicker="ALBUM"
-    :desc="`${activeTemplate.albumMood} · ${activeTemplate.photoMood}`"
+    desc="精选影像 · 银盐相册"
     :theme-class="templateClass"
   >
     <scroll-view class="album-container" scroll-x enhanced :show-scrollbar="false" v-if="photos.length > 0">
@@ -61,7 +61,6 @@ const loadError = ref('')
 const MAX_ALBUM_PHOTOS = 9
 
 const photos = computed(() => (store.album?.photos || []).slice(0, MAX_ALBUM_PHOTOS))
-const activeTemplate = computed(() => store.activeTemplate)
 const templateClass = computed(() => store.templateClass)
 const photoTreatment = computed(() => store.invitation?.photo_treatment || 'original')
 const emptyText = computed(() => {

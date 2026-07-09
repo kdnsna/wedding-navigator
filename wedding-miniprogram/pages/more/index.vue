@@ -7,7 +7,7 @@
   >
     <view class="more-feature">
       <view class="more-seal">囍</view>
-      <text class="more-feature-kicker">甜囍手册</text>
+      <text class="more-feature-kicker">WEDDING LETTER</text>
       <text class="more-feature-title">{{ coupleName || '我们的婚礼' }}</text>
       <text class="more-feature-desc">请柬、路书、流程、回执和祝福都已经为宾客整理好。</text>
       <button class="more-share-btn" open-type="share">分享给好友</button>
@@ -163,116 +163,6 @@ onShow(async () => {
   padding-bottom: calc(80rpx + env(safe-area-inset-bottom));
 }
 
-/* 顶部标题 */
-.page-header {
-  padding: $page-header-top $page-gutter 24rpx;
-}
-.page-tag {
-  display: block;
-  font-size: 22rpx;
-  color: $text-muted;
-  letter-spacing: 0;
-  margin-bottom: 12rpx;
-}
-.page-title {
-  display: block;
-  font-size: $font-h1;
-  font-weight: 600;
-  color: $text-primary;
-}
-
-/* 新人信息 */
-.couple-info {
-  padding: 24rpx $page-gutter 48rpx;
-}
-.couple-name {
-  display: block;
-  font-size: $font-h2;
-  font-weight: 600;
-  color: $text-primary;
-  margin-bottom: 8rpx;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-.couple-date {
-  display: block;
-  font-size: $font-body;
-  color: $text-secondary;
-}
-
-/* 菜单组 */
-.menu-group {
-  margin: 0 $page-gutter 24rpx;
-  background: $bg-surface;
-  border-radius: $card-radius;
-  overflow: hidden;
-}
-.menu-item {
-  display: flex;
-  align-items: center;
-  min-height: $tap-min-height;
-  padding: 28rpx;
-  transition: background 0.15s ease;
-}
-.menu-item:active {
-  background: $bg-muted;
-}
-.contact-btn {
-  background: transparent;
-  border: none;
-  padding: 28rpx;
-  margin: 0;
-  line-height: inherit;
-  text-align: left;
-}
-.contact-btn::after { border: none; }
-.menu-icon {
-  font-size: 36rpx;
-  margin-right: 20rpx;
-  width: 48rpx;
-  text-align: center;
-}
-.menu-title {
-  flex: 1;
-  min-width: 0;
-  font-size: 30rpx;
-  color: $text-primary;
-  font-weight: 500;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-.menu-arrow {
-  font-size: 28rpx;
-  color: $text-muted;
-}
-
-.divider {
-  height: 1rpx;
-  background: $border-color;
-  margin: 0 28rpx;
-}
-
-/* 分享 */
-.share-area {
-  padding: 40rpx $page-gutter 24rpx;
-}
-.share-btn {
-  width: 100%;
-  height: $control-height;
-  line-height: $control-height;
-  text-align: center;
-  border-radius: $radius-full;
-  background: $text-primary;
-  color: $ink-inverse;
-  font-size: 30rpx;
-  font-weight: 500;
-  transition: opacity 0.2s ease;
-}
-.share-btn::after { border: none; }
-.share-btn:active { opacity: 0.8; }
-
 /* 引流 */
 .promo-link {
   text-align: center;
@@ -310,51 +200,13 @@ onShow(async () => {
   line-height: $control-height-sm;
   padding: 0 18rpx;
   border-radius: $radius-sm;
-  background: $text-primary;
-  color: $ink-inverse;
+  background: $paper-card;
+  color: $gold;
+  border: 1rpx solid rgba(201,169,110,0.32);
   font-size: 23rpx;
 }
 .more-alert-btn::after {
   border: none;
-}
-
-.theme-wine,
-.theme-cinnabar,
-.theme-indigo,
-.theme-pine {
-  background: var(--theme-page, $bg-color);
-  color: var(--theme-ink, $text-primary);
-
-  .page-title,
-  .couple-name,
-  .menu-title {
-    color: var(--theme-ink, $text-primary);
-  }
-
-  .page-tag,
-  .couple-date,
-  .menu-arrow,
-  .promo-link {
-    color: var(--theme-muted, $text-muted);
-  }
-
-  .menu-group {
-    background: var(--theme-surface, $bg-surface);
-    border: 1rpx solid var(--theme-border, $border-color);
-  }
-
-  .menu-item:active {
-    background: var(--theme-elevated, $bg-muted);
-  }
-
-  .divider {
-    background: var(--theme-border, $border-color);
-  }
-
-  .share-btn {
-    background: var(--theme-accent, $text-primary);
-    color: var(--theme-on-accent, $ink-inverse);
-  }
 }
 
 .more-feature {

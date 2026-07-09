@@ -523,7 +523,7 @@ function openCalendar() {
   const date = store.weddingDate
   const time = store.weddingTime || '12:00'
   if (!date) {
-    uni.showToast({ title: '暂无婚礼日期', icon: 'none' })
+    uni.showToast({ title: '良辰尚未落定', icon: 'none' })
     return
   }
   const startTime = Math.floor(new Date(`${date}T${time}`).getTime() / 1000)

@@ -83,7 +83,7 @@ function checkLegacyThemeNormalization() {
 function checkPhotoSystem() {
   assertIncludes('pages/index/index.vue', '@include photo-hero-scrim', 'guest cover must have the paper hero scrim')
   assertIncludes('pages/index/index.vue', 'photoTreatmentClass', 'guest cover and previews must only apply opt-in photo treatments')
-  assertIncludes('pages/index/index.vue', 'filter: none', 'guest photos must not be filtered by default')
+  assertIncludes('pages/index/index.vue', 'filter: var(--theme-hero-filter, none)', 'guest photos must not be filtered by default')
   assertIncludes('pages/index/index.vue', 'lux-footer-section', 'guest scroll must have a designed closing section')
   assertIncludes('pages/album/index.vue', 'MAX_ALBUM_PHOTOS = 9', 'album page must cap the curated story at nine photos')
   assertIncludes('pages/album/index.vue', '.slice(0, MAX_ALBUM_PHOTOS)', 'album page must enforce the nine-photo limit')
@@ -173,14 +173,19 @@ function checkGuestToneAndAccentDiscipline() {
   }
 
   const home = read('pages/index/index.vue')
-  for (const text of ['GUEST ACTIONS', '宾客行动', 'lux-float-actions', 'lux-rsvp-chip', 'lux-mini-grid', '待回执', '最近流程']) {
+  for (const text of ['GUEST ACTIONS', '宾客行动', 'lux-float-actions', 'lux-rsvp-chip', 'lux-mini-grid', '待回执', '最近流程', 'lux-action-panel', 'lux-panel-btn', 'lux-preview', 'activeTemplate.photoMood']) {
     assert(!home.includes(text), `pages/index/index.vue: home must not keep dashboard/action residue: ${text}`)
   }
   assert(home.includes('kicker="INVITATION"'), 'pages/index/index.vue: invitation section must use a pure English gold kicker')
   assert(home.includes('lux-couple-amp'), 'pages/index/index.vue: couple names must be joined by a gold ampersand')
+  assert(home.includes('THE WEDDING OF'), 'pages/index/index.vue: cover must use a pure English gold wedding kicker')
+  assert(home.includes('lux-detail-section'), 'pages/index/index.vue: home must include the wedding details chapter')
+  assert(home.includes('lux-rsvp-section'), 'pages/index/index.vue: home must end the guest action as an RSVP chapter')
+  assert(!read('stores/wedding.js').includes('请在主人端填写婚礼地址'), 'stores/wedding.js: fallback data must not leak admin copy into guest pages')
 
   const guide = read('pages/guide/index.vue')
   assert(guide.includes('suggestedArrivalTime'), 'pages/guide/index.vue: suggested arrival must be derived or hidden')
+  assert(read('stores/wedding.js').includes('suggestedArrivalTime'), 'stores/wedding.js: suggested arrival must be centralized in the wedding store')
   assert(guide.includes("return '以当日为准'"), 'pages/guide/index.vue: weather fallback must be guest-facing')
   assert(guide.includes('v-if="hasCoordinate(primaryVenue)"'), 'pages/guide/index.vue: navigation button must not render as a disabled pseudo button')
 

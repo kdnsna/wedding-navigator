@@ -117,6 +117,8 @@ const activeRole = ref('all')
 const weddingDate = computed(() => store.weddingDate)
 const countdown = computed(() => store.countdown)
 const timelineDesc = computed(() => {
+  if (!userStore.weddingId) return '请从新人寄来的请柬进入'
+  if (loadError.value) return '稍后再翻，这一页会重新铺开'
   if (!isTimelineEnabled.value) return '流程暂未开放，您仍可查看到场路书'
   if (countdown.value?.isToday) return '今天是我们的婚礼日'
   if (countdown.value) return `距离婚礼还有 ${countdown.value.days} 天`
@@ -145,13 +147,13 @@ const visibleEvents = computed(() => {
 const emptyText = computed(() => {
   if (!userStore.weddingId) return '这封信还没有抵达'
   if (loadError.value) return '这一页暂时没翻开'
-  if (activeRole.value !== 'all') return '当前角色暂无专属安排'
+  if (activeRole.value !== 'all') return '这一席还未另列安排'
   return '流程这一章，等新人落笔'
 })
 const emptySub = computed(() => {
   if (!userStore.weddingId) return '请从新人寄来的请柬进入'
   if (loadError.value) return '稍后再翻，这一页会重新铺开'
-  if (activeRole.value !== 'all') return '可以切回“全部”查看完整婚礼流程'
+  if (activeRole.value !== 'all') return '可切回“全部”看整日礼序'
   return '请以现场安排为准'
 })
 const timelineActionText = computed(() => {
@@ -377,8 +379,8 @@ onShow(() => loadTimeline(false))
   justify-content: center;
 }
 .role-pill.active {
-  background: $text-primary;
-  color: $ink-inverse;
+  background: var(--theme-accent-soft, rgba(176,58,91,0.10));
+  color: var(--theme-accent, $color-primary);
 }
 .timeline-item {
   display: flex;
@@ -603,10 +605,14 @@ onShow(() => loadTimeline(false))
 
   .page-divider,
   .timeline-item.current .timeline-dot,
-  .feature-action,
-  .role-pill.active {
+  .feature-action {
     background: var(--theme-accent, $color-primary);
     color: var(--theme-on-accent, $ink-inverse);
+  }
+
+  .role-pill.active {
+    background: var(--theme-accent-soft, rgba(176,58,91,0.10));
+    color: var(--theme-accent, $color-primary);
   }
 
   .date-banner,

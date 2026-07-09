@@ -17,8 +17,8 @@ const DEFAULT_FEATURES = {
 export const useWeddingStore = defineStore('wedding', () => {
   const fallbackWedding = {
     basic_info: {
-      date: '2026-11-14',
-      time: '12:08'
+      date: '',
+      time: ''
     },
     share_config: {
       title: '诚邀您参加我们的婚礼'
@@ -34,22 +34,18 @@ export const useWeddingStore = defineStore('wedding', () => {
       bride: { name: '新娘' }
     },
     wedding: {
-      venue_name: '婚礼宴会厅',
-      venue_address: '请在主人端填写婚礼地址'
+      venue_name: '',
+      venue_address: ''
     },
     content: {
-      main_text: '诚挚邀请您参加我们的婚礼，见证我们的幸福时刻。'
+      main_text: ''
     }
   }
 
   const fallbackVenues = {
-    venues: [{
-      id: 'default',
-      name: '婚礼宴会厅',
-      address: '请在主人端填写婚礼地址',
-      coordinate: null
-    }]
+    venues: []
   }
+  const fallbackVenue = { id: 'default', name: '', address: '', coordinate: null }
 
   // State
   const wedding = ref(fallbackWedding)
@@ -113,7 +109,18 @@ export const useWeddingStore = defineStore('wedding', () => {
 
   const primaryVenue = computed(() => {
     const list = venues.value?.venues || []
-    return list.find(v => v.type === 'venue') || list[0] || fallbackVenues.venues[0]
+    return list.find(v => v.type === 'venue') || list[0] || fallbackVenue
+  })
+
+  const suggestedArrivalTime = computed(() => {
+    const configured = primaryVenue.value?.arrival_time
+    if (configured) return configured
+    const time = weddingTime.value
+    if (!/^\d{1,2}:\d{2}$/.test(String(time || ''))) return ''
+    const [hour, minute] = String(time).split(':').map(Number)
+    if (!Number.isFinite(hour) || !Number.isFinite(minute)) return ''
+    const total = Math.max(0, hour * 60 + minute - 30)
+    return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
   })
 
   const nextTimelineEvent = computed(() => {
@@ -395,6 +402,7 @@ export const useWeddingStore = defineStore('wedding', () => {
     weddingTime,
     venueName,
     primaryVenue,
+    suggestedArrivalTime,
     nextTimelineEvent,
     latestBlessings,
     featuredPhotos,

@@ -337,7 +337,8 @@ function checkTemplateSystem() {
   assertIncludes('pages/guide/index.vue', '--theme-panel-gradient', 'guide page must use template-aware panel colors')
   assertIncludes('pages/timeline/index.vue', '--theme-accent', 'timeline page must use template accent colors')
   assertIncludes('pages/rsvp/index.vue', 'rsvp-brief', 'RSVP page must show a template-aware wedding brief')
-  assertIncludes('pages/album/index.vue', 'activeTemplate.albumMood', 'album page must adapt copy to the active template')
+  assertIncludes('pages/album/index.vue', '精选影像 · 银盐相册', 'album page must use guest-facing album copy')
+  assert(!read('pages/album/index.vue').includes('photoMood'), 'pages/album/index.vue: guest album must not leak owner upload guidance')
   assertIncludes('pages/album/index.vue', 'MAX_ALBUM_PHOTOS = 9', 'album page must present a curated nine-photo story')
   assertIncludes('pages/album/index.vue', 'photoTreatmentClass', 'album page must keep photo tone opt-in')
   assertIncludes('utils/posterCanvas.js', 'getTemplatePosterTheme', 'poster canvas must draw with the active template palette')
@@ -374,7 +375,7 @@ function checkTemplateSystem() {
     assertIncludes(file, 'await saveToStorage()', `${file} must await cloud persistence before success feedback`)
     assertIncludes(file, 'clone', `${file} must keep a rollback snapshot for failed saves`)
   }
-  assert(countOccurrences(read('pages/index/index.vue'), '<view class="preview-header">') === 2, 'home page must not contain duplicated preview headers')
+  assert(!read('pages/index/index.vue').includes('<view class="preview-header">'), 'home page must not render app-style preview widgets')
   assertIncludes('cloudfunctions/getWeather/index.js', 'geocodeVenue', 'getWeather must geocode venue fallback when coordinates are missing')
   assertIncludes('cloudfunctions/getWeather/index.js', 'QWEATHER_KEY', 'getWeather must support common weather key env aliases')
   assertIncludes('utils/posterCanvas.js', 'resolveImagePath', 'poster canvas must resolve cloud and base64 images before drawing')
