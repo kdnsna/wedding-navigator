@@ -10,6 +10,7 @@
     "check:release": "node scripts/check-v2-acceptance.js --automatic && node scripts/check-release-readiness.js && node scripts/check-ui-polish.js",
     "check:v2-acceptance": "node scripts/check-v2-acceptance.js",
     "check:ui-polish": "node scripts/check-ui-polish.js",
+    "create:v2-acceptance-record": "node scripts/create-v2-acceptance-record.js",
     "dev:app": "uni",
     "dev:custom": "uni -p",
     "dev:h5": "UNI_INPUT_DIR=. npm exec --yes --package=node@20.19.6 -- node node_modules/.bin/uni",
