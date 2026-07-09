@@ -144,12 +144,15 @@ function checkTemplateRuntimeClasses() {
 function checkManualAcceptanceArtifacts() {
   assert(fs.existsSync(path.join(root, 'docs', 'v2-real-device-acceptance.md')), 'docs/v2-real-device-acceptance.md: manual acceptance checklist must exist')
   assert(fs.existsSync(path.join(root, 'scripts', 'create-v2-acceptance-record.js')), 'scripts/create-v2-acceptance-record.js: release acceptance record generator must exist')
+  assert(fs.existsSync(path.join(root, 'scripts', 'record-v2-automatic-evidence.js')), 'scripts/record-v2-automatic-evidence.js: automatic evidence recorder must exist')
   assert(fs.existsSync(path.join(root, 'scripts', 'check-v2-real-device-record.js')), 'scripts/check-v2-real-device-record.js: final real-device record checker must exist')
   assert(fs.existsSync(path.join(root, 'scripts', 'find-legacy-sakura-wedding.js')), 'scripts/find-legacy-sakura-wedding.js: legacy sakura-pink query helper must exist')
   assertIncludes('docs/v2-real-device-acceptance.md', '朋友第一反应', 'manual checklist must capture the uninformed friend reaction')
   assertIncludes('docs/v2-real-device-acceptance.md', 'theme=sakura-pink', 'manual checklist must capture old sakura-pink data validation')
+  assertIncludes('docs/v2-real-device-acceptance.md', 'npm run record:v2-automatic-evidence', 'manual checklist must document automatic evidence recording')
   assertIncludes('docs/v2-real-device-acceptance.md', 'npm run find:legacy-sakura', 'manual checklist must document the old-data query command')
   assertIncludes('scripts/create-v2-acceptance-record.js', 'v2-real-device-acceptance-', 'record generator must write versioned release evidence')
+  assertIncludes('scripts/record-v2-automatic-evidence.js', 'Automatic v2 evidence recorded', 'automatic evidence recorder must update the release record')
   assertIncludes('scripts/check-v2-real-device-record.js', 'v2 real-device acceptance is not complete', 'final real-device checker must fail while evidence is pending')
   assertIncludes('scripts/find-legacy-sakura-wedding.js', "'sakura-pink'", 'legacy query helper must search for sakura-pink')
 }
