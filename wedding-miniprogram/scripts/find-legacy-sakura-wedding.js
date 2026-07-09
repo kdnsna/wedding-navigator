@@ -4,6 +4,50 @@ const { spawnSync } = require('child_process')
 
 const root = path.resolve(__dirname, '..')
 const releaseDir = path.join(root, '.release')
+const LEGACY_SAKURA_VALUES = ['sakura-pink', 'theme-sakura-pink']
+const WEDDING_THEME_FIELDS = [
+  'theme',
+  'themeClass',
+  'theme_key',
+  'basic_info.theme',
+  'basic_info.themeClass',
+  'commercial.theme',
+  'commercial.theme_key',
+  'workspace.theme',
+  'workspace.theme_key',
+  'invitation.theme',
+  'invitation.themeClass',
+  'settings.theme',
+  'settings.themeClass',
+  'style.theme',
+  'style.themeClass'
+]
+const INVITATION_THEME_FIELDS = [
+  'theme',
+  'themeClass',
+  'theme_key',
+  'commercial.theme',
+  'commercial.theme_key',
+  'settings.theme',
+  'settings.themeClass',
+  'style.theme',
+  'style.themeClass',
+  'template.theme',
+  'template.themeClass'
+]
+
+function themeFilter(fields) {
+  return {
+    $or: fields.flatMap(field => LEGACY_SAKURA_VALUES.map(value => ({ [field]: value })))
+  }
+}
+
+function themeProjection(fields) {
+  return fields.reduce((projection, field) => {
+    projection[field] = 1
+    return projection
+  }, { _id: 1, updated_at: 1 })
+}
 
 function readJson(file) {
   return JSON.parse(fs.readFileSync(path.join(root, file), 'utf8'))
@@ -16,22 +60,8 @@ function buildCommands() {
       CommandType: 'QUERY',
       Command: JSON.stringify({
         find: 'weddings',
-        filter: {
-          $or: [
-            { theme: 'sakura-pink' },
-            { 'basic_info.theme': 'sakura-pink' },
-            { 'commercial.theme_key': 'sakura-pink' },
-            { 'workspace.theme_key': 'sakura-pink' }
-          ]
-        },
-        projection: {
-          _id: 1,
-          theme: 1,
-          'basic_info.theme': 1,
-          'commercial.theme_key': 1,
-          'workspace.theme_key': 1,
-          updated_at: 1
-        },
+        filter: themeFilter(WEDDING_THEME_FIELDS),
+        projection: themeProjection(WEDDING_THEME_FIELDS),
         limit: 10
       })
     },
@@ -40,13 +70,8 @@ function buildCommands() {
       CommandType: 'QUERY',
       Command: JSON.stringify({
         find: 'invitations',
-        filter: { theme: 'sakura-pink' },
-        projection: {
-          _id: 1,
-          theme: 1,
-          template: 1,
-          updated_at: 1
-        },
+        filter: themeFilter(INVITATION_THEME_FIELDS),
+        projection: themeProjection(INVITATION_THEME_FIELDS),
         limit: 10
       })
     }

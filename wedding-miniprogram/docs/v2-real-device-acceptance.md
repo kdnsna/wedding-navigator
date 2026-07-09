@@ -17,9 +17,17 @@ npm run build:mp-weixin
 npm run create:v2-acceptance-record
 ```
 
-3. 用 `.release/v2-real-device-acceptance-<version>.md` 记录真机证据。
+3. 生成微信预览码：
 
-4. 记录自动门禁证据：
+```bash
+npm run preview:mp-weixin
+```
+
+这个命令会把当前构建产物生成到 `.release/preview-<version>.png`，用于真机扫码验收。
+
+4. 用 `.release/v2-real-device-acceptance-<version>.md` 记录真机证据。
+
+5. 记录自动门禁证据：
 
 ```bash
 npm run record:v2-automatic-evidence
@@ -27,7 +35,7 @@ npm run record:v2-automatic-evidence
 
 这个命令会运行微信小程序构建、release 检查和 v2 自动验收，并把通过结果写入 `.release/v2-real-device-acceptance-<version>.md`。
 
-5. 填完真机证据后运行最终判定：
+6. 填完真机证据后运行最终判定：
 
 ```bash
 npm run check:v2-real-device-record
@@ -35,7 +43,7 @@ npm run check:v2-real-device-record
 
 只有自动门禁、全部真机行和最终结论都勾选通过时，这个命令才会成功。
 
-6. 如果要找真实旧数据，先登录 CloudBase，再运行只读查询：
+7. 如果要找真实旧数据，先登录 CloudBase，再运行只读查询：
 
 ```bash
 npm exec --yes --package @cloudbase/cli -- tcb login

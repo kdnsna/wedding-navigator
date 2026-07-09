@@ -14,6 +14,7 @@
     "record:v2-automatic-evidence": "node scripts/record-v2-automatic-evidence.js",
     "check:v2-real-device-record": "node scripts/check-v2-real-device-record.js",
     "find:legacy-sakura": "node scripts/find-legacy-sakura-wedding.js",
+    "preview:mp-weixin": "node preview.mjs",
     "dev:app": "uni",
     "dev:custom": "uni -p",
     "dev:h5": "UNI_INPUT_DIR=. npm exec --yes --package=node@20.19.6 -- node node_modules/.bin/uni",
