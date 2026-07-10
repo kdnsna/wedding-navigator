@@ -2,6 +2,7 @@
   <view class="ui-bottom-bar">
     <button
       class="ui-bottom-btn secondary"
+      :class="{ 'is-disabled': disabled || secondaryDisabled || secondaryLoading }"
       v-if="secondaryText"
       :loading="secondaryLoading"
       :disabled="disabled || secondaryDisabled || secondaryLoading"
@@ -9,7 +10,7 @@
     >
       {{ secondaryText }}
     </button>
-    <button class="ui-bottom-btn primary" :loading="loading" :disabled="disabled || primaryDisabled || loading" @click="$emit('primary')">
+    <button class="ui-bottom-btn primary" :class="{ 'is-disabled': disabled || primaryDisabled || loading }" :loading="loading" :disabled="disabled || primaryDisabled || loading" @click="$emit('primary')">
       {{ primaryText }}
     </button>
   </view>
@@ -64,7 +65,7 @@ defineEmits(['primary', 'secondary'])
   color: $text-primary;
   border: 1rpx solid $border-color;
 }
-.ui-bottom-btn[disabled] {
+.ui-bottom-btn.is-disabled {
   opacity: 0.56;
 }
 </style>

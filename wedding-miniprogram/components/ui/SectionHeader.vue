@@ -48,7 +48,7 @@ defineProps({
   display: block;
   margin-bottom: 7rpx;
   color: $gold;
-  font-size: 18rpx;
+  font-size: 20rpx;
   font-weight: 600;
   letter-spacing: $ls-wide;
   text-transform: uppercase;

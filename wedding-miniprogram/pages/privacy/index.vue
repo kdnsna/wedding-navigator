@@ -21,7 +21,7 @@
         <text class="list-item">• 婚礼基本信息：包括婚礼日期、时间、场地地址等您主动填写的信息</text>
         <text class="list-item">• RSVP 信息：宾客填写的出席状态、联系电话、饮食偏好等</text>
         <text class="list-item">• 祝福留言：宾客在祝福墙发表的文本内容</text>
-        <text class="list-item">• 位置信息：仅在您使用地图导航功能时，经您授权后获取</text>
+        <text class="list-item">• 您选择的位置信息：仅在婚礼主人主动使用地图选点时处理，用于保存婚礼场地坐标；宾客导航使用新人已保存的场地位置，不读取宾客当前位置</text>
         <text class="list-item">• 您选中的照片或视频信息：仅在您主动选择婚礼照片时使用，用于制作婚礼相册、请柬封面与分享海报</text>
       </view>
 

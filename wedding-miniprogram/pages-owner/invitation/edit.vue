@@ -3,25 +3,26 @@
     class="page invitation-edit-page"
     kicker="INVITATION"
     title="婚书编辑"
-    desc="统一模板、邀请文案、新人信息、显示开关和背景音乐，保存后会同步宾客端首页。"
+    desc="场景方案负责预填内容，情绪色只改变强调处；保存后同步宾客端婚书。"
   >
 
-    <!-- 模板选择 -->
+    <!-- 场景方案 -->
     <view class="section">
-      <SectionHeader title="模板风格" kicker="TEMPLATE" desc="选择高级礼宴视觉方向，权益标签会保留商业化状态。" compact />
-      <view class="template-card-list">
-        <TemplateCard
+      <SectionHeader title="场景方案" kicker="SCENARIO" desc="只预填文案、礼序和路书，不改变纸墨金视觉骨架。" compact />
+      <view class="scenario-list">
+        <view
+          class="scenario-row"
           v-for="tpl in templates"
           :key="tpl.id"
-          :template="tpl"
-          :selected="form.template === tpl.id"
-          :tier-label="getTemplateTierLabel(tpl)"
-          :premium="isTemplatePremium(tpl)"
-          :disabled="saving"
-          compact
-          @select="selectTemplate"
-          @preview="previewTemplate"
-        />
+          :class="{ active: form.scenarioPreset === tpl.id, disabled: saving }"
+          @click="selectTemplate(tpl)"
+        >
+          <view class="scenario-copy">
+            <text class="scenario-name">{{ tpl.name }}</text>
+            <text class="scenario-desc">{{ tpl.plan?.scenario }} · {{ tpl.copy }}</text>
+          </view>
+          <text class="scenario-state">{{ form.scenarioPreset === tpl.id ? '已选' : '选择' }}</text>
+        </view>
       </view>
       <view class="template-panel">
         <view class="template-panel-head">
@@ -30,15 +31,32 @@
             <text class="template-panel-title">{{ activeTemplate.name }}</text>
           </view>
           <view class="template-panel-badges">
-            <text class="template-panel-tier" :class="{ premium: isTemplatePremium(activeTemplate) }">{{ getTemplateTierLabel(activeTemplate) }}</text>
+            <text class="template-panel-tier">场景方案</text>
             <text class="template-panel-status">当前选择</text>
           </view>
         </view>
-        <text class="template-panel-copy">{{ activeTemplate.photoMood }}</text>
+        <text class="template-panel-copy">{{ activeTemplate.copy }}</text>
         <text class="template-panel-hint">{{ activeTemplateHint }}</text>
         <view class="template-panel-actions">
-          <button class="template-panel-btn primary" :disabled="saving" @click="previewTemplate">预览此模板</button>
-          <button class="template-panel-btn" :disabled="saving" @click="applyTemplatePreset">套用预设文案</button>
+          <button class="template-panel-btn primary" :class="{ 'is-disabled': saving }" :disabled="saving" @click="previewTemplate">预览此方案</button>
+          <button class="template-panel-btn" :class="{ 'is-disabled': saving }" :disabled="saving" @click="applyTemplatePreset">套用预设文案</button>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
+      <SectionHeader title="情绪色" kicker="INK COLOR" desc="酒红免费；朱砂、黛蓝、松绿为高级色。" compact />
+      <view class="mood-grid">
+        <view
+          class="mood-option"
+          v-for="mood in moodOptions"
+          :key="mood.key"
+          :class="{ active: form.theme === mood.key, locked: mood.locked }"
+          :style="{ '--mood-accent': mood.accent }"
+          @click="selectTheme(mood)"
+        >
+          <view class="mood-swatch" />
+          <view class="mood-copy"><text>{{ mood.name }}</text><text>{{ mood.locked ? '高级色' : '可用' }}</text></view>
         </view>
       </view>
     </view>
@@ -217,12 +235,11 @@ import { useUserStore } from '@/stores/user.js'
 import { showSuccess, showError } from '@/utils/index.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
 import { generateAiSuggestions, updateWedding } from '@/composables/useCloud.js'
-import { WEDDING_TEMPLATES, getWeddingTemplate, normalizeTemplateId } from '@/utils/templates.js'
-import { buildTemplateCommercialState, getCommercialHint, getTemplateTierLabel, isTemplatePremium } from '@/utils/commercial.js'
-import { getThemeTokens } from '@/utils/legacy-theme-map.js'
+import { WEDDING_SCENARIOS, getWeddingScenario, getWeddingTemplate, normalizeTemplateId } from '@/utils/templates.js'
+import { buildThemeCommercialState, canUseTheme } from '@/utils/commercial.js'
+import { getThemeTokens, isPremiumTheme, resolveTheme } from '@/utils/legacy-theme-map.js'
 import PageShell from '@/components/ui/PageShell.vue'
 import SectionHeader from '@/components/ui/SectionHeader.vue'
-import TemplateCard from '@/components/ui/TemplateCard.vue'
 import BottomActionBar from '@/components/ui/BottomActionBar.vue'
 import AiSuggestionPanel from '@/components/ui/AiSuggestionPanel.vue'
 
@@ -230,10 +247,20 @@ const store = useWeddingStore()
 const userStore = useUserStore()
 const saving = ref(false)
 
-const templates = WEDDING_TEMPLATES
-const activeTemplate = computed(() => getWeddingTemplate(form.value.template))
-const activeTemplateHint = computed(() => getCommercialHint(activeTemplate.value, userStore.entitlements))
-const nativeAccentColor = computed(() => getThemeTokens(activeTemplate.value?.theme).accent)
+const templates = WEDDING_SCENARIOS
+const activeTemplate = computed(() => getWeddingScenario(form.value.scenarioPreset))
+const activeTemplateHint = computed(() => '场景方案只会替换你主动套用的文案，不会改变当前情绪色。')
+const nativeAccentColor = computed(() => getThemeTokens(form.value.theme).accent)
+const moodOptions = computed(() => [
+  { key: 'wine', name: '酒红 · 信笺' },
+  { key: 'cinnabar', name: '朱砂 · 囍宴' },
+  { key: 'indigo', name: '黛蓝 · 远书' },
+  { key: 'pine', name: '松绿 · 庭园' }
+].map(item => ({
+  ...item,
+  accent: getThemeTokens(item.key).accent,
+  locked: isPremiumTheme(item.key) && !canUseTheme(item.key, userStore.entitlements)
+})))
 const aiLoading = ref(false)
 const aiError = ref('')
 const aiWarnings = ref([])
@@ -257,7 +284,8 @@ const musicPresets = [
 ]
 
 const form = ref({
-  template: 'rose-couture',
+  scenarioPreset: 'rose-couture',
+  theme: 'wine',
   content: '',
   groomName: '',
   brideName: '',
@@ -282,7 +310,8 @@ function loadFromStore() {
   const inv = store.invitation || {}
   const wedding = store.wedding || {}
   form.value = {
-    template: normalizeTemplateId(inv.template),
+    scenarioPreset: normalizeTemplateId(inv.scenario_preset || inv.template),
+    theme: resolveTheme(inv.theme || wedding.basic_info?.theme),
     content: inv.content?.main_text || '',
     groomName: inv.couple?.groom?.name || '',
     brideName: inv.couple?.bride?.name || '',
@@ -312,7 +341,14 @@ function selectMusic(music) {
 
 function selectTemplate(tpl) {
   if (guardInvitationSaving()) return
-  form.value.template = normalizeTemplateId(tpl.id)
+  form.value.scenarioPreset = normalizeTemplateId(tpl.id)
+}
+
+function selectTheme(mood) {
+  if (guardInvitationSaving()) return
+  form.value.theme = mood.key
+  applyLocalPreviewData()
+  if (mood.locked) uni.showToast({ title: '高级色体验中', icon: 'none' })
 }
 
 function onDateChange(e) { form.value.date = e.detail.value }
@@ -376,10 +412,11 @@ function buildAiInvitationContext() {
 }
 
 function buildInvitationData() {
-  const commercial = buildTemplateCommercialState(activeTemplate.value, userStore.entitlements)
-  const theme = activeTemplate.value?.theme || 'wine'
+  const commercial = buildThemeCommercialState(form.value.theme, userStore.entitlements)
+  const theme = resolveTheme(form.value.theme)
   return {
-    template: form.value.template,
+    scenario_preset: form.value.scenarioPreset,
+    template: form.value.scenarioPreset,
     theme,
     commercial,
     photo_treatment: form.value.photoTreatment || 'original',
@@ -416,7 +453,7 @@ function buildInvitationData() {
 }
 
 function buildWeddingData() {
-  const theme = activeTemplate.value?.theme || 'wine'
+  const theme = resolveTheme(form.value.theme)
   return {
     basic_info: {
       ...(store.wedding?.basic_info || {}),
@@ -427,9 +464,10 @@ function buildWeddingData() {
     commercial: {
       ...(store.wedding?.commercial || {}),
       plan: userStore.plan || store.wedding?.commercial?.plan || 'free',
-      template_id: form.value.template,
+      scenario_preset: form.value.scenarioPreset,
+      template_id: form.value.scenarioPreset,
       theme_key: theme,
-      ...buildTemplateCommercialState(activeTemplate.value, userStore.entitlements)
+      ...buildThemeCommercialState(theme, userStore.entitlements)
     }
   }
 }
@@ -520,7 +558,7 @@ function previewInvitation() {
 function previewTemplate() {
   if (guardInvitationSaving()) return
   uni.navigateTo({
-    url: `/pages-owner/template/preview?id=${encodeURIComponent(form.value.template)}`,
+    url: `/pages-owner/template/preview?id=${encodeURIComponent(form.value.scenarioPreset)}&theme=${encodeURIComponent(form.value.theme)}`,
     fail: (err) => {
       console.warn('打开模板预览失败:', err)
       showError('模板预览打开失败，请稍后重试')
@@ -535,8 +573,8 @@ function guardInvitationSaving() {
 }
 
 function validateInvitationForm(options = {}) {
-  if (!form.value.template) {
-    showError('请选择模板')
+  if (!form.value.scenarioPreset) {
+    showError('请选择场景方案')
     return false
   }
   if (!form.value.groomName.trim() || !form.value.brideName.trim()) {
@@ -601,7 +639,7 @@ function applyPendingTemplate() {
   if (!pendingTemplateId) return
   uni.removeStorageSync('pending_template_id')
   const tpl = getWeddingTemplate(pendingTemplateId)
-  form.value.template = normalizeTemplateId(tpl.id)
+  form.value.scenarioPreset = normalizeTemplateId(tpl.id)
   if (!form.value.content) {
     form.value.content = tpl.preset?.mainText || ''
   }
@@ -671,6 +709,27 @@ onShow(async () => {
   grid-template-columns: 1fr;
   gap: 18rpx;
 }
+.scenario-list {
+  display: flex;
+  flex-direction: column;
+  gap: $sp-2;
+}
+.scenario-row {
+  min-height: 104rpx;
+  display: flex;
+  align-items: center;
+  gap: $sp-3;
+  padding: $sp-3;
+  border-left: 4rpx solid transparent;
+  background: $paper-card;
+  border-bottom: 1rpx solid $line;
+}
+.scenario-row.active { border-left-color: var(--accent); background: var(--accent-soft); }
+.scenario-row.disabled { opacity: 0.56; }
+.scenario-copy { flex: 1; min-width: 0; }
+.scenario-name { display: block; color: $ink; font-size: $fs-body; }
+.scenario-desc { display: block; margin-top: $sp-1; color: $ink-soft; font-size: $fs-note; line-height: 1.45; }
+.scenario-state { flex-shrink: 0; color: var(--accent); font-size: $fs-note; }
 
 /* 模板选择 */
 .template-scroll {
@@ -725,7 +784,7 @@ onShow(async () => {
   position: relative;
   z-index: 2;
   display: block;
-  font-size: 16rpx;
+  font-size: 20rpx;
   color: rgba(255,255,255,0.72);
   letter-spacing: 0;
   text-align: center;
@@ -749,7 +808,7 @@ onShow(async () => {
   border-radius: $radius-full;
   background: rgba(255,255,255,0.86);
   color: $color-success;
-  font-size: 18rpx;
+  font-size: 24rpx;
   line-height: 1.2;
 }
 .template-tier.premium {
@@ -758,7 +817,7 @@ onShow(async () => {
 .template-desc {
   display: block;
   margin-top: 12rpx;
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: $text-muted;
   line-height: 1.45;
   white-space: normal;
@@ -780,7 +839,7 @@ onShow(async () => {
 }
 .template-panel-kicker {
   display: block;
-  font-size: 18rpx;
+  font-size: 24rpx;
   color: rgba(255,255,255,0.52);
   letter-spacing: 0;
   margin-bottom: 8rpx;
@@ -806,7 +865,7 @@ onShow(async () => {
   border-radius: $radius-full;
   background: rgba(52,168,83,0.16);
   color: $ink-inverse;
-  font-size: 22rpx;
+  font-size: 24rpx;
   line-height: 1.2;
 }
 .template-panel-tier.premium {
@@ -818,7 +877,7 @@ onShow(async () => {
   border-radius: $radius-full;
   background: rgba(255,255,255,0.1);
   color: rgba(255,255,255,0.72);
-  font-size: 22rpx;
+  font-size: 24rpx;
 }
 .template-panel-copy {
   display: block;
@@ -834,7 +893,7 @@ onShow(async () => {
   border-radius: $radius-md;
   background: rgba(255,255,255,0.08);
   color: rgba(255,255,255,0.72);
-  font-size: 23rpx;
+  font-size: 24rpx;
   line-height: 1.45;
 }
 .template-panel-actions {
@@ -858,7 +917,7 @@ onShow(async () => {
 .template-panel-btn::after {
   border: none;
 }
-.template-panel-btn[disabled] {
+.template-panel-btn.is-disabled {
   opacity: 0.56;
 }
 
@@ -1006,8 +1065,37 @@ onShow(async () => {
 }
 .music-tip {
   margin-top: 16rpx;
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: $text-muted;
   line-height: 1.5;
 }
+
+.mood-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $sp-2;
+}
+.mood-option {
+  min-height: 88rpx;
+  display: flex;
+  align-items: center;
+  gap: $sp-2;
+  padding: $sp-2;
+  border: 1rpx solid $line;
+  border-radius: $r-sm;
+  background: $paper-card;
+}
+.mood-option.active { border-color: var(--mood-accent); }
+.mood-swatch {
+  width: 32rpx;
+  height: 32rpx;
+  flex-shrink: 0;
+  border-radius: $r-full;
+  background: var(--mood-accent);
+}
+.mood-copy { min-width: 0; }
+.mood-copy text { display: block; }
+.mood-copy text:first-child { color: $ink; font-size: $fs-note; }
+.mood-copy text:last-child { margin-top: 4rpx; color: $ink-soft; font-size: $fs-note; }
+.mood-option.locked .mood-swatch { box-shadow: 0 0 0 3rpx $gold-soft; }
 </style>

@@ -1,13 +1,19 @@
 import { getThemeClass, getThemeTokens, isPremiumTheme, resolveTheme } from '@/utils/legacy-theme-map.js'
 
 export const TEMPLATE_HERO_IMAGES = {
-  'rose-couture': '/static/visuals/hero/hero-signature-rose.jpg',
-  'champagne-editorial': '/static/visuals/hero/hero-champagne-editorial.jpg',
-  'noir-banquet': '/static/visuals/hero/hero-noir-banquet.jpg',
-  'garden-film': '/static/visuals/hero/hero-garden-film.jpg',
-  'heritage-ritual': '/static/visuals/hero/hero-heritage-ritual.jpg',
-  'shandong-family': '/static/visuals/hero/hero-shandong-family.jpg',
-  'travel-friendly': '/static/visuals/hero/hero-travel-friendly.jpg'
+  'rose-couture': '',
+  'champagne-editorial': '',
+  'noir-banquet': '',
+  'garden-film': '',
+  'heritage-ritual': '',
+  'shandong-family': '',
+  'travel-friendly': ''
+}
+
+export const LOCAL_PAPER_FALLBACK = '/static/visuals/default-cover.png'
+
+function resolveScenarioHero(id) {
+  return TEMPLATE_HERO_IMAGES[id] || LOCAL_PAPER_FALLBACK
 }
 
 function themeAccent(theme) {
@@ -44,7 +50,7 @@ export const WEDDING_TEMPLATES = [
     accent: themeAccent('wine'),
     surface: '#6E2F38',
     preview: 'linear-gradient(145deg, #6E2F38 0%, #8A3B45 52%, #B08D57 100%)',
-    defaultHero: TEMPLATE_HERO_IMAGES['rose-couture'],
+    defaultHero: resolveScenarioHero('rose-couture'),
     photoMood: '建议使用竖版主封面，人物居中偏上，留出底部文字空间',
     albumMood: '高定相册',
     copy: '适合酒店、宴会厅、正式仪式和大多数婚礼场景',
@@ -91,7 +97,7 @@ export const WEDDING_TEMPLATES = [
     accent: themeAccent('wine'),
     surface: '#F7F2E9',
     preview: 'linear-gradient(145deg, #F7F2E9 0%, #FFFDF8 52%, #B08D57 100%)',
-    defaultHero: TEMPLATE_HERO_IMAGES['champagne-editorial'],
+    defaultHero: resolveScenarioHero('champagne-editorial'),
     photoMood: '建议使用浅色、户外或白纱照片，画面保留自然留白',
     albumMood: '杂志影像',
     copy: '适合草坪、极简、白绿色或香槟色婚礼',
@@ -137,7 +143,7 @@ export const WEDDING_TEMPLATES = [
     accent: themeAccent('indigo'),
     surface: '#2C3E52',
     preview: 'linear-gradient(145deg, #2C3E52 0%, #3A5068 58%, #B08D57 100%)',
-    defaultHero: TEMPLATE_HERO_IMAGES['noir-banquet'],
+    defaultHero: resolveScenarioHero('noir-banquet'),
     photoMood: '建议使用夜景、宴会厅、灯光或黑礼服照片',
     albumMood: '晚宴片场',
     copy: '适合晚宴、酒店宴会厅、高级餐厅和黑金主题',
@@ -183,7 +189,7 @@ export const WEDDING_TEMPLATES = [
     accent: themeAccent('pine'),
     surface: '#F7F2E9',
     preview: 'linear-gradient(145deg, #E5E9DF 0%, #FFFDF8 54%, #4A6151 100%)',
-    defaultHero: TEMPLATE_HERO_IMAGES['garden-film'],
+    defaultHero: resolveScenarioHero('garden-film'),
     photoMood: '建议使用草坪、花园、旅拍或自然光照片',
     albumMood: '胶片故事',
     copy: '适合户外、草坪、旅拍和温柔生活感婚礼',
@@ -229,7 +235,7 @@ export const WEDDING_TEMPLATES = [
     accent: themeAccent('cinnabar'),
     surface: '#FAF6EF',
     preview: 'linear-gradient(145deg, #9E3322 0%, #FAF6EF 54%, #B08D57 100%)',
-    defaultHero: TEMPLATE_HERO_IMAGES['heritage-ritual'],
+    defaultHero: resolveScenarioHero('heritage-ritual'),
     photoMood: '建议使用中式礼服、敬茶或家宴场景照片，画面要端正、留白充足',
     albumMood: '礼序影像',
     copy: '适合中式礼服、敬茶改口、证婚和家庭仪式感较强的婚礼',
@@ -276,7 +282,7 @@ export const WEDDING_TEMPLATES = [
     accent: themeAccent('cinnabar'),
     surface: '#FBF7F1',
     preview: 'linear-gradient(145deg, #F4E4D7 0%, #FFFDF8 48%, #C3402B 100%)',
-    defaultHero: TEMPLATE_HERO_IMAGES['shandong-family'],
+    defaultHero: resolveScenarioHero('shandong-family'),
     photoMood: '建议使用端正合影、家宴或仪式照片，信息区域保持清晰易读',
     albumMood: '家宴纪实',
     copy: '适合重视亲友到场、接亲、会亲、回门和席位安排的山东家庭婚礼',
@@ -324,7 +330,7 @@ export const WEDDING_TEMPLATES = [
     accent: themeAccent('indigo'),
     surface: '#F5F6EF',
     preview: 'linear-gradient(145deg, #E5E7EA 0%, #FFFDF8 50%, #3A5068 100%)',
-    defaultHero: TEMPLATE_HERO_IMAGES['travel-friendly'],
+    defaultHero: resolveScenarioHero('travel-friendly'),
     photoMood: '建议使用城市、酒店、合影或旅拍照片，信息层要足够清楚',
     albumMood: '到场手册',
     copy: '适合异地宾客较多、需要重点说明住宿交通和时间安排的婚礼',
@@ -359,6 +365,21 @@ export const WEDDING_TEMPLATES = [
   }
 ]
 
+// v2 scenarios intentionally expose content fields only. Legacy template
+// visuals stay private to compatibility previews while stored records migrate.
+export const WEDDING_SCENARIOS = WEDDING_TEMPLATES.map((template) => ({
+  id: template.id,
+  scenarioPreset: template.id,
+  legacyIds: template.legacyIds,
+  name: template.name,
+  shortName: template.shortName,
+  desc: template.desc,
+  kicker: template.kicker,
+  copy: template.copy,
+  preset: template.preset,
+  plan: template.plan
+}))
+
 const DEFAULT_TEMPLATE_ID = 'rose-couture'
 
 export const DEFAULT_TIMELINE_ROLES = [
@@ -380,6 +401,11 @@ export function getWeddingTemplate(id) {
   return WEDDING_TEMPLATES.find(t => t.id === normalized) || WEDDING_TEMPLATES[0]
 }
 
+export function getWeddingScenario(id) {
+  const normalized = normalizeTemplateId(id)
+  return WEDDING_SCENARIOS.find(item => item.id === normalized) || WEDDING_SCENARIOS[0]
+}
+
 export function getTemplateClass(id) {
   const template = getWeddingTemplate(id)
   return getThemeClass(template.theme || template.themeClass)
@@ -392,7 +418,7 @@ export function getTemplateTheme(id) {
 
 export function getTemplateHeroImage(id) {
   const template = getWeddingTemplate(id)
-  return template.defaultHero || TEMPLATE_HERO_IMAGES[DEFAULT_TEMPLATE_ID]
+  return template.defaultHero || resolveScenarioHero(DEFAULT_TEMPLATE_ID)
 }
 
 const MOOD_POSTER_THEME_MAP = {

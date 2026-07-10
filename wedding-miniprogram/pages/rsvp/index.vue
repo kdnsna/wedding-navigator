@@ -8,23 +8,23 @@
     :safe-bottom="!submitted && isRsvpEnabled && !loadError"
   >
 
-    <view class="rsvp-brief" v-if="!submitted && isRsvpEnabled">
+    <view class="rsvp-brief" v-if="guestStore.canRenderInvitation && !submitted && isRsvpEnabled">
       <view>
         <text class="brief-kicker">RSVP CARD</text>
-        <text class="brief-title">{{ store.coupleName || '新人婚礼' }}</text>
+        <text class="brief-title">{{ store.coupleName }}</text>
       </view>
       <view class="brief-grid">
-        <view class="brief-item">
+        <view class="brief-item" v-if="store.weddingDate">
           <text class="brief-label">DATE</text>
-          <text class="brief-value">{{ formatDate(store.weddingDate) || '良辰待定' }}</text>
+          <text class="brief-value">{{ formatDate(store.weddingDate) }}</text>
         </view>
-        <view class="brief-item">
+        <view class="brief-item" v-if="store.weddingTime">
           <text class="brief-label">TIME</text>
-          <text class="brief-value">{{ store.weddingTime || '12:00' }}</text>
+          <text class="brief-value">{{ store.weddingTime }}</text>
         </view>
-        <view class="brief-item wide">
+        <view class="brief-item wide" v-if="store.venueName">
           <text class="brief-label">VENUE</text>
-          <text class="brief-value">{{ store.venueName || '婚礼场地' }}</text>
+          <text class="brief-value">{{ store.venueName }}</text>
         </view>
       </view>
     </view>
@@ -34,7 +34,7 @@
       v-if="loadError && !submitted"
       icon="/static/visuals/icon-warning.svg"
       title="这一页暂时没翻开"
-      desc="请稍后再试，回执会重新铺开。"
+      :desc="loadError"
       action-text="重新加载"
       @action="reloadWedding"
     />
@@ -48,7 +48,7 @@
       @action="goToGuide"
     />
 
-    <view class="form" v-else-if="!submitted && isRsvpEnabled">
+    <view class="form" v-else-if="guestStore.canRenderInvitation && !submitted && isRsvpEnabled">
       <!-- 姓名 -->
       <view class="form-group">
         <view class="form-label">
@@ -235,11 +235,7 @@
 
     <!-- 成功页 -->
     <view class="success-page" v-else-if="submitted">
-      <view class="success-ring">
-        <view class="success-circle">
-          <text class="success-icon">✓</text>
-        </view>
-      </view>
+      <view class="success-seal"><text>已复</text></view>
       <text class="success-title">感谢回复</text>
       <text class="success-desc" v-if="form.status === 'attending'">
         期待在婚礼当天与您相见
@@ -276,7 +272,7 @@
       </view>
     </view>
     <BottomActionBar
-      v-if="!submitted && isRsvpEnabled && !loadError"
+      v-if="guestStore.canRenderInvitation && !submitted && isRsvpEnabled && !loadError"
       primary-text="确认提交"
       secondary-text="查看路线"
       :loading="submitting"
@@ -296,17 +292,18 @@ import EmptyState from '@/components/ui/EmptyState.vue'
 import BottomActionBar from '@/components/ui/BottomActionBar.vue'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
-import { fetchWedding, submitRSVP } from '@/composables/useCloud.js'
+import { useGuestInvitationStore } from '@/stores/guest-invitation.js'
+import { fetchGuestInvitation, submitRSVP } from '@/composables/useCloud.js'
 import { formatDate } from '@/utils/index.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
+const guestStore = useGuestInvitationStore()
 
 const submitted = ref(false)
 const submitting = ref(false)
 const loading = ref(false)
 const loadError = ref('')
-const activeTemplate = computed(() => store.activeTemplate)
 const templateClass = computed(() => store.templateClass)
 const isRsvpEnabled = computed(() => store.isRsvpEnabled)
 const phoneRequired = computed(() => store.rsvpPhoneRequired)
@@ -323,7 +320,7 @@ const pageDesc = computed(() => {
   return isRsvpEnabled.value ? '请告诉我们是否能见证这美好时刻' : '回执这一页暂未启封，路线和礼序仍可查看。'
 })
 const requiredFieldsReady = computed(() => {
-  if (loading.value || !userStore.weddingId) return false
+  if (loading.value || !guestStore.canRenderInvitation || !guestStore.invitationId) return false
   if (!form.name.trim()) return false
   if (form.status !== 'declined' && phoneRequired.value && !form.phone.trim()) return false
   return true
@@ -403,7 +400,7 @@ function decrementGuestCount() {
 }
 
 async function handleSubmit() {
-  if (!userStore.weddingId) {
+  if (!guestStore.invitationId || !guestStore.canRenderInvitation) {
     uni.showToast({ title: '未找到婚礼信息，请重新打开邀请', icon: 'none' })
     return
   }
@@ -434,7 +431,7 @@ async function handleSubmit() {
   submitting.value = true
   try {
     const attendingCount = form.status === 'declined' ? 0 : form.guestCount
-    await submitRSVP(userStore.weddingId, {
+    await submitRSVP(guestStore.invitationId, {
       name: form.name.trim(),
       phone: form.phone.trim(),
       openid: userStore.openid,
@@ -483,11 +480,11 @@ function resetForm() {
   form.companionNote = ''
   form.dietary = []
   form.message = ''
-  relaunchOrToast('/pages/index/index', '返回首页')
+  switchTabOrToast('/pages/index/index', '返回首页')
 }
 
 function goHome() {
-  relaunchOrToast('/pages/index/index', '返回首页')
+  switchTabOrToast('/pages/index/index', '返回首页')
 }
 
 function goToGuide() {
@@ -504,13 +501,6 @@ function goToBlessing() {
 function routeFail(label, err) {
   console.warn(`${label}失败:`, err)
   uni.showToast({ title: `${label}失败，请稍后重试`, icon: 'none' })
-}
-
-function relaunchOrToast(url, label) {
-  uni.reLaunch({
-    url,
-    fail: (err) => routeFail(label, err)
-  })
 }
 
 function switchTabOrToast(url, label) {
@@ -572,7 +562,8 @@ function openCalendar() {
 
 onLoad(async (options) => {
   if (options?.id) {
-    userStore.setWeddingId(options.id)
+    const cached = guestStore.hydrate(options.id)
+    if (cached) store.setWeddingData(cached, options.id)
   }
   await loadWedding()
   const rsvp = (store.guests?.guests || []).find(item => {
@@ -596,10 +587,14 @@ onLoad(async (options) => {
 
 async function loadWedding(force = false) {
   loadError.value = ''
-  if (!userStore.weddingId || (store.guests?.guests?.length && !force)) return
+  if (!guestStore.invitationId) {
+    loadError.value = '请从新人寄来的邀请进入，回执才会铺开。'
+    return
+  }
+  if (guestStore.canRenderInvitation && store.guests?.guests?.length && !force) return
   loading.value = true
   try {
-    await fetchWedding(userStore.weddingId, force)
+    await fetchGuestInvitation(guestStore.invitationId)
   } catch (err) {
     console.error('回执页加载婚礼失败:', err)
     loadError.value = '请稍后再试，回执会重新铺开。'
@@ -629,7 +624,7 @@ async function reloadWedding() {
   display: inline-flex;
   align-items: center;
   gap: 10rpx;
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: $text-muted;
   letter-spacing: $tracking-kicker;
   text-transform: uppercase;
@@ -716,7 +711,7 @@ async function reloadWedding() {
 }
 .brief-kicker {
   display: block;
-  font-size: 18rpx;
+  font-size: 24rpx;
   color: $gold;
   letter-spacing: $ls-wide;
   margin-bottom: 10rpx;
@@ -747,7 +742,7 @@ async function reloadWedding() {
 }
 .brief-label {
   display: block;
-  font-size: 18rpx;
+  font-size: 24rpx;
   letter-spacing: 0;
   color: $text-muted;
   margin-bottom: 6rpx;
@@ -788,11 +783,11 @@ async function reloadWedding() {
   border-radius: 6rpx;
   background: $bg-muted;
   color: $text-muted;
-  font-size: 20rpx;
+  font-size: 24rpx;
   letter-spacing: 0.04em;
 }
 .label-en {
-  font-size: 20rpx;
+  font-size: 24rpx;
   color: $text-muted;
   letter-spacing: $tracking-kicker;
   text-transform: uppercase;
@@ -1024,7 +1019,7 @@ async function reloadWedding() {
 .char-count {
   display: block;
   text-align: right;
-  font-size: 20rpx;
+  font-size: 24rpx;
   color: $text-muted;
   margin-top: 10rpx;
   letter-spacing: 0.04em;
@@ -1068,7 +1063,7 @@ async function reloadWedding() {
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
   opacity: 0.92;
 }
-.submit-btn[disabled] {
+.submit-btn.is-disabled {
   opacity: 0.45;
   box-shadow: none;
 }
@@ -1083,19 +1078,7 @@ async function reloadWedding() {
   background: var(--theme-page, $bg-color);
   position: relative;
 }
-.success-page::before {
-  content: '';
-  position: absolute;
-  top: 8%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 480rpx;
-  height: 480rpx;
-  background: radial-gradient(circle at center, rgba(176, 58, 91, 0.04) 0%, rgba(176, 58, 91, 0) 70%);
-  pointer-events: none;
-  z-index: 0;
-}
-.success-page .success-ring,
+.success-page .success-seal,
 .success-page .success-title,
 .success-page .success-desc,
 .success-page .success-card,
@@ -1105,60 +1088,25 @@ async function reloadWedding() {
 .success-page > view,
 .success-page > text { position: relative; z-index: 1; }
 
-.success-ring {
-  position: relative;
-  width: 168rpx;
-  height: 168rpx;
-  margin-bottom: 56rpx;
-}
-.success-ring::before {
-  content: '';
-  position: absolute;
-  top: -8rpx;
-  left: -8rpx;
-  right: -8rpx;
-  bottom: -8rpx;
+.success-seal {
+  width: 128rpx;
+  height: 128rpx;
+  margin-bottom: $sp-5;
   border-radius: 50%;
-  border: 1rpx solid $color-success;
-  opacity: 0.32;
-  animation: scale-fade 2.4s ease-out infinite;
-}
-.success-ring::after {
-  content: '';
-  position: absolute;
-  top: -16rpx;
-  left: -16rpx;
-  right: -16rpx;
-  bottom: -16rpx;
-  border-radius: 50%;
-  border: 1rpx solid $color-success;
-  opacity: 0.18;
-  animation: scale-fade 2.4s ease-out 0.4s infinite;
-}
-@keyframes scale-fade {
-  0% { transform: scale(1); opacity: var(--ring-start, 0.32); }
-  100% { transform: scale(1.4); opacity: 0; }
-}
-
-.success-circle {
-  width: 168rpx;
-  height: 168rpx;
-  border-radius: 50%;
-  background: $color-success;
+  background: var(--accent);
+  border: 6rpx solid var(--accent-ink);
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
-  z-index: 2;
-  box-shadow:
-    0 12rpx 28rpx rgba(0, 0, 0, 0.12),
-    inset 0 2rpx 4rpx rgba(255, 255, 255, 0.2);
-  animation: bounceIn 0.9s $ease-out-back both;
+  box-shadow: 0 6rpx 24rpx var(--accent-glow);
+  color: var(--on-accent);
+  font-family: $font-serif;
+  font-size: $fs-title;
+  animation: sealIn 0.4s ease-out both;
 }
-.success-icon {
-  font-size: 72rpx;
-  color: $ink-inverse;
-  font-weight: 700;
+@keyframes sealIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .success-title {
@@ -1167,7 +1115,6 @@ async function reloadWedding() {
   color: $text-primary;
   margin-bottom: 16rpx;
   letter-spacing: $tracking-cn-soft;
-  animation: fadeInUp 0.7s $ease-editorial 0.3s both;
 }
 .success-title::after {
   content: '';
@@ -1186,7 +1133,6 @@ async function reloadWedding() {
   text-align: center;
   line-height: 1.7;
   letter-spacing: $tracking-cn-soft;
-  animation: fadeInUp 0.7s $ease-editorial 0.45s both;
 }
 
 .success-card {
@@ -1200,7 +1146,6 @@ async function reloadWedding() {
   box-shadow:
     0 8rpx 24rpx rgba(0, 0, 0, 0.04),
     0 1rpx 2rpx rgba(0, 0, 0, 0.02);
-  animation: fadeInUp 0.7s $ease-editorial 0.6s both;
 }
 .success-info {
   display: flex;
@@ -1237,7 +1182,6 @@ async function reloadWedding() {
   font-size: 28rpx;
   letter-spacing: $tracking-cn-soft;
   transition: all 0.3s $ease-editorial;
-  animation: fadeInUp 0.7s $ease-editorial 0.75s both;
 }
 .back-btn::after { border: none; }
 .back-btn:active {
@@ -1251,7 +1195,6 @@ async function reloadWedding() {
   display: flex;
   gap: 14rpx;
   margin-top: 24rpx;
-  animation: fadeInUp 0.7s $ease-editorial 0.85s both;
 }
 .success-action {
   flex: 1;

@@ -34,15 +34,19 @@
       </view>
       <view class="form-group">
         <text class="form-label">婚礼日期</text>
-        <picker mode="date" :value="form.date" @change="onDateChange">
+        <picker mode="date" :value="form.date || suggestedDate" @change="onDateChange">
           <view class="picker-value">{{ form.date || '请选择日期' }}</view>
         </picker>
       </view>
       <view class="form-group">
         <text class="form-label">婚礼时间</text>
-        <picker mode="time" :value="form.time" @change="onTimeChange">
+        <picker mode="time" :value="form.time || suggestedTime" @change="onTimeChange">
           <view class="picker-value">{{ form.time || '请选择时间' }}</view>
         </picker>
+      </view>
+      <view class="form-group">
+        <text class="form-label">写给宾客的话</text>
+        <textarea class="form-textarea" v-model="form.invitationText" maxlength="300" placeholder="亲手写下这封邀请的卷首语" />
       </view>
     </view>
 
@@ -135,6 +139,7 @@
       :secondary-text="currentStep > 1 ? '上一幕' : ''"
       :loading="creating"
       :disabled="creating"
+      :primary-disabled="!canContinue"
       @primary="handleStepPrimary"
       @secondary="prevStep"
     />
@@ -148,8 +153,9 @@ import { useUserStore } from '@/stores/user.js'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { createWedding, updateWedding, uploadFile } from '@/composables/useCloud.js'
 import { generateId, getWeekDay, showError, showSuccess } from '@/utils/index.js'
+import { chooseAlbumImages, isAlbumPickerCancel } from '@/utils/albumPicker.js'
 import { buildTemplateGuide, buildTemplateTimeline, getWeddingTemplate } from '@/utils/templates.js'
-import { buildTemplateCommercialState, canUseTemplate, getCommercialHint } from '@/utils/commercial.js'
+import { buildThemeCommercialState, canUseTheme } from '@/utils/commercial.js'
 import { getThemeClass, getThemeTokens, isPremiumTheme, resolveTheme } from '@/utils/legacy-theme-map.js'
 import BottomActionBar from '@/components/ui/BottomActionBar.vue'
 
@@ -163,12 +169,7 @@ const steps = [
   { index: 3, key: 'photos', label: '选照' },
   { index: 4, key: 'theme', label: '定色' }
 ]
-const THEME_TEMPLATE_MAP = {
-  wine: 'rose-couture',
-  cinnabar: 'heritage-ritual',
-  indigo: 'noir-banquet',
-  pine: 'garden-film'
-}
+const DEFAULT_SCENARIO_ID = 'rose-couture'
 
 const currentStep = ref(1)
 const creating = ref(false)
@@ -177,19 +178,41 @@ const pickedPhotos = ref([])
 const form = ref({
   groomName: '',
   brideName: '',
-  date: '2026-11-14',
-  time: '12:00',
+  date: '',
+  time: '',
+  invitationText: '',
   venueName: '',
   venueAddress: '',
   theme: 'wine'
 })
 
 const normalizedTheme = computed(() => resolveTheme(form.value.theme))
+const suggestedDate = getSuggestedDate()
+const suggestedTime = '12:00'
 const themeClass = computed(() => getThemeClass(normalizedTheme.value))
-const selectedTemplate = computed(() => getWeddingTemplate(THEME_TEMPLATE_MAP[normalizedTheme.value] || THEME_TEMPLATE_MAP.wine))
-const selectedMoodHint = computed(() => getCommercialHint(selectedTemplate.value, userStore.entitlements))
+const selectedTemplate = computed(() => getWeddingTemplate(DEFAULT_SCENARIO_ID))
+const selectedMoodHint = computed(() => isPremiumTheme(normalizedTheme.value)
+  ? (canUseTheme(normalizedTheme.value, userStore.entitlements) ? '高级色情绪已解锁' : '高级色情绪体验中')
+  : '酒红 · 信笺为免费默认色')
+const canContinue = computed(() => {
+  if (currentStep.value === 1) {
+    return Boolean(
+      form.value.groomName.trim() &&
+      form.value.brideName.trim() &&
+      form.value.date &&
+      form.value.time &&
+      form.value.invitationText.trim()
+    )
+  }
+  if (currentStep.value === 2) {
+    const venueName = form.value.venueName.trim()
+    const venueAddress = form.value.venueAddress.trim()
+    return Boolean(venueName && venueName.length <= 40 && venueAddress.length <= 80)
+  }
+  return true
+})
 const remainingPhotoSlots = computed(() => Math.max(0, MAX_ALBUM_PHOTOS - pickedPhotos.value.length))
-const heroPreviewImage = computed(() => pickedPhotos.value[0]?.localPath || selectedTemplate.value.defaultHero)
+const heroPreviewImage = computed(() => pickedPhotos.value[0]?.localPath || '/static/visuals/default-cover.png')
 const couplePreview = computed(() => {
   const groom = form.value.groomName || '新郎'
   const bride = form.value.brideName || '新娘'
@@ -202,12 +225,11 @@ const moodOptions = computed(() => {
     { key: 'indigo', name: '黛蓝 · 远书', desc: '高级，夜色与远书感' },
     { key: 'pine', name: '松绿 · 庭园', desc: '高级，户外与自然光' }
   ].map(item => {
-    const tpl = getWeddingTemplate(THEME_TEMPLATE_MAP[item.key])
     const premium = isPremiumTheme(item.key)
     return {
       ...item,
       premium,
-      locked: premium && !canUseTemplate(tpl, userStore.entitlements),
+      locked: premium && !canUseTheme(item.key, userStore.entitlements),
       token: getThemeTokens(item.key)
     }
   })
@@ -215,6 +237,14 @@ const moodOptions = computed(() => {
 
 function onDateChange(e) { form.value.date = e.detail.value }
 function onTimeChange(e) { form.value.time = e.detail.value }
+function getSuggestedDate() {
+  const date = new Date()
+  date.setDate(date.getDate() + 90)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 function prevStep() {
   if (creating.value) return
   currentStep.value = Math.max(1, currentStep.value - 1)
@@ -251,61 +281,35 @@ async function chooseWizardImages() {
     return
   }
   try {
-    const filePaths = await chooseLocalImages(remainingPhotoSlots.value)
+    const filePaths = await chooseAlbumImages(remainingPhotoSlots.value, {
+      maxCount: MAX_ALBUM_PHOTOS,
+      sizeType: ['compressed']
+    })
     for (const localPath of filePaths) {
       if (!remainingPhotoSlots.value) break
       pickedPhotos.value.push({ id: generateId(), localPath })
     }
   } catch (err) {
-    if (isUserCancel(err)) return
+    if (isAlbumPickerCancel(err)) return
     console.warn('向导选照失败:', err)
-    showError(formatPickError(err))
+    showWizardPickerError(err)
   }
 }
 function removePickedPhoto(id) {
   pickedPhotos.value = pickedPhotos.value.filter(item => item.id !== id)
 }
-function chooseLocalImages(count) {
-  const chooseCount = Math.max(1, Math.min(MAX_ALBUM_PHOTOS, Number(count) || 1))
-  return new Promise((resolve, reject) => {
-    const success = (res) => resolve(extractChosenImagePaths(res).slice(0, chooseCount))
-    const fail = reject
-    if (typeof wx !== 'undefined' && typeof wx.chooseMedia === 'function') {
-      wx.chooseMedia({
-        count: chooseCount,
-        mediaType: ['image'],
-        sourceType: ['album'],
-        sizeType: ['compressed'],
-        success,
-        fail
-      })
-      return
-    }
-    uni.chooseImage({
-      count: chooseCount,
-      sizeType: ['compressed'],
-      sourceType: ['album'],
-      success,
-      fail
+function showWizardPickerError(err) {
+  const message = err?.message || '选照失败，请稍后重试'
+  if (message.includes('微信公众平台')) {
+    uni.showModal({
+      title: '需完成平台声明',
+      content: `${message}。用途建议填写：用于新人上传婚礼照片并制作婚礼相册、请柬封面与分享海报。`,
+      showCancel: false,
+      confirmText: '知道了'
     })
-  })
-}
-function extractChosenImagePaths(res = {}) {
-  if (Array.isArray(res.tempFilePaths)) return res.tempFilePaths.filter(Boolean)
-  if (Array.isArray(res.tempFiles)) {
-    return res.tempFiles.map(file => file.tempFilePath || file.path).filter(Boolean)
+    return
   }
-  return []
-}
-function isUserCancel(err) {
-  const raw = err?.errMsg || err?.message || String(err || '')
-  return raw.includes('cancel') || raw.includes('取消')
-}
-function formatPickError(err) {
-  const raw = err?.errMsg || err?.message || String(err || '')
-  if (raw.includes('privacy')) return '请先同意隐私授权后再选照'
-  if (raw.includes('permission') || raw.includes('auth')) return '相册权限不足，请在微信设置中开启'
-  return '选照失败，请稍后重试'
+  showError(message)
 }
 
 function validateStep() {
@@ -316,6 +320,14 @@ function validateStep() {
     }
     if (!form.value.date) {
       showError('请选择婚礼日期')
+      return false
+    }
+    if (!form.value.time) {
+      showError('请选择婚礼时间')
+      return false
+    }
+    if (!form.value.invitationText.trim()) {
+      showError('请亲手写一句邀请的话')
       return false
     }
   }
@@ -340,7 +352,7 @@ async function createWeddingAction() {
     uni.showLoading({ title: '生成婚书中...', mask: true })
     const tpl = selectedTemplate.value
     const theme = normalizedTheme.value
-    const commercialState = buildTemplateCommercialState(tpl, userStore.entitlements)
+    const commercialState = buildThemeCommercialState(theme, userStore.entitlements)
     const weddingPayload = buildWeddingPayload(tpl, theme, commercialState)
     const invitationPayload = buildInvitationPayload(tpl, theme, commercialState)
     const mainVenueId = 'main-venue'
@@ -395,12 +407,14 @@ function buildWeddingPayload(tpl, theme, commercialState) {
     stats: { views: 0, shares: 0, rsvp_count: 0, blessing_count: 0, unique_viewers: 0 },
     commercial: {
       plan: userStore.plan || 'free',
+      scenario_preset: tpl.id,
       template_id: tpl.id,
       theme_key: theme,
       ...commercialState
     },
     workspace: {
       plan: userStore.plan || 'free',
+      scenario_preset: tpl.id,
       template_id: tpl.id,
       theme_key: theme,
       commercial_status: commercialState.billing_state || 'included'
@@ -414,13 +428,14 @@ function buildWeddingPayload(tpl, theme, commercialState) {
 }
 function buildInvitationPayload(tpl, theme, commercialState) {
   return {
+    scenario_preset: tpl.id,
     template: tpl.id,
     theme,
     photo_treatment: 'original',
     commercial: commercialState,
     content: {
       title: '婚礼请柬',
-      main_text: tpl?.preset?.mainText || '诚挚邀请您参加我们的婚礼，见证我们的幸福时刻。',
+      main_text: form.value.invitationText.trim(),
       sub_text: '',
       story: ''
     },
@@ -555,7 +570,7 @@ onShow(() => {
   width: 64rpx;
   text-align: center;
   color: $ink-soft;
-  font-size: $fs-cap;
+  font-size: $fs-note;
 }
 .step-content {
   padding: $sp-6 $sp-5 calc(132rpx + env(safe-area-inset-bottom));
@@ -608,6 +623,16 @@ onShow(() => {
   color: $ink;
   font-size: $fs-body;
   box-sizing: border-box;
+}
+.form-textarea {
+  width: 100%;
+  min-height: 176rpx;
+  padding: $sp-2 0;
+  border-bottom: 1rpx solid $line;
+  background: transparent;
+  color: $ink;
+  font-size: $fs-body;
+  line-height: $lh-body;
 }
 .venue-card,
 .theme-preview {

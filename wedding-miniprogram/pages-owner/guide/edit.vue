@@ -38,7 +38,7 @@
       desc="先添加主仪式场地，再补充接亲、住宿或拍摄点。"
     />
 
-    <button class="add-btn secondary" :disabled="guideBusy" @click="showAddModal">
+    <button class="add-btn secondary" :class="{ 'is-disabled': guideBusy }" :disabled="guideBusy" @click="showAddModal">
       <text>+ 添加场地</text>
     </button>
 
@@ -115,7 +115,7 @@
       desc="可以添加协议酒店、附近酒店或新人推荐的住宿点。"
     />
 
-    <button class="add-btn secondary" :disabled="guideBusy" @click="showHotelModal">
+    <button class="add-btn secondary" :class="{ 'is-disabled': guideBusy }" :disabled="guideBusy" @click="showHotelModal">
       <text>+ 添加住宿</text>
     </button>
 
@@ -155,8 +155,8 @@
               <text class="geo-desc">{{ geoStatusText }}</text>
             </view>
             <view class="geo-actions">
-              <button class="geo-btn" :loading="geocoding" :disabled="geocoding || savingVenue" @click="autoMatchLocation">自动匹配</button>
-              <button class="geo-btn primary" :disabled="geocoding || savingVenue" @click="chooseVenueLocation">地图选点</button>
+              <button class="geo-btn" :class="{ 'is-disabled': geocoding || savingVenue }" :loading="geocoding" :disabled="geocoding || savingVenue" @click="autoMatchLocation">自动匹配</button>
+              <button class="geo-btn primary" :class="{ 'is-disabled': geocoding || savingVenue }" :disabled="geocoding || savingVenue" @click="chooseVenueLocation">地图选点</button>
             </view>
           </view>
           <view class="manual-coordinate">
@@ -451,12 +451,31 @@ function chooseVenueLocation() {
       fail: (err) => {
         if (!String(err?.errMsg || '').includes('cancel')) {
           console.warn('地图选点失败:', err)
-          showError('地图选点失败，请检查定位权限')
+          showLocationPickerError(err)
         }
         resolve(false)
       }
     })
   })
+}
+
+function showLocationPickerError(err) {
+  const raw = String(err?.errMsg || err?.message || '')
+  const normalized = raw.toLowerCase()
+  if (normalized.includes('api scope is not declared') || normalized.includes('privacy agreement')) {
+    uni.showModal({
+      title: '需完成平台声明',
+      content: '请在微信公众平台声明“收集你选择的位置信息”，保存约 5 分钟后再使用地图选点。用途建议填写：用于婚礼主人选择并保存婚礼场地位置。',
+      showCancel: false,
+      confirmText: '知道了'
+    })
+    return
+  }
+  if (/privacy|隐私/i.test(raw)) {
+    showError('请先同意小程序隐私保护指引后再使用地图选点')
+    return
+  }
+  showError('地图选点失败，请稍后重试；也可以手动填写坐标')
 }
 
 async function saveVenue() {
@@ -933,7 +952,7 @@ onShow(async () => {
 }
 .page-tag {
   display: block;
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: $text-muted;
   letter-spacing: 0;
   margin-bottom: 12rpx;
@@ -958,7 +977,7 @@ onShow(async () => {
   color: $text-primary;
 }
 .section-hint {
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: $text-muted;
 }
 
@@ -980,12 +999,12 @@ onShow(async () => {
   padding: 4rpx 12rpx;
   background: $bg-muted;
   color: $text-secondary;
-  font-size: 20rpx;
+  font-size: 24rpx;
   border-radius: 6rpx;
   font-weight: 500;
 }
 .venue-time {
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: $text-muted;
 }
 .venue-name, .hotel-name {
@@ -1012,7 +1031,7 @@ onShow(async () => {
   border-radius: 6rpx;
   background: rgba(52,168,83,0.08);
   color: $color-success;
-  font-size: 20rpx;
+  font-size: 24rpx;
 }
 .venue-geo.missing {
   background: rgba(249,171,0,0.12);
@@ -1040,7 +1059,7 @@ onShow(async () => {
   margin: 6rpx 0;
 }
 .hotel-tag {
-  font-size: 20rpx;
+  font-size: 24rpx;
   color: $text-secondary;
   background: $bg-muted;
   padding: 2rpx 10rpx;
@@ -1050,7 +1069,7 @@ onShow(async () => {
   display: inline-flex;
   align-items: center;
   gap: 8rpx;
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: $color-primary;
 }
 .hotel-phone-icon {
@@ -1135,7 +1154,7 @@ onShow(async () => {
 }
 .add-btn::after { border: none; }
 .add-btn:active { background: $bg-muted; }
-.add-btn[disabled] {
+.add-btn.is-disabled {
   opacity: 0.48;
 }
 
@@ -1223,7 +1242,7 @@ onShow(async () => {
 }
 .geo-desc {
   display: block;
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: $text-secondary;
   line-height: 1.45;
 }
@@ -1246,7 +1265,7 @@ onShow(async () => {
   color: $ink-inverse;
 }
 .geo-btn::after { border: none; }
-.geo-btn[disabled] {
+.geo-btn.is-disabled {
   opacity: 0.62;
 }
 .manual-coordinate {

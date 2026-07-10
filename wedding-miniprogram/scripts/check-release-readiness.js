@@ -160,10 +160,23 @@ function checkPrivacyAuthorizationFlow() {
   const weixin = manifest['mp-weixin'] || {}
   const app = read('App.vue')
   const album = read('pages-owner/album/manage.vue')
+  const wizard = read('pages-owner/wizard/index.vue')
+  const guide = read('pages-owner/guide/edit.vue')
+  const privacyPage = read('pages/privacy/index.vue')
+  const pickerPath = path.join(root, 'utils', 'albumPicker.js')
 
   assert(weixin.__usePrivacyCheck__ === true, 'manifest.json must keep WeChat privacy checks enabled')
-  assert(album.includes('requirePrivacyAuthorize'), 'album upload must request privacy authorization at the point of use')
-  assert(album.includes('收集你选中的照片或视频信息'), 'album upload must identify the exact WeChat privacy declaration required by image pickers')
+  assert(JSON.stringify(weixin.requiredPrivateInfos || []) === JSON.stringify(['chooseLocation']), 'manifest.json must declare only the location picker API that the mini program actually uses')
+  assert(!weixin.permission?.['scope.userLocation'], 'manifest.json must not request precise current location when getLocation is unused')
+  assert(fs.existsSync(pickerPath), 'utils/albumPicker.js must centralize privacy-safe photo selection')
+  const picker = fs.readFileSync(pickerPath, 'utf8')
+  assert(picker.includes('requirePrivacyAuthorize'), 'shared album picker must request privacy authorization at the point of use')
+  assert(picker.includes('wx.chooseImage') && picker.includes('uni.chooseImage') && picker.includes('wx.chooseMedia'), 'shared album picker must fall back across supported WeChat image APIs')
+  assert(picker.includes('收集你选中的照片或视频信息'), 'shared album picker must identify the exact WeChat privacy declaration required by image pickers')
+  assert(album.includes("from '@/utils/albumPicker.js'"), 'album manager must use the shared privacy-safe image picker')
+  assert(wizard.includes("from '@/utils/albumPicker.js'"), 'creation wizard must use the shared privacy-safe image picker')
+  assert(guide.includes('收集你选择的位置信息'), 'guide editor must identify the exact WeChat privacy declaration required by chooseLocation')
+  assert(privacyPage.includes('不读取宾客当前位置'), 'privacy page must explain that guest navigation does not collect current location')
   assert(!app.includes('onNeedPrivacyAuthorization'), 'App.vue must not intercept WeChat privacy authorization without a native agreePrivacyAuthorization button')
   assert(!app.includes('checkPrivacySetting()'), 'App.vue must not interrupt every launch with a non-authorizing privacy modal')
 }
@@ -174,6 +187,7 @@ function checkReleaseDiagnosticsTruthfulness() {
 
   assert(source.includes("key: 'platform-privacy'"), 'release diagnostics must track WeChat platform privacy separately')
   assert(source.includes('收集你选中的照片或视频信息'), 'release diagnostics must name the exact WeChat image privacy declaration')
+  assert(source.includes('收集你选择的位置信息'), 'release diagnostics must name the exact WeChat location picker privacy declaration')
   assert(source.includes("key: 'guest-rules'"), 'release diagnostics must keep guest data rules separate from platform privacy')
   assert(source.includes('ready: blockers === 0 && manual === 0'), 'release diagnostics must not claim ready while manual checks remain')
   assert(page.includes('summaryTitle'), 'diagnostics page must derive a truthful release state title')
@@ -199,8 +213,10 @@ function checkCloudSafety() {
   assertIncludes('cloudfunctions/submitRSVP/index.js', 'err.errCode === -502005', 'submitRSVP must handle missing guest documents consistently')
   assertIncludes('cloudfunctions/submitBlessing/index.js', 'CONTENT_SAFETY_MODE', 'submitBlessing must support configurable content safety fallback')
   assertIncludes('cloudfunctions/submitBlessing/index.js', 'isDocNotExistError', 'submitBlessing must create missing blessing documents for older weddings')
-  assertIncludes('cloudfunctions/recordView/index.js', 'ensureStatsDocument', 'recordView must initialize missing stats documents')
+  assert(!read('cloudfunctions/recordView/index.js').includes('createCollection'), 'recordView hot path must not create or inspect collections')
   assertIncludes('cloudfunctions/recordView/index.js', 'isDocNotExistError(err)', 'recordView must distinguish missing stats docs from transient failures')
+  assertIncludes('cloudfunctions/getGuestInvitation/index.js', 'ownRsvp', 'guest endpoint must return only the current guest RSVP')
+  assertIncludes('cloudfunctions/getBlessings/index.js', 'nextCursor', 'public blessings must load through a paginated endpoint')
   assertIncludes('composables/useCloud.js', 'recordShare', 'useCloud must expose share tracking')
   assertIncludes('pages/index/index.vue', 'recordShare', 'index share handlers must track shares')
   assertIncludes('cloudfunctions/geocodeVenue/index.js', 'TENCENT_MAP_KEY', 'geocodeVenue must use configurable Tencent Map key')
@@ -224,7 +240,7 @@ function checkCloudSafety() {
 
 function checkCloudFunctionDeployConfig() {
   const cloudFunctions = listCloudFunctionDirs()
-  assert(cloudFunctions.length === 16, `expected 16 cloud functions, got ${cloudFunctions.length}: ${cloudFunctions.join(', ')}`)
+  assert(cloudFunctions.length === 18, `expected 18 cloud functions, got ${cloudFunctions.length}: ${cloudFunctions.join(', ')}`)
 
   const cloudbaserc = readJson('cloudbaserc.json')
   assert(cloudbaserc.envId === 'cloud1-d5gqyur7g5a4d3c8d', 'cloudbaserc must target the production CloudBase env')
@@ -251,7 +267,7 @@ function checkCloudFunctionDeployConfig() {
       assert(pkg.dependencies['@cloudbase/node-sdk'], 'aiPublishAssistant: package.json must depend on @cloudbase/node-sdk')
       assert(Number(deploy.timeout) >= 60, 'aiPublishAssistant: cloudbaserc timeout must cover AI text generation')
     }
-    assert(deploy.runtime === 'Nodejs16.13', `${name}: cloudbaserc runtime must be Nodejs16.13`)
+    assert(deploy.runtime === 'Nodejs18.15', `${name}: cloudbaserc runtime must be Nodejs18.15`)
     assert(deploy.handler === 'index.main', `${name}: cloudbaserc handler must be index.main`)
     assert(Number(deploy.timeout) >= 10, `${name}: cloudbaserc timeout must be at least 10 seconds`)
     assert(typeof deploy.description === 'string' && deploy.description.length > 0, `${name}: cloudbaserc description is required`)
@@ -288,7 +304,9 @@ function checkDataContracts() {
   assertIncludes('cloudfunctions/updateWedding/index.js', "'blessings'", 'updateWedding must persist blessings without nested wrappers')
   assertIncludes('cloudfunctions/updateWedding/index.js', 'isDocNotExistError', 'updateWedding must create missing related documents for older weddings')
   assertIncludes('cloudfunctions/createWedding/index.js', "'viewers'", 'createWedding must create the viewers collection used by view tracking')
-  assertIncludes('cloudfunctions/recordView/index.js', "ensureCollection('viewers')", 'recordView must initialize the viewers collection')
+  assert(!read('cloudfunctions/recordView/index.js').includes('ensureCollection'), 'recordView must assume deployment-provisioned collections on the hot path')
+  assertIncludes('composables/useCloud.js', 'fetchGuestInvitation', 'guest pages must use the public lightweight invitation endpoint')
+  assertIncludes('stores/guest-invitation.js', 'GUEST_INVITATION_STATUS', 'guest invitation store must expose explicit loading states')
   assertIncludes('cloudfunctions/getWedding/index.js', 'normalizeListDocument', 'getWedding must normalize legacy nested list documents')
   assertIncludes('cloudfunctions/getWedding/index.js', 'is_current_user', 'getWedding must mark the current guest RSVP without exposing other guests')
   assertIncludes('cloudfunctions/getStats/index.js', 'normalizeListDocument', 'getStats must normalize legacy nested list documents')
@@ -332,8 +350,9 @@ function checkTemplateSystem() {
   assertIncludes('utils/templates.js', 'noir-banquet', 'templates must include noir banquet')
   assertIncludes('utils/templates.js', 'garden-film', 'templates must include garden film')
   assertIncludes('utils/templates.js', 'themeClass', 'templates must expose a theme class beyond the legacy tpl class')
-  assertIncludes('utils/templates.js', 'TEMPLATE_HERO_IMAGES', 'templates must define photorealistic default hero images')
-  assertIncludes('utils/templates.js', 'defaultHero', 'templates must bind a default hero image to each template')
+  assertIncludes('utils/templates.js', 'TEMPLATE_HERO_IMAGES', 'scenarios must expose a remote hero image map')
+  assertIncludes('utils/templates.js', 'LOCAL_PAPER_FALLBACK', 'scenarios must keep one local paper fallback')
+  assertIncludes('utils/templates.js', 'defaultHero', 'scenarios must resolve a hero image with a safe fallback')
   assertIncludes('utils/templates.js', 'getTemplateHeroImage', 'templates must expose a reusable hero image resolver')
   assertIncludes('utils/templates.js', 'getTemplatePosterTheme', 'templates must expose poster colors for template-aligned sharing')
   assertIncludes('utils/templates.js', 'buildTemplatePreviewData', 'templates must provide filled mock data for full previews')
@@ -355,10 +374,10 @@ function checkTemplateSystem() {
   assertIncludes('pages-owner/wizard/index.vue', '@include photo-hero-scrim', 'wizard hero preview must show the paper scrim')
   assertIncludes('pages-owner/wizard/index.vue', 'persistWizardPhotos', 'wizard must persist selected photos after creation')
   assertIncludes('pages-owner/wizard/index.vue', "updateWedding(weddingId, 'albums'", 'wizard must write uploaded photos into albums')
-  assertIncludes('pages-owner/wizard/index.vue', 'THEME_TEMPLATE_MAP', 'wizard must map mood colors to shared template presets')
-  assertIncludes('pages-owner/wizard/index.vue', 'canUseTemplate', 'wizard mood switching must check commercial entitlements')
+  assertIncludes('pages-owner/wizard/index.vue', 'DEFAULT_SCENARIO_ID', 'wizard must keep scenario content independent from mood colors')
+  assertIncludes('pages-owner/wizard/index.vue', 'canUseTheme', 'wizard mood switching must check theme entitlements')
   assertIncludes('pages-owner/wizard/index.vue', 'getThemeTokens', 'wizard native mood swatches must use resolved theme tokens')
-  assertIncludes('pages-owner/invitation/edit.vue', 'WEDDING_TEMPLATES', 'invitation editor must use shared template definitions')
+  assertIncludes('pages-owner/invitation/edit.vue', 'WEDDING_SCENARIOS', 'invitation editor must use content-only scenario definitions')
   assertIncludes('pages-owner/invitation/edit.vue', 'previewTemplate', 'invitation editor must preview the currently selected template before saving')
   assertIncludes('pages-owner/invitation/edit.vue', 'photoToneOptions', 'invitation editor must expose opt-in photo tone controls')
   assertIncludes('pages-owner/invitation/edit.vue', 'photo_treatment', 'invitation editor must persist opt-in photo tone controls')
@@ -371,7 +390,7 @@ function checkTemplateSystem() {
   assert(!read('pages-owner/template/preview.vue').includes('GUEST PACK'), 'pages-owner/template/preview.vue: template preview home must not show the old guest action dashboard')
   assertIncludes('pages-owner/invitation/edit.vue', 'applyTemplatePreset', 'invitation editor must expose built-in template preset copy')
   assertIncludes('pages/index/index.vue', 'templateClass', 'home page must apply template styling')
-  assertIncludes('pages/index/index.vue', 'getTemplateHeroImage', 'home page must fall back to the active template hero image')
+  assert(!read('pages/index/index.vue').includes('getTemplateHeroImage'), 'home page must never use a fictitious template photo when guest data is missing')
   assertIncludes('pages/index/index.vue', '--theme-hero-overlay', 'home page must use template-aware hero image overlays')
   assertIncludes('pages/index/index.vue', "const coverImageMode = computed(() => 'aspectFill')", 'home page must fill narrow default covers without visible side bars')
   assertIncludes('pages/guide/index.vue', '--theme-panel-gradient', 'guide page must use template-aware panel colors')
@@ -384,12 +403,10 @@ function checkTemplateSystem() {
   assertIncludes('utils/posterCanvas.js', 'getTemplatePosterTheme', 'poster canvas must draw with the active template palette')
   assertIncludes('utils/posterCanvas.js', 'getTemplateHeroImage', 'poster canvas must use template hero images when no album cover exists')
   assertIncludes('pages-owner/album/manage.vue', 'chooseAlbumImages', 'album manager must handle modern WeChat image selection')
-  assertIncludes('pages-owner/album/manage.vue', 'ensureAlbumPrivacyAuthorized', 'album manager must request WeChat privacy authorization before photo picking')
-  assertIncludes('pages-owner/album/manage.vue', 'chooseWithFallback', 'album manager must fall back across supported WeChat image pickers')
+  assertIncludes('pages-owner/wizard/index.vue', 'chooseAlbumImages', 'creation wizard must share the hardened album picker')
   assertIncludes('pages-owner/album/manage.vue', 'MAX_ALBUM_PHOTOS = 9', 'album manager must cap the curated photo set at nine')
   assertIncludes('pages-owner/album/manage.vue', 'remainingPhotoSlots', 'album manager must enforce remaining curated photo slots')
-  assertIncludes('pages-owner/album/manage.vue', 'getChooseImageApi', 'album manager must choose the native WeChat image API when available')
-  assertIncludes('pages-owner/album/manage.vue', 'extractChosenImagePaths', 'album manager must normalize image paths from tempFilePaths and tempFiles')
+  assertIncludes('utils/albumPicker.js', 'extractAlbumImagePaths', 'shared album picker must normalize image paths from tempFilePaths and tempFiles')
   assertIncludes('pages-owner/album/manage.vue', 'buildAlbumCloudPath', 'album manager must upload into wedding-scoped cloud paths')
   assertIncludes('pages-owner/album/manage.vue', 'fetchWedding(userStore.weddingId, true)', 'album manager must force-refresh cloud data on entry')
   assertIncludes('pages-owner/album/manage.vue', 'previousAlbum', 'album manager must rollback local album state when cloud save fails')
@@ -398,7 +415,7 @@ function checkTemplateSystem() {
   assertIncludes('composables/useCloud.js', "getCloudApi('uploadFile')", 'uploadFile must use the shared CloudBase API resolver')
   assertIncludes('composables/useCloud.js', "targets.push({ name: 'wx.cloud'", 'cloud init must initialize native wx.cloud when available')
   assertIncludes('composables/useCloud.js', 'deleteFiles', 'useCloud must expose cloud storage cleanup for failed album transactions')
-  assertIncludes('pages-owner/album/manage.vue', 'requirePrivacyAuthorize', 'album manager must trigger WeChat privacy authorization only when uploading')
+  assertIncludes('utils/albumPicker.js', 'requirePrivacyAuthorize', 'shared album picker must trigger WeChat privacy authorization only when uploading')
   assertIncludes('pages/guide/index.vue', 'snow', 'guide weather icons must handle weather types returned by getWeather')
   assertIncludes('pages/guide/index.vue', 'geocodedVenues', 'guide map must only render venues with real coordinates')
   assertIncludes('pages/guide/index.vue', 'height: 420rpx', 'guide map must have a stable explicit native map height')
@@ -445,14 +462,14 @@ function checkCommercializationFoundations() {
   assert(fs.existsSync(path.join(root, 'utils/commercial.js')), 'commercial config helper must exist')
   assertIncludes('utils/commercial.js', 'PLAN_TIERS', 'commercial helper must define plan tiers')
   assertIncludes('utils/commercial.js', 'DEFAULT_ENTITLEMENTS', 'commercial helper must define default entitlements')
-  assertIncludes('utils/commercial.js', 'buildTemplateCommercialState', 'commercial helper must build template billing state')
+  assertIncludes('utils/commercial.js', 'buildThemeCommercialState', 'commercial helper must build theme billing state')
   assertIncludes('utils/templates.js', "themeTier('cinnabar')", 'templates must derive premium candidates from non-wine mood colors')
   assertIncludes('utils/templates.js', 'premium_templates', 'templates must bind premium moods to entitlement keys')
   assertIncludes('utils/commercial.js', 'isPremiumTheme', 'commercial helper must use theme premium rules')
   assertIncludes('pages-owner/wizard/index.vue', 'moodOptions', 'wizard must expose mood color choices and premium state')
-  assertIncludes('pages-owner/wizard/index.vue', 'buildTemplateCommercialState', 'wizard must persist template commercial state')
-  assertIncludes('pages-owner/invitation/edit.vue', 'getCommercialHint', 'invitation editor must explain commercial template state')
-  assertIncludes('pages-owner/invitation/edit.vue', 'buildTemplateCommercialState', 'invitation editor must persist template commercial state')
+  assertIncludes('pages-owner/wizard/index.vue', 'buildThemeCommercialState', 'wizard must persist theme commercial state')
+  assertIncludes('pages-owner/invitation/edit.vue', 'scenarioPreset', 'invitation editor must persist scenario preset independently')
+  assertIncludes('pages-owner/invitation/edit.vue', 'buildThemeCommercialState', 'invitation editor must persist theme commercial state')
   assertIncludes('cloudfunctions/syncOwnerProfile/index.js', 'owners', 'syncOwnerProfile must persist owner profiles')
   assertIncludes('cloudfunctions/syncOwnerProfile/index.js', 'workspaces', 'syncOwnerProfile must return wedding workspaces')
   assertIncludes('cloudfunctions/syncOwnerProfile/index.js', 'entitlements', 'syncOwnerProfile must return commercial entitlements')
@@ -502,14 +519,14 @@ function checkReleaseDocs() {
   assert(fs.existsSync(path.join(root, '.nvmrc')), '.nvmrc must pin the preferred Node LTS version')
   assert(fs.existsSync(path.join(root, 'RELEASE-AUDIT.md')), 'RELEASE-AUDIT.md must document the pre-launch full audit')
   const audit = read('RELEASE-AUDIT.md')
-  assert(audit.includes('16 个云函数'), 'RELEASE-AUDIT.md must cover all 16 cloud functions')
+  assert(audit.includes('18 个云函数'), 'RELEASE-AUDIT.md must cover all 18 cloud functions')
   assert(audit.includes('真云必验清单'), 'RELEASE-AUDIT.md must include true-cloud manual verification steps')
   const readme = read('README.md')
   assert(readme.includes('Node.js 20 LTS'), 'README must document Node.js 20 LTS')
   assert(readme.includes('发布前检查清单'), 'README must include a release checklist')
   assert(readme.includes('RELEASE-AUDIT.md'), 'README must link the pre-launch full audit')
   assert(readme.includes('P2 大众化/商业化'), 'README must document P2 commercialization foundations')
-  assert(readme.includes('写实模板主图'), 'README must document photorealistic template hero images')
+  assert(readme.includes('场景方案原图'), 'README must document remote scenario hero assets')
   assert(readme.includes('syncOwnerProfile'), 'README must document owner profile sync deployment')
 }
 
@@ -569,16 +586,16 @@ function checkVisualAssets() {
   assertPngSize('static/visuals/default-cover.png', 640, 1349)
 
   const expectedHeroImages = [
-    'hero-rose-couture.jpg',
-    'hero-champagne-editorial.jpg',
-    'hero-noir-banquet.jpg',
-    'hero-garden-film.jpg',
-    'hero-heritage-ritual.jpg',
-    'hero-shandong-family.jpg',
-    'hero-travel-friendly.jpg'
+    ['hero-signature-rose.jpg', 1332],
+    ['hero-champagne-editorial.jpg', 1334],
+    ['hero-noir-banquet.jpg', 1334],
+    ['hero-garden-film.jpg', 1334],
+    ['hero-heritage-ritual.jpg', 1334],
+    ['hero-shandong-family.jpg', 1334],
+    ['hero-travel-friendly.jpg', 1334]
   ]
-  for (const file of expectedHeroImages) {
-    assertJpegSize(`static/visuals/hero/${file}`, 750, 1334)
+  for (const [file, height] of expectedHeroImages) {
+    assertJpegSize(`../assets/scenario-heroes/${file}`, 750, height)
   }
 
   const visualsDir = path.join(root, 'static/visuals')

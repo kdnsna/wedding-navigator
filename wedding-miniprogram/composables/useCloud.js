@@ -1,5 +1,6 @@
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
+import { GUEST_INVITATION_STATUS, useGuestInvitationStore } from '@/stores/guest-invitation.js'
 import { CLOUD_ENV } from '@/config/cloud.js'
 
 let cloudInitialized = false
@@ -65,47 +66,39 @@ function normalizeCloudError(err, fallback = '云开发请求失败') {
 // 云函数调用封装
 async function callFunction(name, data = {}, options = {}) {
   const { timeoutMs = 8000 } = options
+  const cloudApi = getCloudApi('callFunction')
+  if (!cloudApi) {
+    throw new Error('云开发环境未初始化，请检查 appid 和云开发配置')
+  }
 
-  return new Promise((resolve, reject) => {
-    let settled = false
-    const finish = (handler, payload) => {
-      if (settled) return
-      settled = true
-      clearTimeout(timeoutId)
-      handler(payload)
-    }
-
-    const timeoutId = setTimeout(() => {
-      finish(reject, new Error(`${name} 请求超时`))
-    }, timeoutMs)
-
-    const cloudApi = getCloudApi('callFunction')
-    if (!cloudApi) {
-      finish(reject, new Error('云开发环境未初始化，请检查 appid 和云开发配置'))
-      return
-    }
-
-    cloudApi.callFunction({
-      name,
-      data,
-      success: (res) => {
-        if (res.result?.success === false) {
-          const error = new Error(res.result.message || `${name} 调用失败`)
-          error.code = res.result.code || ''
-          error.needConfig = Boolean(res.result.needConfig)
-          error.result = res.result
-          finish(reject, error)
-          return
-        }
-        finish(resolve, res.result)
-      },
-      fail: (err) => {
-        console.error(`[cloud] ${name} fail:`, err)
-        const message = normalizeCloudError(err, `${name} 调用失败`)
-        finish(reject, new Error(message.includes(name) ? message : `${name}: ${message}`))
-      }
-    })
+  let timeoutId
+  const request = Promise.resolve().then(() => cloudApi.callFunction({ name, data }))
+  const timeout = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(`${name} 请求超时`)), timeoutMs)
   })
+
+  try {
+    // Promise.race attaches a rejection handler to the request, so a late cloud
+    // rejection remains observed even after the local timeout has fired.
+    const res = await Promise.race([request, timeout])
+    if (res?.result?.success === false) {
+      const error = new Error(res.result.message || `${name} 调用失败`)
+      error.code = res.result.code || ''
+      error.needConfig = Boolean(res.result.needConfig)
+      error.result = res.result
+      throw error
+    }
+    return res?.result
+  } catch (err) {
+    const message = normalizeCloudError(err, `${name} 调用失败`)
+    const normalized = new Error(message.includes(name) ? message : `${name}: ${message}`)
+    normalized.code = err?.code || ''
+    normalized.needConfig = Boolean(err?.needConfig)
+    normalized.result = err?.result
+    throw normalized
+  } finally {
+    clearTimeout(timeoutId)
+  }
 }
 
 // 获取婚礼数据
@@ -131,6 +124,34 @@ async function fetchWedding(weddingId, forceRefresh = false) {
     console.error('fetchWedding error:', err)
     throw err
   }
+}
+
+// Fetch the public guest payload without loading owner-only collections.
+async function fetchGuestInvitation(weddingId) {
+  const weddingStore = useWeddingStore()
+  const guestStore = useGuestInvitationStore()
+  if (!weddingId) throw new Error('缺少婚礼ID')
+
+  guestStore.setInvitationId(weddingId)
+  guestStore.beginLoading()
+  try {
+    const res = await callFunction('getGuestInvitation', { weddingId }, { timeoutMs: 10000 })
+    weddingStore.setWeddingData(res.data, weddingId)
+    guestStore.resolve(res.data)
+    if (res.state === 'closed') guestStore.status = GUEST_INVITATION_STATUS.CLOSED
+    return res
+  } catch (err) {
+    const invalidCodes = ['INVALID_ID', 'NOT_FOUND', 'NOT_PUBLISHED', 'NOT_READY']
+    guestStore.fail(
+      err?.message,
+      invalidCodes.includes(err?.code) ? GUEST_INVITATION_STATUS.INVALID : GUEST_INVITATION_STATUS.OFFLINE
+    )
+    throw err
+  }
+}
+
+async function fetchBlessings(weddingId, cursor = 0, limit = 20) {
+  return callFunction('getBlessings', { weddingId, cursor, limit }, { timeoutMs: 10000 })
 }
 
 // 创建婚礼
@@ -287,6 +308,8 @@ export {
   initCloud,
   callFunction,
   fetchWedding,
+  fetchGuestInvitation,
+  fetchBlessings,
   createWedding,
   updateWedding,
   deleteWedding,

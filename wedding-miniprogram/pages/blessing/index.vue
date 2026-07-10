@@ -6,9 +6,16 @@
     :theme-class="templateClass"
   >
 
+    <EmptyState
+      v-if="!guestStore.canRenderInvitation"
+      icon="/static/visuals/empty-blessing.svg"
+      title="这封信还没有抵达"
+      desc="请从新人寄来的邀请进入。"
+    />
+
     <!-- 发送区域 -->
     <EmptyState
-      v-if="!isBlessingEnabled"
+      v-else-if="!isBlessingEnabled"
       icon="/static/visuals/icon-blessing.svg"
       title="祝福这一章暂未启封"
       desc="可先翻到路书，查看婚礼时间、地点和到场路线。"
@@ -16,7 +23,7 @@
       @action="goToGuide"
     />
 
-    <view class="send-area" v-if="isBlessingEnabled">
+    <view class="send-area" v-if="guestStore.canRenderInvitation && isBlessingEnabled">
       <view class="sender-row">
         <input
           class="sender-input"
@@ -37,12 +44,12 @@
       />
       <view class="send-bar">
         <text class="char-count">{{ newBlessing.length }}/500</text>
-        <button class="send-btn" :disabled="sending" @click="sendTextBlessing">{{ sending ? '发送中' : '发送' }}</button>
+        <button class="send-btn" :class="{ 'is-disabled': sending }" :disabled="sending" @click="sendTextBlessing">{{ sending ? '发送中' : '发送' }}</button>
       </view>
     </view>
 
     <!-- 祝福列表 -->
-    <view class="blessing-list" v-if="isBlessingEnabled && blessingPublic && blessings.length > 0">
+    <view class="blessing-list" v-if="guestStore.canRenderInvitation && isBlessingEnabled && blessingPublic && blessings.length > 0">
       <view
         class="blessing-item"
         v-for="item in blessings"
@@ -60,7 +67,7 @@
 
     <!-- 空状态 -->
     <EmptyState
-      v-if="isBlessingEnabled && !loading && (blessings.length === 0 || !blessingPublic)"
+      v-if="guestStore.canRenderInvitation && isBlessingEnabled && !loading && (blessings.length === 0 || !blessingPublic)"
       icon="/static/visuals/empty-blessing.svg"
       :title="emptyText"
       :desc="emptySub"
@@ -68,7 +75,7 @@
       @action="handleEmptyAction"
     />
 
-    <view class="loading-state" v-if="isBlessingEnabled && loading">
+    <view class="loading-state" v-if="guestStore.canRenderInvitation && isBlessingEnabled && loading">
       <text>祝福加载中...</text>
     </view>
   </PageShell>
@@ -79,28 +86,31 @@ import { ref, computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
-import { fetchWedding, submitBlessing } from '@/composables/useCloud.js'
+import { useGuestInvitationStore } from '@/stores/guest-invitation.js'
+import { fetchBlessings, fetchGuestInvitation, submitBlessing } from '@/composables/useCloud.js'
 import { showSuccess, showError, formatRelativeTime } from '@/utils/index.js'
 import PageShell from '@/components/ui/PageShell.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
+const guestStore = useGuestInvitationStore()
 const newBlessing = ref('')
 const senderName = ref('')
 const sending = ref(false)
 const loading = ref(false)
 const loadError = ref('')
 const blessingInputFocus = ref(false)
-const activeTemplate = computed(() => store.activeTemplate)
 const templateClass = computed(() => store.templateClass)
 const isBlessingEnabled = computed(() => store.isBlessingEnabled)
 const blessingPublic = computed(() => store.blessingPublic)
 const allowAnonymousBlessing = computed(() => store.allowAnonymousBlessing)
 const blessingDesc = computed(() => {
+  if (!guestStore.canRenderInvitation) return ''
   if (!isBlessingEnabled.value) return '祝福这一章暂未启封'
   const countText = blessings.value.length > 0 ? `${blessings.value.length} 条祝福` : '还在等待第一条祝福'
-  return `${activeTemplate.value.shortName} · ${countText}`
+  const couple = String(store.coupleName || '').replace(/^\s*&\s*$/, '').trim()
+  return `${couple || '两位新人'} · ${countText}`
 })
 
 const blessings = computed(() => {
@@ -112,18 +122,18 @@ const blessings = computed(() => {
   })
 })
 const emptyText = computed(() => {
-  if (!userStore.weddingId) return '这封信还没有抵达'
+  if (!guestStore.invitationId) return '这封信还没有抵达'
   if (loadError.value) return '这一页暂时没翻开'
   if (!blessingPublic.value) return '祝福已提交给新人查看'
   return '祝福这一章，等您轻轻落笔'
 })
 const emptySub = computed(() => {
-  if (!userStore.weddingId) return '从新人寄来的请柬进入后，这一章会铺开'
+  if (!guestStore.invitationId) return '从新人寄来的请柬进入后，这一章会铺开'
   if (loadError.value) return '稍后再翻，这一页会重新铺开'
   return ''
 })
 const emptyActionText = computed(() => {
-  if (!userStore.weddingId) return ''
+  if (!guestStore.invitationId) return ''
   if (loadError.value) return '重新加载'
   return blessingPublic.value ? '写第一条祝福' : '继续写祝福'
 })
@@ -150,7 +160,7 @@ function handleEmptyAction() {
 async function sendTextBlessing() {
   const content = newBlessing.value.trim()
   if (!content) { showError('请输入祝福内容'); return }
-  if (!userStore.weddingId) { showError('这封信还没有抵达'); return }
+  if (!guestStore.invitationId || !guestStore.canRenderInvitation) { showError('这封信还没有抵达'); return }
   if (!allowAnonymousBlessing.value && !senderName.value.trim()) {
     showError('请输入您的称呼')
     return
@@ -159,7 +169,7 @@ async function sendTextBlessing() {
   sending.value = true
   try {
     uni.showLoading({ title: '发送中...', mask: true })
-    const res = await submitBlessing(userStore.weddingId, {
+    const res = await submitBlessing(guestStore.invitationId, {
       sender: { name: senderName.value.trim() || '宾客', openid: userStore.openid || '' },
       type: 'text',
       content
@@ -194,12 +204,14 @@ function goToGuide() {
 }
 
 async function loadBlessings(force = false) {
-  if (!userStore.weddingId || loading.value) return
+  if (!guestStore.invitationId || loading.value) return
   if (!force && blessings.value.length > 0) return
   loading.value = true
   loadError.value = ''
   try {
-    await fetchWedding(userStore.weddingId, force)
+    await fetchGuestInvitation(guestStore.invitationId)
+    const page = await fetchBlessings(guestStore.invitationId, 0, 20)
+    store.blessings = { blessings: page?.blessings || [], _totalBlessings: page?.total || 0 }
   } catch (err) {
     console.warn('祝福读取受阻:', err)
     loadError.value = '稍后再翻，这一页会重新铺开'
@@ -227,7 +239,7 @@ onShow(() => loadBlessings(false))
   display: inline-flex;
   align-items: center;
   gap: 10rpx;
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: $text-muted;
   letter-spacing: $tracking-kicker;
   text-transform: uppercase;
@@ -303,7 +315,7 @@ onShow(() => loadBlessings(false))
   padding-top: 24rpx;
 }
 .char-count {
-  font-size: 20rpx;
+  font-size: 24rpx;
   color: $text-muted;
   letter-spacing: 0.04em;
   font-variant-numeric: tabular-nums;
@@ -328,7 +340,7 @@ onShow(() => loadBlessings(false))
   transform: scale(0.98);
   box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.06);
 }
-.send-btn[disabled] { opacity: 0.45; box-shadow: none; }
+.send-btn.is-disabled { opacity: 0.45; box-shadow: none; }
 
 .loading-state {
   text-align: center;
@@ -438,7 +450,7 @@ onShow(() => loadBlessings(false))
   word-break: break-word;
 }
 .item-time {
-  font-size: 20rpx;
+  font-size: 24rpx;
   color: $text-muted;
   flex-shrink: 0;
 
@@ -479,7 +491,7 @@ onShow(() => loadBlessings(false))
   padding: 4rpx 12rpx;
   background: var(--theme-accent-soft, $gold-soft);
   color: var(--theme-accent, $color-primary);
-  font-size: 18rpx;
+  font-size: 24rpx;
   letter-spacing: $tracking-kicker;
   text-transform: uppercase;
   border-radius: 4rpx;

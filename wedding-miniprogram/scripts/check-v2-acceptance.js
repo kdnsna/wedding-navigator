@@ -119,19 +119,21 @@ function checkFourActWizard() {
 
 function checkPremiumThemeEntitlements() {
   assertIncludes('utils/legacy-theme-map.js', 'isPremiumTheme(key)', 'premium theme helper must exist')
-  assertIncludes('utils/commercial.js', 'canUseTemplate', 'commercial helper must expose entitlement checks')
+  assertIncludes('utils/commercial.js', 'canUseTheme', 'commercial helper must expose theme entitlement checks')
   assertIncludes('utils/commercial.js', 'billing_state', 'commercial state must record locked premium usage')
-  assertIncludes('pages-owner/wizard/index.vue', 'locked: premium && !canUseTemplate', 'wizard mood switch must compute locked premium states')
+  assertIncludes('pages-owner/wizard/index.vue', 'locked: premium && !canUseTheme', 'wizard mood switch must compute locked premium theme states')
   assertIncludes('pages-owner/wizard/index.vue', '高级色体验中', 'wizard must surface premium mood state when selected')
-  assertIncludes('pages-owner/invitation/edit.vue', 'getCommercialHint', 'invitation editor must explain premium state')
-  assertIncludes('pages-owner/invitation/edit.vue', 'buildTemplateCommercialState', 'invitation editor must persist premium state')
+  assertIncludes('pages-owner/invitation/edit.vue', 'moodOptions', 'invitation editor must expose independent mood choices')
+  assertIncludes('pages-owner/invitation/edit.vue', 'buildThemeCommercialState', 'invitation editor must persist theme premium state')
   assertIncludes('pages-owner/invitation/edit.vue', ':color="nativeAccentColor"', 'native switches must receive JS-resolved theme color')
   assertIncludes('pages-owner/timeline/edit.vue', ':color="nativeAccentColor"', 'native checkboxes must receive JS-resolved theme color')
   assertIncludes('pages/guide/index.vue', 'mapInk', 'native map callouts must receive JS-resolved theme color')
 }
 
 function checkTemplateRuntimeClasses() {
-  assertIncludes('utils/templates.js', 'return getThemeClass(template.theme || template.themeClass)', 'runtime templates must emit mood theme classes only')
+  assertIncludes('stores/wedding.js', 'getThemeClass(resolveTheme(invitation.value?.theme))', 'runtime visual class must come from the independent mood theme')
+  assertIncludes('utils/templates.js', 'export const WEDDING_SCENARIOS', 'content scenarios must have a v2 export')
+  assertIncludes('utils/templates.js', 'scenarioPreset: template.id', 'content scenarios must expose scenario_preset identity')
   assert(!read('utils/templates.js').includes('return [template.className'), 'utils/templates.js: must not emit legacy tpl-* classes at runtime')
   const templatesSource = read('utils/templates.js')
   const mixedKicker = templatesSource.match(/kicker:\s*'[^']*[\u4e00-\u9fff][^']*'/)
@@ -160,7 +162,6 @@ function checkGuestToneAndAccentDiscipline() {
   const forbiddenGuestCopy = [
     '请在主人端',
     '请从有效婚礼邀请进入',
-    '请从新人寄来的请柬进入',
     '当前没有关联的婚礼信息',
     '新人暂未开放',
     '待主人匹配地图',
@@ -212,6 +213,9 @@ function checkGuestToneAndAccentDiscipline() {
   assert(more.includes('more-seal'), 'pages/more/index.vue: share feature must use the paper card plus small seal treatment')
   assert(more.includes('more-contact-inline'), 'pages/more/index.vue: contact service must be downgraded to footer copy')
   assert(!more.includes('tone="primary"'), 'pages/more/index.vue: guide action must not be a large accent card')
+  for (const duplicate of ['goToAlbum', 'goToTimeline', 'goToGuide', 'goToRSVP']) {
+    assert(!more.includes(duplicate), `pages/more/index.vue: more page must not repeat primary navigation action ${duplicate}`)
+  }
 
   const poster = read('pages/poster/index.vue')
   assert(!poster.includes('rgba(249,171'), 'pages/poster/index.vue: poster notices must not introduce a yellow fifth-color label')

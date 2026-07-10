@@ -151,6 +151,7 @@
     "backgroundColor": "#F7F2E9"
   },
   "tabBar": {
+    "custom": true,
     "color": "#8C8072",
     "selectedColor": "#8A3B45",
     "backgroundColor": "#F7F2E9",
@@ -158,31 +159,21 @@
     "list": [
       {
         "pagePath": "pages/index/index",
-        "text": "首页"
+        "text": "请柬"
       },
       {
-        "pagePath": "pages/album/index",
-        "text": "相册"
+        "pagePath": "pages/rsvp/index",
+        "text": "赴约"
       },
       {
         "pagePath": "pages/guide/index",
         "text": "路书"
       },
       {
-        "pagePath": "pages/timeline/index",
-        "text": "流程"
-      },
-      {
         "pagePath": "pages/more/index",
         "text": "更多"
       }
     ]
-  },
-  "preloadRule": {
-    "pages/index/index": {
-      "network": "all",
-      "packages": ["pages-owner"]
-    }
   },
   "condition": {}
 }

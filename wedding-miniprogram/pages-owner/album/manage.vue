@@ -61,6 +61,7 @@ import MetricStrip from '@/components/ui/MetricStrip.vue'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { generateId, showSuccess, showError, showLoading, hideLoading } from '@/utils/index.js'
+import { chooseAlbumImages } from '@/utils/albumPicker.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
 import { fetchWedding, updateWedding, uploadFile, deleteFiles } from '@/composables/useCloud.js'
 
@@ -109,7 +110,10 @@ async function chooseImage() {
   }
 
   try {
-    const filePaths = await chooseAlbumImages(remainingPhotoSlots.value)
+    const filePaths = await chooseAlbumImages(remainingPhotoSlots.value, {
+      maxCount: MAX_ALBUM_PHOTOS,
+      sizeType: ['compressed', 'original']
+    })
     if (!filePaths.length) return
 
     const previousAlbum = cloneAlbum()
@@ -191,155 +195,6 @@ async function setCover(id) {
   } finally {
     saving.value = false
   }
-}
-
-function chooseAlbumImages(count = remainingPhotoSlots.value) {
-  return new Promise((resolve, reject) => {
-    const chooseImageApi = getChooseImageApi(count)
-    if (!chooseImageApi.length) {
-      reject(new Error('当前环境不支持选择照片，请在微信小程序中重试'))
-      return
-    }
-
-    ensureAlbumPrivacyAuthorized()
-      .then(() => chooseWithFallback(chooseImageApi))
-      .then(resolve)
-      .catch(reject)
-  })
-}
-
-function getChooseImageApi(count = remainingPhotoSlots.value) {
-  const chooseCount = Math.max(1, Math.min(MAX_ALBUM_PHOTOS, Number(count) || 1))
-  const apis = []
-  if (typeof wx !== 'undefined' && typeof wx.chooseImage === 'function') {
-    apis.push({
-      name: 'wx.chooseImage',
-      choose: wx.chooseImage.bind(wx),
-      options: {
-        count: chooseCount,
-        sizeType: ['compressed', 'original'],
-        sourceType: ['album']
-      }
-    })
-  }
-  if (typeof uni !== 'undefined' && typeof uni.chooseImage === 'function') {
-    apis.push({
-      name: 'uni.chooseImage',
-      choose: uni.chooseImage.bind(uni),
-      options: {
-        count: chooseCount,
-        sizeType: ['compressed', 'original'],
-        sourceType: ['album']
-      }
-    })
-  }
-  if (typeof wx !== 'undefined' && typeof wx.chooseMedia === 'function') {
-    apis.push({
-      name: 'wx.chooseMedia',
-      choose: wx.chooseMedia.bind(wx),
-      options: {
-        count: chooseCount,
-        mediaType: ['image'],
-        sourceType: ['album'],
-        sizeType: ['compressed']
-      }
-    })
-  }
-  return apis
-}
-
-function ensureAlbumPrivacyAuthorized() {
-  return new Promise((resolve, reject) => {
-    if (typeof wx === 'undefined' || typeof wx.requirePrivacyAuthorize !== 'function') {
-      resolve()
-      return
-    }
-
-    wx.requirePrivacyAuthorize({
-      success: resolve,
-      fail: (err) => {
-        const message = err?.errMsg || err?.message || ''
-        reject(new Error(normalizeChooseImageError(message)))
-      }
-    })
-  })
-}
-
-async function chooseWithFallback(apis) {
-  let lastError = null
-
-  for (const api of apis) {
-    try {
-      return await runChooseApi(api)
-    } catch (err) {
-      lastError = err
-      const raw = err?.rawMessage || err?.message || ''
-      if (shouldStopChooseFallback(raw)) {
-        throw err
-      }
-      console.warn(`[album] ${api.name} failed, trying next picker:`, raw)
-    }
-  }
-
-  throw lastError || new Error('选择照片失败，请重试')
-}
-
-function runChooseApi(api) {
-  return new Promise((resolve, reject) => {
-    api.choose({
-      ...api.options,
-      success: (res) => {
-        const paths = extractChosenImagePaths(res)
-        if (!paths.length) {
-          reject(new Error('未获取到照片路径，请重新选择'))
-          return
-        }
-        resolve([...new Set(paths)].slice(0, api.options.count))
-      },
-      fail: (err) => {
-        const msg = err?.errMsg || err?.message || ''
-        if (msg.includes('cancel')) { resolve([]); return }
-        const error = new Error(normalizeChooseImageError(msg))
-        error.rawMessage = msg
-        error.apiName = api.name
-        reject(error)
-      }
-    })
-  })
-}
-
-function shouldStopChooseFallback(message = '') {
-  return /privacy|隐私|permission|denied|auth|authorize|scope|cancel/i.test(message)
-}
-
-function extractChosenImagePaths(res = {}) {
-  const fromPaths = Array.isArray(res.tempFilePaths) ? res.tempFilePaths : []
-  const fromFiles = Array.isArray(res.tempFiles)
-    ? res.tempFiles.map(item => {
-      if (typeof item === 'string') return item
-      return item?.tempFilePath || item?.path || item?.thumbTempFilePath || ''
-    })
-    : []
-  return [...fromPaths, ...fromFiles]
-    .map(item => String(item || '').trim())
-    .filter(Boolean)
-}
-
-function normalizeChooseImageError(message = '') {
-  const raw = String(message || '')
-  if (raw.includes('api scope is not declared') || raw.includes('privacy agreement')) {
-    return '请在微信公众平台声明“收集你选中的照片或视频信息”，约 5 分钟后再上传'
-  }
-  if (/privacy|隐私/i.test(raw)) {
-    return '请先同意小程序隐私保护指引后再上传照片'
-  }
-  if (/auth|permission|denied|authorize|scope/i.test(raw)) {
-    return '选择照片失败，请在微信设置中允许访问相册'
-  }
-  if (raw.includes('chooseImage:fail') || raw.includes('chooseMedia:fail')) {
-    return '选择照片失败，请稍后重试；也可以尝试重新进入小程序后上传'
-  }
-  return raw || '选择照片失败，请重试'
 }
 
 function showUploadError(err) {
@@ -518,7 +373,7 @@ onShow(refreshAlbum)
 }
 .page-tag {
   display: block;
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: $text-muted;
   letter-spacing: 0;
   margin-bottom: 12rpx;
@@ -598,7 +453,7 @@ onShow(refreshAlbum)
   padding: 4rpx 10rpx;
   background: var(--theme-accent, $text-primary);
   color: $ink-inverse;
-  font-size: 18rpx;
+  font-size: 24rpx;
   border-radius: 4rpx;
   font-weight: 500;
 }
@@ -606,7 +461,7 @@ onShow(refreshAlbum)
   padding: 4rpx 10rpx;
   background: rgba(255,253,248,0.88);
   color: $text-primary;
-  font-size: 18rpx;
+  font-size: 24rpx;
   border-radius: 4rpx;
   font-weight: 500;
 }

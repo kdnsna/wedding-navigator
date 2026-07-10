@@ -16,7 +16,7 @@
         </view>
       </view>
       <text class="qrcode-tip">微信扫一扫，查看婚礼邀请</text>
-      <button class="qrcode-refresh" :loading="qrLoading" :disabled="qrLoading" @click="refreshQrCode">重新生成小程序码</button>
+      <button class="qrcode-refresh" :class="{ 'is-disabled': qrLoading }" :loading="qrLoading" :disabled="qrLoading" @click="refreshQrCode">重新生成小程序码</button>
     </view>
 
     <view class="publish-pack">
@@ -355,7 +355,7 @@ onShow(async () => {
   margin-bottom: 8rpx;
 }
 .qrcode-hint {
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: $text-muted;
   line-height: 1.4;
   text-align: center;
@@ -375,7 +375,7 @@ onShow(async () => {
   font-size: 24rpx;
 }
 .qrcode-refresh::after { border: none; }
-.qrcode-refresh[disabled] { opacity: 0.62; }
+.qrcode-refresh.is-disabled { opacity: 0.62; }
 .publish-pack {
   margin: 0 $page-gutter 44rpx;
   padding: 28rpx;
@@ -388,7 +388,7 @@ onShow(async () => {
 }
 .publish-pack-kicker {
   display: block;
-  font-size: 18rpx;
+  font-size: 20rpx;
   letter-spacing: 0;
   color: $color-gold;
   margin-bottom: 8rpx;
@@ -452,7 +452,7 @@ onShow(async () => {
   color: $text-muted;
 }
 .char-hint {
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: $text-muted;
 }
 .form-input {

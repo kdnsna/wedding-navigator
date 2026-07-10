@@ -1,0 +1,14 @@
+<view class="guest-tabbar" wx:if="{{visible}}">
+  <view class="guest-tabbar-inner">
+    <view
+      wx:for="{{items}}"
+      wx:key="path"
+      class="guest-tabbar-item {{selectedPath === item.path ? 'is-active' : ''}}"
+      data-path="{{item.path}}"
+      bindtap="switchTab"
+    >
+      <text class="guest-tabbar-text">{{item.text}}</text>
+      <view class="guest-tabbar-mark" style="background: {{selectedPath === item.path ? selectedColor : 'transparent'}}" />
+    </view>
+  </view>
+</view>

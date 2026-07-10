@@ -213,7 +213,7 @@ onShow(async () => {
 }
 .plan-kicker {
   display: block;
-  font-size: 18rpx;
+  font-size: 20rpx;
   color: rgba(255,255,255,0.52);
   letter-spacing: 0;
   margin-bottom: 10rpx;
@@ -236,7 +236,7 @@ onShow(async () => {
   border-radius: $radius-full;
   background: rgba(201,169,110,0.18);
   color: $gold;
-  font-size: 22rpx;
+  font-size: 24rpx;
 }
 .section {
   padding: 0 $page-gutter;
@@ -273,7 +273,7 @@ onShow(async () => {
   margin-bottom: 12rpx;
 }
 .char-hint {
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: $text-muted;
 }
 .form-input {
@@ -325,7 +325,7 @@ onShow(async () => {
   border-radius: $radius-full;
   background: $bg-muted;
   color: $text-muted;
-  font-size: 22rpx;
+  font-size: 24rpx;
 }
 .entitlement-status.active {
   background: rgba(52,168,83,0.12);

@@ -1,5 +1,5 @@
 <template>
-  <button class="t-btn" :class="[variant]" :disabled="disabled || loading" :loading="loading" @click="$emit('tap')">
+  <button class="t-btn" :class="[variant, { 'is-disabled': disabled || loading }]" :disabled="disabled || loading" :loading="loading" @click="$emit('tap')">
     <slot>{{ text }}</slot>
   </button>
 </template>
@@ -40,7 +40,7 @@ defineEmits(['tap'])
   background: var(--accent-soft);
   color: var(--accent);
 }
-.t-btn[disabled] {
+.t-btn.is-disabled {
   opacity: 0.56;
 }
 </style>

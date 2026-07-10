@@ -1,15 +1,22 @@
 <template>
   <PageShell
     title="更多"
-    kicker="WEDDING MENU"
-    :desc="`${coupleName || '新人婚礼'} · ${formatDate(weddingDate) || '良辰待定'}`"
+    kicker="AFTERWORD"
+    :desc="guestStore.canRenderInvitation ? `${coupleName} · ${formatDate(weddingDate)}` : ''"
     :theme-class="templateClass"
   >
+    <EmptyState
+      v-if="!guestStore.canRenderInvitation"
+      title="这封信还没有抵达"
+      desc="请从新人寄来的邀请进入。"
+    />
+
+    <template v-else>
     <view class="more-feature">
       <view class="more-seal">囍</view>
       <text class="more-feature-kicker">WEDDING LETTER</text>
-      <text class="more-feature-title">{{ coupleName || '我们的婚礼' }}</text>
-      <text class="more-feature-desc">请柬、路书、流程、回执和祝福都已经为宾客整理好。</text>
+      <text class="more-feature-title">{{ coupleName }}</text>
+      <text class="more-feature-desc">把这一封邀请，转交给同样被惦念的人。</text>
       <button class="more-share-btn" open-type="share">分享给好友</button>
     </view>
 
@@ -20,11 +27,8 @@
     </view>
 
     <view class="more-group">
-      <ActionCard v-if="isRsvpEnabled" title="出席回执" desc="确认是否到场、人数、到达时间和饮食偏好" icon="/static/visuals/icon-rsvp.svg" @click="goToRSVP" />
       <ActionCard v-if="isBlessingEnabled" title="祝福墙" desc="留下给新人的祝福，也可以查看公开留言" icon="/static/visuals/icon-blessing.svg" @click="goToBlessing" />
-      <ActionCard title="婚礼路书" desc="主场地、停车、住宿、天气和导航入口" icon="/static/visuals/icon-guide.svg" status="到场必看" @click="goToGuide" />
-      <ActionCard v-if="isTimelineEnabled" title="婚礼流程" desc="按角色查看当天时间安排和正在进行的节点" icon="/static/visuals/icon-timeline.svg" @click="goToTimeline" />
-      <ActionCard title="婚纱相册" desc="查看新人精选影像和婚礼封面照片" icon="/static/visuals/icon-album.svg" @click="goToAlbum" />
+      <ActionCard title="珍藏海报" desc="生成一张可以留存的婚礼纪念海报" icon="/static/visuals/icon-poster.svg" @click="goToPoster" />
     </view>
 
     <view class="more-group">
@@ -32,10 +36,12 @@
     </view>
 
     <button class="more-contact-inline" open-type="contact">需要协助，可联系甜囍手册</button>
+    <navigator class="more-privacy" url="/pages/privacy/index">隐私保护指引</navigator>
 
     <navigator class="promo-link" url="/pages-owner/wizard/index" open-type="navigate">
       <text>由甜囍手册生成 · 我也要制作</text>
     </navigator>
+    </template>
   </PageShell>
 </template>
 
@@ -44,30 +50,23 @@ import { computed, ref } from 'vue'
 import { onShareAppMessage, onShareTimeline, onShow } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
+import { useGuestInvitationStore } from '@/stores/guest-invitation.js'
 import { formatDate } from '@/utils/index.js'
-import { fetchWedding, recordShare } from '@/composables/useCloud.js'
+import { fetchGuestInvitation, recordShare } from '@/composables/useCloud.js'
 import PageShell from '@/components/ui/PageShell.vue'
 import ActionCard from '@/components/ui/ActionCard.vue'
+import EmptyState from '@/components/ui/EmptyState.vue'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
+const guestStore = useGuestInvitationStore()
 const loading = ref(false)
 const loadError = ref('')
 
 const coupleName = computed(() => store.coupleName)
 const weddingDate = computed(() => store.weddingDate)
 const templateClass = computed(() => store.templateClass)
-const isRsvpEnabled = computed(() => store.isRsvpEnabled)
 const isBlessingEnabled = computed(() => store.isBlessingEnabled)
-const isTimelineEnabled = computed(() => store.isTimelineEnabled)
-
-function goToRSVP() {
-  if (!isRsvpEnabled.value) {
-    uni.showToast({ title: '回执这一页暂未启封', icon: 'none' })
-    return
-  }
-  navigateOrToast('/pages/rsvp/index', '打开回执')
-}
 function goToBlessing() {
   if (!isBlessingEnabled.value) {
     uni.showToast({ title: '祝福这一章暂未启封', icon: 'none' })
@@ -75,27 +74,12 @@ function goToBlessing() {
   }
   navigateOrToast('/pages/blessing/index', '打开祝福墙')
 }
-function goToGuide() { switchTabOrToast('/pages/guide/index', '打开路书') }
-function goToTimeline() {
-  if (!isTimelineEnabled.value) {
-    uni.showToast({ title: '礼序这一章暂未启封', icon: 'none' })
-    return
-  }
-  switchTabOrToast('/pages/timeline/index', '打开流程')
-}
-function goToAlbum() { switchTabOrToast('/pages/album/index', '打开相册') }
+function goToPoster() { navigateOrToast('/pages/poster/index', '打开珍藏海报') }
 function goToManage() { navigateOrToast('/pages-owner/manage/index', '打开主人书案') }
 
 function routeFail(label, err) {
   console.warn(`${label}失败:`, err)
   uni.showToast({ title: `${label}失败，请稍后重试`, icon: 'none' })
-}
-
-function switchTabOrToast(url, label) {
-  uni.switchTab({
-    url,
-    fail: (err) => routeFail(label, err)
-  })
 }
 
 function navigateOrToast(url, label) {
@@ -106,23 +90,23 @@ function navigateOrToast(url, label) {
 }
 
 function getSharePath() {
-  return userStore.weddingId ? `/pages/index/index?id=${encodeURIComponent(userStore.weddingId)}` : '/pages/index/index'
+  return guestStore.invitationId ? `/pages/index/index?id=${encodeURIComponent(guestStore.invitationId)}` : '/pages/index/index'
 }
 
 function trackShare() {
-  if (userStore.weddingId) {
-    recordShare(userStore.weddingId).catch((err) => {
+  if (guestStore.invitationId) {
+    recordShare(guestStore.invitationId).catch((err) => {
       console.warn('更多页分享记录失败:', err)
     })
   }
 }
 
 async function reloadWedding() {
-  if (!userStore.weddingId || loading.value) return
+  if (!guestStore.invitationId || loading.value) return
   loading.value = true
   loadError.value = ''
   try {
-    await fetchWedding(userStore.weddingId, true)
+    await fetchGuestInvitation(guestStore.invitationId)
   } catch (err) {
     console.warn('更多页加载婚礼失败:', err)
     loadError.value = '这一页暂时没翻开，请稍后重试。'
@@ -135,7 +119,7 @@ async function reloadWedding() {
 onShareAppMessage(() => {
   trackShare()
   return {
-    title: `${coupleName.value || '甜囍手册'}的婚礼邀请`,
+    title: `${coupleName.value}的婚礼邀请`,
     path: getSharePath()
   }
 })
@@ -143,13 +127,13 @@ onShareAppMessage(() => {
 onShareTimeline(() => {
   trackShare()
   return {
-    title: `${coupleName.value || '甜囍手册'}的婚礼邀请`,
-    query: userStore.weddingId ? `id=${encodeURIComponent(userStore.weddingId)}` : ''
+    title: `${coupleName.value}的婚礼邀请`,
+    query: guestStore.invitationId ? `id=${encodeURIComponent(guestStore.invitationId)}` : ''
   }
 })
 
 onShow(async () => {
-  if (userStore.weddingId && !store.wedding?._id && !store.wedding?.wedding_id) {
+  if (guestStore.invitationId && store.cachedWeddingId !== guestStore.invitationId) {
     await reloadWedding()
   }
 })
@@ -191,7 +175,7 @@ onShow(async () => {
   flex: 1;
   min-width: 0;
   color: $gold;
-  font-size: 23rpx;
+  font-size: 24rpx;
   line-height: 1.45;
 }
 .more-alert-btn {
@@ -204,7 +188,7 @@ onShow(async () => {
   background: $paper-card;
   color: $gold;
   border: 1rpx solid rgba(201,169,110,0.32);
-  font-size: 23rpx;
+  font-size: 24rpx;
 }
 .more-alert-btn::after {
   border: none;
@@ -250,7 +234,7 @@ onShow(async () => {
 .more-feature-kicker {
   display: block;
   color: $gold;
-  font-size: 20rpx;
+  font-size: 24rpx;
   font-weight: 600;
   letter-spacing: $ls-wide;
   text-transform: uppercase;
@@ -302,11 +286,18 @@ onShow(async () => {
   width: auto;
   background: transparent;
   color: var(--theme-muted, $ink-faint);
-  font-size: 22rpx;
+  font-size: $fs-note;
   line-height: 1.6;
   text-align: center;
 }
 .more-contact-inline::after {
   border: none;
+}
+.more-privacy {
+  display: block;
+  padding: $sp-2;
+  color: $ink-faint;
+  font-size: $fs-note;
+  text-align: center;
 }
 </style>

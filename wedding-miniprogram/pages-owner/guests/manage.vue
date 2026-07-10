@@ -428,7 +428,7 @@ onShow(refreshGuests)
 }
 .page-tag {
   display: block;
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: $text-muted;
   letter-spacing: 0;
   margin-bottom: 12rpx;
@@ -459,7 +459,7 @@ onShow(refreshGuests)
   margin-bottom: 4rpx;
 }
 .stat-label {
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: $text-muted;
 }
 
@@ -509,7 +509,7 @@ onShow(refreshGuests)
   word-break: break-word;
 }
 .guest-phone {
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: $text-muted;
   flex-shrink: 0;
 }
@@ -523,7 +523,7 @@ onShow(refreshGuests)
 .guest-status {
   padding: 4rpx 12rpx;
   border-radius: 6rpx;
-  font-size: 20rpx;
+  font-size: 24rpx;
   font-weight: 500;
 }
 .guest-status.status-attending { background: rgba(52,168,83,0.1); color: $color-success; }
@@ -531,7 +531,7 @@ onShow(refreshGuests)
 .guest-status.status-declined { background: rgba(153,153,153,0.1); color: $text-muted; }
 .guest-status.status-pending { background: $bg-muted; color: $text-muted; }
 .guest-count {
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: $text-secondary;
 }
 .guest-extra {
@@ -545,7 +545,7 @@ onShow(refreshGuests)
   border-radius: 6rpx;
   background: $bg-muted;
   color: $text-secondary;
-  font-size: 22rpx;
+  font-size: 24rpx;
 }
 .guest-actions {
   display: flex;

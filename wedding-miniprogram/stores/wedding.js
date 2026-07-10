@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { getWeddingTemplate, getTemplateClass, normalizeTemplateId } from '@/utils/templates.js'
-import { resolveTheme } from '@/utils/legacy-theme-map.js'
+import { getWeddingTemplate, normalizeTemplateId } from '@/utils/templates.js'
+import { getThemeClass, resolveTheme } from '@/utils/legacy-theme-map.js'
 
 const DEFAULT_FEATURES = {
   show_countdown: true,
@@ -21,7 +21,7 @@ export const useWeddingStore = defineStore('wedding', () => {
       time: ''
     },
     share_config: {
-      title: '诚邀您参加我们的婚礼'
+      title: ''
     }
   }
 
@@ -30,8 +30,8 @@ export const useWeddingStore = defineStore('wedding', () => {
     theme: 'wine',
     photo_treatment: 'original',
     couple: {
-      groom: { name: '新郎' },
-      bride: { name: '新娘' }
+      groom: { name: '' },
+      bride: { name: '' }
     },
     wedding: {
       venue_name: '',
@@ -160,7 +160,7 @@ export const useWeddingStore = defineStore('wedding', () => {
 
   const activeTemplate = computed(() => getWeddingTemplate(invitation.value?.template))
 
-  const templateClass = computed(() => getTemplateClass(invitation.value?.template))
+  const templateClass = computed(() => getThemeClass(resolveTheme(invitation.value?.theme)))
 
   const features = computed(() => ({
     ...DEFAULT_FEATURES,

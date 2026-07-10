@@ -6,7 +6,7 @@
     {
       "name": "aiPublishAssistant",
       "timeout": 120,
-      "runtime": "Nodejs16.13",
+      "runtime": "Nodejs18.15",
       "handler": "index.main",
       "installDependency": true,
       "description": "AI 主人发布助手，生成婚书、分享、流程、路书和诊断候选"
@@ -14,7 +14,7 @@
     {
       "name": "checkOwnership",
       "timeout": 10,
-      "runtime": "Nodejs16.13",
+      "runtime": "Nodejs18.15",
       "handler": "index.main",
       "installDependency": true,
       "description": "校验当前用户是否为婚礼主人"
@@ -22,7 +22,7 @@
     {
       "name": "createWedding",
       "timeout": 20,
-      "runtime": "Nodejs16.13",
+      "runtime": "Nodejs18.15",
       "handler": "index.main",
       "installDependency": true,
       "description": "创建婚礼及关联业务文档"
@@ -30,7 +30,7 @@
     {
       "name": "deleteWedding",
       "timeout": 20,
-      "runtime": "Nodejs16.13",
+      "runtime": "Nodejs18.15",
       "handler": "index.main",
       "installDependency": true,
       "description": "删除婚礼及关联数据"
@@ -38,7 +38,7 @@
     {
       "name": "generatePoster",
       "timeout": 20,
-      "runtime": "Nodejs16.13",
+      "runtime": "Nodejs18.15",
       "handler": "index.main",
       "installDependency": true,
       "description": "生成小程序码海报"
@@ -46,15 +46,31 @@
     {
       "name": "geocodeVenue",
       "timeout": 20,
-      "runtime": "Nodejs16.13",
+      "runtime": "Nodejs18.15",
       "handler": "index.main",
       "installDependency": true,
       "description": "根据场地名称和地址匹配地图坐标"
     },
     {
+      "name": "getBlessings",
+      "timeout": 10,
+      "runtime": "Nodejs18.15",
+      "handler": "index.main",
+      "installDependency": true,
+      "description": "分页获取公开宾客祝福"
+    },
+    {
+      "name": "getGuestInvitation",
+      "timeout": 10,
+      "runtime": "Nodejs18.15",
+      "handler": "index.main",
+      "installDependency": true,
+      "description": "获取宾客端公开邀请快照与当前用户回执"
+    },
+    {
       "name": "getRSVPStats",
       "timeout": 10,
-      "runtime": "Nodejs16.13",
+      "runtime": "Nodejs18.15",
       "handler": "index.main",
       "installDependency": true,
       "description": "获取 RSVP 统计"
@@ -62,7 +78,7 @@
     {
       "name": "getStats",
       "timeout": 10,
-      "runtime": "Nodejs16.13",
+      "runtime": "Nodejs18.15",
       "handler": "index.main",
       "installDependency": true,
       "description": "获取主人端统计数据"
@@ -70,7 +86,7 @@
     {
       "name": "getWeather",
       "timeout": 20,
-      "runtime": "Nodejs16.13",
+      "runtime": "Nodejs18.15",
       "handler": "index.main",
       "installDependency": true,
       "description": "获取婚礼当天天气预报"
@@ -78,7 +94,7 @@
     {
       "name": "getWedding",
       "timeout": 15,
-      "runtime": "Nodejs16.13",
+      "runtime": "Nodejs18.15",
       "handler": "index.main",
       "installDependency": true,
       "description": "获取婚礼完整展示数据"
@@ -86,7 +102,7 @@
     {
       "name": "pinBlessing",
       "timeout": 10,
-      "runtime": "Nodejs16.13",
+      "runtime": "Nodejs18.15",
       "handler": "index.main",
       "installDependency": true,
       "description": "置顶或取消置顶祝福"
@@ -94,7 +110,7 @@
     {
       "name": "recordView",
       "timeout": 10,
-      "runtime": "Nodejs16.13",
+      "runtime": "Nodejs18.15",
       "handler": "index.main",
       "installDependency": true,
       "description": "记录浏览与分享统计"
@@ -102,7 +118,7 @@
     {
       "name": "submitBlessing",
       "timeout": 15,
-      "runtime": "Nodejs16.13",
+      "runtime": "Nodejs18.15",
       "handler": "index.main",
       "installDependency": true,
       "description": "提交祝福留言"
@@ -110,7 +126,7 @@
     {
       "name": "submitRSVP",
       "timeout": 15,
-      "runtime": "Nodejs16.13",
+      "runtime": "Nodejs18.15",
       "handler": "index.main",
       "installDependency": true,
       "description": "提交宾客出席回执"
@@ -118,7 +134,7 @@
     {
       "name": "syncOwnerProfile",
       "timeout": 20,
-      "runtime": "Nodejs16.13",
+      "runtime": "Nodejs18.15",
       "handler": "index.main",
       "installDependency": true,
       "description": "同步主人账号、权益和婚礼工作区"
@@ -126,7 +142,7 @@
     {
       "name": "updateWedding",
       "timeout": 20,
-      "runtime": "Nodejs16.13",
+      "runtime": "Nodejs18.15",
       "handler": "index.main",
       "installDependency": true,
       "description": "更新婚礼业务数据"

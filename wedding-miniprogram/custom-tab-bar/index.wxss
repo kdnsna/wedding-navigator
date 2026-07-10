@@ -1,0 +1,36 @@
+.guest-tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+  padding-bottom: env(safe-area-inset-bottom);
+  border-top: 1rpx solid rgba(42, 35, 29, 0.08);
+  background: rgba(247, 242, 233, 0.98);
+}
+.guest-tabbar-inner {
+  height: 104rpx;
+  display: flex;
+  align-items: stretch;
+}
+.guest-tabbar-item {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #74695E;
+}
+.guest-tabbar-item.is-active { color: #2A231D; }
+.guest-tabbar-text {
+  font-family: "Songti SC", "STSong", "SimSun", serif;
+  font-size: 24rpx;
+  line-height: 1.4;
+}
+.guest-tabbar-mark {
+  width: 32rpx;
+  height: 3rpx;
+  margin-top: 10rpx;
+  border-radius: 2rpx;
+}

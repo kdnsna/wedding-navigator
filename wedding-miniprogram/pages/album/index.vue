@@ -49,13 +49,13 @@
 import { ref, computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
-import { useUserStore } from '@/stores/user.js'
-import { fetchWedding } from '@/composables/useCloud.js'
+import { useGuestInvitationStore } from '@/stores/guest-invitation.js'
+import { fetchGuestInvitation } from '@/composables/useCloud.js'
 import PageShell from '@/components/ui/PageShell.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 
 const store = useWeddingStore()
-const userStore = useUserStore()
+const guestStore = useGuestInvitationStore()
 const loading = ref(false)
 const loadError = ref('')
 const MAX_ALBUM_PHOTOS = 9
@@ -64,17 +64,17 @@ const photos = computed(() => (store.album?.photos || []).slice(0, MAX_ALBUM_PHO
 const templateClass = computed(() => store.templateClass)
 const photoTreatment = computed(() => store.invitation?.photo_treatment || 'original')
 const emptyText = computed(() => {
-  if (!userStore.weddingId) return '这封信还没有抵达'
+  if (!guestStore.invitationId) return '这封信还没有抵达'
   if (loadError.value) return '这一页暂时没翻开'
   return '影像这一章，留给相见时慢慢翻开'
 })
 const emptySub = computed(() => {
-  if (!userStore.weddingId) return '从新人寄来的请柬进入后，这一章会铺开'
+  if (!guestStore.invitationId) return '从新人寄来的请柬进入后，这一章会铺开'
   if (loadError.value) return '稍后再翻，这一页会重新铺开'
   return ''
 })
 const albumActionText = computed(() => {
-  if (!userStore.weddingId) return ''
+  if (!guestStore.invitationId) return ''
   return loadError.value ? '重新加载' : ''
 })
 
@@ -129,12 +129,12 @@ function handleEmptyAction() {
 }
 
 async function loadAlbum(force = false) {
-  if (!userStore.weddingId || loading.value) return
+  if (!guestStore.invitationId || loading.value) return
   if (!force && photos.value.length > 0) return
   loading.value = true
   loadError.value = ''
   try {
-    await fetchWedding(userStore.weddingId, force)
+    await fetchGuestInvitation(guestStore.invitationId)
   } catch (err) {
     console.warn('相册读取受阻:', err)
     loadError.value = '稍后再翻，这一页会重新铺开'
@@ -161,7 +161,7 @@ onShow(() => loadAlbum(false))
   display: inline-flex;
   align-items: center;
   gap: 10rpx;
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: $text-muted;
   letter-spacing: $tracking-kicker;
   text-transform: uppercase;
@@ -270,7 +270,7 @@ onShow(() => loadAlbum(false))
   margin-top: 14rpx;
   color: $ink-soft;
   font-family: $font-num;
-  font-size: 22rpx;
+  font-size: 24rpx;
   line-height: 1.35;
   text-align: center;
   word-break: break-word;

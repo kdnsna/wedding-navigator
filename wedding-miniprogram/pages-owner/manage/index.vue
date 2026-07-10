@@ -1,102 +1,92 @@
 <template>
   <PageShell
-    title="发布作战台"
-    kicker="OWNER DASHBOARD"
-    :desc="`${coupleName || '新人婚礼'} · ${formatDate(weddingDate) || '婚期未定'} · ${statusText}`"
+    title="我的书案"
+    kicker="OWNER DESK"
+    :desc="`${coupleName || '未具名婚书'} · ${formatDate(weddingDate) || '婚期未定'}`"
+    :theme-class="store.templateClass"
   >
-    <view class="owner-hero">
-      <image class="owner-hero-media" src="/static/visuals/hero/hero-signature-rose.jpg" mode="aspectFill" />
-      <view class="owner-hero-scrim" />
-      <view class="owner-hero-copy">
-        <text class="owner-hero-kicker">PUBLISH READY</text>
-        <text class="owner-hero-score">{{ checklist.percent }}%</text>
-        <text class="owner-hero-desc">{{ readinessSummary }}</text>
-      </view>
-      <view class="owner-status-tag" :class="{ ready: checklist.ready, draft: !checklist.ready }">
-        <text>{{ checklist.ready ? '可分享' : '需补齐' }}</text>
-      </view>
-      <view class="owner-readiness-bar">
-        <view class="owner-readiness-fill" :style="{ width: checklist.percent + '%' }" />
-      </view>
-    </view>
-
     <view class="owner-alert" v-if="loadError">
       <view class="owner-alert-copy">
-        <text class="owner-alert-title">后台数据未完成刷新</text>
+        <text class="owner-alert-title">书案暂未更新</text>
         <text class="owner-alert-desc">{{ loadError }}</text>
       </view>
-      <button class="owner-alert-btn" :loading="loading" :disabled="loading" @click="refreshDashboard(true)">重试</button>
+      <button class="owner-alert-btn" :class="{ 'is-disabled': loading }" :loading="loading" :disabled="loading" @click="refreshDashboard(true)">重试</button>
     </view>
 
-    <MetricStrip :items="metricItems" />
-
-    <SectionHeader title="发布清单" kicker="CHECKLIST" desc="先补齐会影响宾客体验的关键项" />
-    <view class="owner-action-list">
-      <ActionCard
-        v-for="item in checklist.items"
-        :key="item.key"
-        :title="item.title"
-        :desc="item.desc"
-        :status="item.done ? '已完成' : '待补齐'"
-        :tone="item.done ? 'default' : 'gold'"
-        @click="goToRoute(item.route)"
-      />
+    <view class="letter-preview">
+      <view class="letter-preview-head">
+        <view class="letter-preview-copy">
+          <text class="letter-preview-kicker">MY WEDDING LETTER</text>
+          <text class="letter-preview-name">{{ coupleName || '写下两个人的名字' }}</text>
+          <text class="letter-preview-date">{{ formatDate(weddingDate) || 'DATE TO BE SET' }}</text>
+        </view>
+        <view class="letter-preview-seal"><text>囍</text></view>
+      </view>
+      <view class="letter-preview-photo" v-if="coverImage">
+        <image class="letter-preview-photo-image" :src="coverImage" mode="aspectFill" />
+      </view>
+      <view class="letter-preview-status">
+        <view class="letter-progress"><view class="letter-progress-fill" :style="{ width: checklist.percent + '%' }" /></view>
+        <text>{{ readinessSummary }}</text>
+      </view>
+      <button class="preview-btn" @click="previewWedding">预览宾客看到的婚书</button>
     </view>
 
-    <SectionHeader title="内容与到场" kicker="CONTENT" desc="婚书、相册、路书和流程构成宾客第一体验" />
-    <view class="owner-action-grid">
-      <ActionCard title="婚书编辑" desc="模板、文案、新人、开关和背景音乐" icon="/static/visuals/icon-date.svg" @click="goTo('invitation/edit')" />
-      <ActionCard title="相册管理" desc="上传照片，设置首页封面和相册顺序" icon="/static/visuals/icon-album.svg" @click="goTo('album/manage')" />
-      <ActionCard title="路书设置" desc="场地、地图坐标、停车、住宿和天气" icon="/static/visuals/icon-guide.svg" tone="primary" status="核心" @click="goTo('guide/edit')" />
-      <ActionCard title="流程编辑" desc="婚礼当天节点、角色和场地绑定" icon="/static/visuals/icon-timeline.svg" @click="goTo('timeline/edit')" />
+    <view class="rsvp-summary">
+      <view class="rsvp-primary">
+        <text class="rsvp-number">{{ stats.attendingPeople }}</text>
+        <text class="rsvp-label">位宾客确认赴约</text>
+      </view>
+      <view class="rsvp-secondary">
+        <view><text>{{ stats.rsvp }}</text><text>回执</text></view>
+        <view><text>{{ stats.blessings }}</text><text>祝福</text></view>
+        <view><text>{{ stats.views }}</text><text>浏览</text></view>
+      </view>
     </view>
 
-    <SectionHeader title="宾客与传播" kicker="GUESTS" desc="回执、祝福、分享和统计集中管理" />
-    <view class="owner-action-grid">
-      <ActionCard title="宾客管理" desc="查看 RSVP、关系、人数和到达信息" icon="/static/visuals/icon-person.svg" @click="goTo('guests/manage')" />
-      <ActionCard title="祝福管理" desc="查看、置顶或删除宾客祝福" icon="/static/visuals/icon-blessing.svg" @click="goTo('blessing/manage')" />
-      <ActionCard title="分享设置" desc="分享标题、海报、小程序路径和二维码" icon="/static/visuals/icon-poster.svg" @click="goTo('share/index')" />
-      <ActionCard title="数据统计" desc="浏览、分享、回执和祝福趋势" icon="/static/visuals/icon-manage.svg" @click="goTo('stats/index')" />
+    <SectionHeader title="书案四事" kicker="THE DESK" desc="从落笔到寄出，都在这里完成" compact />
+    <view class="desk-list">
+      <view class="desk-row" @click="goTo('guests/manage')">
+        <view class="desk-mark">回</view>
+        <view class="desk-copy"><text class="desk-title">回执</text><text class="desk-desc">宾客名单、赴约人数与到达信息</text></view>
+        <image class="desk-arrow" src="/static/visuals/icon-chevron-right.svg" mode="aspectFit" />
+      </view>
+      <view class="desk-row" @click="goTo('invitation/edit')">
+        <view class="desk-mark">墨</view>
+        <view class="desk-copy"><text class="desk-title">笔墨</text><text class="desk-desc">邀请正文、四色心情与场景方案</text></view>
+        <image class="desk-arrow" src="/static/visuals/icon-chevron-right.svg" mode="aspectFit" />
+      </view>
+      <view class="desk-row" @click="goTo('album/manage')">
+        <view class="desk-mark">修</view>
+        <view class="desk-copy"><text class="desk-title">修书</text><text class="desk-desc">照片装裱、路书和婚礼礼序</text></view>
+        <image class="desk-arrow" src="/static/visuals/icon-chevron-right.svg" mode="aspectFit" />
+      </view>
+      <view class="desk-row" @click="shareWedding">
+        <view class="desk-mark accent">寄</view>
+        <view class="desk-copy"><text class="desk-title">寄信</text><text class="desk-desc">分享卡片、海报与小程序码</text></view>
+        <image class="desk-arrow" src="/static/visuals/icon-chevron-right.svg" mode="aspectFit" />
+      </view>
     </view>
 
-    <SectionHeader title="发布与权益" kicker="OPS" desc="上线前检查和账号权益边界" />
-    <view class="owner-action-list">
-      <ActionCard
-        title="发布诊断"
-        desc="检查云环境、地图天气、隐私、海报和模板权益"
-        icon="/static/visuals/icon-warning.svg"
-        :status="checklist.ready ? '可发布' : '需补齐'"
-        :tone="checklist.ready ? 'default' : 'gold'"
-        @click="goTo('diagnostics/index')"
-      />
-      <ActionCard
-        title="账号与权益"
-        desc="查看免费版/高级版/商家版边界和工作区"
-        icon="/static/visuals/icon-manage.svg"
-        :status="userStore.planTier.label"
-        @click="goTo('profile/index')"
-      />
+    <view class="desk-shortcuts">
+      <button @click="goTo('guide/edit')">路书</button>
+      <button @click="goTo('timeline/edit')">流程</button>
+      <button @click="goTo('blessing/manage')">祝福</button>
+      <button @click="goTo('stats/index')">统计</button>
+      <button @click="goTo('diagnostics/index')">发布诊断</button>
+      <button @click="goTo('profile/index')">账号权益</button>
     </view>
 
-    <view class="danger-zone owner-danger-zone">
-      <text class="danger-kicker">DANGER ZONE</text>
-      <text class="danger-title">删除婚礼邀请</text>
-      <text class="danger-desc">删除后当前邀请链接将失效，婚书、相册记录、路书、流程、宾客回执、祝福和统计数据都会移除。</text>
-      <button class="danger-btn" :loading="deleting" :disabled="deleting" @click="confirmDeleteWedding">删除婚礼邀请</button>
+    <view class="danger-zone">
+      <text class="danger-title">删除这封婚书</text>
+      <text class="danger-desc">删除后旧邀请链接会失效，相关回执与祝福也将移除。</text>
+      <button class="danger-btn" :class="{ 'is-disabled': deleting }" :loading="deleting" :disabled="deleting" @click="confirmDeleteWedding">删除婚礼邀请</button>
     </view>
-
-    <BottomActionBar
-      primary-text="预览效果"
-      secondary-text="分享邀请"
-      :disabled="deleting"
-      @primary="previewWedding"
-      @secondary="shareWedding"
-    />
   </PageShell>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
@@ -106,9 +96,6 @@ import { deleteWedding, fetchWedding, getStats, syncOwnerProfile } from '@/compo
 import { getThemeTokens } from '@/utils/legacy-theme-map.js'
 import PageShell from '@/components/ui/PageShell.vue'
 import SectionHeader from '@/components/ui/SectionHeader.vue'
-import ActionCard from '@/components/ui/ActionCard.vue'
-import BottomActionBar from '@/components/ui/BottomActionBar.vue'
-import MetricStrip from '@/components/ui/MetricStrip.vue'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
@@ -118,92 +105,70 @@ const loadError = ref('')
 
 const coupleName = computed(() => store.coupleName)
 const weddingDate = computed(() => store.weddingDate)
-const weddingStatus = computed(() => store.wedding?.status || 'draft')
-const deleteConfirmColor = computed(() => getThemeTokens(store.activeTemplate?.theme || store.invitation?.theme).accentInk)
 const checklist = computed(() => store.publishChecklist)
-const readinessSummary = computed(() => {
-  const left = checklist.value.total - checklist.value.doneCount
-  if (checklist.value.ready) return '发布项已齐，可以放心分享给宾客'
-  return `还差 ${left} 项，补齐后首页、回执、路线和分享链路会更完整`
+const coverImage = computed(() => {
+  const photos = store.album?.photos || []
+  return photos.find(item => item.type === 'cover')?.url || photos[0]?.url || ''
 })
-
-const statusText = computed(() => {
-  const map = { draft: '草稿', published: '已发布', ended: '已结束' }
-  return map[weddingStatus.value] || '草稿'
-})
-
+const deleteConfirmColor = computed(() => getThemeTokens(store.invitation?.theme).accentInk)
+const readinessSummary = computed(() => checklist.value.ready
+  ? '婚书已经写好，可以寄出'
+  : `还差 ${checklist.value.total - checklist.value.doneCount} 项待落笔`)
 const stats = computed(() => {
-  const s = store.wedding?.stats || {}
+  const weddingStats = store.wedding?.stats || {}
   return {
-    views: s.views || 0,
-    shares: s.shares || 0,
-    rsvp: s.rsvp_count || 0,
-    blessings: s.blessing_count || 0
+    views: Number(weddingStats.views || 0),
+    rsvp: Number(weddingStats.rsvp_count || 0),
+    blessings: Number(weddingStats.blessing_count || 0),
+    attendingPeople: Number(store.rsvpStats?.attending_people || 0)
   }
 })
-const metricItems = computed(() => [
-  { label: '浏览', value: stats.value.views },
-  { label: '分享', value: stats.value.shares },
-  { label: 'RSVP', value: stats.value.rsvp },
-  { label: '祝福', value: stats.value.blessings }
-])
 
 function goTo(path) {
   uni.navigateTo({
     url: `/pages-owner/${path}`,
     fail: (err) => {
-      console.warn('打开后台页面失败:', err)
+      console.warn('打开书案页面失败:', err)
       showError('页面打开失败，请稍后重试')
-    }
-  })
-}
-function goToRoute(route) {
-  uni.navigateTo({
-    url: route,
-    fail: (err) => {
-      console.warn('打开发布清单页面失败:', err)
-      showError('页面打开失败，请稍后重试')
-    }
-  })
-}
-function previewWedding() {
-  uni.switchTab({
-    url: '/pages/index/index',
-    fail: (err) => {
-      console.warn('打开预览首页失败:', err)
-      showError('预览页打开失败，请稍后重试')
-    }
-  })
-}
-function shareWedding() {
-  uni.navigateTo({
-    url: '/pages-owner/share/index',
-    fail: (err) => {
-      console.warn('打开分享设置失败:', err)
-      showError('分享设置打开失败，请稍后重试')
     }
   })
 }
 
+function previewWedding() {
+  if (!userStore.ownerActiveWeddingId) {
+    showError('请先创建婚书')
+    return
+  }
+  uni.setStorageSync('guestPreviewInvitationId', userStore.ownerActiveWeddingId)
+  uni.switchTab({
+    url: '/pages/index/index',
+    fail: (err) => {
+      console.warn('打开婚书预览失败:', err)
+      showError('预览页打开失败，请稍后重试')
+    }
+  })
+}
+
+function shareWedding() { goTo('share/index') }
+
 async function refreshDashboard(force = false) {
   if (!(await useOwnerGuard())) return
-  if (!userStore.weddingId) {
-    loadError.value = '当前没有婚礼 ID，请先创建婚礼后再进入后台'
+  const weddingId = userStore.ownerActiveWeddingId
+  if (!weddingId) {
+    loadError.value = '请先完成四幕向导，再回到书案。'
     return
   }
   if (loading.value) return
   loading.value = true
   loadError.value = ''
   try {
-    await fetchWedding(userStore.weddingId, force)
+    await fetchWedding(weddingId, force)
     const profileRes = await syncOwnerProfile().catch((err) => {
       console.warn('主人账号同步失败:', err)
       return null
     })
-    if (profileRes?.success) {
-      userStore.setOwnerProfile(profileRes)
-    }
-    const res = await getStats(userStore.weddingId)
+    if (profileRes?.success) userStore.setOwnerProfile(profileRes)
+    const res = await getStats(weddingId)
     if (res?.stats) {
       store.wedding.stats = {
         views: res.stats.views || 0,
@@ -214,48 +179,28 @@ async function refreshDashboard(force = false) {
       }
     }
   } catch (err) {
-    console.warn('管理后台数据加载失败:', err)
-    loadError.value = err?.message || '后台数据加载失败，请稍后重试'
-    showError(loadError.value)
+    console.warn('书案数据加载失败:', err)
+    loadError.value = err?.message || '书案暂时无法更新，请稍后重试'
   } finally {
     loading.value = false
   }
 }
 
 async function confirmDeleteWedding() {
-  if (deleting.value) return
-  if (!userStore.weddingId) {
-    showError('当前没有可删除的婚礼邀请')
-    return
-  }
-  const first = await showDeleteModal(
-    '删除婚礼邀请',
-    '这会删除婚礼资料、请柬、相册记录、路书、流程、宾客回执、祝福和统计数据。此操作不可恢复。',
-    '继续删除'
-  )
+  if (deleting.value || !userStore.ownerActiveWeddingId) return
+  const first = await showDeleteModal('删除婚礼邀请', '婚书、照片记录、回执和祝福都会一并移除。', '继续删除')
   if (!first) return
+  const confirmed = await showDeleteModal('再次确认', '删除后无法恢复，确认继续吗？', '确认删除')
+  if (!confirmed) return
 
-  const second = await showDeleteModal(
-    '再次确认',
-    '删除后宾客打开旧邀请链接将看不到这场婚礼。确认继续删除吗？',
-    '确认删除'
-  )
-  if (!second) return
-
-  const weddingId = userStore.weddingId
+  const weddingId = userStore.ownerActiveWeddingId
   try {
     deleting.value = true
     uni.showLoading({ title: '删除中...', mask: true })
     await deleteWedding(weddingId, 'DELETE')
     clearLocalWedding(weddingId)
     showSuccess('已删除婚礼邀请')
-    uni.reLaunch({
-      url: '/pages-owner/wizard/index',
-      fail: (navErr) => {
-        console.warn('删除后返回创建向导失败:', navErr)
-        showError('已删除，但创建向导打开失败')
-      }
-    })
+    uni.reLaunch({ url: '/pages-owner/wizard/index' })
   } catch (err) {
     console.error('删除婚礼邀请失败:', err)
     showError(err.message || '删除失败，请稍后重试')
@@ -280,480 +225,149 @@ function showDeleteModal(title, content, confirmText) {
 }
 
 function clearLocalWedding(weddingId) {
-  if (weddingId) {
-    const weddings = uni.getStorageSync('weddings') || {}
-    if (weddings[weddingId]) {
-      delete weddings[weddingId]
-      uni.setStorageSync('weddings', weddings)
-    }
-    uni.removeStorageSync(`invitation_${weddingId}`)
+  const weddings = uni.getStorageSync('weddings') || {}
+  if (weddings[weddingId]) {
+    delete weddings[weddingId]
+    uni.setStorageSync('weddings', weddings)
   }
+  uni.removeStorageSync(`invitation_${weddingId}`)
   store.setWeddingData({})
-  userStore.logout()
+  userStore.setOwnerActiveWeddingId('')
 }
 
 onShow(() => refreshDashboard(false))
 </script>
 
 <style lang="scss" scoped>
-.page {
-  background-color: $bg-color;
-  min-height: 100vh;
-  padding-bottom: calc(80rpx + env(safe-area-inset-bottom));
-}
-
-/* 顶部标题 */
-.page-header {
-  padding: $page-header-top $page-gutter 24rpx;
-}
-.page-tag {
-  display: block;
-  font-size: 22rpx;
-  color: $text-muted;
-  letter-spacing: 0;
-  margin-bottom: 12rpx;
-}
-.page-title {
-  display: block;
-  font-size: $font-h1;
-  font-weight: 600;
-  color: $text-primary;
-}
-
-/* 婚礼信息 */
-.couple-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 24rpx $page-gutter 40rpx;
-  gap: 24rpx;
-}
-.couple-bar > view { min-width: 0; }
-.couple-name {
-  display: block;
-  font-size: $font-h2;
-  font-weight: 600;
-  color: $text-primary;
-  margin-bottom: 8rpx;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-.couple-date {
-  display: block;
-  font-size: $font-body;
-  color: $text-secondary;
-}
-.status-tag {
-  padding: 8rpx 20rpx;
-  border-radius: 6rpx;
-  font-size: 22rpx;
-  background: $bg-muted;
-  color: $text-secondary;
-  font-weight: 500;
-}
-.status-tag.published {
-  background: $color-success;
-  color: $ink-inverse;
-}
-
-/* 发布准备 */
-.readiness-card {
-  margin: 0 $page-gutter 40rpx;
-  padding: 32rpx;
-  border-radius: $card-radius;
-  background: $text-primary;
-  color: $ink-inverse;
-}
-.readiness-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 24rpx;
-  margin-bottom: 24rpx;
-}
-.readiness-kicker {
-  display: block;
-  font-size: 18rpx;
-  color: rgba(255,255,255,0.55);
-  letter-spacing: 0;
-  margin-bottom: 8rpx;
-}
-.readiness-title {
-  display: block;
-  font-size: 34rpx;
-  font-weight: 600;
-}
-.readiness-score {
-  font-size: 48rpx;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-.readiness-bar {
-  height: 8rpx;
-  border-radius: 4rpx;
-  background: rgba(255,255,255,0.16);
-  overflow: hidden;
-  margin-bottom: 22rpx;
-}
-.readiness-fill {
-  height: 100%;
-  border-radius: 4rpx;
-  background: $color-primary-light;
-  transition: width 0.45s ease;
-}
-.readiness-summary {
-  padding: 18rpx 22rpx;
-  margin-bottom: 14rpx;
-  border-radius: $card-radius;
-  background: rgba(255,255,255,0.08);
-  color: rgba(255,255,255,0.78);
-  font-size: 24rpx;
-  line-height: 1.45;
-}
-.readiness-list {
-  display: flex;
-  flex-direction: column;
-}
-.readiness-item {
-  display: flex;
-  align-items: center;
-  gap: 18rpx;
-  padding: 20rpx 0;
-  border-top: 1rpx solid rgba(255,255,255,0.08);
-}
-.readiness-dot {
-  width: 18rpx;
-  height: 18rpx;
-  border-radius: 50%;
-  border: 2rpx solid rgba(255,255,255,0.36);
-  flex-shrink: 0;
-}
-.readiness-dot.done {
-  background: $color-success;
-  border-color: $color-success;
-}
-.readiness-meta {
-  flex: 1;
-  min-width: 0;
-}
-.readiness-item-title {
-  display: block;
-  font-size: 28rpx;
-  color: $ink-inverse;
-  font-weight: 500;
-  margin-bottom: 4rpx;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-.readiness-item-desc {
-  display: block;
-  font-size: 22rpx;
-  color: rgba(255,255,255,0.62);
-  line-height: 1.4;
-}
-.readiness-arrow {
-  color: rgba(255,255,255,0.45);
-  font-size: 34rpx;
-}
-
-/* 数据概览 */
-.stats-row {
-  display: flex;
-  padding: 0 $page-gutter;
-  margin-bottom: 48rpx;
-}
-.stat-item {
-  flex: 1;
-  text-align: center;
-  padding: 24rpx 0;
-}
-.stat-num {
-  display: block;
-  font-size: 44rpx;
-  font-weight: 700;
-  color: $text-primary;
-  font-variant-numeric: tabular-nums;
-  margin-bottom: 8rpx;
-}
-.stat-label {
-  font-size: 22rpx;
-  color: $text-muted;
-  letter-spacing: 0;
-}
-
-/* 功能菜单 */
-.menu-group {
-  margin: 0 $page-gutter;
-  background: $bg-surface;
-  border-radius: $card-radius;
-  overflow: hidden;
-}
-.menu-item {
-  display: flex;
-  align-items: center;
-  min-height: $tap-min-height;
-  padding: 28rpx;
-}
-.menu-item:active {
-  background: $bg-muted;
-}
-.menu-title {
-  flex: 1;
-  min-width: 0;
-  font-size: 30rpx;
-  color: $text-primary;
-  font-weight: 500;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-.menu-badge {
-  flex-shrink: 0;
-  margin-right: 12rpx;
-  padding: 7rpx 14rpx;
-  border-radius: $radius-full;
-  background: $bg-muted;
-  color: $text-secondary;
-  font-size: 22rpx;
-  line-height: 1.2;
-}
-.menu-badge.danger {
-  background: rgba(234,67,53,0.1);
-  color: $color-error;
-}
-.menu-arrow {
-  font-size: 28rpx;
-  color: $text-muted;
-}
-
-.divider {
-  height: 1rpx;
-  background: $border-color;
-  margin: 0 28rpx;
-}
-
-/* 底部操作 */
-.bottom-actions {
-  padding: 40rpx $page-gutter calc(40rpx + env(safe-area-inset-bottom));
-  display: flex;
-  gap: 16rpx;
-}
-.action-btn {
-  flex: 1;
-  height: $control-height;
-  line-height: $control-height;
-  text-align: center;
-  border-radius: $radius-full;
-  background: $bg-muted;
-  font-size: 28rpx;
-  color: $text-primary;
-  font-weight: 500;
-  transition: opacity 0.2s ease;
-}
-.action-btn::after { border: none; }
-.action-btn:active { opacity: 0.8; }
-.action-btn.primary {
-  background: $text-primary;
-  color: $ink-inverse;
-}
-
-.danger-zone {
-  margin: 0 $page-gutter 48rpx;
-  padding: 30rpx;
-  border-radius: $card-radius;
-  border: 1rpx solid rgba(234,67,53,0.24);
-  background: rgba(234,67,53,0.045);
-}
-.danger-kicker {
-  display: block;
-  font-size: 18rpx;
-  color: rgba(234,67,53,0.72);
-  letter-spacing: 0;
-  margin-bottom: 10rpx;
-}
-.danger-title {
-  display: block;
-  font-size: 30rpx;
-  color: var(--accent-ink);
-  font-weight: 600;
-  margin-bottom: 10rpx;
-}
-.danger-desc {
-  display: block;
-  font-size: 24rpx;
-  color: $text-secondary;
-  line-height: 1.55;
-  margin-bottom: 24rpx;
-}
-.danger-btn {
-  height: 82rpx;
-  line-height: 82rpx;
-  border-radius: $radius-full;
-  background: var(--accent-ink);
-  color: $ink-inverse;
-  font-size: 28rpx;
-  font-weight: 500;
-}
-.danger-btn::after { border: none; }
-.danger-btn[disabled] {
-  opacity: 0.62;
-}
-
-.owner-hero {
-  position: relative;
-  margin: 0 $page-gutter 30rpx;
-  min-height: 306rpx;
-  padding: 34rpx;
-  border-radius: $card-radius;
-  overflow: hidden;
-  background:
-    linear-gradient(135deg, $ink 0%, var(--accent-ink) 72%, var(--accent) 100%);
-  color: $ink-inverse;
-  box-shadow: $shadow-lg;
-}
-.owner-hero-media,
-.owner-hero-scrim {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-.owner-hero-media {
-  opacity: 0.48;
-  filter: saturate(0.98) contrast(1.04);
-}
-.owner-hero-scrim {
-  background:
-    linear-gradient(90deg, rgba(7,3,5,0.94) 0%, rgba(24,7,12,0.80) 48%, rgba(75,17,30,0.56) 100%),
-    linear-gradient(180deg, rgba(0,0,0,0.12), rgba(0,0,0,0.52));
-}
-.owner-hero::after {
-  content: "";
-  position: absolute;
-  right: -96rpx;
-  bottom: -118rpx;
-  width: 310rpx;
-  height: 310rpx;
-  border: 1rpx solid rgba(201,169,110,0.24);
-  border-radius: 50%;
-}
-.owner-hero-copy {
-  position: relative;
-  z-index: 2;
-}
-.owner-hero-kicker {
-  display: block;
-  color: rgba(255,255,255,0.56);
-  font-size: 20rpx;
-  font-weight: 600;
-  letter-spacing: 0;
-}
-.owner-hero-score {
-  display: block;
-  margin-top: 12rpx;
-  color: $ink-inverse;
-  font-size: 72rpx;
-  font-weight: 800;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-.owner-hero-desc {
-  display: block;
-  margin-top: 16rpx;
-  max-width: 520rpx;
-  color: rgba(255,255,255,0.76);
-  font-size: 26rpx;
-  line-height: 1.48;
-}
-.owner-status-tag {
-  position: absolute;
-  z-index: 3;
-  top: 32rpx;
-  right: 32rpx;
-  padding: 9rpx 16rpx;
-  border-radius: $radius-sm;
-  background: rgba(255,255,255,0.12);
-  color: rgba(255,255,255,0.82);
-  font-size: 22rpx;
-  font-weight: 600;
-}
-.owner-status-tag.ready {
-  background: rgba(52,168,83,0.20);
-  color: $ink-inverse;
-}
-.owner-readiness-bar {
-  position: relative;
-  z-index: 2;
-  height: 8rpx;
-  margin-top: 30rpx;
-  border-radius: 4rpx;
-  background: rgba(255,255,255,0.14);
-  overflow: hidden;
-}
-.owner-readiness-fill {
-  height: 100%;
-  border-radius: 4rpx;
-  background: $color-gold;
-  transition: width 0.45s ease;
-}
 .owner-alert {
   display: flex;
   align-items: center;
-  gap: 18rpx;
-  margin: 0 $page-gutter 28rpx;
-  padding: 22rpx 24rpx;
-  border-radius: $card-radius;
-  border: 1rpx solid rgba(249,171,0,0.24);
-  background: rgba(249,171,0,0.10);
-  box-sizing: border-box;
+  gap: $sp-2;
+  margin: 0 $page-gutter $sp-3;
+  padding: $sp-3;
+  border-left: 4rpx solid var(--accent);
+  background: var(--accent-soft);
 }
-.owner-alert-copy {
-  flex: 1;
-  min-width: 0;
-}
-.owner-alert-title {
-  display: block;
-  color: $gold;
-  font-size: 26rpx;
-  font-weight: 600;
-  line-height: 1.35;
-}
-.owner-alert-desc {
-  display: block;
-  margin-top: 6rpx;
-  color: $text-secondary;
-  font-size: 23rpx;
-  line-height: 1.45;
-  word-break: break-word;
-}
+.owner-alert-copy { flex: 1; min-width: 0; }
+.owner-alert-title { display: block; color: $ink; font-size: $fs-body; }
+.owner-alert-desc { display: block; margin-top: $sp-1; color: $ink-soft; font-size: $fs-note; line-height: 1.5; }
 .owner-alert-btn {
-  flex-shrink: 0;
-  width: 132rpx;
-  height: 62rpx;
+  width: 120rpx;
+  height: 64rpx;
+  border: 1rpx solid var(--accent-line);
+  background: transparent;
+  color: var(--accent);
+  font-size: $fs-note;
   line-height: 62rpx;
-  border-radius: $radius-sm;
-  background: $text-primary;
-  color: $ink-inverse;
-  font-size: 24rpx;
-  font-weight: 600;
 }
-.owner-alert-btn::after { border: none; }
-.owner-alert-btn[disabled] { opacity: 0.56; }
-.owner-action-list,
-.owner-action-grid {
+.owner-alert-btn::after { border: 0; }
+.owner-alert-btn.is-disabled { opacity: 0.56; }
+
+.letter-preview {
+  @include card;
+  margin: 0 $page-gutter $sp-6;
+  padding: $sp-4;
+}
+.letter-preview-head { display: flex; align-items: flex-start; gap: $sp-3; }
+.letter-preview-copy { flex: 1; min-width: 0; }
+.letter-preview-kicker { @include eyebrow; display: block; color: $gold-ink; }
+.letter-preview-name {
+  display: block;
+  margin-top: $sp-2;
+  color: $ink;
+  font-size: $fs-title;
+  line-height: $lh-title;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.letter-preview-date { display: block; margin-top: $sp-1; color: $ink-soft; font-family: $font-num; font-size: $fs-note; }
+.letter-preview-seal {
+  width: 64rpx;
+  height: 64rpx;
   display: flex;
-  flex-direction: column;
-  gap: 16rpx;
-  padding: 0 $page-gutter;
-  margin-bottom: 42rpx;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 4rpx solid var(--accent-ink);
+  border-radius: $r-full;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: $fs-note;
 }
-.owner-action-grid {
-  display: grid;
-  grid-template-columns: 1fr;
+.letter-preview-photo { @include photo-mount; margin-top: $sp-4; }
+.letter-preview-photo-image { width: 100%; height: 360rpx; display: block; }
+.letter-preview-status { margin-top: $sp-4; color: $ink-soft; font-size: $fs-note; }
+.letter-progress { height: 4rpx; margin-bottom: $sp-2; overflow: hidden; background: $line; }
+.letter-progress-fill { height: 100%; background: var(--accent); transition: width 0.45s ease-out; }
+.preview-btn {
+  height: 80rpx;
+  margin-top: $sp-4;
+  border: 1rpx solid var(--accent-line);
+  border-radius: $r-sm;
+  background: transparent;
+  color: var(--accent);
+  font-size: $fs-note;
+  line-height: 78rpx;
 }
-.owner-danger-zone {
-  margin-bottom: calc(150rpx + env(safe-area-inset-bottom));
+.preview-btn::after { border: 0; }
+
+.rsvp-summary { margin: 0 $page-gutter $sp-6; }
+.rsvp-number { display: block; color: $ink; font-family: $font-num; font-size: $fs-hero; line-height: 1; }
+.rsvp-label { display: block; margin-top: $sp-1; color: $ink-soft; font-size: $fs-note; }
+.rsvp-secondary { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: $sp-4; border-top: 1rpx solid $line; }
+.rsvp-secondary view { padding-top: $sp-3; }
+.rsvp-secondary text { display: block; }
+.rsvp-secondary text:first-child { color: $ink; font-family: $font-num; font-size: $fs-title; }
+.rsvp-secondary text:last-child { margin-top: $sp-1; color: $ink-soft; font-size: $fs-note; }
+
+.desk-list { margin: 0 $page-gutter $sp-5; border-top: 1rpx solid $line; }
+.desk-row { min-height: 112rpx; display: flex; align-items: center; gap: $sp-3; border-bottom: 1rpx solid $line; }
+.desk-mark {
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: $r-full;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: $fs-note;
 }
+.desk-mark.accent { background: var(--accent); color: var(--on-accent); }
+.desk-copy { flex: 1; min-width: 0; }
+.desk-title { display: block; color: $ink; font-size: $fs-body; }
+.desk-desc { display: block; margin-top: $sp-1; color: $ink-soft; font-size: $fs-note; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.desk-arrow { width: 28rpx; height: 28rpx; opacity: 0.42; }
+
+.desk-shortcuts { display: flex; flex-wrap: wrap; gap: $sp-2; margin: 0 $page-gutter $sp-7; }
+.desk-shortcuts button {
+  min-width: 136rpx;
+  height: 64rpx;
+  padding: 0 $sp-2;
+  border: 1rpx solid $line;
+  border-radius: $r-sm;
+  background: transparent;
+  color: $ink-soft;
+  font-size: $fs-note;
+  line-height: 62rpx;
+}
+.desk-shortcuts button::after { border: 0; }
+
+.danger-zone { margin: 0 $page-gutter $sp-7; padding-top: $sp-4; border-top: 1rpx solid $line; }
+.danger-title { display: block; color: $ink; font-size: $fs-body; }
+.danger-desc { display: block; margin-top: $sp-1; color: $ink-soft; font-size: $fs-note; line-height: 1.5; }
+.danger-btn {
+  height: 72rpx;
+  margin-top: $sp-3;
+  border: 1rpx solid $line;
+  border-radius: $r-sm;
+  background: transparent;
+  color: $ink-soft;
+  font-size: $fs-note;
+  line-height: 70rpx;
+}
+.danger-btn::after { border: 0; }
+.danger-btn.is-disabled { opacity: 0.56; }
 </style>

@@ -6,7 +6,7 @@
         <text class="ai-title">{{ title }}</text>
         <text class="ai-desc">{{ desc }}</text>
       </view>
-      <button class="ai-generate-btn" :loading="loading" :disabled="loading || disabled" @click="$emit('generate')">
+      <button class="ai-generate-btn" :class="{ 'is-disabled': loading || disabled }" :loading="loading" :disabled="loading || disabled" @click="$emit('generate')">
         {{ loading ? '生成中' : generateText }}
       </button>
     </view>
@@ -27,7 +27,7 @@
       <view class="ai-suggestion" v-for="item in suggestions" :key="item.id">
         <view class="ai-suggestion-head">
           <text class="ai-suggestion-title">{{ item.title }}</text>
-          <button class="ai-apply-btn" :disabled="disabled" @click="$emit('apply', item)">应用</button>
+          <button class="ai-apply-btn" :class="{ 'is-disabled': disabled }" :disabled="disabled" @click="$emit('apply', item)">应用</button>
         </view>
         <text class="ai-suggestion-content">{{ previewContent(item.content) }}</text>
         <text class="ai-suggestion-reason" v-if="item.reason">{{ item.reason }}</text>
@@ -98,7 +98,7 @@ const labelMap = {
 }
 .ai-kicker {
   display: block;
-  font-size: 18rpx;
+  font-size: 24rpx;
   color: $color-gold;
   letter-spacing: 0;
   margin-bottom: 8rpx;
@@ -130,8 +130,8 @@ const labelMap = {
 .ai-apply-btn::after {
   border: none;
 }
-.ai-generate-btn[disabled],
-.ai-apply-btn[disabled] {
+.ai-generate-btn.is-disabled,
+.ai-apply-btn.is-disabled {
   opacity: 0.58;
 }
 .ai-error,
@@ -202,7 +202,7 @@ const labelMap = {
 .ai-suggestion-reason {
   display: block;
   margin-top: 12rpx;
-  font-size: 22rpx;
+  font-size: 24rpx;
   line-height: 1.45;
   color: $text-muted;
 }

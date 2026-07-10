@@ -1,5 +1,6 @@
 <template>
   <view class="page" :class="templateClass">
+    <template v-if="guestStore.canRenderInvitation && hasPrimaryVenue">
     <!-- 到场助手 -->
     <view class="arrival-pack">
       <view class="arrival-head">
@@ -267,6 +268,13 @@
         <text class="empty-sub">若需协助，可与新人联系</text>
       </view>
     </view>
+    </template>
+
+    <view class="guide-letter-state" v-else>
+      <text class="guide-state-kicker">THE WAY THERE</text>
+      <text class="guide-state-title">路书尚未抵达</text>
+      <text class="guide-state-copy">请从新人寄来的邀请进入，或稍后再翻这一页。</text>
+    </view>
   </view>
 </template>
 
@@ -274,14 +282,13 @@
 import { ref, computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
-import { useUserStore } from '@/stores/user.js'
-import { fetchWedding, getWeather } from '@/composables/useCloud.js'
+import { useGuestInvitationStore } from '@/stores/guest-invitation.js'
+import { fetchGuestInvitation, getWeather } from '@/composables/useCloud.js'
 import { MARKER_ICON } from '@/config/cloud.js'
 import { getThemeTokens } from '@/utils/legacy-theme-map.js'
 
 const store = useWeddingStore()
-const userStore = useUserStore()
-const activeTemplate = computed(() => store.activeTemplate)
+const guestStore = useGuestInvitationStore()
 const templateClass = computed(() => store.templateClass)
 
 const activeTab = ref('map')
@@ -342,9 +349,10 @@ const guestCountText = computed(() => {
   const count = Number(currentGuestRsvp.value?.attending_count ?? currentGuestRsvp.value?.guest_count ?? 0)
   return Number.isFinite(count) && count > 0 ? `${count} 位赴约` : ''
 })
-const mapAccent = computed(() => getThemeTokens(activeTemplate.value?.theme).accent)
-const mapInk = computed(() => getThemeTokens(activeTemplate.value?.theme).accentInk)
-const mapPaper = computed(() => getThemeTokens(activeTemplate.value?.theme).onAccent)
+const activeThemeTokens = computed(() => getThemeTokens(store.invitation?.theme))
+const mapAccent = computed(() => activeThemeTokens.value.accent)
+const mapInk = computed(() => activeThemeTokens.value.accentInk)
+const mapPaper = computed(() => activeThemeTokens.value.onAccent)
 const weatherHint = computed(() => {
   if (weatherLoading.value) return '加载中'
   if (weatherError.value || !weatherData.value) return '以当日为准'
@@ -473,7 +481,7 @@ function callHotel(phone) {
 }
 
 function openRsvp() {
-  uni.navigateTo({
+  uni.switchTab({
     url: '/pages/rsvp/index',
     fail: (err) => {
       console.warn('路书打开回执失败:', err)
@@ -496,11 +504,11 @@ function formatWeatherDate(dateStr) {
 }
 
 async function loadWeather() {
-  if (!userStore.weddingId) return
+  if (!guestStore.invitationId) return
   weatherLoading.value = true
   weatherError.value = ''
   try {
-    const res = await getWeather(userStore.weddingId)
+    const res = await getWeather(guestStore.invitationId)
     if (res?.success) {
       weatherData.value = res.data
       weatherError.value = ''
@@ -518,10 +526,10 @@ async function loadWeather() {
 }
 
 onShow(async () => {
-  const hasLoadedWedding = Boolean(store.wedding?._id || store.wedding?.wedding_id)
-  if (userStore.weddingId && !hasLoadedWedding) {
+  const hasLoadedWedding = store.cachedWeddingId === guestStore.invitationId
+  if (guestStore.invitationId && !hasLoadedWedding) {
     try {
-      await fetchWedding(userStore.weddingId)
+      await fetchGuestInvitation(guestStore.invitationId)
       syncMapCenter()
     } catch (err) {
       console.warn('路书读取受阻:', err)
@@ -529,7 +537,7 @@ onShow(async () => {
     }
   }
   syncMapCenter()
-  if (userStore.weddingId && !weatherData.value && !weatherLoading.value) {
+  if (guestStore.invitationId && !weatherData.value && !weatherLoading.value) {
     await loadWeather()
   }
 })
@@ -543,6 +551,19 @@ onShow(async () => {
   background: var(--theme-page, $bg-color);
   color: var(--theme-ink, $text-primary);
 }
+.guide-letter-state {
+  min-height: 100vh;
+  padding: $sp-7 $page-gutter;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: $paper-bg;
+}
+.guide-state-kicker { @include eyebrow; color: $gold-ink; }
+.guide-state-title { margin-top: $sp-3; color: $ink; font-size: $fs-title; }
+.guide-state-copy { margin-top: $sp-2; color: $ink-soft; font-size: $fs-body; line-height: $lh-body; }
 
 /* 到场助手 */
 .arrival-pack {
@@ -562,7 +583,7 @@ onShow(async () => {
   display: inline-flex;
   align-items: center;
   gap: 10rpx;
-  font-size: 18rpx;
+  font-size: 24rpx;
   color: $gold;
   letter-spacing: $ls-wide;
   margin-bottom: 8rpx;
@@ -578,7 +599,7 @@ onShow(async () => {
   line-height: 1.25;
 }
 .arrival-date {
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: var(--theme-muted, $text-muted);
   font-family: $font-num;
   padding-top: 8rpx;
@@ -635,7 +656,7 @@ onShow(async () => {
 }
 .arrival-label {
   display: block;
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: var(--theme-muted, $text-muted);
   margin-bottom: 8rpx;
   letter-spacing: $tracking-kicker;
@@ -704,7 +725,7 @@ onShow(async () => {
 }
 .summary-label {
   display: block;
-  font-size: 20rpx;
+  font-size: 24rpx;
   color: var(--theme-muted, $text-muted);
   margin-bottom: 8rpx;
   letter-spacing: $tracking-kicker;
@@ -752,7 +773,7 @@ onShow(async () => {
   display: block;
   margin-bottom: 5rpx;
   color: $gold;
-  font-size: 17rpx;
+  font-size: 24rpx;
   font-family: $font-sans;
   font-weight: 600;
   letter-spacing: $ls-wide;
@@ -770,7 +791,7 @@ onShow(async () => {
   background: var(--theme-accent-soft, $bg-muted);
   color: var(--theme-accent, $color-primary);
   font-family: $font-sans;
-  font-size: 19rpx;
+  font-size: 24rpx;
 }
 .guest-pass-status.declined {
   background: var(--theme-elevated, $bg-muted);
@@ -792,7 +813,7 @@ onShow(async () => {
   margin-top: 10rpx;
   color: var(--theme-muted, $text-secondary);
   font-family: $font-sans;
-  font-size: 22rpx;
+  font-size: 24rpx;
 }
 .guest-pass-action {
   width: auto;
@@ -801,7 +822,7 @@ onShow(async () => {
   background: transparent;
   color: var(--theme-accent, $color-primary);
   font-family: $font-sans;
-  font-size: 22rpx;
+  font-size: 24rpx;
   line-height: 1.4;
   text-align: left;
 }
@@ -988,7 +1009,7 @@ onShow(async () => {
 }
 .map-empty-sub {
   display: block;
-  font-size: 23rpx;
+  font-size: 24rpx;
   color: var(--theme-muted, $text-muted);
   line-height: 1.6;
   letter-spacing: $tracking-cn-soft;
@@ -1046,14 +1067,14 @@ onShow(async () => {
   padding: 4rpx 12rpx;
   background: var(--theme-elevated, $bg-muted);
   color: var(--theme-muted, $text-secondary);
-  font-size: 20rpx;
+  font-size: 24rpx;
   border-radius: 6rpx;
   font-weight: 500;
   letter-spacing: $tracking-kicker;
   text-transform: uppercase;
 }
 .venue-time {
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: var(--theme-muted, $text-muted);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.04em;
@@ -1175,7 +1196,7 @@ onShow(async () => {
   letter-spacing: $tracking-cn-soft;
 }
 .weather-date {
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: var(--theme-muted, $text-muted);
   letter-spacing: $tracking-kicker;
   text-transform: uppercase;
@@ -1190,7 +1211,7 @@ onShow(async () => {
   display: inline-flex;
   align-items: center;
   gap: 8rpx;
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: var(--theme-muted, $text-secondary);
   background: rgba(255,255,255,0.7);
   padding: 8rpx 18rpx;
@@ -1221,7 +1242,7 @@ onShow(async () => {
   margin-bottom: 8rpx;
   color: $gold;
   font-family: $font-sans;
-  font-size: 17rpx;
+  font-size: 24rpx;
   font-weight: 600;
   letter-spacing: $ls-wide;
 }
@@ -1236,7 +1257,7 @@ onShow(async () => {
   margin-top: 8rpx;
   color: var(--theme-accent, $color-primary);
   font-family: $font-sans;
-  font-size: 23rpx;
+  font-size: 24rpx;
 }
 .weather-pending-copy {
   display: block;
@@ -1311,7 +1332,7 @@ onShow(async () => {
   border: 1rpx solid rgba(184, 134, 11, 0.16);
 }
 .note-icon { flex-shrink: 0; }
-.note-text { font-size: 22rpx; color: $gold; }
+.note-text { font-size: 24rpx; color: $gold; }
 
 /* 交通 / 住宿 */
 .info-tab {
@@ -1346,7 +1367,7 @@ onShow(async () => {
   padding-left: 14rpx;
 }
 .section-date {
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: var(--theme-muted, $text-muted);
   letter-spacing: $tracking-kicker;
   text-transform: uppercase;
@@ -1388,7 +1409,7 @@ onShow(async () => {
 }
 .info-label {
   display: block;
-  font-size: 20rpx;
+  font-size: 24rpx;
   color: var(--theme-muted, $text-muted);
   margin-bottom: 8rpx;
   letter-spacing: $tracking-kicker;
@@ -1429,7 +1450,7 @@ onShow(async () => {
 }
 .hotel-tags { display: flex; flex-wrap: wrap; gap: 12rpx; margin: 8rpx 0; }
 .hotel-tag {
-  font-size: 20rpx;
+  font-size: 24rpx;
   color: var(--theme-muted, $text-secondary);
   background: var(--theme-elevated, $bg-muted);
   padding: 4rpx 12rpx;

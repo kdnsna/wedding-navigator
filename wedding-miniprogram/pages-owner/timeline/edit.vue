@@ -159,7 +159,7 @@ const venueNames = computed(() => ['无', ...venues.value.map(v => v.name)])
 const timelineRoles = computed(() => store.timeline?.roles?.length ? store.timeline.roles : DEFAULT_TIMELINE_ROLES)
 const canSaveEvent = computed(() => Boolean(modalForm.value.time && modalForm.value.title.trim()))
 const timelineBusy = computed(() => saving.value || refreshing.value)
-const nativeAccentColor = computed(() => getThemeTokens(store.activeTemplate?.theme || store.invitation?.theme).accent)
+const nativeAccentColor = computed(() => getThemeTokens(store.invitation?.theme).accent)
 
 function getVenueName(venueId) {
   if (!venueId) return ''
@@ -467,7 +467,7 @@ onShow(refreshTimeline)
 }
 .page-tag {
   display: block;
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: $text-muted;
   letter-spacing: 0;
   margin-bottom: 12rpx;
@@ -553,7 +553,7 @@ onShow(refreshTimeline)
   padding: 4rpx 10rpx;
   background: $bg-muted;
   color: $text-secondary;
-  font-size: 18rpx;
+  font-size: 24rpx;
   border-radius: 4rpx;
   font-weight: 500;
 }

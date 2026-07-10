@@ -122,7 +122,8 @@ function checkGuestLoadErrorCopy() {
 
 function checkTypographyContract() {
   const appSource = read(path.join(root, 'App.vue'))
-  assert(appSource.includes('font-family: $font-serif;'), 'App.vue: global body copy must use the wedding serif stack')
+  assert(appSource.includes("@import '@/styles/global.scss';"), 'App.vue: global styles must be imported exactly once')
+  assert(read(path.join(root, 'styles/global.scss')).includes('font-family: $font-serif;'), 'styles/global.scss: global body copy must use the wedding serif stack')
   const fontPattern = /font-family:[^;\n]*(?:-apple-system|Helvetica|Arial|Inter|Roboto|system-ui|Georgia)/
   assert(!fontPattern.test(appSource), 'App.vue: global font stack must not override the wedding typography contract')
 
@@ -409,9 +410,9 @@ function checkOwnerSharePosterRoute() {
   assert(source.includes('/static/visuals/icon-share.svg'), 'pages-owner/share/index.vue: copy/share actions should use the shared local share icon')
 
   const poster = read(path.join(root, 'pages/poster/index.vue'))
-  assert(poster.includes('open-type="share" :disabled="!posterReady"'), 'pages/poster/index.vue: header share action should be a real share button gated by poster readiness')
-  assert(poster.includes("const path = userStore.weddingId ?"), 'pages/poster/index.vue: share path should omit empty id parameters')
-  assert(poster.includes('encodeURIComponent(userStore.weddingId)'), 'pages/poster/index.vue: share path should encode wedding id query values')
+  assert(poster.includes('open-type="share"') && poster.includes(':disabled="!posterReady"'), 'pages/poster/index.vue: header share action should be a real share button gated by poster readiness')
+  assert(poster.includes("const path = guestStore.invitationId ?"), 'pages/poster/index.vue: share path should omit empty id parameters')
+  assert(poster.includes('encodeURIComponent(guestStore.invitationId)'), 'pages/poster/index.vue: share path should encode wedding id query values')
   assert(poster.includes('options.scene ? decodeSceneValue(options.scene) :'), 'pages/poster/index.vue: scene parsing should tolerate malformed encoding')
   assert(poster.includes('decodeSceneValue(pair[1])'), 'pages/poster/index.vue: scene id values should be decoded once after query parsing')
   assert(poster.includes('/static/visuals/icon-share.svg'), 'pages/poster/index.vue: friend share action should use a local share icon instead of text arrows')
@@ -421,22 +422,22 @@ function checkOwnerSharePosterRoute() {
 
 function checkGuestSharePathEncoding() {
   const index = read(path.join(root, 'pages/index/index.vue'))
-  assert(index.includes('encodeURIComponent(userStore.weddingId)'), 'pages/index/index.vue: share paths should encode wedding id query values')
+  assert(index.includes('encodeURIComponent(guestStore.invitationId)'), 'pages/index/index.vue: share paths should encode guest invitation id query values')
   assert(index.includes('options.scene ? decodeSceneValue(options.scene) :'), 'pages/index/index.vue: shared scene parsing should tolerate malformed encoding')
   assert(index.includes('decodeSceneValue(idPair[1])'), 'pages/index/index.vue: scene id values should be decoded once after query parsing')
 
   const more = read(path.join(root, 'pages/more/index.vue'))
-  assert(more.includes('encodeURIComponent(userStore.weddingId)'), 'pages/more/index.vue: share paths should encode wedding id query values')
+  assert(more.includes('encodeURIComponent(guestStore.invitationId)'), 'pages/more/index.vue: share paths should encode guest invitation id query values')
 }
 
 function checkOwnerDashboardFailureFeedback() {
   const source = read(path.join(root, 'pages-owner/manage/index.vue'))
   assert(source.includes('loadError'), 'pages-owner/manage/index.vue: dashboard load failures must have page state')
-  assert(source.includes('后台数据未完成刷新'), 'pages-owner/manage/index.vue: dashboard load failures must be visible')
+  assert(source.includes('书案暂未更新'), 'pages-owner/manage/index.vue: dashboard load failures must be visible')
   assert(source.includes('refreshDashboard(true)'), 'pages-owner/manage/index.vue: dashboard load failure should offer retry')
   assert(source.includes('页面打开失败，请稍后重试'), 'pages-owner/manage/index.vue: dashboard navigation failures must show feedback')
   assert(source.includes('预览页打开失败，请稍后重试'), 'pages-owner/manage/index.vue: preview navigation failures must show feedback')
-  assert(source.includes('分享设置打开失败，请稍后重试'), 'pages-owner/manage/index.vue: share navigation failures must show feedback')
+  assert(source.includes("function shareWedding() { goTo('share/index') }"), 'pages-owner/manage/index.vue: share navigation must use the guarded owner route helper')
 }
 
 function checkGuestNavigationFailureFeedback() {
@@ -482,7 +483,8 @@ function checkOwnerNavigationFailureFeedback() {
 }
 
 function checkWeddingDateDefaults() {
-  assert(read(path.join(root, 'pages-owner/wizard/index.vue')).includes("date: '2026-11-14'"), 'pages-owner/wizard/index.vue: creation wizard default date must match the 2026-11-14 wedding brief')
+  const wizard = read(path.join(root, 'pages-owner/wizard/index.vue'))
+  assert(wizard.includes("date: ''") && wizard.includes("time: ''"), 'pages-owner/wizard/index.vue: creation wizard must not persist suggested date or time before selection')
   assert(read(path.join(root, 'stores/wedding.js')).includes("date: ''"), 'stores/wedding.js: guest fallback wedding date must stay empty until real invitation data loads')
 }
 

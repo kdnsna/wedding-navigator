@@ -274,7 +274,7 @@ onShow(refreshDiagnostics)
 }
 .summary-kicker {
   display: block;
-  font-size: 18rpx;
+  font-size: 20rpx;
   color: rgba(255,255,255,0.55);
   letter-spacing: 0;
   margin-bottom: 10rpx;
@@ -358,7 +358,7 @@ onShow(refreshDiagnostics)
   border-radius: $radius-full;
   background: $bg-muted;
   color: $text-muted;
-  font-size: 21rpx;
+  font-size: 24rpx;
 }
 .diagnostic-status.done {
   color: $color-success;

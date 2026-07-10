@@ -6,11 +6,11 @@
 
 ## 总结
 
-本轮按“代码 + 云函数 + 主链路 + 上线配置 + H5 视觉冒烟”的口径完成审查，并在原有绿色基线上完成“甜囍手册”全链路高级礼宴重设计。当前代码侧最主要的阻断项已经清理：16 个云函数全部写入 `cloudbaserc.json`，内容安全接口权限补齐，上传脚本移除本机私钥路径，上传版本改为优先读取 `manifest.versionName`，RSVP/祝福提交增加服务端必填和长度校验。
+本轮按“代码 + 云函数 + 主链路 + 上线配置 + H5 视觉冒烟”的口径完成审查，并在原有绿色基线上完成“甜囍手册”全链路高级礼宴重设计。当前代码侧最主要的阻断项已经清理：18 个云函数全部写入 `cloudbaserc.json`，新增宾客轻量读取与祝福分页接口，内容安全接口权限补齐，上传脚本移除本机私钥路径，上传版本改为优先读取 `manifest.versionName`，RSVP/祝福提交增加服务端必填和长度校验。
 
 2026-07-10 复验结论：`npm run check:release`、`npm run build:mp-weixin`、`git diff --check` 均通过；相册隐私授权已改为用户点击上传时调用微信官方授权，发布诊断已把微信平台隐私声明与宾客信息规则拆开，并禁止在仍有人工项时显示“可发布”。
 
-真云部署状态仍需要在微信开发者工具或云开发控制台做最后确认。本机已安装 CloudBase CLI，并在仓库根目录补充 `config/mcporter.json` 接入 CloudBase MCP；当前 MCP 与 CLI 均未完成登录授权，因此本轮只能确认本地 16 个云函数及构建产物完整，不能把云端已部署函数、环境变量、数据库索引或小程序码权限误报为已验证。下面的“真云必验清单”仍需逐项点亮。
+真云部署状态仍需要在微信开发者工具或云开发控制台做最后确认。本轮只能确认本地 18 个云函数及构建产物完整，不能把云端已部署函数、环境变量、数据库索引或小程序码权限误报为已验证。下面的“真云必验清单”仍需逐项点亮。
 
 ## 本轮已修复
 
@@ -22,7 +22,7 @@
 | 服务端表单校验 | `submitRSVP` 校验姓名、手机号长度、关系、随行备注、留言；`submitBlessing` 校验祝福内容和称呼 | 避免绕过前端提交空姓名、空祝福或超长文本 |
 | 主人身份保护 | `createWedding` 在没有微信 `OPENID` 时拒绝创建 | 避免产生无主人归属的婚礼数据 |
 | 上传脚本 | `upload.mjs` 上传版本优先读取 `manifest.versionName`；`upload-ci.mjs` 改为环境变量读取 AppID、构建目录、私钥、版本和描述 | 避免上传旧版本号或把本机私钥路径写进仓库 |
-| 构建产物 | `postbuild:mp-weixin` 按 `cloudbaserc.json` 白名单同步 16 个云函数和 `cloudbaserc.json` 到 `dist/build/mp-weixin` | 避免开发者工具打开构建目录时看不到云函数，且不会带入 `* 2` 重复目录 |
+| 构建产物 | `postbuild:mp-weixin` 按 `cloudbaserc.json` 白名单同步 18 个云函数和 `cloudbaserc.json` 到 `dist/build/mp-weixin` | 避免开发者工具打开构建目录时看不到云函数，且不会带入 `* 2` 重复目录 |
 | AI 主人发布助手 | 新增 `aiPublishAssistant`，主人端婚书、分享、流程、路书和诊断只生成候选，应用后再走现有保存逻辑 | 提升主人端筹备效率，同时避免 AI 直接写库或自动发布 |
 | 发布检查 | `npm run check:release` 新增云函数全量部署、构建产物云函数一致性、OpenAPI 权限、CI 上传脚本安全和当前宾客回执断言 | 后续迭代更难漏掉上线关键配置 |
 | 发布诊断真实性 | 微信平台隐私声明与宾客信息规则独立展示；存在人工确认项时显示“待确认”而不是“可发布” | 避免相册仍被平台拦截时主人端给出虚假发布绿灯 |
@@ -77,8 +77,8 @@
 
 上线前请在微信开发者工具或云开发控制台完成以下检查：
 
-1. 运行 `npm run build:mp-weixin` 后，确认 `dist/build/mp-weixin/cloudfunctions` 中存在 16 个云函数目录。
-2. 在仓库根目录完成 CloudBase MCP 设备授权并绑定 `cloud1-d5gqyur7g5a4d3c8d`，或登录云开发控制台；确认 16 个云函数全部已部署，并选择“云端安装依赖”。
+1. 运行 `npm run build:mp-weixin` 后，确认 `dist/build/mp-weixin/cloudfunctions` 中存在 18 个云函数目录。
+2. 在仓库根目录完成 CloudBase 设备授权并绑定目标环境，或登录云开发控制台；确认 18 个云函数全部已部署，并选择“云端安装依赖”。
 3. 确认 `submitRSVP`、`submitBlessing` 云函数权限包含 `security.msgSecCheck`，`generatePoster` 包含 `wxacode.getUnlimited`。
 4. 为 `geocodeVenue` 和 `getWeather` 配置 `TENCENT_MAP_KEY`；为真实天气配置 `HEFENG_KEY`，也可用 `QWEATHER_KEY` / `WEATHER_KEY`。
 5. 按需为 `submitRSVP`、`submitBlessing` 配置 `CONTENT_SAFETY_MODE=strict`；不配置时为“接口不可用则降级放行”。
@@ -123,4 +123,4 @@ MINIPROGRAM_PRIVATE_KEY_PATH=/path/to/private.key node upload-ci.mjs
 - 微信开发者工具 CLI `islogin --port 59321` 当前返回 `{"login":false}`；`open --project dist/build/mp-weixin` 返回 `#initialize-error: wait IDE port timeout`
 - `git diff --check` 通过
 - `node --check` 已覆盖 `scripts/copy-cloudfunctions-to-dist.js`、`upload.mjs`、`upload-ci.mjs`、`scripts/check-release-readiness.js`、`scripts/check-ui-polish.js`
-- `dist/build/mp-weixin/cloudfunctions` 已确认包含 16 个云函数目录；`check:release` 会拦截多余、缺失或 `* 2` 后缀重复目录
+- `dist/build/mp-weixin/cloudfunctions` 已确认包含 18 个云函数目录；`check:release` 会拦截多余、缺失或 `* 2` 后缀重复目录

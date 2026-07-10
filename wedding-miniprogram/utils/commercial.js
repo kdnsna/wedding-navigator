@@ -68,6 +68,11 @@ export function canUseTemplate(template = {}, entitlements = {}) {
   return normalized[getTemplateEntitlement(template)] === true
 }
 
+export function canUseTheme(theme = 'wine', entitlements = {}) {
+  if (!isPremiumTheme(theme)) return true
+  return normalizeEntitlements(entitlements).premium_templates === true
+}
+
 export function getCommercialHint(template = {}, entitlements = {}) {
   if (!template?.id) return ''
   if (!isTemplatePremium(template)) {
@@ -90,5 +95,18 @@ export function buildTemplateCommercialState(template = {}, entitlements = {}) {
     theme_name: themeMeta.name,
     template_entitlement: entitlement,
     billing_state: isTemplatePremium(template) && !canUseTemplate(template, entitlements) ? 'trial' : 'included'
+  }
+}
+
+export function buildThemeCommercialState(theme = 'wine', entitlements = {}) {
+  const normalizedTheme = resolveTheme(theme)
+  const themeMeta = getThemeTokens(normalizedTheme)
+  const premium = isPremiumTheme(normalizedTheme)
+  return {
+    template_tier: premium ? 'premium' : 'free',
+    theme_key: normalizedTheme,
+    theme_name: themeMeta.name,
+    template_entitlement: premium ? 'premium_templates' : '',
+    billing_state: premium && !canUseTheme(normalizedTheme, entitlements) ? 'trial' : 'included'
   }
 }

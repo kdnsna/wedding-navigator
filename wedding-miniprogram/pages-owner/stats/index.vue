@@ -281,7 +281,7 @@ onShow(refreshStats)
 }
 .ops-kicker {
   display: block;
-  font-size: 18rpx;
+  font-size: 20rpx;
   color: rgba(255,255,255,0.52);
   letter-spacing: 0;
   margin-bottom: 10rpx;
@@ -311,7 +311,7 @@ onShow(refreshStats)
   border-radius: $radius-full;
   background: rgba(255,255,255,0.10);
   color: rgba(255,255,255,0.82);
-  font-size: 22rpx;
+  font-size: 24rpx;
 }
 
 /* 区块 */

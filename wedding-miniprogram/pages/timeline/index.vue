@@ -43,7 +43,6 @@
         v-for="(event, index) in visibleEvents"
         :key="event.id"
         :class="getEventStatus(event.time)"
-        :style="{ animationDelay: `${index * 0.1}s` }"
       >
         <view class="timeline-left">
           <text class="timeline-time">{{ event.time }}</text>
@@ -101,13 +100,13 @@
 import { computed, ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
-import { useUserStore } from '@/stores/user.js'
-import { fetchWedding } from '@/composables/useCloud.js'
+import { useGuestInvitationStore } from '@/stores/guest-invitation.js'
+import { fetchGuestInvitation } from '@/composables/useCloud.js'
 import PageShell from '@/components/ui/PageShell.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 
 const store = useWeddingStore()
-const userStore = useUserStore()
+const guestStore = useGuestInvitationStore()
 const loading = ref(false)
 const loadError = ref('')
 const templateClass = computed(() => store.templateClass)
@@ -117,7 +116,7 @@ const activeRole = ref('all')
 const weddingDate = computed(() => store.weddingDate)
 const countdown = computed(() => store.countdown)
 const timelineDesc = computed(() => {
-  if (!userStore.weddingId) return '这封信还没有抵达'
+  if (!guestStore.invitationId) return '这封信还没有抵达'
   if (loadError.value) return '稍后再翻，这一页会重新铺开'
   if (!isTimelineEnabled.value) return '礼序这一章暂未启封，可先查看到场路书'
   if (countdown.value?.isToday) return '今天是我们的婚礼日'
@@ -128,12 +127,8 @@ const events = computed(() => store.timeline?.events || [])
 const venues = computed(() => store.venues?.venues || [])
 const roles = computed(() => store.timeline?.roles || [])
 const roleFilters = computed(() => {
-  const roleList = roles.value.length ? roles.value : [
-    { id: 'guest', name: '普通宾客' },
-    { id: 'party', name: '伴郎伴娘' },
-    { id: 'parents', name: '双方父母' },
-    { id: 'vendor', name: '摄影司仪' }
-  ]
+  if (!events.value.length || !roles.value.length) return []
+  const roleList = roles.value
   return [{ id: 'all', name: '全部' }, ...roleList]
 })
 const visibleEvents = computed(() => {
@@ -145,19 +140,19 @@ const visibleEvents = computed(() => {
   })
 })
 const emptyText = computed(() => {
-  if (!userStore.weddingId) return '这封信还没有抵达'
+  if (!guestStore.invitationId) return '这封信还没有抵达'
   if (loadError.value) return '这一页暂时没翻开'
   if (activeRole.value !== 'all') return '这一席还未另列安排'
   return '流程这一章，等新人落笔'
 })
 const emptySub = computed(() => {
-  if (!userStore.weddingId) return '从新人寄来的请柬进入后，这一章会铺开'
+  if (!guestStore.invitationId) return '从新人寄来的请柬进入后，这一章会铺开'
   if (loadError.value) return '稍后再翻，这一页会重新铺开'
   if (activeRole.value !== 'all') return '可切回“全部”看整日礼序'
   return '请以现场安排为准'
 })
 const timelineActionText = computed(() => {
-  if (!userStore.weddingId) return ''
+  if (!guestStore.invitationId) return ''
   if (loadError.value) return '重新加载'
   if (activeRole.value !== 'all') return '查看全部流程'
   return '查看路线'
@@ -230,12 +225,12 @@ function handleEmptyAction() {
 }
 
 async function loadTimeline(force = false) {
-  if (!userStore.weddingId || loading.value) return
+  if (!guestStore.invitationId || loading.value) return
   if (!force && events.value.length > 0) return
   loading.value = true
   loadError.value = ''
   try {
-    await fetchWedding(userStore.weddingId, force)
+    await fetchGuestInvitation(guestStore.invitationId)
   } catch (err) {
     console.warn('流程读取受阻:', err)
     loadError.value = '稍后再翻，这一页会重新铺开'
@@ -261,7 +256,7 @@ onShow(() => loadTimeline(false))
 }
 .page-tag {
   display: block;
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: $text-muted;
   letter-spacing: 0;
   margin-bottom: 12rpx;
@@ -400,7 +395,7 @@ onShow(() => loadTimeline(false))
   font-weight: 500;
 }
 .date-week {
-  font-size: 20rpx;
+  font-size: 24rpx;
   color: $text-muted;
   letter-spacing: $tracking-kicker;
   text-transform: uppercase;
@@ -444,7 +439,7 @@ onShow(() => loadTimeline(false))
   display: flex;
   gap: 32rpx;
   padding-bottom: 48rpx;
-  animation: fadeInUp 0.7s $ease-editorial both;
+  animation: fadeInUp 0.45s ease-out both;
   opacity: 0;
 }
 
@@ -490,7 +485,7 @@ onShow(() => loadTimeline(false))
   height: 24rpx;
   border-radius: 50%;
   border: 2rpx solid $color-primary;
-  animation: pulse 2s ease-in-out infinite;
+  opacity: 0.38;
   z-index: 1;
 }
 
@@ -534,7 +529,7 @@ onShow(() => loadTimeline(false))
   flex-shrink: 0;
   padding: 4rpx 12rpx;
   border-radius: 6rpx;
-  font-size: 18rpx;
+  font-size: 24rpx;
   font-weight: 500;
   white-space: nowrap;
   letter-spacing: $tracking-kicker;
@@ -560,7 +555,7 @@ onShow(() => loadTimeline(false))
   margin-top: 10rpx;
 }
 .meta-icon {
-  font-size: 22rpx;
+  font-size: 24rpx;
   opacity: 0.7;
 }
 .meta-text {
@@ -660,7 +655,7 @@ onShow(() => loadTimeline(false))
 .footer-line::before { left: -16rpx; }
 .footer-line::after { right: -16rpx; }
 .footer-text {
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: $text-muted;
   letter-spacing: $tracking-kicker;
   text-transform: uppercase;

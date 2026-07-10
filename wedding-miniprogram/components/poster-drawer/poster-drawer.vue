@@ -45,7 +45,7 @@ const posterScaleStyle = computed(() => ({
 
 function syncViewport() {
   try {
-    windowWidth.value = uni.getSystemInfoSync()?.windowWidth || POSTER_CANVAS_WIDTH
+    windowWidth.value = uni.getWindowInfo()?.windowWidth || POSTER_CANVAS_WIDTH
   } catch (err) {
     windowWidth.value = POSTER_CANVAS_WIDTH
   }

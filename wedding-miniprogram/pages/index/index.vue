@@ -1,7 +1,9 @@
 <template>
   <view class="page lux-home" :class="templateClass" @touchstart="onPageTap">
+    <template v-if="guestStore.canRenderInvitation">
     <view class="lux-hero-stage">
       <image
+        v-if="coverImage"
         class="lux-hero-image"
         :class="[{ default: isDefaultCover }, heroPhotoTreatmentClass]"
         :src="coverImage"
@@ -21,7 +23,7 @@
       </view>
     </view>
 
-    <view class="lux-invite-section">
+    <view class="lux-invite-section" v-if="invitationText">
       <SectionHeader
         title="卷首语"
         kicker="INVITATION"
@@ -77,7 +79,22 @@
             <button class="lux-nav-btn" v-if="hasNavigableVenue" @click.stop="openNavigation">导航</button>
           </view>
         </view>
+        <view class="lux-next-event" v-if="nextTimelineEvent">
+          <text class="lux-detail-label">NEXT</text>
+          <text class="lux-next-time">{{ nextTimelineEvent.time }}</text>
+          <text class="lux-next-title">{{ nextTimelineEvent.title || nextTimelineEvent.name }}</text>
+        </view>
       </view>
+    </view>
+
+    <view class="lux-album-section" v-if="featuredPhotos.length">
+      <SectionHeader title="银盐相册" kicker="PHOTOGRAPHS" desc="一些被认真留下的瞬间" />
+      <scroll-view class="lux-photo-strip" scroll-x enhanced :show-scrollbar="false">
+        <view class="lux-photo-mount" v-for="(photo, index) in featuredPhotos" :key="photo.id || photo.url">
+          <image class="lux-photo-image" :class="photoTreatmentClass(photo)" :src="photo.url" mode="aspectFill" />
+          <text class="lux-photo-caption">{{ photo.caption || `NO. ${String(index + 1).padStart(2, '0')}` }}</text>
+        </view>
+      </scroll-view>
     </view>
 
     <view class="lux-rsvp-section" v-if="isRsvpEnabled">
@@ -106,6 +123,15 @@
         mode="aspectFit"
       />
     </view>
+    </template>
+
+    <view class="letter-state" v-else>
+      <view class="letter-state-seal"><text>{{ guestStateSeal }}</text></view>
+      <text class="letter-state-kicker">TIAN XI LETTER</text>
+      <text class="letter-state-title">{{ guestStateTitle }}</text>
+      <text class="letter-state-copy">{{ guestStateCopy }}</text>
+      <button class="letter-state-action" v-if="guestStore.invitationId && guestStore.status !== 'loading'" @click="retryInvitation">再试一次</button>
+    </view>
   </view>
 </template>
 
@@ -113,13 +139,14 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { onLoad, onShareAppMessage, onShareTimeline, onShow } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
+import { useGuestInvitationStore } from '@/stores/guest-invitation.js'
 import { useUserStore } from '@/stores/user.js'
-import { fetchWedding, recordShare, recordView } from '@/composables/useCloud.js'
+import { fetchGuestInvitation, recordShare, recordView } from '@/composables/useCloud.js'
 import { formatDate } from '@/utils/index.js'
-import { getTemplateHeroImage } from '@/utils/templates.js'
 import SectionHeader from '@/components/ui/SectionHeader.vue'
 
 const store = useWeddingStore()
+const guestStore = useGuestInvitationStore()
 const userStore = useUserStore()
 
 let countdownTimer = null
@@ -172,16 +199,15 @@ function onPageTap() {
 const coverImage = computed(() => {
   const photos = store.album?.photos || []
   const cover = photos.find(p => p.type === 'cover')
-  return cover?.url || photos[0]?.url || getTemplateHeroImage(store.invitation?.template) || '/static/visuals/hero/hero-signature-rose.jpg'
+  return cover?.url || photos[0]?.url || ''
 })
-const isGeneratedTemplateCover = computed(() => String(coverImage.value || '').startsWith('/static/visuals/hero/'))
 const isLegacyDefaultCover = computed(() => coverImage.value === '/static/visuals/default-cover.png')
-const isDefaultCover = computed(() => isGeneratedTemplateCover.value || isLegacyDefaultCover.value)
+const isDefaultCover = computed(() => isLegacyDefaultCover.value)
 const coverImageMode = computed(() => 'aspectFill')
 const photoTreatment = computed(() => store.invitation?.photo_treatment || 'original')
 
-const groomName = computed(() => store.invitation?.couple?.groom?.name || '新郎')
-const brideName = computed(() => store.invitation?.couple?.bride?.name || '新娘')
+const groomName = computed(() => store.invitation?.couple?.groom?.name || '')
+const brideName = computed(() => store.invitation?.couple?.bride?.name || '')
 const weddingDate = computed(() => store.weddingDate)
 const weddingTime = computed(() => store.weddingTime)
 const venueName = computed(() => store.venueName)
@@ -209,6 +235,27 @@ const hasSubmittedRsvp = computed(() => {
   const status = guest?.rsvp_status || guest?.status || 'pending'
   return status !== 'pending'
 })
+const featuredPhotos = computed(() => (store.featuredPhotos || []).filter(photo => photo?.url))
+const nextTimelineEvent = computed(() => store.isTimelineEnabled ? store.nextTimelineEvent : null)
+
+const guestStateTitle = computed(() => ({
+  idle: '这封信还没有抵达',
+  loading: '正在展信',
+  invalid: '这封邀请已失效',
+  closed: '这场婚礼已经圆满落幕',
+  offline: '暂时无法取信'
+}[guestStore.status] || '这封信还没有抵达'))
+const guestStateCopy = computed(() => {
+  if (guestStore.error) return guestStore.error
+  return ({
+    idle: '请从新人分享的婚礼邀请进入。',
+    loading: '纸页正在轻轻展开，请稍候。',
+    invalid: '请联系新人重新发送一封邀请。',
+    closed: '谢谢您曾经见证这一日。',
+    offline: '请检查网络，或稍后再来展开。'
+  }[guestStore.status] || '')
+})
+const guestStateSeal = computed(() => guestStore.status === 'closed' ? '礼' : '囍')
 
 function photoTreatmentClass(photo = null) {
   const treatment = String(photo?.treatment || photo?.effect || photo?.filter || photoTreatment.value || '').toLowerCase()
@@ -217,7 +264,7 @@ function photoTreatmentClass(photo = null) {
   return ''
 }
 const invitationText = computed(() => {
-  return store.invitation?.content?.main_text || '盼与您共赴这一日的约。'
+  return store.invitation?.content?.main_text || ''
 })
 
 function formatWeddingYear(dateStr) {
@@ -264,7 +311,7 @@ function goToRSVP() {
     uni.showToast({ title: '回执这一页暂未启封', icon: 'none' })
     return
   }
-  navigateOrToast('/pages/rsvp/index', '打开回执')
+  switchTabOrToast('/pages/rsvp/index', '打开回执')
 }
 
 function openNavigation() {
@@ -293,8 +340,8 @@ function openNavigation() {
 }
 
 function getSharePath() {
-  return userStore.weddingId
-    ? `/pages/index/index?id=${encodeURIComponent(userStore.weddingId)}`
+  return guestStore.invitationId
+    ? `/pages/index/index?id=${encodeURIComponent(guestStore.invitationId)}`
     : '/pages/index/index'
 }
 
@@ -318,8 +365,8 @@ function decodeSceneValue(value) {
 }
 
 function trackShare() {
-  if (userStore.weddingId) {
-    recordShare(userStore.weddingId).catch((err) => {
+  if (guestStore.isReady && guestStore.invitationId) {
+    recordShare(guestStore.invitationId).catch((err) => {
       console.warn('首页分享记录失败:', err)
     })
   }
@@ -340,35 +387,62 @@ onShareTimeline(() => {
   const title = store.wedding?.share_config?.title || `${groomName.value} & ${brideName.value} 的婚礼邀请`
   return {
     title,
-    query: userStore.weddingId ? `id=${encodeURIComponent(userStore.weddingId)}` : '',
+    query: guestStore.isReady ? `id=${encodeURIComponent(guestStore.invitationId)}` : '',
     imageUrl: coverImage.value
   }
 })
 
 onLoad(async (options) => {
-  const weddingId = parseWeddingIdFromOptions(options) || userStore.weddingId
-  if (weddingId) {
-    userStore.setWeddingId(weddingId)
-    try {
-      await fetchWedding(weddingId)
-      updateCountdown()
-      startCountdownTimer()
-      recordView(weddingId).catch((err) => {
-        console.warn('访问记录失败:', err)
-      })
-    } catch (err) {
-      if (err?.message === '婚礼不存在') {
-        userStore.setWeddingId('')
-      }
-      console.warn('加载婚礼数据失败，已使用本地默认数据:', err)
-      uni.showToast({
-        title: err?.message === '婚礼不存在' ? '婚礼链接已失效，请重新进入' : '加载数据失败，请检查网络',
-        icon: 'none',
-        duration: 3000
-      })
-    }
+  const pendingPreviewId = userStore.canEdit ? uni.getStorageSync('guestPreviewInvitationId') : ''
+  if (pendingPreviewId) uni.removeStorageSync('guestPreviewInvitationId')
+  const weddingId = parseWeddingIdFromOptions(options) || pendingPreviewId
+  if (!weddingId) {
+    guestStore.clear()
+    syncShareMenu()
+    return
   }
+
+  const cached = guestStore.hydrate(weddingId)
+  if (cached) {
+    store.setWeddingData(cached, weddingId)
+    updateCountdown()
+    startCountdownTimer()
+  }
+  await loadGuestInvitation(weddingId)
 })
+
+async function loadGuestInvitation(weddingId = guestStore.invitationId) {
+  if (!weddingId) return
+  try {
+    await fetchGuestInvitation(weddingId)
+    updateCountdown()
+    startCountdownTimer()
+    syncShareMenu()
+    recordView(weddingId).catch((err) => console.warn('访问记录失败:', err))
+  } catch (err) {
+    console.warn('宾客邀请加载失败:', err)
+    syncShareMenu()
+  }
+}
+
+function retryInvitation() {
+  loadGuestInvitation()
+}
+
+function syncShareMenu() {
+  const options = {
+    fail: (err) => console.warn('同步分享菜单失败:', err)
+  }
+  if (guestStore.isReady) {
+    consumeUniTask(uni.showShareMenu?.({ ...options, menus: ['shareAppMessage', 'shareTimeline'] }))
+  }
+}
+
+function consumeUniTask(task) {
+  if (task && typeof task.catch === 'function') {
+    task.catch((err) => console.warn('分享菜单请求未完成:', err))
+  }
+}
 
 function startCountdownTimer() {
   if (countdownTimer) clearInterval(countdownTimer)
@@ -385,11 +459,18 @@ function startCountdownTimer() {
 }
 
 onShow(async () => {
+  const pendingPreviewId = userStore.canEdit ? uni.getStorageSync('guestPreviewInvitationId') : ''
+  if (pendingPreviewId) {
+    uni.removeStorageSync('guestPreviewInvitationId')
+    guestStore.setInvitationId(pendingPreviewId)
+    await loadGuestInvitation(pendingPreviewId)
+    return
+  }
   updateCountdown()
-  const weddingId = userStore.weddingId
-  if (weddingId && !store.wedding?._id && !store.wedding?.wedding_id) {
+  const weddingId = guestStore.invitationId
+  if (weddingId && store.cachedWeddingId !== weddingId) {
     try {
-      await fetchWedding(weddingId)
+      await fetchGuestInvitation(weddingId)
       updateCountdown()
       startCountdownTimer()
     } catch (err) {
@@ -438,7 +519,7 @@ onUnmounted(() => {
   @include photo-hero-scrim;
   pointer-events: none;
   z-index: 3;
-  letter-spacing: -0.04em;
+  letter-spacing: 0;
   user-select: none;
 }
 .lux-hero-image {
@@ -580,7 +661,7 @@ onUnmounted(() => {
 .lux-couple-label {
   display: block;
   color: $text-muted;
-  font-size: 18rpx;
+  font-size: 24rpx;
   font-weight: 600;
   letter-spacing: $ls-wide;
 }
@@ -625,7 +706,7 @@ onUnmounted(() => {
 .lux-count-label,
 .lux-detail-label {
   display: block;
-  color: $gold;
+  color: $gold-ink;
   font-size: $fs-cap;
   font-weight: 600;
   letter-spacing: $ls-wide;
@@ -752,10 +833,127 @@ onUnmounted(() => {
   display: block;
   margin-top: 10rpx;
   color: $text-muted;
-  font-size: 22rpx;
+  font-size: $fs-note;
 }
 .lux-music-control {
   right: $page-gutter;
   bottom: calc(116rpx + env(safe-area-inset-bottom));
 }
+
+.lux-next-event {
+  display: grid;
+  grid-template-columns: 88rpx 116rpx minmax(0, 1fr);
+  align-items: center;
+  gap: $sp-2;
+  margin-top: $sp-3;
+  padding-top: $sp-3;
+  border-top: 1rpx solid $line-soft;
+}
+.lux-next-time {
+  font-family: $font-num;
+  color: var(--accent);
+  font-size: $fs-body;
+}
+.lux-next-title {
+  min-width: 0;
+  color: $ink;
+  font-size: $fs-note;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lux-album-section {
+  padding: $sp-7 0;
+  overflow: hidden;
+}
+.lux-album-section :deep(.section-header) {
+  padding-left: $page-gutter;
+  padding-right: $page-gutter;
+}
+.lux-photo-strip {
+  width: 100%;
+  white-space: nowrap;
+  padding-left: $page-gutter;
+}
+.lux-photo-mount {
+  @include photo-mount;
+  display: inline-flex;
+  width: 520rpx;
+  margin-right: $sp-3;
+  flex-direction: column;
+  vertical-align: top;
+}
+.lux-photo-image {
+  width: 100%;
+  height: 620rpx;
+  display: block;
+}
+.lux-photo-caption {
+  display: block;
+  margin-top: $sp-2;
+  color: $ink-soft;
+  font-family: $font-num;
+  font-size: $fs-note;
+  line-height: 1.4;
+  white-space: normal;
+}
+
+.letter-state {
+  min-height: 100vh;
+  padding: calc(160rpx + env(safe-area-inset-top)) $page-gutter 160rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: $paper-bg;
+}
+.letter-state-seal {
+  width: 88rpx;
+  height: 88rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 4rpx solid var(--accent-ink);
+  border-radius: $r-full;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-family: $font-serif;
+  font-size: $fs-title;
+  box-shadow: 0 4rpx 16rpx var(--accent-glow);
+}
+.letter-state-kicker {
+  margin-top: $sp-5;
+  color: $gold-ink;
+  font-family: $font-num;
+  font-size: $fs-cap;
+  letter-spacing: $ls-wide;
+}
+.letter-state-title {
+  margin-top: $sp-3;
+  color: $ink;
+  font-size: $fs-title;
+  line-height: $lh-title;
+}
+.letter-state-copy {
+  max-width: 520rpx;
+  margin-top: $sp-2;
+  color: $ink-soft;
+  font-size: $fs-body;
+  line-height: $lh-body;
+}
+.letter-state-action {
+  min-width: 224rpx;
+  height: 80rpx;
+  margin-top: $sp-5;
+  padding: 0 $sp-4;
+  border: 1rpx solid var(--accent-line);
+  border-radius: $r-sm;
+  background: transparent;
+  color: var(--accent);
+  font-size: $fs-note;
+  line-height: 78rpx;
+}
+.letter-state-action::after { border: 0; }
 </style>

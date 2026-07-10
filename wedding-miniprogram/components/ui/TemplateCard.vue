@@ -87,7 +87,7 @@ function handlePreview() {
   right: 24rpx;
   bottom: 96rpx;
   color: $gold;
-  font-size: 18rpx;
+  font-size: 20rpx;
   font-weight: 600;
   letter-spacing: $ls-wide;
   text-transform: uppercase;
@@ -114,7 +114,7 @@ function handlePreview() {
   border-radius: $radius-sm;
   background: rgba(255, 255, 255, 0.88);
   color: $color-success;
-  font-size: 20rpx;
+  font-size: 24rpx;
   font-weight: 600;
 }
 .ui-template-tier.premium {

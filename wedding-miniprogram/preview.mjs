@@ -69,15 +69,22 @@ function sleep(ms) {
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms)
 }
 
-const args = [
-  'preview',
-  '--project', projectPath,
-  '--port', port,
-  '--lang', 'zh',
-  '--qr-format', 'image',
-  '--qr-output', qrOutput,
-  '--info-output', infoOutput
-]
+function previewArgs(targetPort) {
+  return [
+    'preview',
+    '--project', projectPath,
+    '--port', targetPort,
+    '--lang', 'zh',
+    '--qr-format', 'image',
+    '--qr-output', qrOutput,
+    '--info-output', infoOutput
+  ]
+}
+
+function detectRunningIdePort(result) {
+  const output = `${result.stdout || ''}\n${result.stderr || ''}`
+  return output.match(/监听 http:\/\/127\.0\.0\.1:(\d+)/)?.[1] || ''
+}
 
 buildProject()
 assertConfig(fs.existsSync(projectPath), `构建目录不存在：${projectPath}，请先运行 npm run build:mp-weixin`)
@@ -86,7 +93,12 @@ syncCloudfunctions()
 fs.rmSync(qrOutput, { force: true })
 fs.rmSync(infoOutput, { force: true })
 console.log(`开始使用微信开发者工具 CLI 生成 v${version} 预览码...`)
-const result = runCommand(cliPath, args)
+let result = runCommand(cliPath, previewArgs(port))
+const runningIdePort = detectRunningIdePort(result)
+if (runningIdePort && runningIdePort !== port) {
+  console.log(`检测到已打开的开发者工具端口 ${runningIdePort}，自动重试...`)
+  result = runCommand(cliPath, previewArgs(runningIdePort))
+}
 syncCloudfunctions()
 sleep(settleMs)
 syncCloudfunctions()

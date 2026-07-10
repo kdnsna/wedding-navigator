@@ -223,7 +223,7 @@ onShow(refreshBlessings)
 }
 .page-tag {
   display: block;
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: $text-muted;
   letter-spacing: 0;
   margin-bottom: 12rpx;
@@ -254,7 +254,7 @@ onShow(refreshBlessings)
   margin-bottom: 4rpx;
 }
 .stat-label {
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: $text-muted;
 }
 
@@ -292,7 +292,7 @@ onShow(refreshBlessings)
   word-break: break-word;
 }
 .item-time {
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: $text-muted;
   flex-shrink: 0;
 }

@@ -5,11 +5,12 @@
       <view class="header-top">
         <image class="back-btn" src="/static/visuals/icon-back.svg" mode="aspectFit" @click="goBack" />
         <text class="page-title">婚礼海报</text>
-        <button class="share-btn" open-type="share" :disabled="!posterReady">分享</button>
+        <button v-if="guestStore.canRenderInvitation" class="share-btn" :class="{ 'is-disabled': !posterReady }" open-type="share" :disabled="!posterReady">分享</button>
       </view>
-      <text class="page-desc">保存图片分享到朋友圈，邀请更多人见证</text>
+      <text class="page-desc">{{ guestStore.canRenderInvitation ? '保存图片分享到朋友圈，邀请更多人见证' : '请从新人寄来的邀请进入' }}</text>
     </view>
 
+    <template v-if="guestStore.canRenderInvitation">
     <!-- 海报预览 -->
     <view class="poster-preview">
       <view class="poster-container" :style="previewFrameStyle">
@@ -30,11 +31,11 @@
 
     <!-- 操作按钮 -->
     <view class="actions">
-      <button class="action-btn primary" @click="saveToAlbum" :disabled="!posterReady">
+      <button class="action-btn primary" :class="{ 'is-disabled': !posterReady }" @click="saveToAlbum" :disabled="!posterReady">
         <image class="action-visual-icon" src="/static/visuals/icon-save.svg" mode="aspectFit" />
         <text class="action-text">保存到相册</text>
       </button>
-      <button class="action-btn" open-type="share" :disabled="!posterReady">
+      <button class="action-btn" :class="{ 'is-disabled': !posterReady }" open-type="share" :disabled="!posterReady">
         <image class="action-visual-icon" src="/static/visuals/icon-share.svg" mode="aspectFit" />
         <text class="action-text">发给好友</text>
       </button>
@@ -47,6 +48,13 @@
         <text class="loading-text">{{ loadingText }}</text>
       </view>
     </view>
+    </template>
+
+    <view class="poster-letter-state" v-else>
+      <view class="poster-state-seal">囍</view>
+      <text class="poster-state-title">海报尚未展开</text>
+      <text class="poster-state-copy">从新人寄来的邀请进入后，才会生成对应的珍藏海报。</text>
+    </view>
   </view>
 </template>
 
@@ -54,12 +62,12 @@
 import { computed, ref, nextTick, getCurrentInstance } from 'vue'
 import { onLoad, onShareAppMessage } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
-import { useUserStore } from '@/stores/user.js'
-import { fetchWedding, generatePoster } from '@/composables/useCloud.js'
+import { useGuestInvitationStore } from '@/stores/guest-invitation.js'
+import { fetchGuestInvitation, generatePoster } from '@/composables/useCloud.js'
 import { drawWeddingPoster, POSTER_CANVAS_STYLE } from '@/utils/posterCanvas.js'
 
 const store = useWeddingStore()
-const userStore = useUserStore()
+const guestStore = useGuestInvitationStore()
 const instance = getCurrentInstance()
 
 const qrCodePath = ref('')
@@ -84,7 +92,7 @@ const posterScaleStyle = computed(() => ({
 
 function syncViewport() {
   try {
-    windowWidth.value = uni.getSystemInfoSync()?.windowWidth || 375
+    windowWidth.value = uni.getWindowInfo()?.windowWidth || 375
   } catch (err) {
     windowWidth.value = 375
   }
@@ -95,14 +103,14 @@ async function generateQRCode() {
   loadingText.value = '生成小程序码...'
   posterNotice.value = ''
   try {
-    if (!userStore.weddingId) {
+    if (!guestStore.invitationId) {
       posterNotice.value = '小程序码暂未生成，海报仍可保存'
       qrCodePath.value = ''
       return
     }
     const res = await generatePoster(
       'pages/index/index',
-      userStore.weddingId || '',
+      guestStore.invitationId || '',
       430
     )
 
@@ -244,7 +252,7 @@ onShareAppMessage(() => {
   const groom = store.invitation?.couple?.groom?.name || '我们'
   const bride = store.invitation?.couple?.bride?.name || ''
   const title = `${groom} & ${bride} 诚邀您见证我们的婚礼`
-  const path = userStore.weddingId ? `/pages/index/index?id=${encodeURIComponent(userStore.weddingId)}` : '/pages/index/index'
+  const path = guestStore.invitationId ? `/pages/index/index?id=${encodeURIComponent(guestStore.invitationId)}` : '/pages/index/index'
   return {
     title,
     path
@@ -252,16 +260,17 @@ onShareAppMessage(() => {
 })
 
 async function ensureWeddingLoaded(options = {}) {
-  const weddingId = parseWeddingId(options) || userStore.weddingId
-  if (weddingId) userStore.setWeddingId(weddingId)
-  if (!userStore.weddingId) return
-  if (store.wedding?._id || store.wedding?.wedding_id) return
+  const weddingId = parseWeddingId(options) || guestStore.invitationId
+  if (weddingId) guestStore.setInvitationId(weddingId)
+  if (!guestStore.invitationId) return false
+  if (guestStore.canRenderInvitation && store.cachedWeddingId === guestStore.invitationId) return true
   try {
-    await fetchWedding(userStore.weddingId)
+    await fetchGuestInvitation(guestStore.invitationId)
   } catch (err) {
     console.warn('海报页加载婚礼数据失败:', err)
-    posterNotice.value = '这张海报暂时没有完整婚礼信息'
+    posterNotice.value = '这张海报暂时无法展开'
   }
+  return guestStore.canRenderInvitation
 }
 
 function parseWeddingId(options = {}) {
@@ -284,7 +293,8 @@ function decodeSceneValue(value) {
 
 onLoad(async (options) => {
   syncViewport()
-  await ensureWeddingLoaded(options)
+  const ready = await ensureWeddingLoaded(options)
+  if (!ready) return
   await generateQRCode()
   await redrawPoster()
 })
@@ -297,6 +307,41 @@ onLoad(async (options) => {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+}
+.poster-letter-state {
+  flex: 1;
+  min-height: 760rpx;
+  padding: 96rpx $page-gutter;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.poster-state-seal {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: $r-full;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-family: $font-serif;
+  font-size: $fs-body;
+}
+.poster-state-title {
+  margin-top: $sp-4;
+  color: $ink;
+  font-family: $font-serif;
+  font-size: $fs-title;
+}
+.poster-state-copy {
+  max-width: 520rpx;
+  margin-top: $sp-2;
+  color: $ink-soft;
+  font-size: $fs-note;
+  line-height: $lh-body;
 }
 
 .page-header {
@@ -337,7 +382,7 @@ onLoad(async (options) => {
 .share-btn::after {
   border: none;
 }
-.share-btn[disabled] {
+.share-btn.is-disabled {
   color: $text-placeholder;
 }
 .page-desc {
@@ -377,7 +422,7 @@ onLoad(async (options) => {
   border-radius: $card-radius;
   background: $gold-soft;
   color: $gold;
-  font-size: 23rpx;
+  font-size: 24rpx;
   line-height: 1.5;
   letter-spacing: $tracking-cn-soft;
   border: 1rpx solid $hairline-soft;
@@ -421,7 +466,7 @@ onLoad(async (options) => {
   color: var(--theme-on-accent, $ink-inverse);
   border-color: var(--theme-accent, $color-primary);
 }
-.action-btn[disabled] { opacity: 0.4; }
+.action-btn.is-disabled { opacity: 0.4; }
 .action-visual-icon {
   width: 34rpx;
   height: 34rpx;

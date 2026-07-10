@@ -450,7 +450,7 @@ onLoad((options = {}) => {
 }
 .mock-kicker {
   display: block;
-  font-size: 18rpx;
+  font-size: 20rpx;
   color: $gold;
   letter-spacing: $ls-wide;
   text-transform: uppercase;
@@ -467,7 +467,7 @@ onLoad((options = {}) => {
 .mock-date,
 .mock-cover-line {
   display: block;
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: $ink-soft;
   line-height: 1.45;
 }
@@ -481,7 +481,7 @@ onLoad((options = {}) => {
 }
 .section-kicker {
   display: block;
-  font-size: 18rpx;
+  font-size: 20rpx;
   color: $gold;
   letter-spacing: $ls-wide;
   text-transform: uppercase;
@@ -570,7 +570,7 @@ onLoad((options = {}) => {
 }
 .card-label {
   display: block;
-  font-size: 20rpx;
+  font-size: 24rpx;
   color: var(--theme-muted, $text-muted);
   margin-bottom: 8rpx;
 }
@@ -591,7 +591,7 @@ onLoad((options = {}) => {
 .card-sub {
   display: block;
   margin-top: 8rpx;
-  font-size: 23rpx;
+  font-size: 24rpx;
   line-height: 1.45;
   color: var(--theme-muted, $text-muted);
 }
@@ -603,7 +603,7 @@ onLoad((options = {}) => {
   border-radius: $radius-full;
   background: var(--theme-accent, $color-primary);
   color: var(--theme-on-accent, $ink-inverse);
-  font-size: 22rpx;
+  font-size: 24rpx;
 }
 .mini-grid,
 .brief-grid {
@@ -658,7 +658,7 @@ onLoad((options = {}) => {
   border-radius: $radius-full;
   background: var(--theme-elevated, $bg-muted);
   color: var(--theme-muted, $text-muted);
-  font-size: 22rpx;
+  font-size: 24rpx;
   white-space: nowrap;
 }
 .role-pill.active,
@@ -674,7 +674,7 @@ onLoad((options = {}) => {
   padding: 16rpx 0;
 }
 .timeline-time {
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: var(--theme-accent, $color-primary);
   font-weight: 600;
 }
@@ -708,7 +708,7 @@ onLoad((options = {}) => {
 .form-label {
   display: block;
   margin: 20rpx 0 10rpx;
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: var(--theme-muted, $text-muted);
 }
 .form-line,
@@ -767,7 +767,7 @@ onLoad((options = {}) => {
   margin-top: 10rpx;
   color: $ink-soft;
   font-family: $font-num;
-  font-size: 20rpx;
+  font-size: 24rpx;
   line-height: 1.3;
   text-align: center;
 }
@@ -824,7 +824,7 @@ onLoad((options = {}) => {
   align-items: center;
   justify-content: center;
   color: $ink;
-  font-size: 22rpx;
+  font-size: 24rpx;
 }
 
 .template-summary {
@@ -849,7 +849,7 @@ onLoad((options = {}) => {
 .summary-label {
   display: block;
   margin-top: 6rpx;
-  font-size: 20rpx;
+  font-size: 24rpx;
   color: var(--theme-muted, $text-muted);
 }
 
