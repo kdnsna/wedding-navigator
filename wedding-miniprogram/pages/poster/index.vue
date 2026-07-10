@@ -65,6 +65,7 @@ import { useWeddingStore } from '@/stores/wedding.js'
 import { useGuestInvitationStore } from '@/stores/guest-invitation.js'
 import { fetchGuestInvitation, generatePoster } from '@/composables/useCloud.js'
 import { drawWeddingPoster, POSTER_CANVAS_STYLE } from '@/utils/posterCanvas.js'
+import { DEFAULT_SHARE_IMAGE, prepareShareImage } from '@/utils/shareCard.js'
 
 const store = useWeddingStore()
 const guestStore = useGuestInvitationStore()
@@ -75,6 +76,7 @@ const posterReady = ref(false)
 const loading = ref(false)
 const loadingText = ref('生成海报中...')
 const posterNotice = ref('')
+const shareImageUrl = ref(DEFAULT_SHARE_IMAGE)
 const canvasStyle = POSTER_CANVAS_STYLE
 const templateClass = computed(() => store.templateClass)
 const windowWidth = ref(375)
@@ -255,7 +257,8 @@ onShareAppMessage(() => {
   const path = guestStore.invitationId ? `/pages/index/index?id=${encodeURIComponent(guestStore.invitationId)}` : '/pages/index/index'
   return {
     title,
-    path
+    path,
+    imageUrl: shareImageUrl.value
   }
 })
 
@@ -295,6 +298,9 @@ onLoad(async (options) => {
   syncViewport()
   const ready = await ensureWeddingLoaded(options)
   if (!ready) return
+  prepareShareImage(store).then((path) => {
+    shareImageUrl.value = path
+  })
   await generateQRCode()
   await redrawPoster()
 })

@@ -124,6 +124,7 @@ import { showError, showSuccess } from '@/utils/index.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
 import { generateAiSuggestions, generatePoster, recordShare, updateWedding } from '@/composables/useCloud.js'
 import { resolveImagePath } from '@/utils/imagePaths.js'
+import { DEFAULT_SHARE_IMAGE, prepareShareImage } from '@/utils/shareCard.js'
 
 const store = useWeddingStore()
 const userStore = useUserStore()
@@ -137,6 +138,7 @@ const aiLoading = ref(false)
 const aiError = ref('')
 const aiWarnings = ref([])
 const aiSuggestions = ref([])
+const shareImageUrl = ref(DEFAULT_SHARE_IMAGE)
 
 const weddingId = computed(() => userStore.weddingId)
 const encodedWeddingId = computed(() => encodeURIComponent(weddingId.value || ''))
@@ -304,13 +306,17 @@ onShareAppMessage(() => {
   return {
     title: shareForm.value.title.trim() || `${store.coupleName}的婚礼邀请`,
     path: `/pages/index/index?id=${encodedWeddingId.value}`,
-    desc: shareForm.value.description.trim() || `${store.weddingDate}，我们结婚啦！诚邀您的见证~`
+    desc: shareForm.value.description.trim() || `${store.weddingDate}，我们结婚啦！诚邀您的见证~`,
+    imageUrl: shareImageUrl.value
   }
 })
 
 onShow(async () => {
   if (!(await useOwnerGuard())) return
   loadFromStore()
+  prepareShareImage(store).then((path) => {
+    shareImageUrl.value = path
+  })
   if (!qrCodePath.value && weddingId.value) refreshQrCode()
 })
 </script>

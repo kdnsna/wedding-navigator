@@ -52,6 +52,7 @@ import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { useGuestInvitationStore } from '@/stores/guest-invitation.js'
 import { formatDate } from '@/utils/index.js'
+import { DEFAULT_SHARE_IMAGE, prepareShareImage } from '@/utils/shareCard.js'
 import { fetchGuestInvitation, recordShare } from '@/composables/useCloud.js'
 import PageShell from '@/components/ui/PageShell.vue'
 import ActionCard from '@/components/ui/ActionCard.vue'
@@ -62,6 +63,7 @@ const userStore = useUserStore()
 const guestStore = useGuestInvitationStore()
 const loading = ref(false)
 const loadError = ref('')
+const shareImageUrl = ref(DEFAULT_SHARE_IMAGE)
 
 const coupleName = computed(() => store.coupleName)
 const weddingDate = computed(() => store.weddingDate)
@@ -107,6 +109,7 @@ async function reloadWedding() {
   loadError.value = ''
   try {
     await fetchGuestInvitation(guestStore.invitationId)
+    refreshShareImage()
   } catch (err) {
     console.warn('更多页加载婚礼失败:', err)
     loadError.value = '这一页暂时没翻开，请稍后重试。'
@@ -119,23 +122,45 @@ async function reloadWedding() {
 onShareAppMessage(() => {
   trackShare()
   return {
-    title: `${coupleName.value}的婚礼邀请`,
-    path: getSharePath()
+    title: store.wedding?.share_config?.title || `${coupleName.value}的婚礼邀请`,
+    path: getSharePath(),
+    imageUrl: shareImageUrl.value
   }
 })
 
 onShareTimeline(() => {
   trackShare()
   return {
-    title: `${coupleName.value}的婚礼邀请`,
-    query: guestStore.invitationId ? `id=${encodeURIComponent(guestStore.invitationId)}` : ''
+    title: store.wedding?.share_config?.title || `${coupleName.value}的婚礼邀请`,
+    query: guestStore.invitationId ? `id=${encodeURIComponent(guestStore.invitationId)}` : '',
+    imageUrl: shareImageUrl.value
   }
 })
+
+function refreshShareImage() {
+  prepareShareImage(store).then((path) => {
+    shareImageUrl.value = path
+  })
+}
+
+function enableShareMenu() {
+  if (!guestStore.canRenderInvitation) return
+  const task = uni.showShareMenu?.({
+    menus: ['shareAppMessage', 'shareTimeline'],
+    fail: (err) => console.warn('更多页分享菜单开启失败:', err)
+  })
+  if (task && typeof task.catch === 'function') {
+    task.catch((err) => console.warn('更多页分享菜单请求未完成:', err))
+  }
+}
 
 onShow(async () => {
   if (guestStore.invitationId && store.cachedWeddingId !== guestStore.invitationId) {
     await reloadWedding()
+  } else if (guestStore.canRenderInvitation) {
+    refreshShareImage()
   }
+  enableShareMenu()
 })
 </script>
 

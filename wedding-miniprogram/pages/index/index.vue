@@ -147,6 +147,7 @@ import { useGuestInvitationStore } from '@/stores/guest-invitation.js'
 import { useUserStore } from '@/stores/user.js'
 import { fetchGuestInvitation, recordShare, recordView } from '@/composables/useCloud.js'
 import { formatDate } from '@/utils/index.js'
+import { DEFAULT_SHARE_IMAGE, prepareShareImage } from '@/utils/shareCard.js'
 import SectionHeader from '@/components/ui/SectionHeader.vue'
 
 const store = useWeddingStore()
@@ -155,6 +156,7 @@ const userStore = useUserStore()
 
 let countdownTimer = null
 const countdown = ref(null)
+const shareImageUrl = ref(DEFAULT_SHARE_IMAGE)
 
 // 背景音乐
 let audioCtx = null
@@ -388,7 +390,7 @@ onShareAppMessage(() => {
   return {
     title,
     path: getSharePath(),
-    imageUrl: coverImage.value
+    imageUrl: shareImageUrl.value
   }
 })
 
@@ -398,7 +400,7 @@ onShareTimeline(() => {
   return {
     title,
     query: guestStore.isReady ? `id=${encodeURIComponent(guestStore.invitationId)}` : '',
-    imageUrl: coverImage.value
+    imageUrl: shareImageUrl.value
   }
 })
 
@@ -415,6 +417,7 @@ onLoad(async (options) => {
   const cached = guestStore.hydrate(weddingId)
   if (cached) {
     store.setWeddingData(cached, weddingId)
+    refreshShareImage()
     updateCountdown()
     startCountdownTimer()
   }
@@ -425,6 +428,7 @@ async function loadGuestInvitation(weddingId = guestStore.invitationId) {
   if (!weddingId) return
   try {
     await fetchGuestInvitation(weddingId)
+    refreshShareImage()
     updateCountdown()
     startCountdownTimer()
     syncShareMenu()
@@ -433,6 +437,12 @@ async function loadGuestInvitation(weddingId = guestStore.invitationId) {
     console.warn('宾客邀请加载失败:', err)
     syncShareMenu()
   }
+}
+
+function refreshShareImage() {
+  prepareShareImage(store).then((path) => {
+    shareImageUrl.value = path
+  })
 }
 
 function retryInvitation() {
