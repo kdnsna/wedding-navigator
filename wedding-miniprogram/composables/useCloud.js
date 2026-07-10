@@ -51,6 +51,13 @@ function getCloudApi(method = 'callFunction') {
 
 function normalizeCloudError(err, fallback = '云开发请求失败') {
   const raw = err?.errMsg || err?.message || String(err || '')
+  if (
+    raw.includes('FUNCTION_NOT_FOUND') ||
+    raw.includes('FunctionName parameter could not be found') ||
+    raw.includes('-501000')
+  ) {
+    return '云端服务正在更新，请稍后再试'
+  }
   if (raw.includes('未初始化') || raw.includes('not init') || raw.includes('init') || raw.includes('env')) {
     return '云开发环境未就绪，请重新进入小程序后再试'
   }
@@ -91,8 +98,9 @@ async function callFunction(name, data = {}, options = {}) {
     return res?.result
   } catch (err) {
     const message = normalizeCloudError(err, `${name} 调用失败`)
-    const normalized = new Error(message.includes(name) ? message : `${name}: ${message}`)
+    const normalized = new Error(message)
     normalized.code = err?.code || ''
+    normalized.functionName = name
     normalized.needConfig = Boolean(err?.needConfig)
     normalized.result = err?.result
     throw normalized
@@ -142,9 +150,10 @@ async function fetchGuestInvitation(weddingId) {
     return res
   } catch (err) {
     const invalidCodes = ['INVALID_ID', 'NOT_FOUND', 'NOT_PUBLISHED', 'NOT_READY']
+    const isInvalid = invalidCodes.includes(err?.code)
     guestStore.fail(
-      err?.message,
-      invalidCodes.includes(err?.code) ? GUEST_INVITATION_STATUS.INVALID : GUEST_INVITATION_STATUS.OFFLINE
+      isInvalid ? err?.message : '云端暂时没有回信，请稍后再试。',
+      isInvalid ? GUEST_INVITATION_STATUS.INVALID : GUEST_INVITATION_STATUS.OFFLINE
     )
     throw err
   }

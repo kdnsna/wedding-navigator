@@ -252,7 +252,6 @@ const guestStateTitle = computed(() => ({
   offline: '暂时无法取信'
 }[guestStore.status] || '这封信还没有抵达'))
 const guestStateCopy = computed(() => {
-  if (guestStore.error) return guestStore.error
   return ({
     idle: hasOwnerWorkspace.value ? '继续修书、查看回执，或把邀请寄给亲友。' : '用四幕向导写好姓名、良辰、地点与照片，再把这封信寄给亲友。',
     loading: '纸页正在轻轻展开，请稍候。',
