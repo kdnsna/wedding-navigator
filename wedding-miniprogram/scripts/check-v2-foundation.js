@@ -94,12 +94,18 @@ function checkExperienceContracts() {
   assert(read('pages-owner/invitation/edit.vue').includes('scenarioPreset'), 'editor must separate scenario preset from theme')
   assert(read('pages/blessing/index.vue').includes('!guestStore.canRenderInvitation'), 'blessing form must be hidden without a valid invitation')
   assert(read('pages/poster/index.vue').includes('const ready = await ensureWeddingLoaded(options)'), 'poster generation must wait for a valid invitation')
+  assert(read('pages/index/index.vue').includes('openOwnerEntry'), 'no-id launch must offer an owner creation or workspace entry')
+  assert(read('pages/index/index.vue').includes('开始制作婚书'), 'first preview launch must not dead-end before a wedding can be created')
   assert(!read('pages/guide/index.vue').includes('getThemeTokens(activeTemplate'), 'native map colors must follow the selected mood, not a scenario')
 }
 
 function checkMotionAndCloudHotPath() {
-  const source = walk(root)
-    .filter(file => /\.(vue|scss)$/.test(file) && !file.includes(`${path.sep}dist${path.sep}`) && !file.includes(`${path.sep}node_modules${path.sep}`))
+  const sourceRoots = ['App.vue', 'styles', 'pages', 'pages-owner', 'components']
+  const source = sourceRoots.flatMap(item => {
+    const target = path.join(root, item)
+    return fs.statSync(target).isDirectory() ? walk(target) : [target]
+  })
+    .filter(file => /\.(vue|scss)$/.test(file))
     .map(file => fs.readFileSync(file, 'utf8'))
     .join('\n')
   assert(!/@keyframes\s+(bounce|pulse|float|breathe|editorialFloat|editorialPulse)/.test(source), 'legacy bounce/pulse/float motion must be removed')

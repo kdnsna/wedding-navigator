@@ -130,7 +130,11 @@
       <text class="letter-state-kicker">TIAN XI LETTER</text>
       <text class="letter-state-title">{{ guestStateTitle }}</text>
       <text class="letter-state-copy">{{ guestStateCopy }}</text>
-      <button class="letter-state-action" v-if="guestStore.invitationId && guestStore.status !== 'loading'" @click="retryInvitation">再试一次</button>
+      <template v-if="guestStore.status === 'idle'">
+        <button class="letter-state-action primary" @click="openOwnerEntry">{{ ownerEntryLabel }}</button>
+        <text class="letter-state-hint">宾客请从新人分享的婚礼邀请进入</text>
+      </template>
+      <button class="letter-state-action" v-else-if="guestStore.invitationId && guestStore.status !== 'loading'" @click="retryInvitation">再试一次</button>
     </view>
   </view>
 </template>
@@ -237,9 +241,11 @@ const hasSubmittedRsvp = computed(() => {
 })
 const featuredPhotos = computed(() => (store.featuredPhotos || []).filter(photo => photo?.url))
 const nextTimelineEvent = computed(() => store.isTimelineEnabled ? store.nextTimelineEvent : null)
+const hasOwnerWorkspace = computed(() => Boolean(userStore.ownerActiveWeddingId))
+const ownerEntryLabel = computed(() => hasOwnerWorkspace.value ? '回到我的书案' : '开始制作婚书')
 
 const guestStateTitle = computed(() => ({
-  idle: '这封信还没有抵达',
+  idle: hasOwnerWorkspace.value ? '你的婚书在书案上' : '从这里写下喜事',
   loading: '正在展信',
   invalid: '这封邀请已失效',
   closed: '这场婚礼已经圆满落幕',
@@ -248,7 +254,7 @@ const guestStateTitle = computed(() => ({
 const guestStateCopy = computed(() => {
   if (guestStore.error) return guestStore.error
   return ({
-    idle: '请从新人分享的婚礼邀请进入。',
+    idle: hasOwnerWorkspace.value ? '继续修书、查看回执，或把邀请寄给亲友。' : '用四幕向导写好姓名、良辰、地点与照片，再把这封信寄给亲友。',
     loading: '纸页正在轻轻展开，请稍候。',
     invalid: '请联系新人重新发送一封邀请。',
     closed: '谢谢您曾经见证这一日。',
@@ -256,6 +262,11 @@ const guestStateCopy = computed(() => {
   }[guestStore.status] || '')
 })
 const guestStateSeal = computed(() => guestStore.status === 'closed' ? '礼' : '囍')
+
+function openOwnerEntry() {
+  const url = hasOwnerWorkspace.value ? '/pages-owner/manage/index' : '/pages-owner/wizard/index'
+  navigateOrToast(url, hasOwnerWorkspace.value ? '打开我的书案' : '开始制作婚书')
+}
 
 function photoTreatmentClass(photo = null) {
   const treatment = String(photo?.treatment || photo?.effect || photo?.filter || photoTreatment.value || '').toLowerCase()
@@ -956,4 +967,15 @@ onUnmounted(() => {
   line-height: 78rpx;
 }
 .letter-state-action::after { border: 0; }
+.letter-state-action.primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.letter-state-hint {
+  margin-top: $sp-3;
+  color: $ink-faint;
+  font-size: $fs-note;
+  line-height: $lh-body;
+}
 </style>
