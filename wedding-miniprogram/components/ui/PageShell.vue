@@ -1,5 +1,14 @@
 <template>
-  <view class="ui-page-shell" :class="[themeClass, { 'safe-bottom': safeBottom }]">
+  <view
+    class="ui-page-shell"
+    :class="[
+      themeClass,
+      {
+        'safe-bottom': safeBottom,
+        'safe-bottom-tabbar-action': safeBottom && tabBarAction
+      }
+    ]"
+  >
     <view class="ui-page-head" v-if="title || kicker || desc">
       <text class="ui-kicker" v-if="kicker">{{ kicker }}</text>
       <text class="ui-title" v-if="title">{{ title }}</text>
@@ -15,7 +24,8 @@ defineProps({
   kicker: { type: String, default: '' },
   desc: { type: String, default: '' },
   themeClass: { type: String, default: '' },
-  safeBottom: { type: Boolean, default: true }
+  safeBottom: { type: Boolean, default: true },
+  tabBarAction: { type: Boolean, default: false }
 })
 </script>
 
@@ -28,6 +38,9 @@ defineProps({
 }
 .safe-bottom {
   padding-bottom: calc(72rpx + env(safe-area-inset-bottom));
+}
+.safe-bottom-tabbar-action {
+  padding-bottom: calc(260rpx + env(safe-area-inset-bottom));
 }
 .ui-page-head {
   padding: calc(#{$page-header-top} + env(safe-area-inset-top)) $page-gutter $page-header-bottom;

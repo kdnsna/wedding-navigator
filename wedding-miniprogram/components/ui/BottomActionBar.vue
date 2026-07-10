@@ -1,5 +1,5 @@
 <template>
-  <view class="ui-bottom-bar">
+  <view class="ui-bottom-bar" :class="{ 'above-tab-bar': aboveTabBar }">
     <button
       class="ui-bottom-btn secondary"
       :class="{ 'is-disabled': disabled || secondaryDisabled || secondaryLoading }"
@@ -24,7 +24,8 @@ defineProps({
   secondaryLoading: { type: Boolean, default: false },
   disabled: { type: Boolean, default: false },
   primaryDisabled: { type: Boolean, default: false },
-  secondaryDisabled: { type: Boolean, default: false }
+  secondaryDisabled: { type: Boolean, default: false },
+  aboveTabBar: { type: Boolean, default: false }
 })
 defineEmits(['primary', 'secondary'])
 </script>
@@ -42,6 +43,10 @@ defineEmits(['primary', 'secondary'])
   background: rgba(255, 248, 245, 0.94);
   border-top: 1rpx solid rgba(75, 17, 30, 0.08);
   backdrop-filter: blur(18rpx);
+}
+.ui-bottom-bar.above-tab-bar {
+  bottom: calc(104rpx + env(safe-area-inset-bottom));
+  padding-bottom: 18rpx;
 }
 .ui-bottom-btn {
   flex: 1;

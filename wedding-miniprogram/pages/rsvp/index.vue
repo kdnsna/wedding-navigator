@@ -6,6 +6,7 @@
     :title="pageTitle"
     :desc="pageDesc"
     :safe-bottom="!submitted && isRsvpEnabled && !loadError"
+    :tab-bar-action="guestStore.showTabBar"
   >
 
     <view class="rsvp-brief" v-if="guestStore.canRenderInvitation && !submitted && isRsvpEnabled">
@@ -278,6 +279,7 @@
       :loading="submitting"
       :disabled="submitting"
       :primary-disabled="!requiredFieldsReady"
+      :above-tab-bar="guestStore.showTabBar"
       @primary="handleSubmit"
       @secondary="goToGuide"
     />
