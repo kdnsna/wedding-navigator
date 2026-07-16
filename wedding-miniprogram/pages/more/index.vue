@@ -5,6 +5,8 @@
     :desc="guestStore.canRenderInvitation ? `${coupleName} · ${formatDate(weddingDate)}` : ''"
     :theme-class="templateClass"
   >
+    <canvas canvas-id="shareCardCanvas" id="shareCardCanvas" class="share-card-canvas" />
+
     <EmptyState
       v-if="!guestStore.canRenderInvitation"
       title="这封信还没有抵达"
@@ -46,13 +48,13 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
-import { onShareAppMessage, onShareTimeline, onShow } from '@dcloudio/uni-app'
+import { computed, getCurrentInstance, nextTick, ref } from 'vue'
+import { onLoad, onShareAppMessage, onShareTimeline, onShow } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { useGuestInvitationStore } from '@/stores/guest-invitation.js'
 import { formatDate } from '@/utils/index.js'
-import { DEFAULT_SHARE_IMAGE, prepareShareImage } from '@/utils/shareCard.js'
+import { DEFAULT_SHARE_IMAGE, generateWeddingShareCard } from '@/utils/shareCard.js'
 import { fetchGuestInvitation, recordShare } from '@/composables/useCloud.js'
 import PageShell from '@/components/ui/PageShell.vue'
 import ActionCard from '@/components/ui/ActionCard.vue'
@@ -61,6 +63,7 @@ import EmptyState from '@/components/ui/EmptyState.vue'
 const store = useWeddingStore()
 const userStore = useUserStore()
 const guestStore = useGuestInvitationStore()
+const instance = getCurrentInstance()
 const loading = ref(false)
 const loadError = ref('')
 const shareImageUrl = ref(DEFAULT_SHARE_IMAGE)
@@ -137,10 +140,14 @@ onShareTimeline(() => {
   }
 })
 
-function refreshShareImage() {
-  prepareShareImage(store).then((path) => {
-    shareImageUrl.value = path
-  })
+async function refreshShareImage() {
+  try {
+    await nextTick()
+    shareImageUrl.value = await generateWeddingShareCard({ instance, store })
+  } catch (err) {
+    console.warn('更多页分享卡生成失败:', err)
+    shareImageUrl.value = DEFAULT_SHARE_IMAGE
+  }
 }
 
 function enableShareMenu() {
@@ -153,6 +160,13 @@ function enableShareMenu() {
     task.catch((err) => console.warn('更多页分享菜单请求未完成:', err))
   }
 }
+
+onLoad((options) => {
+  const weddingId = String(options?.id || '')
+  if (!weddingId) return
+  const cached = guestStore.hydrate(weddingId)
+  if (cached) store.setWeddingData(cached, weddingId)
+})
 
 onShow(async () => {
   if (guestStore.invitationId && store.cachedWeddingId !== guestStore.invitationId) {
@@ -170,6 +184,14 @@ onShow(async () => {
   color: var(--theme-ink, $text-primary);
   min-height: 100vh;
   padding-bottom: calc(80rpx + env(safe-area-inset-bottom));
+}
+.share-card-canvas {
+  position: fixed;
+  left: -9999px;
+  top: -9999px;
+  width: 500px;
+  height: 400px;
+  pointer-events: none;
 }
 
 

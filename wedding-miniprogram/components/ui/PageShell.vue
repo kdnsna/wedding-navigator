@@ -23,7 +23,7 @@ defineProps({
   title: { type: String, default: '' },
   kicker: { type: String, default: '' },
   desc: { type: String, default: '' },
-  themeClass: { type: String, default: '' },
+  themeClass: { type: [String, Array, Object], default: '' },
   safeBottom: { type: Boolean, default: true },
   tabBarAction: { type: Boolean, default: false }
 })

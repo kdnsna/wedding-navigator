@@ -23,6 +23,7 @@
         <text class="list-item">• 祝福留言：宾客在祝福墙发表的文本内容</text>
         <text class="list-item">• 您选择的位置信息：仅在婚礼主人主动使用地图选点时处理，用于保存婚礼场地坐标；宾客导航使用新人已保存的场地位置，不读取宾客当前位置</text>
         <text class="list-item">• 您选中的照片或视频信息：仅在您主动选择婚礼照片时使用，用于制作婚礼相册、请柬封面与分享海报</text>
+        <text class="list-item">• 相册（仅写入）权限：仅在您主动点击“保存到相册”时，将小程序生成的婚礼分享海报写入手机相册，便于分享邀请；不会读取或上传相册中的其他内容</text>
       </view>
 
       <text class="section-title">三、信息的使用</text>
@@ -57,7 +58,7 @@
         如您对本隐私保护指引有任何疑问，可通过小程序内的客服功能与我们联系。
       </text>
 
-      <text class="update-time">更新日期：2026年7月10日</text>
+      <text class="update-time">更新日期：2026年7月16日</text>
     </view>
   </PageShell>
 </template>

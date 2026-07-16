@@ -41,6 +41,13 @@ npm run record:v2-manual-evidence -- \
   --wizard-flow=/path/to/wizard-flow.mp4 \
   --wizard-photo-preview=/path/to/wizard-photo-preview.png \
   --premium-entitlement=/path/to/premium-entitlement.png \
+  --visual-stories=/path/to/visual-stories.mp4 \
+  --photo-director=/path/to/photo-director.mp4 \
+  --share-card=/path/to/share-card.png \
+  --share-poster=/path/to/share-poster.png \
+  --owner-workspace-recovery=/path/to/owner-workspace-recovery.mp4 \
+  --rsvp-scroll=/path/to/rsvp-scroll.mp4 \
+  --long-content=/path/to/long-content.mp4 \
   --friend-quote="这是请柬" \
   --friend-evidence=/path/to/friend-feedback.png \
   --no-errors
@@ -92,6 +99,11 @@ npm run find:legacy-sakura
 | 四幕向导 | 具名 -> 择地 -> 选照 -> 定色可连续走完 | 真机录屏 |
 | 选照预览 | 第三幕选照后立即看到装裱预览，最多九张 | 真机录屏或截图 |
 | 高级色权益 | 主人端切换 cinnabar/indigo/pine 时显示高级/体验/权益状态，并写入 commercial 状态 | 真机截图和保存后数据 |
+| 五种视觉叙事 | 同一组真实照片切换电影纪实、新中式华章、花园胶片、杂志高定、夜宴片场，首页、相册和海报均随之变化 | 真机录屏 |
+| 照片导演 | 上传横图、竖图和低清图后，清晰度、用途建议与扉页焦点操作正确，原图不被修改 | 真机录屏 |
+| 社交传播面 | 好友分享卡为 5:4 专属封面，朋友圈海报为对应视觉构图，不截取功能页面 | 微信会话截图和海报截图 |
+| 赴约完整滚动 | 表单所有字段和底部操作均可触达，不被自定义 tabBar 或安全区遮挡 | iOS/Android 真机录屏 |
+| 极端内容 | 长姓名、长场地、大字体、横竖照片均无重叠、截断和异常留白 | iOS/Android 真机录屏 |
 | 朋友第一反应 | 给不知情的人看任意宾客端截图，对方第一反应是“请柬/邀请函/婚礼信件” | 反馈原话 |
 
 ## 完成标准

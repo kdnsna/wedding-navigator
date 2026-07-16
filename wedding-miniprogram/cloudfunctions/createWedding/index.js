@@ -189,12 +189,36 @@ function normalizeWeddingPayload(payload, theme) {
 }
 
 function normalizeInvitationPayload(payload = {}, theme) {
+  const scenarioPreset = String(payload.scenario_preset || payload.template || 'rose-couture')
   return {
     ...payload,
+    scenario_preset: scenarioPreset,
+    template: scenarioPreset,
+    visual_preset: resolveVisualPreset(payload.visual_preset, scenarioPreset),
     theme,
     commercial: {
       ...(payload.commercial || {}),
       theme_key: theme
     }
   }
+}
+
+const VALID_VISUAL_PRESETS = ['cinematic-documentary', 'new-chinese-ceremony', 'garden-film', 'editorial-couture', 'night-banquet']
+const SCENARIO_VISUAL_MAP = {
+  'rose-couture': 'cinematic-documentary',
+  'champagne-editorial': 'editorial-couture',
+  'noir-banquet': 'night-banquet',
+  'garden-film': 'garden-film',
+  'heritage-ritual': 'new-chinese-ceremony',
+  'shandong-family': 'new-chinese-ceremony',
+  'travel-friendly': 'cinematic-documentary',
+  classic: 'cinematic-documentary',
+  luxury: 'editorial-couture',
+  modern: 'night-banquet'
+}
+
+function resolveVisualPreset(key, scenarioPreset) {
+  const normalized = String(key || '').trim().replace(/^visual-/, '')
+  if (VALID_VISUAL_PRESETS.includes(normalized)) return normalized
+  return SCENARIO_VISUAL_MAP[String(scenarioPreset || '').trim()] || 'cinematic-documentary'
 }

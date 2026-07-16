@@ -1,81 +1,139 @@
 import { useUserStore } from '@/stores/user.js'
 import { useWeddingStore } from '@/stores/wedding.js'
-import { checkOwnership, fetchWedding } from '@/composables/useCloud.js'
+import { fetchWedding, syncOwnerProfile } from '@/composables/useCloud.js'
 
-export async function useOwnerGuard() {
+const WORKSPACE_SYNC_TTL = 60 * 1000
+let workspaceSyncPromise = null
+let lastWorkspaceSyncAt = 0
+
+export async function useOwnerGuard(options = {}) {
   const userStore = useUserStore()
   const weddingStore = useWeddingStore()
+  const {
+    allowNoWedding = false,
+    forceWorkspaceSync = false,
+    forceWeddingRefresh = false
+  } = options || {}
 
-  if (!userStore.weddingId) {
+  try {
+    await syncWorkspaceProfile(userStore, forceWorkspaceSync)
+  } catch (err) {
+    console.warn('主人工作区同步失败:', err)
+    if (!userStore.ownerVerified && !userStore.ownerActiveWeddingId) {
+      return showOwnerVerificationFailure(userStore, weddingStore, err)
+    }
+  }
+
+  if (!userStore.ownerActiveWeddingId) {
+    if (allowNoWedding && userStore.ownerVerified) return true
+    weddingStore.setWeddingData({})
+    return showMissingWedding('当前账号还没有可管理的婚书，请先完成四幕向导。')
+  }
+
+  const weddingId = userStore.ownerActiveWeddingId
+  try {
+    const res = await fetchWedding(weddingId, forceWeddingRefresh)
+    if (res?.fromCache || isOwnerResult(res)) {
+      userStore.verifyOwner(true)
+      return true
+    }
+    return recoverUnavailableWorkspace(userStore, weddingStore, weddingId)
+  } catch (err) {
+    if (isUnavailableWeddingError(err)) {
+      return recoverUnavailableWorkspace(userStore, weddingStore, weddingId)
+    }
+    console.warn('主人端婚礼数据加载失败:', err)
+    if (weddingStore.isCacheValidFor(weddingId) && userStore.ownerVerified) {
+      uni.showToast({ title: '当前显示上次保存的书案', icon: 'none' })
+      return true
+    }
+    return showOwnerVerificationFailure(userStore, weddingStore, err)
+  }
+}
+
+async function syncWorkspaceProfile(userStore, force = false) {
+  const cacheFresh = Date.now() - lastWorkspaceSyncAt < WORKSPACE_SYNC_TTL
+  if (!force && cacheFresh && userStore.ownerVerified) return true
+  if (workspaceSyncPromise) return workspaceSyncPromise
+
+  workspaceSyncPromise = syncOwnerProfile()
+    .then((res) => {
+      if (!res?.success) throw new Error(res?.message || '主人账号同步失败')
+      userStore.setOwnerProfile(res)
+      lastWorkspaceSyncAt = Date.now()
+      return true
+    })
+    .finally(() => {
+      workspaceSyncPromise = null
+    })
+  return workspaceSyncPromise
+}
+
+function isOwnerResult(res) {
+  return Boolean(res?.isOwner || res?.data?.isOwner || res?.data?.is_owner)
+}
+
+function isUnavailableWeddingError(err) {
+  const message = String(err?.message || '')
+  return err?.code === 'NOT_FOUND' || message.includes('婚礼不存在') || message.includes('无权限')
+}
+
+async function recoverUnavailableWorkspace(userStore, weddingStore, failedWeddingId) {
+  try {
+    await syncWorkspaceProfile(userStore, true)
+  } catch (err) {
+    return showOwnerVerificationFailure(userStore, weddingStore, err)
+  }
+
+  const recoveredWeddingId = userStore.ownerActiveWeddingId
+  weddingStore.setWeddingData({})
+  if (recoveredWeddingId && recoveredWeddingId !== failedWeddingId) {
+    try {
+      const res = await fetchWedding(recoveredWeddingId, true)
+      if (isOwnerResult(res)) {
+        userStore.verifyOwner(true)
+        uni.showToast({ title: '已切换到可用婚书', icon: 'none' })
+        return true
+      }
+    } catch (err) {
+      console.warn('恢复主人工作区失败:', err)
+    }
+  }
+
+  userStore.setOwnerActiveWeddingId('')
+  weddingStore.setWeddingData({})
+  return showMissingWedding('原婚书已经失效，当前账号下也没有其他可用婚书。')
+}
+
+function showMissingWedding(content) {
+  return new Promise((resolve) => {
     uni.showModal({
-      title: '尚未创建婚礼',
-      content: '请先完成创建向导，再进入主人端管理。',
-      confirmText: '去创建',
+      title: '书案需要重新落笔',
+      content,
+      confirmText: '创建婚书',
       showCancel: false,
       success: () => {
         goCreateWizard()
-      }
+        resolve(false)
+      },
+      fail: () => resolve(false)
     })
-    return false
-  }
-
-  if (userStore.isOwner && userStore.ownerVerified) {
-    loadWeddingIfNeeded(userStore, weddingStore)
-    return true
-  }
-
-  return verifyAndGuard(userStore, weddingStore)
+  })
 }
 
-function loadWeddingIfNeeded(userStore, weddingStore) {
-  const hasLoadedWedding = Boolean(weddingStore.wedding?._id || weddingStore.wedding?.wedding_id)
-  if (!hasLoadedWedding) {
-    fetchWedding(userStore.weddingId).catch((err) => {
-      console.warn('主人端婚礼数据加载失败:', err)
-    })
-  }
-}
-
-async function verifyAndGuard(userStore, weddingStore) {
-  try {
-    const res = await checkOwnership(userStore.weddingId)
-    if (res?.success && res.isOwner) {
-      userStore.verifyOwner(true)
-      loadWeddingIfNeeded(userStore, weddingStore)
-      return true
-    } else {
-      userStore.verifyOwner(false)
-      uni.showModal({
-        title: '无权限',
-        content: '仅婚礼主人可访问此页面',
-        showCancel: false,
-        success: () => {
-          goGuestHome()
-        }
-      })
-      return false
-    }
-  } catch (err) {
-    console.warn('所有权验证失败:', err)
-    if (userStore.isOwner) {
-      uni.showToast({ title: '主人权限暂未完成云端校验', icon: 'none' })
-      loadWeddingIfNeeded(userStore, weddingStore)
-      return true
-    }
-    return showOwnerVerificationFailure(userStore, weddingStore)
-  }
-}
-
-function showOwnerVerificationFailure(userStore, weddingStore) {
+function showOwnerVerificationFailure(userStore, weddingStore, cause) {
+  const message = String(cause?.message || '')
   return new Promise((resolve) => {
     uni.showModal({
-      title: '权限校验失败',
-      content: '暂时无法确认您是婚礼主人，请检查网络后重试。',
+      title: '书案暂时无法核验',
+      content: message.includes('超时')
+        ? '云端响应超时，请检查网络后重试。'
+        : '暂时无法确认主人工作区，请检查网络后重试。',
       confirmText: '重试',
       cancelText: '返回首页',
       success: async (res) => {
         if (res.confirm) {
-          resolve(await verifyAndGuard(userStore, weddingStore))
+          resolve(await useOwnerGuard({ forceWorkspaceSync: true, forceWeddingRefresh: true }))
         } else {
           goGuestHome()
           resolve(false)
@@ -90,7 +148,7 @@ function showOwnerVerificationFailure(userStore, weddingStore) {
 }
 
 function goCreateWizard() {
-  uni.navigateTo({
+  uni.reLaunch({
     url: '/pages-owner/wizard/index',
     fail: (err) => {
       console.warn('主人守卫打开创建向导失败:', err)

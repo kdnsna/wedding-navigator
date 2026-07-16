@@ -10,9 +10,18 @@
         <text class="owner-alert-title">书案暂未更新</text>
         <text class="owner-alert-desc">{{ loadError }}</text>
       </view>
-      <button class="owner-alert-btn" :class="{ 'is-disabled': loading }" :loading="loading" :disabled="loading" @click="refreshDashboard(true)">重试</button>
+      <view class="owner-alert-actions">
+        <button class="owner-alert-btn" :class="{ 'is-disabled': loading }" :loading="loading" :disabled="loading" @click="refreshDashboard(true)">重试</button>
+        <button class="owner-alert-btn" :disabled="loading" @click="goTo('profile/index')">切换婚书</button>
+      </view>
     </view>
 
+    <view class="owner-loading" v-if="loading && !dashboardReady">
+      <text class="owner-loading-title">正在整理书案</text>
+      <text class="owner-loading-desc">核验婚书与主人工作区，请稍候。</text>
+    </view>
+
+    <template v-if="workspaceReady">
     <view class="letter-preview">
       <view class="letter-preview-head">
         <view class="letter-preview-copy">
@@ -82,6 +91,7 @@
       <text class="danger-desc">删除后旧邀请链接会失效，相关回执与祝福也将移除。</text>
       <button class="danger-btn" :class="{ 'is-disabled': deleting }" :loading="deleting" :disabled="deleting" @click="confirmDeleteWedding">删除婚礼邀请</button>
     </view>
+    </template>
   </PageShell>
 </template>
 
@@ -92,7 +102,7 @@ import { useWeddingStore } from '@/stores/wedding.js'
 import { useUserStore } from '@/stores/user.js'
 import { formatDate, showError, showSuccess } from '@/utils/index.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
-import { deleteWedding, fetchWedding, getStats, syncOwnerProfile } from '@/composables/useCloud.js'
+import { deleteWedding, fetchWedding, getStats } from '@/composables/useCloud.js'
 import { getThemeTokens } from '@/utils/legacy-theme-map.js'
 import PageShell from '@/components/ui/PageShell.vue'
 import SectionHeader from '@/components/ui/SectionHeader.vue'
@@ -102,6 +112,7 @@ const userStore = useUserStore()
 const deleting = ref(false)
 const loading = ref(false)
 const loadError = ref('')
+const dashboardReady = ref(false)
 
 const coupleName = computed(() => store.coupleName)
 const weddingDate = computed(() => store.weddingDate)
@@ -111,6 +122,13 @@ const coverImage = computed(() => {
   return photos.find(item => item.type === 'cover')?.url || photos[0]?.url || ''
 })
 const deleteConfirmColor = computed(() => getThemeTokens(store.invitation?.theme).accentInk)
+const workspaceReady = computed(() => Boolean(
+  dashboardReady.value &&
+  !loading.value &&
+  !loadError.value &&
+  userStore.ownerActiveWeddingId &&
+  store.cachedWeddingId === userStore.ownerActiveWeddingId
+))
 const readinessSummary = computed(() => checklist.value.ready
   ? '婚书已经写好，可以寄出'
   : `还差 ${checklist.value.total - checklist.value.doneCount} 项待落笔`)
@@ -125,6 +143,10 @@ const stats = computed(() => {
 })
 
 function goTo(path) {
+  if (path !== 'profile/index' && !workspaceReady.value) {
+    showError('请先等待书案核验完成')
+    return
+  }
   uni.navigateTo({
     url: `/pages-owner/${path}`,
     fail: (err) => {
@@ -135,8 +157,8 @@ function goTo(path) {
 }
 
 function previewWedding() {
-  if (!userStore.ownerActiveWeddingId) {
-    showError('请先创建婚书')
+  if (!workspaceReady.value) {
+    showError('请先等待书案核验完成')
     return
   }
   uni.setStorageSync('guestPreviewInvitationId', userStore.ownerActiveWeddingId)
@@ -152,22 +174,20 @@ function previewWedding() {
 function shareWedding() { goTo('share/index') }
 
 async function refreshDashboard(force = false) {
-  if (!(await useOwnerGuard())) return
-  const weddingId = userStore.ownerActiveWeddingId
-  if (!weddingId) {
-    loadError.value = '请先完成四幕向导，再回到书案。'
-    return
-  }
   if (loading.value) return
   loading.value = true
+  dashboardReady.value = false
   loadError.value = ''
   try {
-    await fetchWedding(weddingId, force)
-    const profileRes = await syncOwnerProfile().catch((err) => {
-      console.warn('主人账号同步失败:', err)
-      return null
+    const allowed = await useOwnerGuard({
+      forceWorkspaceSync: force,
+      forceWeddingRefresh: force
     })
-    if (profileRes?.success) userStore.setOwnerProfile(profileRes)
+    if (!allowed) return
+
+    const weddingId = userStore.ownerActiveWeddingId
+    if (!weddingId) throw new Error('请先完成四幕向导，再回到书案。')
+    if (store.cachedWeddingId !== weddingId) await fetchWedding(weddingId, true)
     const res = await getStats(weddingId)
     if (res?.stats) {
       store.wedding.stats = {
@@ -178,6 +198,7 @@ async function refreshDashboard(force = false) {
         unique_viewers: res.stats.unique_viewers || 0
       }
     }
+    dashboardReady.value = true
   } catch (err) {
     console.warn('书案数据加载失败:', err)
     loadError.value = err?.message || '书案暂时无法更新，请稍后重试'
@@ -262,6 +283,16 @@ onShow(() => refreshDashboard(false))
 }
 .owner-alert-btn::after { border: 0; }
 .owner-alert-btn.is-disabled { opacity: 0.56; }
+.owner-alert-actions { display: flex; flex-direction: column; gap: $sp-1; flex-shrink: 0; }
+.owner-loading {
+  margin: 0 $page-gutter $sp-6;
+  padding: $sp-5 0;
+  border-top: 1rpx solid $line;
+  border-bottom: 1rpx solid $line;
+  text-align: center;
+}
+.owner-loading-title { display: block; color: $ink; font-size: $fs-body; }
+.owner-loading-desc { display: block; margin-top: $sp-2; color: $ink-soft; font-size: $fs-note; }
 
 .letter-preview {
   @include card;

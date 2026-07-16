@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { getWeddingTemplate, normalizeTemplateId } from '@/utils/templates.js'
 import { getThemeClass, resolveTheme } from '@/utils/legacy-theme-map.js'
+import { getVisualPreset, getVisualPresetClass, resolveVisualPreset } from '@/utils/visual-presets.js'
 
 const DEFAULT_FEATURES = {
   show_countdown: true,
@@ -27,6 +28,8 @@ export const useWeddingStore = defineStore('wedding', () => {
 
   const fallbackInvitation = {
     template: 'rose-couture',
+    scenario_preset: 'rose-couture',
+    visual_preset: 'cinematic-documentary',
     theme: 'wine',
     photo_treatment: 'original',
     couple: {
@@ -109,7 +112,21 @@ export const useWeddingStore = defineStore('wedding', () => {
 
   const primaryVenue = computed(() => {
     const list = venues.value?.venues || []
-    return list.find(v => v.type === 'venue') || list[0] || fallbackVenue
+    const configured = list.find(v => v.type === 'venue') || list[0]
+    if (configured) return configured
+
+    const legacyVenue = invitation.value?.wedding || {}
+    if (legacyVenue.venue_name || legacyVenue.venue_address) {
+      return {
+        id: 'invitation-venue',
+        type: 'venue',
+        name: legacyVenue.venue_name || '',
+        address: legacyVenue.venue_address || '',
+        coordinate: legacyVenue.coordinate || null,
+        arrival_time: legacyVenue.arrival_time || ''
+      }
+    }
+    return fallbackVenue
   })
 
   const suggestedArrivalTime = computed(() => {
@@ -160,7 +177,18 @@ export const useWeddingStore = defineStore('wedding', () => {
 
   const activeTemplate = computed(() => getWeddingTemplate(invitation.value?.template))
 
-  const templateClass = computed(() => getThemeClass(resolveTheme(invitation.value?.theme)))
+  const activeVisualPreset = computed(() => getVisualPreset(
+    invitation.value?.visual_preset,
+    invitation.value?.scenario_preset || invitation.value?.template
+  ))
+
+  const templateClass = computed(() => [
+    getThemeClass(resolveTheme(invitation.value?.theme)),
+    getVisualPresetClass(
+      invitation.value?.visual_preset,
+      invitation.value?.scenario_preset || invitation.value?.template
+    )
+  ])
 
   const features = computed(() => ({
     ...DEFAULT_FEATURES,
@@ -289,11 +317,14 @@ export const useWeddingStore = defineStore('wedding', () => {
   // Actions
   function setWeddingData(data, weddingId = '') {
     const template = normalizeTemplateId(data.invitation?.template || fallbackInvitation.template)
+    const scenarioPreset = normalizeTemplateId(data.invitation?.scenario_preset || template)
     wedding.value = data.wedding || fallbackWedding
     invitation.value = {
       ...fallbackInvitation,
       ...(data.invitation || {}),
       template,
+      scenario_preset: scenarioPreset,
+      visual_preset: resolveVisualPreset(data.invitation?.visual_preset, scenarioPreset),
       theme: resolveTheme(data.invitation?.theme || getWeddingTemplate(template).theme)
     }
     album.value = data.album || { photos: [] }
@@ -317,10 +348,13 @@ export const useWeddingStore = defineStore('wedding', () => {
 
   function updateInvitation(data) {
     const template = normalizeTemplateId(data?.template || invitation.value?.template)
+    const scenarioPreset = normalizeTemplateId(data?.scenario_preset || invitation.value?.scenario_preset || template)
     invitation.value = {
       ...invitation.value,
       ...data,
       template,
+      scenario_preset: scenarioPreset,
+      visual_preset: resolveVisualPreset(data?.visual_preset || invitation.value?.visual_preset, scenarioPreset),
       theme: resolveTheme(data?.theme || getWeddingTemplate(template).theme || invitation.value?.theme)
     }
   }
@@ -418,6 +452,7 @@ export const useWeddingStore = defineStore('wedding', () => {
     latestBlessings,
     featuredPhotos,
     activeTemplate,
+    activeVisualPreset,
     templateClass,
     features,
     showCountdown,

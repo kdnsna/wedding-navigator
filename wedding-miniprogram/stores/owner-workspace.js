@@ -19,6 +19,12 @@ export const useOwnerWorkspaceStore = defineStore('ownerWorkspace', () => {
 
   function setWorkspaces(items = []) {
     workspaces.value = Array.isArray(items) ? items : []
+    if (
+      activeWeddingId.value &&
+      !workspaces.value.some(item => String(item?.weddingId || '') === activeWeddingId.value)
+    ) {
+      setActiveWedding(workspaces.value[0]?.weddingId || '')
+    }
   }
 
   function loadFromStorage(ownerVerified = false) {

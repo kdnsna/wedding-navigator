@@ -25,17 +25,25 @@
     </view>
 
     <!-- 时间轴 -->
-    <view class="role-filter" v-if="isTimelineEnabled && roleFilters.length > 1">
-      <text
-        class="role-pill"
-        v-for="role in roleFilters"
-        :key="role.id"
-        :class="{ active: activeRole === role.id }"
-        @click="activeRole = role.id"
-      >
-        {{ role.name }}
-      </text>
-    </view>
+    <scroll-view
+      class="role-filter"
+      scroll-x
+      enhanced
+      :show-scrollbar="false"
+      v-if="isTimelineEnabled && roleFilters.length > 1"
+    >
+      <view class="role-filter-track">
+        <text
+          class="role-pill"
+          v-for="role in roleFilters"
+          :key="role.id"
+          :class="{ active: activeRole === role.id }"
+          @click="activeRole = role.id"
+        >
+          {{ role.name }}
+        </text>
+      </view>
+    </scroll-view>
 
     <view class="timeline" v-if="isTimelineEnabled && visibleEvents.length > 0">
       <view
@@ -98,7 +106,7 @@
 
 <script setup>
 import { computed, ref } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
+import { onLoad, onShow } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useGuestInvitationStore } from '@/stores/guest-invitation.js'
 import { fetchGuestInvitation } from '@/composables/useCloud.js'
@@ -238,6 +246,13 @@ async function loadTimeline(force = false) {
     loading.value = false
   }
 }
+
+onLoad((options) => {
+  const weddingId = String(options?.id || '')
+  if (!weddingId) return
+  const cached = guestStore.hydrate(weddingId)
+  if (cached) store.setWeddingData(cached, weddingId)
+})
 
 onShow(() => loadTimeline(false))
 </script>
@@ -407,13 +422,20 @@ onShow(() => loadTimeline(false))
   padding: 0 $page-gutter;
 }
 .role-filter {
-  display: flex;
+  width: 100%;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+.role-filter-track {
+  display: inline-flex;
+  min-width: 100%;
   gap: 12rpx;
   padding: 0 80rpx 32rpx $page-gutter;
-  overflow-x: auto;
+  box-sizing: border-box;
 }
 .role-filter::-webkit-scrollbar { display: none; }
 .role-pill {
+  flex-shrink: 0;
   min-height: $control-height-sm;
   padding: 0 28rpx;
   border-radius: $radius-full;
@@ -508,6 +530,7 @@ onShow(() => loadTimeline(false))
 
 .timeline-content {
   flex: 1;
+  min-width: 0;
   padding-top: 40rpx;
 }
 .content-header {
@@ -518,6 +541,7 @@ onShow(() => loadTimeline(false))
   margin-bottom: 14rpx;
 }
 .content-title {
+  flex: 1;
   font-size: 32rpx;
   font-weight: 600;
   color: $text-primary;
@@ -550,7 +574,7 @@ onShow(() => loadTimeline(false))
 
 .content-meta {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8rpx;
   margin-top: 10rpx;
 }
@@ -559,8 +583,12 @@ onShow(() => loadTimeline(false))
   opacity: 0.7;
 }
 .meta-text {
+  flex: 1;
+  min-width: 0;
   font-size: 24rpx;
   color: $text-secondary;
+  line-height: 1.5;
+  word-break: break-word;
   letter-spacing: $tracking-cn-soft;
 }
 .content-notes {

@@ -1,5 +1,5 @@
 <template>
-  <view class="page" :class="preview.templateClass">
+  <view class="page" :class="previewClass">
     <view class="preview-header">
       <image class="back-btn" src="/static/visuals/icon-back.svg" mode="aspectFit" @click="goBack" />
       <view class="header-main">
@@ -32,7 +32,7 @@
             <image class="mock-cover" :src="previewHeroImage" mode="aspectFill" />
             <view class="mock-hero-overlay" />
             <view class="mock-hero-text">
-              <text class="mock-kicker">THE WEDDING OF</text>
+              <text class="mock-kicker">{{ selectedVisual.kicker }}</text>
               <text class="mock-names">{{ preview.couple.groom }} & {{ preview.couple.bride }}</text>
               <text class="mock-date">{{ formatDate(preview.date) }}</text>
             </view>
@@ -239,9 +239,13 @@
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { buildTemplatePreviewData, normalizeTemplateId } from '@/utils/templates.js'
+import { getThemeClass, resolveTheme } from '@/utils/legacy-theme-map.js'
+import { getVisualPreset, getVisualPresetClass, resolveVisualPreset } from '@/utils/visual-presets.js'
 import BottomActionBar from '@/components/ui/BottomActionBar.vue'
 
 const templateId = ref('rose-couture')
+const visualPresetId = ref('cinematic-documentary')
+const themeId = ref('wine')
 const activeTab = ref('home')
 const usingTemplate = ref(false)
 
@@ -256,6 +260,11 @@ const tabs = [
 ]
 
 const preview = computed(() => buildTemplatePreviewData(templateId.value))
+const selectedVisual = computed(() => getVisualPreset(visualPresetId.value, templateId.value))
+const previewClass = computed(() => [
+  getThemeClass(themeId.value),
+  getVisualPresetClass(visualPresetId.value, templateId.value)
+])
 const previewHeroImage = computed(() => preview.value.template.defaultHero || '/static/visuals/default-cover.png')
 
 function formatDate(date) {
@@ -294,12 +303,15 @@ function useTemplate() {
   if (usingTemplate.value) return
   usingTemplate.value = true
   uni.setStorageSync('pending_template_id', templateId.value)
+  uni.setStorageSync('pending_visual_preset_id', visualPresetId.value)
   uni.showToast({ title: '已选择模板', icon: 'success' })
   setTimeout(goBack, 260)
 }
 
 onLoad((options = {}) => {
   templateId.value = normalizeTemplateId(decodeURIComponent(options.id || 'rose-couture'))
+  visualPresetId.value = resolveVisualPreset(decodeURIComponent(options.visual || ''), templateId.value)
+  themeId.value = resolveTheme(decodeURIComponent(options.theme || preview.value.template.theme || 'wine'))
 })
 </script>
 

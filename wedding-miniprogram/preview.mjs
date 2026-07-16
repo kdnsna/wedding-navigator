@@ -8,8 +8,11 @@ const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, 'manifest.json'
 const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'), 'utf8'))
 
 const cliPath = process.env.WECHAT_DEVTOOLS_CLI_PATH || '/Applications/wechatwebdevtools.app/Contents/MacOS/cli'
-const projectPath = process.env.MINIPROGRAM_PROJECT_PATH || path.join(__dirname, 'dist/build/mp-weixin')
 const version = process.env.MINIPROGRAM_VERSION || manifest.versionName || pkg.version || '1.0.0'
+const buildProjectPath = path.join(__dirname, 'dist/build/mp-weixin')
+const externalProjectPath = process.env.MINIPROGRAM_PROJECT_PATH || ''
+const projectPath = externalProjectPath || path.join('/tmp', `wedding-miniprogram-preview-${version}`)
+const usesStagedProject = !externalProjectPath
 const port = process.env.WECHAT_DEVTOOLS_PORT || '12890'
 const qrOutput = process.env.MINIPROGRAM_PREVIEW_QR_OUTPUT || path.join(__dirname, '.release', `preview-${version}.png`)
 const infoOutput = process.env.MINIPROGRAM_PREVIEW_INFO_OUTPUT || path.join(__dirname, '.release', `preview-${version}.json`)
@@ -49,6 +52,12 @@ function syncCloudfunctions() {
   }
 }
 
+function stagePreviewProject() {
+  if (!usesStagedProject) return
+  fs.rmSync(projectPath, { recursive: true, force: true })
+  fs.cpSync(buildProjectPath, projectPath, { recursive: true })
+}
+
 function buildProject() {
   if (skipBuild) return
   console.log('开始构建微信小程序产物...')
@@ -61,6 +70,7 @@ function buildProject() {
 
 function outputContainsCliError(result) {
   const output = `${result.stdout || ''}\n${result.stderr || ''}`
+  if (output.includes('✔ preview')) return false
   return output.includes('[error]') || output.includes('✖')
 }
 
@@ -87,6 +97,8 @@ function detectRunningIdePort(result) {
 }
 
 buildProject()
+assertConfig(fs.existsSync(buildProjectPath), `构建目录不存在：${buildProjectPath}，请先运行 npm run build:mp-weixin`)
+stagePreviewProject()
 assertConfig(fs.existsSync(projectPath), `构建目录不存在：${projectPath}，请先运行 npm run build:mp-weixin`)
 assertConfig(fs.existsSync(path.join(projectPath, 'project.config.json')), `微信项目配置不存在：${path.join(projectPath, 'project.config.json')}`)
 syncCloudfunctions()
@@ -99,9 +111,6 @@ if (runningIdePort && runningIdePort !== port) {
   console.log(`检测到已打开的开发者工具端口 ${runningIdePort}，自动重试...`)
   result = runCommand(cliPath, previewArgs(runningIdePort))
 }
-syncCloudfunctions()
-sleep(settleMs)
-syncCloudfunctions()
 
 if (result.status !== 0 || outputContainsCliError(result)) {
   console.error(`生成预览码失败，退出码：${result.status}`)
@@ -109,6 +118,11 @@ if (result.status !== 0 || outputContainsCliError(result)) {
 }
 assertConfig(fs.existsSync(qrOutput), `预览二维码未生成：${qrOutput}`)
 assertConfig(fs.existsSync(infoOutput), `预览详情文件未生成：${infoOutput}`)
+sleep(settleMs)
+if (usesStagedProject) {
+  runCommand(cliPath, ['close', '--project', projectPath, '--port', port])
+  fs.rmSync(projectPath, { recursive: true, force: true })
+}
 
 console.log(`预览码已生成：${qrOutput}`)
 console.log(`预览详情文件：${infoOutput}`)

@@ -45,6 +45,26 @@
     </view>
 
     <view class="section">
+      <SectionHeader title="视觉叙事" kicker="VISUAL STORY" desc="决定照片构图、相册节奏与分享海报；不会修改原片颜色。" compact />
+      <scroll-view class="visual-scroll" scroll-x enhanced :show-scrollbar="false">
+        <view class="visual-track">
+          <view
+            class="visual-option"
+            v-for="visual in visualOptions"
+            :key="visual.id"
+            :class="[visual.className, { active: form.visualPreset === visual.id, disabled: saving }]"
+            @click="selectVisualPreset(visual)"
+          >
+            <text class="visual-kicker">{{ visual.kicker }}</text>
+            <text class="visual-name">{{ visual.name }}</text>
+            <text class="visual-desc">{{ visual.desc }}</text>
+            <text class="visual-tier">{{ visual.premium ? '高级叙事' : '免费基础' }}</text>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+
+    <view class="section">
       <SectionHeader title="情绪色" kicker="INK COLOR" desc="酒红免费；朱砂、黛蓝、松绿为高级色。" compact />
       <view class="mood-grid">
         <view
@@ -238,6 +258,7 @@ import { generateAiSuggestions, updateWedding } from '@/composables/useCloud.js'
 import { WEDDING_SCENARIOS, getWeddingScenario, getWeddingTemplate, normalizeTemplateId } from '@/utils/templates.js'
 import { buildThemeCommercialState, canUseTheme } from '@/utils/commercial.js'
 import { getThemeTokens, isPremiumTheme, resolveTheme } from '@/utils/legacy-theme-map.js'
+import { VISUAL_PRESETS, getVisualPreset, resolveVisualPreset } from '@/utils/visual-presets.js'
 import PageShell from '@/components/ui/PageShell.vue'
 import SectionHeader from '@/components/ui/SectionHeader.vue'
 import BottomActionBar from '@/components/ui/BottomActionBar.vue'
@@ -248,6 +269,7 @@ const userStore = useUserStore()
 const saving = ref(false)
 
 const templates = WEDDING_SCENARIOS
+const visualOptions = VISUAL_PRESETS
 const activeTemplate = computed(() => getWeddingScenario(form.value.scenarioPreset))
 const activeTemplateHint = computed(() => '场景方案只会替换你主动套用的文案，不会改变当前情绪色。')
 const nativeAccentColor = computed(() => getThemeTokens(form.value.theme).accent)
@@ -285,6 +307,7 @@ const musicPresets = [
 
 const form = ref({
   scenarioPreset: 'rose-couture',
+  visualPreset: 'cinematic-documentary',
   theme: 'wine',
   content: '',
   groomName: '',
@@ -311,6 +334,7 @@ function loadFromStore() {
   const wedding = store.wedding || {}
   form.value = {
     scenarioPreset: normalizeTemplateId(inv.scenario_preset || inv.template),
+    visualPreset: resolveVisualPreset(inv.visual_preset, inv.scenario_preset || inv.template),
     theme: resolveTheme(inv.theme || wedding.basic_info?.theme),
     content: inv.content?.main_text || '',
     groomName: inv.couple?.groom?.name || '',
@@ -342,6 +366,15 @@ function selectMusic(music) {
 function selectTemplate(tpl) {
   if (guardInvitationSaving()) return
   form.value.scenarioPreset = normalizeTemplateId(tpl.id)
+}
+
+function selectVisualPreset(visual) {
+  if (guardInvitationSaving()) return
+  form.value.visualPreset = visual.id
+  applyLocalPreviewData()
+  if (visual.premium && !userStore.entitlements?.premium_templates) {
+    uni.showToast({ title: '高级视觉体验中', icon: 'none' })
+  }
 }
 
 function selectTheme(mood) {
@@ -414,12 +447,21 @@ function buildAiInvitationContext() {
 function buildInvitationData() {
   const commercial = buildThemeCommercialState(form.value.theme, userStore.entitlements)
   const theme = resolveTheme(form.value.theme)
+  const visual = getVisualPreset(form.value.visualPreset, form.value.scenarioPreset)
   return {
     scenario_preset: form.value.scenarioPreset,
     template: form.value.scenarioPreset,
+    visual_preset: visual.id,
     theme,
-    commercial,
+    commercial: {
+      ...commercial,
+      visual_preset: visual.id,
+      visual_tier: visual.premium ? 'premium' : 'free',
+      visual_entitlement: visual.premium ? 'premium_templates' : '',
+      visual_access: !visual.premium || userStore.entitlements?.premium_templates ? 'included' : 'preview'
+    },
     photo_treatment: form.value.photoTreatment || 'original',
+    album_layout: visual.albumLayout,
     content: {
       title: '婚礼请柬',
       main_text: form.value.content,
@@ -466,6 +508,7 @@ function buildWeddingData() {
       plan: userStore.plan || store.wedding?.commercial?.plan || 'free',
       scenario_preset: form.value.scenarioPreset,
       template_id: form.value.scenarioPreset,
+      visual_preset: form.value.visualPreset,
       theme_key: theme,
       ...buildThemeCommercialState(theme, userStore.entitlements)
     }
@@ -558,7 +601,7 @@ function previewInvitation() {
 function previewTemplate() {
   if (guardInvitationSaving()) return
   uni.navigateTo({
-    url: `/pages-owner/template/preview?id=${encodeURIComponent(form.value.scenarioPreset)}&theme=${encodeURIComponent(form.value.theme)}`,
+    url: `/pages-owner/template/preview?id=${encodeURIComponent(form.value.scenarioPreset)}&visual=${encodeURIComponent(form.value.visualPreset)}&theme=${encodeURIComponent(form.value.theme)}`,
     fail: (err) => {
       console.warn('打开模板预览失败:', err)
       showError('模板预览打开失败，请稍后重试')
@@ -636,17 +679,21 @@ function isValidTimeString(value) {
 
 function applyPendingTemplate() {
   const pendingTemplateId = uni.getStorageSync('pending_template_id')
-  if (!pendingTemplateId) return
-  uni.removeStorageSync('pending_template_id')
-  const tpl = getWeddingTemplate(pendingTemplateId)
-  form.value.scenarioPreset = normalizeTemplateId(tpl.id)
-  if (!form.value.content) {
-    form.value.content = tpl.preset?.mainText || ''
+  const pendingVisualPresetId = uni.getStorageSync('pending_visual_preset_id')
+  if (pendingTemplateId) {
+    uni.removeStorageSync('pending_template_id')
+    const tpl = getWeddingTemplate(pendingTemplateId)
+    form.value.scenarioPreset = normalizeTemplateId(tpl.id)
+    form.value.visualPreset = resolveVisualPreset(pendingVisualPresetId, tpl.id)
+    if (!form.value.content) {
+      form.value.content = tpl.preset?.mainText || ''
+    }
+    if (!form.value.venueName) {
+      form.value.venueName = tpl.preset?.venueName || ''
+    }
+    applyLocalPreviewData()
   }
-  if (!form.value.venueName) {
-    form.value.venueName = tpl.preset?.venueName || ''
-  }
-  applyLocalPreviewData()
+  if (pendingVisualPresetId) uni.removeStorageSync('pending_visual_preset_id')
 }
 
 onShow(async () => {
@@ -676,6 +723,58 @@ onShow(async () => {
 .section :deep(.ai-panel) {
   margin-left: 0;
   margin-right: 0;
+}
+.visual-scroll {
+  width: 100%;
+  white-space: nowrap;
+}
+.visual-track {
+  display: inline-flex;
+  align-items: stretch;
+  gap: $sp-3;
+  padding: 0 $page-gutter $sp-2 0;
+}
+.visual-option {
+  width: 360rpx;
+  min-height: 244rpx;
+  padding: $sp-3;
+  box-sizing: border-box;
+  white-space: normal;
+  background: $paper-card;
+  border: 1rpx solid $line;
+  border-top: 5rpx solid $line;
+}
+.visual-option.active {
+  border-color: var(--theme-accent, var(--accent));
+  background: var(--theme-accent-soft, var(--accent-soft));
+}
+.visual-kicker,
+.visual-name,
+.visual-desc,
+.visual-tier {
+  display: block;
+}
+.visual-kicker {
+  color: $gold;
+  font-size: $fs-cap;
+  letter-spacing: $ls-wide;
+}
+.visual-name {
+  margin-top: $sp-2;
+  color: $ink;
+  font-family: $font-serif;
+  font-size: $fs-body;
+}
+.visual-desc {
+  margin-top: $sp-1;
+  color: $ink-soft;
+  font-size: $fs-note;
+  line-height: 1.5;
+}
+.visual-tier {
+  margin-top: $sp-2;
+  color: $gold-ink;
+  font-size: $fs-note;
 }
 .ai-tone-row,
 .photo-tone-row {

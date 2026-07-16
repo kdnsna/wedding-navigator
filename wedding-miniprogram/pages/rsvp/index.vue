@@ -593,7 +593,9 @@ async function loadWedding(force = false) {
     loadError.value = '请从新人寄来的邀请进入，回执才会铺开。'
     return
   }
-  if (guestStore.canRenderInvitation && store.guests?.guests?.length && !force) return
+  // 首页负责快照的后台刷新。RSVP 命中快照时直接使用，避免切换 tab
+  // 重复请求，并防止弱网刷新打断宾客正在填写的长表单。
+  if (guestStore.canRenderInvitation && !force) return
   loading.value = true
   try {
     await fetchGuestInvitation(guestStore.invitationId)
@@ -723,10 +725,8 @@ async function reloadWedding() {
   display: block;
   font-size: 34rpx;
   font-weight: 600;
-  line-height: 1.3;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  line-height: 1.4;
+  word-break: break-word;
   letter-spacing: $tracking-cn-soft;
 }
 .brief-grid {
@@ -754,9 +754,7 @@ async function reloadWedding() {
   font-size: 26rpx;
   color: $text-primary;
   line-height: 1.4;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  word-break: break-word;
 }
 
 /* 表单 */

@@ -54,6 +54,12 @@ ${previewLine}
 | 四幕向导一气呵成 | 待测 | ${evidenceDir}/wizard-flow.mp4 | 具名 -> 择地 -> 选照 -> 定色 |
 | 第三幕选照立即看到装裱预览 | 待测 | ${evidenceDir}/wizard-photo-preview.png | 最多九张 |
 | 主人端高级色权益状态生效 | 待测 | ${evidenceDir}/premium-entitlement.png | cinnabar/indigo/pine |
+| 五种视觉叙事使用同一组真实照片均正确成书 | 待测 | ${evidenceDir}/visual-stories.mp4 | 电影/东方/花园/高定/夜宴 |
+| 照片导演显示清晰度、构图建议和扉页焦点 | 待测 | ${evidenceDir}/photo-director.mp4 | 不修改原图 |
+| 好友分享卡和朋友圈海报为专属构图 | 待测 | ${evidenceDir}/share-card.png; ${evidenceDir}/share-poster.png | 不得截取更多页 |
+| 主人工作区失效后自动切换到仍可用婚书 | 待测 | ${evidenceDir}/owner-workspace-recovery.mp4 | 不得继续显示或操作已删除婚书 |
+| 赴约页可滑到全部字段且底部操作不遮挡 | 待测 | ${evidenceDir}/rsvp-scroll.mp4 | 含大字体和安全区 |
+| 长姓名、长场地和横竖照片无重叠截断 | 待测 | ${evidenceDir}/long-content.mp4 | iOS/Android 各检查一次 |
 | 不知情朋友第一反应是请柬/邀请函 | 待测 |  | 记录原话 |
 
 ## 朋友反馈原话

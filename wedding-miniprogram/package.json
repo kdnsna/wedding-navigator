@@ -7,7 +7,8 @@
     "node": "20.x"
   },
   "scripts": {
-    "check:release": "node scripts/check-v2-foundation.js && node scripts/check-v2-acceptance.js --automatic && node scripts/check-release-readiness.js && node scripts/check-ui-polish.js && node scripts/check-weather-forecast.js",
+    "check:release": "node scripts/test-owner-workspace-recovery.js && node scripts/check-v2-foundation.js && node scripts/check-v2-acceptance.js --automatic && node scripts/check-release-readiness.js && node scripts/check-ui-polish.js && node scripts/check-weather-forecast.js",
+    "test:owner-workspace": "node scripts/test-owner-workspace-recovery.js",
     "check:v2-foundation": "node scripts/check-v2-foundation.js",
     "check:v2-acceptance": "node scripts/check-v2-acceptance.js",
     "check:ui-polish": "node scripts/check-ui-polish.js",

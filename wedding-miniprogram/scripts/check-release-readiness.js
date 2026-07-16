@@ -123,6 +123,25 @@ function assertNoDuplicateSuffixedDirs(label, names) {
   assert(!duplicateSuffixedNames.length, `${label} must not contain duplicate-suffixed directories: ${duplicateSuffixedNames.join(', ')}`)
 }
 
+function assertNoDuplicateBuildEntries() {
+  const buildRoot = path.join(root, 'dist/build/mp-weixin')
+  if (!fs.existsSync(buildRoot)) return
+  const duplicates = []
+  const pending = [buildRoot]
+  while (pending.length) {
+    const dir = pending.pop()
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const abs = path.join(dir, entry.name)
+      if (/\s+\d+(?=\.|$)/.test(entry.name)) {
+        duplicates.push(path.relative(buildRoot, abs))
+      }
+      if (entry.isDirectory()) pending.push(abs)
+    }
+  }
+  duplicates.sort()
+  assert(!duplicates.length, `dist/build/mp-weixin must not contain duplicate-suffixed entries: ${duplicates.join(', ')}`)
+}
+
 function assertCloudFunctionSet(label, actualNames, expectedNames) {
   assertNoDuplicateSuffixedDirs(label, actualNames)
 
@@ -150,9 +169,22 @@ function checkRsvpContract() {
 
 function checkOwnerGuard() {
   const source = read('composables/useOwnerGuard.js')
-  assert(source.includes('weddingId'), 'useOwnerGuard must check current weddingId')
+  const workspaceStore = read('stores/owner-workspace.js')
+  const managePage = read('pages-owner/manage/index.vue')
+  const profilePage = read('pages-owner/profile/index.vue')
+  assert(source.includes('ownerActiveWeddingId'), 'useOwnerGuard must check the isolated owner workspace id')
   assert(source.includes('ownerVerified'), 'useOwnerGuard must check owner verification state')
-  assert(source.includes('navigateTo'), 'useOwnerGuard must redirect users without owner access')
+  assert(source.includes('syncWorkspaceProfile'), 'useOwnerGuard must synchronize the authoritative workspace list')
+  assert(source.includes('recoverUnavailableWorkspace'), 'useOwnerGuard must recover from deleted or unauthorized active weddings')
+  assert(source.includes('forceWorkspaceSync'), 'useOwnerGuard must support an explicit workspace refresh')
+  assert(source.includes('reLaunch'), 'useOwnerGuard must redirect users without a usable owner workspace')
+  assert(workspaceStore.includes('workspaces.value.some'), 'owner workspace store must reconcile stale active ids')
+  assert(managePage.includes('workspaceReady'), 'owner desk must hide actions until the active wedding is verified')
+  assert(managePage.includes('forceWorkspaceSync: force'), 'owner desk retry must force workspace reconciliation')
+  assert(profilePage.includes('allowNoWedding: true'), 'account page must remain available when the owner has no active wedding')
+  assert(profilePage.includes('selectWorkspace(workspace)'), 'account page must let owners switch to another valid wedding workspace')
+  assert(profilePage.includes('setOwnerActiveWeddingId(weddingId)'), 'workspace selection must update the isolated owner active id')
+  assertIncludes('package.json', 'test:owner-workspace', 'stale workspace recovery must have an executable regression test')
 }
 
 function checkPrivacyAuthorizationFlow() {
@@ -177,6 +209,8 @@ function checkPrivacyAuthorizationFlow() {
   assert(wizard.includes("from '@/utils/albumPicker.js'"), 'creation wizard must use the shared privacy-safe image picker')
   assert(guide.includes('收集你选择的位置信息'), 'guide editor must identify the exact WeChat privacy declaration required by chooseLocation')
   assert(privacyPage.includes('不读取宾客当前位置'), 'privacy page must explain that guest navigation does not collect current location')
+  assert(privacyPage.includes('相册（仅写入）权限'), 'privacy page must identify the write-only album permission used by poster saving')
+  assert(privacyPage.includes('主动点击“保存到相册”'), 'privacy page must tie write-only album access to the explicit poster save action')
   assert(!app.includes('onNeedPrivacyAuthorization'), 'App.vue must not intercept WeChat privacy authorization without a native agreePrivacyAuthorization button')
   assert(!app.includes('checkPrivacySetting()'), 'App.vue must not interrupt every launch with a non-authorizing privacy modal')
 }
@@ -188,6 +222,7 @@ function checkReleaseDiagnosticsTruthfulness() {
   assert(source.includes("key: 'platform-privacy'"), 'release diagnostics must track WeChat platform privacy separately')
   assert(source.includes('收集你选中的照片或视频信息'), 'release diagnostics must name the exact WeChat image privacy declaration')
   assert(source.includes('收集你选择的位置信息'), 'release diagnostics must name the exact WeChat location picker privacy declaration')
+  assert(source.includes('使用你的相册（仅写入）'), 'release diagnostics must name the exact WeChat write-only album declaration')
   assert(source.includes("key: 'guest-rules'"), 'release diagnostics must keep guest data rules separate from platform privacy')
   assert(source.includes('ready: blockers === 0 && manual === 0'), 'release diagnostics must not claim ready while manual checks remain')
   assert(page.includes('summaryTitle'), 'diagnostics page must derive a truthful release state title')
@@ -282,6 +317,7 @@ function checkCloudFunctionDeployConfig() {
 }
 
 function checkBuildCloudfunctionsOutputIfPresent() {
+  assertNoDuplicateBuildEntries()
   const actualNames = listBuildCloudFunctionDirs()
   if (!actualNames) return
 
@@ -374,7 +410,9 @@ function checkTemplateSystem() {
   assertIncludes('pages-owner/wizard/index.vue', '@include photo-hero-scrim', 'wizard hero preview must show the paper scrim')
   assertIncludes('pages-owner/wizard/index.vue', 'persistWizardPhotos', 'wizard must persist selected photos after creation')
   assertIncludes('pages-owner/wizard/index.vue', "updateWedding(weddingId, 'albums'", 'wizard must write uploaded photos into albums')
-  assertIncludes('pages-owner/wizard/index.vue', 'DEFAULT_SCENARIO_ID', 'wizard must keep scenario content independent from mood colors')
+  assertIncludes('pages-owner/wizard/index.vue', 'scenario_preset: tpl.id', 'wizard must persist scenario content independently')
+  assertIncludes('pages-owner/wizard/index.vue', 'visual_preset: resolveVisualPreset', 'wizard must persist visual storytelling independently')
+  assertIncludes('pages-owner/wizard/index.vue', 'theme,', 'wizard must persist mood color independently')
   assertIncludes('pages-owner/wizard/index.vue', 'canUseTheme', 'wizard mood switching must check theme entitlements')
   assertIncludes('pages-owner/wizard/index.vue', 'getThemeTokens', 'wizard native mood swatches must use resolved theme tokens')
   assertIncludes('pages-owner/invitation/edit.vue', 'WEDDING_SCENARIOS', 'invitation editor must use content-only scenario definitions')
@@ -385,7 +423,7 @@ function checkTemplateSystem() {
   assertIncludes('pages-owner/template/preview.vue', 'previewHeroImage', 'template preview page must render the template hero image')
   assertIncludes('pages-owner/template/preview.vue', 'RSVP CARD', 'template preview page must show RSVP mock state')
   assertIncludes('pages-owner/template/preview.vue', '祝福墙', 'template preview page must show blessing wall mock state')
-  assertIncludes('pages-owner/template/preview.vue', 'THE WEDDING OF', 'template preview home must match the guest invitation cover')
+  assertIncludes('pages-owner/template/preview.vue', 'selectedVisual.kicker', 'template preview home must match the selected visual story cover')
   assertIncludes('pages-owner/template/preview.vue', 'DETAILS', 'template preview home must show the details chapter instead of dashboard widgets')
   assert(!read('pages-owner/template/preview.vue').includes('GUEST PACK'), 'pages-owner/template/preview.vue: template preview home must not show the old guest action dashboard')
   assertIncludes('pages-owner/invitation/edit.vue', 'applyTemplatePreset', 'invitation editor must expose built-in template preset copy')
@@ -413,7 +451,12 @@ function checkTemplateSystem() {
   assertIncludes('pages-owner/album/manage.vue', 'deleteUploadedPhotos', 'album manager must clean uploaded files after failed album saves')
   assertIncludes('pages-owner/album/manage.vue', 'saveAlbumData', 'album manager must await cloud persistence before showing success')
   assertIncludes('composables/useCloud.js', "getCloudApi('uploadFile')", 'uploadFile must use the shared CloudBase API resolver')
-  assertIncludes('composables/useCloud.js', "targets.push({ name: 'wx.cloud'", 'cloud init must initialize native wx.cloud when available')
+  assertIncludes('composables/useCloud.js', "const target = wxCloud?.init", 'cloud init must prefer native wx.cloud when available')
+  assertIncludes('composables/useCloud.js', 'Promise.resolve(pending).catch', 'cloud init must observe asynchronous SDK failures')
+  assertIncludes('composables/useCloud.js', 'cloudApi.callFunction({ name, data })', 'cloud functions must use the SDK Promise form')
+  assert(!read('composables/useCloud.js').includes('success: res =>'), 'cloud function calls must not mix callbacks with the SDK Promise')
+  assert(!read('App.vue').includes('initCloud()'), 'App.vue: cloud initialization must stay lazy until the first real cloud operation')
+  assertIncludes('App.vue', 'if (!isDevToolsRuntime()) checkUpdate()', 'App.vue: DevTools must not start a pointless update-manager request')
   assertIncludes('composables/useCloud.js', 'deleteFiles', 'useCloud must expose cloud storage cleanup for failed album transactions')
   assertIncludes('utils/albumPicker.js', 'requirePrivacyAuthorize', 'shared album picker must trigger WeChat privacy authorization only when uploading')
   assertIncludes('pages/guide/index.vue', 'snow', 'guide weather icons must handle weather types returned by getWeather')

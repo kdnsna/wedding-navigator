@@ -8,18 +8,28 @@
         :class="[{ default: isDefaultCover }, heroPhotoTreatmentClass]"
         :src="coverImage"
         :mode="coverImageMode"
+        :style="heroImageStyle"
       />
       <view class="lux-hero-overlay" :class="{ default: isLegacyDefaultCover }" />
       <text class="lux-xi-watermark">囍</text>
 
       <view class="lux-hero-copy">
-        <text class="lux-hero-kicker">THE WEDDING OF</text>
+        <text class="lux-hero-kicker">{{ heroKicker }}</text>
         <view class="lux-hero-names">
-          <text>{{ groomName }}</text>
+          <text class="lux-hero-name groom">{{ groomName }}</text>
           <text class="lux-hero-amp">&amp;</text>
-          <text>{{ brideName }}</text>
+          <text class="lux-hero-name bride">{{ brideName }}</text>
         </view>
         <text class="lux-hero-sub" v-if="formattedWeddingDate">{{ formattedWeddingDate }}</text>
+      </view>
+    </view>
+
+    <view class="lux-story-beat" v-if="storyBeatPhoto">
+      <image class="lux-story-beat-image" :src="storyBeatPhoto.url" mode="aspectFill" lazy-load />
+      <view class="lux-story-beat-overlay" />
+      <view class="lux-story-beat-copy">
+        <text class="lux-story-beat-kicker">{{ activeVisualPreset.kicker }}</text>
+        <text class="lux-story-beat-line">{{ storyBeatLine }}</text>
       </view>
     </view>
 
@@ -87,7 +97,7 @@
       </view>
     </view>
 
-    <view class="lux-album-section" v-if="featuredPhotos.length">
+    <view class="lux-album-section" :class="`layout-${activeVisualPreset.albumLayout}`" v-if="featuredPhotos.length">
       <SectionHeader title="银盐相册" kicker="PHOTOGRAPHS" desc="一些被认真留下的瞬间" />
       <scroll-view class="lux-photo-strip" scroll-x enhanced :show-scrollbar="false">
         <view class="lux-photo-mount" v-for="(photo, index) in featuredPhotos" :key="photo.id || photo.url">
@@ -123,6 +133,7 @@
         mode="aspectFit"
       />
     </view>
+    <canvas canvas-id="shareCardCanvas" id="shareCardCanvas" class="share-card-canvas" />
     </template>
 
     <view class="letter-state" v-else>
@@ -140,23 +151,26 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, nextTick, getCurrentInstance, onMounted, onUnmounted } from 'vue'
 import { onLoad, onShareAppMessage, onShareTimeline, onShow } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useGuestInvitationStore } from '@/stores/guest-invitation.js'
 import { useUserStore } from '@/stores/user.js'
 import { fetchGuestInvitation, recordShare, recordView } from '@/composables/useCloud.js'
 import { formatDate } from '@/utils/index.js'
-import { DEFAULT_SHARE_IMAGE, prepareShareImage } from '@/utils/shareCard.js'
+import { DEFAULT_SHARE_IMAGE, generateWeddingShareCard } from '@/utils/shareCard.js'
+import { focusPositionValue } from '@/utils/photoDirector.js'
 import SectionHeader from '@/components/ui/SectionHeader.vue'
 
 const store = useWeddingStore()
 const guestStore = useGuestInvitationStore()
 const userStore = useUserStore()
+const instance = getCurrentInstance()
 
 let countdownTimer = null
 const countdown = ref(null)
 const shareImageUrl = ref(DEFAULT_SHARE_IMAGE)
+const shareCardSignature = ref('')
 
 // 背景音乐
 let audioCtx = null
@@ -210,6 +224,13 @@ const coverImage = computed(() => {
 const isLegacyDefaultCover = computed(() => coverImage.value === '/static/visuals/default-cover.png')
 const isDefaultCover = computed(() => isLegacyDefaultCover.value)
 const coverImageMode = computed(() => 'aspectFill')
+const heroImageStyle = computed(() => ({
+  objectPosition: focusPositionValue(
+    store.album?.photos?.find(photo => photo.type === 'cover')?.focus_position ||
+    store.invitation?.cover_focus ||
+    store.activeVisualPreset?.coverFocus
+  )
+}))
 const photoTreatment = computed(() => store.invitation?.photo_treatment || 'original')
 
 const groomName = computed(() => store.invitation?.couple?.groom?.name || '')
@@ -219,6 +240,8 @@ const weddingTime = computed(() => store.weddingTime)
 const venueName = computed(() => store.venueName)
 const venueAddress = computed(() => store.invitation?.wedding?.venue_address || '')
 const templateClass = computed(() => store.templateClass)
+const activeVisualPreset = computed(() => store.activeVisualPreset)
+const heroKicker = computed(() => activeVisualPreset.value?.kicker || 'THE WEDDING OF')
 const showCountdown = computed(() => store.showCountdown)
 const isRsvpEnabled = computed(() => store.isRsvpEnabled)
 const primaryVenue = computed(() => store.primaryVenue || { name: venueName.value || '婚礼场地', address: venueAddress.value })
@@ -242,6 +265,11 @@ const hasSubmittedRsvp = computed(() => {
   return status !== 'pending'
 })
 const featuredPhotos = computed(() => (store.featuredPhotos || []).filter(photo => photo?.url))
+const storyBeatPhoto = computed(() => {
+  const photos = (store.album?.photos || []).filter(photo => photo?.url && photo.url !== coverImage.value)
+  return photos[0] || null
+})
+const storyBeatLine = computed(() => store.invitation?.content?.sub_text || '把相爱的日常，郑重写进这一天。')
 const nextTimelineEvent = computed(() => store.isTimelineEnabled ? store.nextTimelineEvent : null)
 const hasOwnerWorkspace = computed(() => Boolean(userStore.ownerActiveWeddingId))
 const ownerEntryLabel = computed(() => hasOwnerWorkspace.value ? '回到我的书案' : '开始制作婚书')
@@ -378,7 +406,7 @@ function decodeSceneValue(value) {
 
 function trackShare() {
   if (guestStore.isReady && guestStore.invitationId) {
-    recordShare(guestStore.invitationId).catch((err) => {
+    recordShare(guestStore.invitationId, activeVisualPreset.value?.id).catch((err) => {
       console.warn('首页分享记录失败:', err)
     })
   }
@@ -432,17 +460,32 @@ async function loadGuestInvitation(weddingId = guestStore.invitationId) {
     updateCountdown()
     startCountdownTimer()
     syncShareMenu()
-    recordView(weddingId).catch((err) => console.warn('访问记录失败:', err))
+    recordView(weddingId, '', activeVisualPreset.value?.id).catch((err) => console.warn('访问记录失败:', err))
   } catch (err) {
     console.warn('宾客邀请加载失败:', err)
     syncShareMenu()
   }
 }
 
-function refreshShareImage() {
-  prepareShareImage(store).then((path) => {
-    shareImageUrl.value = path
-  })
+async function refreshShareImage() {
+  const signature = [
+    guestStore.invitationId,
+    coverImage.value,
+    activeVisualPreset.value?.id,
+    store.invitation?.theme,
+    groomName.value,
+    brideName.value,
+    weddingDate.value
+  ].join('|')
+  if (signature && signature === shareCardSignature.value && shareImageUrl.value !== DEFAULT_SHARE_IMAGE) return
+  try {
+    await nextTick()
+    shareImageUrl.value = await generateWeddingShareCard({ instance, store })
+    shareCardSignature.value = signature
+  } catch (err) {
+    console.warn('婚礼分享卡生成失败:', err)
+    shareImageUrl.value = DEFAULT_SHARE_IMAGE
+  }
 }
 
 function retryInvitation() {
@@ -599,7 +642,6 @@ onUnmounted(() => {
 .lux-hero-names {
   display: flex;
   align-items: baseline;
-  flex-wrap: wrap;
   gap: 16rpx;
   max-width: 640rpx;
   color: var(--theme-ink, $text-primary);
@@ -610,7 +652,13 @@ onUnmounted(() => {
   letter-spacing: 0;
   word-break: break-word;
 }
+.lux-hero-name {
+  min-width: 0;
+  max-width: calc((100% - 80rpx) / 2);
+  overflow-wrap: anywhere;
+}
 .lux-hero-amp {
+  flex-shrink: 0;
   color: $gold;
   font-family: $font-num;
   font-size: 48rpx;
@@ -623,6 +671,86 @@ onUnmounted(() => {
   font-family: $font-num;
   font-size: $fs-note;
   line-height: 1.45;
+}
+.lux-story-beat {
+  position: relative;
+  height: 720rpx;
+  margin: $sp-7 $page-gutter 0;
+  overflow: hidden;
+  background: $paper-deep;
+}
+.lux-story-beat-image,
+.lux-story-beat-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.lux-story-beat-overlay {
+  background: linear-gradient(to bottom, rgba(42, 35, 29, 0.02) 34%, rgba(42, 35, 29, 0.72) 100%);
+}
+.lux-story-beat-copy {
+  position: absolute;
+  z-index: 1;
+  left: $sp-4;
+  right: $sp-4;
+  bottom: $sp-4;
+}
+.lux-story-beat-kicker,
+.lux-story-beat-line {
+  display: block;
+  color: $ink-inverse;
+}
+.lux-story-beat-kicker {
+  color: $gold;
+  font-family: $font-num;
+  font-size: $fs-cap;
+  letter-spacing: $ls-wide;
+}
+.lux-story-beat-line {
+  margin-top: $sp-2;
+  font-family: $font-serif;
+  font-size: $fs-title;
+  line-height: 1.5;
+}
+.visual-heritage .lux-hero-copy {
+  text-align: center;
+}
+.visual-heritage .lux-story-beat {
+  padding: $photo-border;
+  height: 780rpx;
+  background: $photo-matte;
+  border: 1rpx solid $line;
+  box-sizing: border-box;
+}
+.visual-garden .lux-story-beat {
+  padding: $photo-border;
+  background: $photo-matte;
+  border: 1rpx solid $line;
+  box-shadow: $shadow-card;
+}
+.visual-editorial .lux-hero-copy {
+  left: 42%;
+  text-align: right;
+}
+.visual-editorial .lux-hero-names {
+  justify-content: flex-end;
+}
+.visual-editorial .lux-story-beat {
+  margin-left: 0;
+  margin-right: $page-gutter;
+  height: 660rpx;
+}
+.visual-night .lux-story-beat-overlay {
+  background: linear-gradient(to bottom, rgba(20, 24, 28, 0.08) 20%, rgba(20, 24, 28, 0.88) 100%);
+}
+.share-card-canvas {
+  position: fixed;
+  left: -9999px;
+  top: -9999px;
+  width: 500px;
+  height: 400px;
+  pointer-events: none;
 }
 .lux-invite-section,
 .lux-detail-section,
@@ -691,9 +819,8 @@ onUnmounted(() => {
   color: $text-primary;
   font-size: 34rpx;
   font-weight: 600;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  line-height: 1.4;
+  word-break: break-word;
 }
 .lux-couple-amp {
   width: 52rpx;

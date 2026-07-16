@@ -5,12 +5,13 @@
     desc="精选影像 · 银盐相册"
     :theme-class="templateClass"
   >
-    <scroll-view class="album-container" scroll-x enhanced :show-scrollbar="false" v-if="photos.length > 0">
+    <scroll-view class="album-container" :class="`layout-${activeVisualPreset.albumLayout}`" scroll-x enhanced :show-scrollbar="false" v-if="photos.length > 0">
       <view class="album-track">
         <view
           class="photo-item"
           v-for="(photo, index) in photos"
           :key="photo.id || photo.url"
+          :class="[`photo-index-${index % 3}`, { cover: photo.type === 'cover' }]"
           @click="previewImage(index)"
           :style="{ animationDelay: `${index * 0.05}s` }"
         >
@@ -47,7 +48,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
+import { onLoad, onShow } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useGuestInvitationStore } from '@/stores/guest-invitation.js'
 import { fetchGuestInvitation } from '@/composables/useCloud.js'
@@ -62,6 +63,7 @@ const MAX_ALBUM_PHOTOS = 9
 
 const photos = computed(() => (store.album?.photos || []).slice(0, MAX_ALBUM_PHOTOS))
 const templateClass = computed(() => store.templateClass)
+const activeVisualPreset = computed(() => store.activeVisualPreset)
 const photoTreatment = computed(() => store.invitation?.photo_treatment || 'original')
 const emptyText = computed(() => {
   if (!guestStore.invitationId) return '这封信还没有抵达'
@@ -143,6 +145,13 @@ async function loadAlbum(force = false) {
   }
 }
 
+onLoad((options) => {
+  const weddingId = String(options?.id || '')
+  if (!weddingId) return
+  const cached = guestStore.hydrate(weddingId)
+  if (cached) store.setWeddingData(cached, weddingId)
+})
+
 onShow(() => loadAlbum(false))
 </script>
 
@@ -216,6 +225,46 @@ onShow(() => loadAlbum(false))
   align-items: flex-start;
   gap: 24rpx;
   padding: 0 $page-gutter 36rpx;
+}
+.layout-contact-sheet .album-track {
+  display: grid;
+  grid-template-columns: repeat(3, 320rpx);
+  grid-template-rows: repeat(2, auto);
+  grid-auto-flow: column;
+  align-items: start;
+}
+.layout-contact-sheet .photo-item {
+  width: 320rpx;
+}
+.layout-contact-sheet .photo-frame {
+  padding-top: 75%;
+}
+.layout-editorial-spread .photo-item {
+  width: 520rpx;
+}
+.layout-editorial-spread .photo-index-1 {
+  width: 360rpx;
+  margin-top: $sp-6;
+}
+.layout-editorial-spread .photo-frame {
+  padding-top: 125%;
+}
+.layout-editorial-spread .photo-index-1 .photo-frame {
+  padding-top: 100%;
+}
+.layout-ceremony-scroll .photo-item {
+  width: 440rpx;
+  border-radius: 2rpx;
+}
+.layout-ceremony-scroll .photo-frame {
+  padding-top: 125%;
+}
+.layout-night-sequence .photo-item {
+  width: 520rpx;
+  border-color: var(--accent-line);
+}
+.layout-night-sequence .photo-frame {
+  padding-top: 62.5%;
 }
 
 .photo-item {

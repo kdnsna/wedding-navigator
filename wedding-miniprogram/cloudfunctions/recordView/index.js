@@ -4,7 +4,7 @@ const db = cloud.database()
 const _ = db.command
 
 exports.main = async (event, context) => {
-  const { weddingId, type = 'view' } = event
+  const { weddingId, type = 'view', visualPreset = '' } = event
   const { OPENID } = cloud.getWXContext()
 
   if (!weddingId) {
@@ -12,7 +12,9 @@ exports.main = async (event, context) => {
   }
 
   try {
+    const normalizedVisualPreset = normalizeVisualPreset(visualPreset)
     const updateData = { updated_at: Date.now() }
+    if (normalizedVisualPreset) updateData.last_visual_preset = normalizedVisualPreset
 
     if (type === 'view') {
       updateData.views = _.inc(1)
@@ -48,6 +50,7 @@ exports.main = async (event, context) => {
             _id: viewerId,
             wedding_id: weddingId,
             openid: OPENID,
+            visual_preset: normalizedVisualPreset,
             created_at: Date.now()
           }
         })
@@ -68,6 +71,12 @@ exports.main = async (event, context) => {
     console.error(err)
     return { success: false, message: err.message }
   }
+}
+
+function normalizeVisualPreset(value) {
+  const valid = ['cinematic-documentary', 'new-chinese-ceremony', 'garden-film', 'editorial-couture', 'night-banquet']
+  const normalized = String(value || '').trim()
+  return valid.includes(normalized) ? normalized : ''
 }
 
 function isDocNotExistError(err) {

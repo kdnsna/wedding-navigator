@@ -109,7 +109,7 @@ export function buildReleaseDiagnostics(store) {
     statusItem({
       key: 'platform-privacy',
       title: '微信隐私声明',
-      desc: '需声明“收集你选中的照片或视频信息”和“收集你选择的位置信息”，保存约 5 分钟后真机重测选照与地图选点',
+      desc: '需声明“收集你选中的照片或视频信息”、“收集你选择的位置信息”和“使用你的相册（仅写入）”，保存约 5 分钟后真机重测选照、地图选点与海报保存',
       status: 'manual',
       route: '/pages/privacy/index',
       actionText: '查看说明'

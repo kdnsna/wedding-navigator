@@ -68,7 +68,7 @@
 
     <view class="note-card">
       <text class="note-title">上线前人工验收</text>
-      <text class="note-copy">先在微信公众平台完成选中照片或视频信息声明，再用真机完整走一遍：创建婚礼、上传封面、补场地坐标、提交 RSVP、写祝福、分享好友、生成海报、删除婚礼后旧链接失效。</text>
+      <text class="note-copy">先在微信公众平台完成“选中的照片或视频信息”、“选择的位置信息”和“相册（仅写入）”声明，再用真机完整走一遍：创建婚礼、上传封面、补场地坐标、提交 RSVP、写祝福、分享好友、生成并保存海报、删除婚礼后旧链接失效。</text>
     </view>
 
     <BottomActionBar

@@ -1,5 +1,7 @@
 import { resolveImagePath } from '@/utils/imagePaths.js'
 import { getTemplateHeroImage, getTemplatePosterTheme } from '@/utils/templates.js'
+import { getThemeTokens } from '@/utils/legacy-theme-map.js'
+import { getVisualPreset } from '@/utils/visual-presets.js'
 
 // 画布尺寸：设计稿 750x1334，页面上按 375x667 逻辑像素渲染。
 export const POSTER_CANVAS_WIDTH = 375
@@ -7,8 +9,8 @@ export const POSTER_CANVAS_HEIGHT = 667
 export const POSTER_CANVAS_DPR = 2
 
 export const POSTER_CANVAS_STYLE = {
-  width: `${POSTER_CANVAS_WIDTH}px`,
-  height: `${POSTER_CANVAS_HEIGHT}px`
+  width: `${POSTER_CANVAS_WIDTH * POSTER_CANVAS_DPR}px`,
+  height: `${POSTER_CANVAS_HEIGHT * POSTER_CANVAS_DPR}px`
 }
 
 function formatDateCN(dateStr) {
@@ -35,6 +37,34 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.lineTo(x, y + r)
   ctx.quadraticCurveTo(x, y, x + r, y)
   ctx.closePath()
+}
+
+function imageInfo(src) {
+  return new Promise((resolve) => {
+    uni.getImageInfo({ src, success: resolve, fail: () => resolve(null) })
+  })
+}
+
+function drawCoverImage(ctx, path, info, x, y, width, height, focus = 'center') {
+  if (!path || !info?.width || !info?.height) return false
+  const sourceRatio = info.width / info.height
+  const targetRatio = width / height
+  let sx = 0
+  let sy = 0
+  let sw = info.width
+  let sh = info.height
+
+  if (sourceRatio > targetRatio) {
+    sw = info.height * targetRatio
+    sx = (info.width - sw) / 2
+  } else {
+    sh = info.width / targetRatio
+    const remaining = info.height - sh
+    sy = focus === 'top' ? 0 : focus === 'bottom' ? remaining : remaining / 2
+  }
+
+  ctx.drawImage(path, sx, sy, sw, sh, x, y, width, height)
+  return true
 }
 
 function posterChars(text) {
@@ -121,17 +151,52 @@ export async function drawWeddingPoster({ instance, store, qrCodePath = '' }) {
 
   const W = POSTER_CANVAS_WIDTH
   const H = POSTER_CANVAS_HEIGHT
-  const theme = getTemplatePosterTheme(store.invitation?.template)
+  const posterTheme = getTemplatePosterTheme(store.invitation?.template)
+  const mood = getThemeTokens(store.invitation?.theme || 'wine')
+  const theme = { ...posterTheme, accent: mood.accent, line: mood.line || posterTheme.line }
+  const visual = getVisualPreset(
+    store.invitation?.visual_preset,
+    store.invitation?.scenario_preset || store.invitation?.template
+  )
+  const mountedLayout = ['heritage', 'garden', 'editorial'].includes(visual.posterLayout)
+  const namesY = mountedLayout ? 388 : 168
+  const familyY = mountedLayout ? 416 : 200
+  const accentLineY = mountedLayout ? 438 : 232
+  const dateY = mountedLayout ? 468 : 268
+  const weekY = mountedLayout ? 488 : 288
+  const timeY = mountedLayout ? 510 : 310
+  const detailLineY = mountedLayout ? 528 : 348
+  const venueY = mountedLayout ? 553 : 380
+  const addressY = mountedLayout ? 578 : 414
+  const posterLineY = mountedLayout ? 607 : 466
+  const bodyText = mountedLayout ? '#2A231D' : theme.text
+  const bodyMuted = mountedLayout ? '#74695E' : theme.muted
+  const bodyFaint = mountedLayout ? '#B3A896' : theme.faint
+  const topMuted = mountedLayout ? '#FFFDF8' : theme.muted
 
   const bgPath = await resolveImagePath(
     store.album?.photos?.[0]?.url || getTemplateHeroImage(store.invitation?.template),
     'poster_bg'
   )
+  const bgInfo = bgPath ? await imageInfo(bgPath) : null
+  const coverFocus = store.invitation?.cover_focus || visual.coverFocus || 'center'
 
   if (bgPath) {
-    ctx.drawImage(bgPath, 0, 0, W, H)
-    ctx.setFillStyle(theme.photoOverlay)
-    ctx.fillRect(0, 0, W, H)
+    if (mountedLayout) {
+      ctx.setFillStyle('#F7F2E9')
+      ctx.fillRect(0, 0, W, H)
+      const inset = visual.posterLayout === 'editorial' ? 0 : 20
+      const photoHeight = visual.posterLayout === 'garden' ? 342 : 350
+      ctx.setFillStyle('#FFFDF8')
+      ctx.fillRect(Math.max(0, inset - 6), Math.max(0, inset - 6), W - Math.max(0, inset - 6) * 2, photoHeight + 12)
+      drawCoverImage(ctx, bgPath, bgInfo, inset, inset, W - inset * 2, photoHeight, coverFocus)
+      ctx.setFillStyle(visual.posterLayout === 'heritage' ? 'rgba(110,47,56,0.18)' : 'rgba(42,35,29,0.10)')
+      ctx.fillRect(inset, inset, W - inset * 2, photoHeight)
+    } else {
+      drawCoverImage(ctx, bgPath, bgInfo, 0, 0, W, H, coverFocus)
+      ctx.setFillStyle(theme.photoOverlay)
+      ctx.fillRect(0, 0, W, H)
+    }
   } else {
     const gradient = ctx.createLinearGradient(0, 0, W, H)
     gradient.addColorStop(0, theme.background[0])
@@ -148,16 +213,16 @@ export async function drawWeddingPoster({ instance, store, qrCodePath = '' }) {
   ctx.lineTo(W - 40, 72)
   ctx.stroke()
 
-  ctx.setFillStyle(theme.muted)
+  ctx.setFillStyle(topMuted)
   ctx.setFontSize(9)
   ctx.setTextAlign('center')
-  ctx.fillText('WEDDING INVITATION', W / 2, 52)
+  ctx.fillText(visual.kicker || 'WEDDING INVITATION', W / 2, 52)
 
   const groom = store.invitation?.couple?.groom?.name || '新郎'
   const bride = store.invitation?.couple?.bride?.name || '新娘'
 
-  ctx.setFillStyle(theme.text)
-  drawFittedText(ctx, groom, W / 2 - 16, 168, 132, {
+  ctx.setFillStyle(bodyText)
+  drawFittedText(ctx, groom, W / 2 - 16, namesY, 132, {
     fontSize: 28,
     minFontSize: 18,
     align: 'right'
@@ -166,10 +231,10 @@ export async function drawWeddingPoster({ instance, store, qrCodePath = '' }) {
   ctx.setFontSize(16)
   ctx.setTextAlign('center')
   ctx.setFillStyle(theme.accent)
-  ctx.fillText('&', W / 2, 162)
+  ctx.fillText('&', W / 2, namesY - 6)
 
-  ctx.setFillStyle(theme.text)
-  drawFittedText(ctx, bride, W / 2 + 16, 168, 132, {
+  ctx.setFillStyle(bodyText)
+  drawFittedText(ctx, bride, W / 2 + 16, namesY, 132, {
     fontSize: 28,
     minFontSize: 18,
     align: 'left'
@@ -177,57 +242,57 @@ export async function drawWeddingPoster({ instance, store, qrCodePath = '' }) {
 
   ctx.setFontSize(11)
   ctx.setTextAlign('center')
-  ctx.setFillStyle(theme.muted)
-  ctx.fillText('Together with their families', W / 2, 200)
+  ctx.setFillStyle(bodyMuted)
+  ctx.fillText('Together with their families', W / 2, familyY)
 
   ctx.setStrokeStyle(theme.accent)
   ctx.setLineWidth(0.6)
   ctx.beginPath()
-  ctx.moveTo(W / 2 - 50, 232)
-  ctx.lineTo(W / 2 + 50, 232)
+  ctx.moveTo(W / 2 - 50, accentLineY)
+  ctx.lineTo(W / 2 + 50, accentLineY)
   ctx.stroke()
   ctx.setFillStyle(theme.accent)
   ctx.beginPath()
-  ctx.arc(W / 2, 232, 2.5, 0, Math.PI * 2)
+  ctx.arc(W / 2, accentLineY, 2.5, 0, Math.PI * 2)
   ctx.fill()
 
-  ctx.setFillStyle(theme.text)
+  ctx.setFillStyle(bodyText)
   ctx.setFontSize(15)
   ctx.setTextAlign('center')
-  ctx.fillText(formatDateCN(store.weddingDate), W / 2, 268)
+  ctx.fillText(formatDateCN(store.weddingDate), W / 2, dateY)
 
   const weekDay = getWeekDay(store.weddingDate)
   if (weekDay) {
-    ctx.setFillStyle(theme.faint)
+    ctx.setFillStyle(bodyFaint)
     ctx.setFontSize(10)
-    ctx.fillText(weekDay, W / 2, 288)
+    ctx.fillText(weekDay, W / 2, weekY)
   }
 
   const time = store.weddingTime || '12:00'
-  ctx.setFillStyle(theme.muted)
+  ctx.setFillStyle(bodyMuted)
   ctx.setFontSize(12)
-  ctx.fillText(time, W / 2, 310)
+  ctx.fillText(time, W / 2, timeY)
 
   ctx.setStrokeStyle(theme.line)
   ctx.setLineWidth(0.5)
   ctx.beginPath()
-  ctx.moveTo(60, 348)
-  ctx.lineTo(W - 60, 348)
+  ctx.moveTo(60, detailLineY)
+  ctx.lineTo(W - 60, detailLineY)
   ctx.stroke()
 
   const venueName = store.venueName || ''
   const venueAddress = store.invitation?.wedding?.venue_address || ''
 
-  ctx.setFillStyle(theme.text)
-  drawWrappedText(ctx, venueName, W / 2, 380, 270, {
+  ctx.setFillStyle(bodyText)
+  drawWrappedText(ctx, venueName, W / 2, venueY, 270, {
     fontSize: 13,
     lineHeight: 17,
     maxLines: 2
   })
 
   if (venueAddress) {
-    ctx.setFillStyle(theme.muted)
-    drawWrappedText(ctx, venueAddress, W / 2, 414, 292, {
+    ctx.setFillStyle(bodyMuted)
+    drawWrappedText(ctx, venueAddress, W / 2, addressY, 292, {
       fontSize: 9,
       lineHeight: 13,
       maxLines: 2
@@ -237,7 +302,7 @@ export async function drawWeddingPoster({ instance, store, qrCodePath = '' }) {
   const posterLine = store.wedding?.share_config?.poster_line || ''
   if (posterLine) {
     ctx.setFillStyle(theme.accent)
-    drawWrappedText(ctx, posterLine, W / 2, 466, 250, {
+    drawWrappedText(ctx, posterLine, W / 2, posterLineY, 250, {
       fontSize: 12,
       lineHeight: 15,
       maxLines: 1
@@ -246,9 +311,9 @@ export async function drawWeddingPoster({ instance, store, qrCodePath = '' }) {
 
   const qrPath = await resolveImagePath(qrCodePath, 'poster_qr')
   if (qrPath) {
-    const qrSize = 60
-    const qrX = (W - qrSize) / 2
-    const qrY = H - qrSize - 50
+    const qrSize = mountedLayout ? 52 : 60
+    const qrX = mountedLayout ? W - qrSize - 34 : (W - qrSize) / 2
+    const qrY = mountedLayout ? 270 : H - qrSize - 50
 
     ctx.setFillStyle('rgba(255,255,255,0.92)')
     roundRect(ctx, qrX - 8, qrY - 8, qrSize + 16, qrSize + 16, 6)
@@ -268,7 +333,7 @@ export async function drawWeddingPoster({ instance, store, qrCodePath = '' }) {
     ctx.setFillStyle(theme.qrText)
     ctx.setFontSize(8)
     ctx.setTextAlign('center')
-    ctx.fillText('长按识别小程序码', W / 2, qrY + qrSize + 22)
+    ctx.fillText('长按识别小程序码', mountedLayout ? qrX + qrSize / 2 : W / 2, qrY + qrSize + 22)
   }
 
   ctx.setFillStyle(theme.faint)

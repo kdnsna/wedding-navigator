@@ -45,6 +45,38 @@ const EVIDENCE_ITEMS = [
     arg: 'premium-entitlement',
     row: '主人端高级色权益状态生效',
     fileBase: 'premium-entitlement'
+  },
+  {
+    arg: 'visual-stories',
+    row: '五种视觉叙事使用同一组真实照片均正确成书',
+    fileBase: 'visual-stories'
+  },
+  {
+    arg: 'photo-director',
+    row: '照片导演显示清晰度、构图建议和扉页焦点',
+    fileBase: 'photo-director'
+  },
+  {
+    arg: 'share-card',
+    row: '好友分享卡和朋友圈海报为专属构图',
+    fileBase: 'share-card',
+    appendArg: 'share-poster',
+    appendFileBase: 'share-poster'
+  },
+  {
+    arg: 'owner-workspace-recovery',
+    row: '主人工作区失效后自动切换到仍可用婚书',
+    fileBase: 'owner-workspace-recovery'
+  },
+  {
+    arg: 'rsvp-scroll',
+    row: '赴约页可滑到全部字段且底部操作不遮挡',
+    fileBase: 'rsvp-scroll'
+  },
+  {
+    arg: 'long-content',
+    row: '长姓名、长场地和横竖照片无重叠截断',
+    fileBase: 'long-content'
   }
 ]
 
@@ -193,7 +225,10 @@ function main() {
     }
 
     const evidencePath = copyEvidence(source, evidenceDir, item.fileBase)
-    const evidence = item.appendEvidence ? `${evidencePath}; ${item.appendEvidence}` : evidencePath
+    const appendedPath = item.appendArg && args[item.appendArg]
+      ? copyEvidence(args[item.appendArg], evidenceDir, item.appendFileBase)
+      : ''
+    const evidence = [evidencePath, appendedPath, item.appendEvidence].filter(Boolean).join('; ')
     markdown = updateRow(markdown, item.row, {
       result: '通过',
       evidence

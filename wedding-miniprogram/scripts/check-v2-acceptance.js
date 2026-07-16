@@ -221,6 +221,13 @@ function checkGuestToneAndAccentDiscipline() {
   assert(!poster.includes('rgba(249,171'), 'pages/poster/index.vue: poster notices must not introduce a yellow fifth-color label')
   assert(poster.includes('$gold-soft'), 'pages/poster/index.vue: poster notices should use the paper/gold system')
   assert(poster.includes('background: var(--theme-accent, $color-primary)'), 'pages/poster/index.vue: primary poster action should use the mood accent')
+  assert(poster.includes('guestStore.hydrate(weddingId)'), 'pages/poster/index.vue: poster deep links must render the last valid guest snapshot first')
+  assert(poster.includes('isDevToolsRuntime()'), 'pages/poster/index.vue: poster preview must not call the QR cloud function in DevTools')
+  assert(poster.includes('generateWeddingShareCard({ instance, store })'), 'pages/poster/index.vue: poster shares must use the composed wedding card')
+  assert(read('pages/more/index.vue').includes('generateWeddingShareCard({ instance, store })'), 'pages/more/index.vue: more-page shares must use the composed wedding card')
+  assert(poster.includes('destWidth: POSTER_CANVAS_WIDTH * POSTER_CANVAS_DPR'), 'pages/poster/index.vue: poster export must retain its 2x canvas resolution')
+  assert(poster.includes('previewScale.value / POSTER_CANVAS_DPR'), 'pages/poster/index.vue: poster preview must downscale the real 2x canvas without clipping')
+  assert(read('utils/posterCanvas.js').includes('POSTER_CANVAS_WIDTH * POSTER_CANVAS_DPR'), 'utils/posterCanvas.js: legacy canvas must allocate its real 2x drawing size')
 }
 
 function checkManualAcceptanceArtifacts() {
@@ -253,6 +260,27 @@ function checkManualAcceptanceArtifacts() {
   assertIncludes('preview.mjs', "npm', ['run', 'build:mp-weixin']", 'preview QR generator must build before preview by default')
   assertIncludes('preview.mjs', 'outputContainsCliError', 'preview QR generator must fail on WeChat CLI error output')
   assertIncludes('preview.mjs', 'MINIPROGRAM_PREVIEW_SETTLE_MS', 'preview QR generator must allow delayed cleanup after DevTools preview')
+  assertIncludes('preview.mjs', 'stagePreviewProject', 'preview QR generator must isolate the watched WeChat project from the clean build output')
+  assertIncludes('preview.mjs', "path.join('/tmp', `wedding-miniprogram-preview-${version}`)", 'preview QR generator must stage previews outside the repository')
+}
+
+function checkVisualStorySystem() {
+  const presets = read('utils/visual-presets.js')
+  const wizard = read('pages-owner/wizard/index.vue')
+  const home = read('pages/index/index.vue')
+  const album = read('pages/album/index.vue')
+  const shareCard = read('utils/shareCard.js')
+  for (const preset of ['cinematic-documentary', 'new-chinese-ceremony', 'garden-film', 'editorial-couture', 'night-banquet']) {
+    assert(presets.includes(preset), `utils/visual-presets.js: missing ${preset}`)
+  }
+  assert(wizard.includes('visualOptions') && wizard.includes('heroPreviewImage'), 'wizard must preview visual stories with the selected photo')
+  assert(wizard.includes('photoQualityLabel') && wizard.includes('focusOptions'), 'wizard must expose photo direction feedback')
+  assert(home.includes('activeVisualPreset') && home.includes('lux-story-beat'), 'guest home must vary visual rhythm by preset')
+  for (const layout of ['contact-sheet', 'editorial-spread', 'ceremony-scroll', 'night-sequence']) {
+    assert(album.includes(`layout-${layout}`), `album must implement ${layout}`)
+  }
+  assert(shareCard.includes('generateWeddingShareCard') && shareCard.includes('SHARE_CARD_WIDTH = 500'), 'share card must be a composed 5:4 cover')
+  assert(read('utils/posterCanvas.js').includes('getVisualPreset'), 'poster canvas must use the visual preset')
 }
 
 function runAutomaticChecks() {
@@ -264,6 +292,7 @@ function runAutomaticChecks() {
   checkPremiumThemeEntitlements()
   checkTemplateRuntimeClasses()
   checkGuestToneAndAccentDiscipline()
+  checkVisualStorySystem()
   checkManualAcceptanceArtifacts()
   console.log('v2 automatic acceptance checks passed')
 }

@@ -1,12 +1,10 @@
 <script setup>
 import { onLaunch, onShow, onHide } from '@dcloudio/uni-app'
-import { initCloud } from '@/composables/useCloud.js'
 import { useUserStore } from '@/stores/user.js'
 
 onLaunch(() => {
   useUserStore().loadFromStorage()
-  initCloud()
-  checkUpdate()
+  if (!isDevToolsRuntime()) checkUpdate()
 })
 
 onShow(() => {})
@@ -48,6 +46,14 @@ function checkUpdate() {
       })
     })
   })
+}
+
+function isDevToolsRuntime() {
+  try {
+    return typeof wx !== 'undefined' && wx.getDeviceInfo?.().platform === 'devtools'
+  } catch (err) {
+    return false
+  }
 }
 </script>
 

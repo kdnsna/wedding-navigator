@@ -37,7 +37,12 @@ export const useUserStore = defineStore('user', () => {
     }
 
     const activeId = info.ownerActiveWeddingId || (ownerVerified.value ? info.weddingId : '')
-    if (activeId) ownerWorkspace.setActiveWedding(activeId)
+    if (
+      activeId &&
+      (!Array.isArray(info.workspaces) || info.workspaces.some(item => String(item?.weddingId || '') === String(activeId)))
+    ) {
+      ownerWorkspace.setActiveWedding(activeId)
+    }
   }
 
   function setOwnerProfile(info = {}) {
@@ -53,7 +58,12 @@ export const useUserStore = defineStore('user', () => {
         ownerWorkspace.setActiveWedding(info.workspaces[0].weddingId)
       }
     }
-    if (info.ownerActiveWeddingId) ownerWorkspace.setActiveWedding(info.ownerActiveWeddingId)
+    if (
+      info.ownerActiveWeddingId &&
+      (!Array.isArray(info.workspaces) || info.workspaces.some(item => String(item?.weddingId || '') === String(info.ownerActiveWeddingId)))
+    ) {
+      ownerWorkspace.setActiveWedding(info.ownerActiveWeddingId)
+    }
     isOwner.value = true
     ownerVerified.value = true
     saveToStorage()

@@ -262,15 +262,17 @@ function checkOwnerGuardCoverage() {
 function checkOwnerGuardFailureFeedback() {
   const source = read(path.join(root, 'composables/useOwnerGuard.js'))
   assert(source.includes('export async function useOwnerGuard'), 'useOwnerGuard.js: owner guard must be awaitable')
-  assert(source.includes('return verifyAndGuard'), 'useOwnerGuard.js: pending cloud verification must not be treated as immediate success')
+  assert(source.includes('await syncWorkspaceProfile'), 'useOwnerGuard.js: pending workspace verification must be awaited')
+  assert(source.includes('await fetchWedding'), 'useOwnerGuard.js: active wedding verification must be awaited')
+  assert(source.includes('recoverUnavailableWorkspace'), 'useOwnerGuard.js: stale active weddings must recover through the authoritative workspace list')
   assert(source.includes('return true'), 'useOwnerGuard.js: successful owner verification must resolve true')
-  assert(source.includes('return false'), 'useOwnerGuard.js: failed owner verification must resolve false')
+  assert(source.includes('resolve(false)'), 'useOwnerGuard.js: failed owner verification must resolve false')
   assert(source.includes('goCreateWizard'), 'useOwnerGuard.js: missing wedding fallback should use a guarded create-wizard navigation')
   assert(source.includes('goGuestHome'), 'useOwnerGuard.js: failed owner access should use a guarded home fallback')
   assert(source.includes('创建向导打开失败，请稍后重试'), 'useOwnerGuard.js: create-wizard navigation failure must be visible')
   assert(source.includes('返回首页失败，请稍后重试'), 'useOwnerGuard.js: home navigation failure must be visible')
-  assert(source.includes('权限校验失败'), 'useOwnerGuard.js: owner verification failures must be visible to users')
-  assert(source.includes('主人权限暂未完成云端校验'), 'useOwnerGuard.js: cached owners should get a visible degraded-verification hint')
+  assert(source.includes('书案暂时无法核验'), 'useOwnerGuard.js: owner verification failures must be visible to users')
+  assert(source.includes('当前显示上次保存的书案'), 'useOwnerGuard.js: cached owners should get a visible degraded-verification hint')
   assert(!source.includes('允许访问（云端会做最终校验）'), 'useOwnerGuard.js: unknown owner verification failures must not be silently allowed')
 }
 

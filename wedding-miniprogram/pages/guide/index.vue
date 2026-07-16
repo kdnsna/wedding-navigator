@@ -280,7 +280,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
+import { onLoad, onShow } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useGuestInvitationStore } from '@/stores/guest-invitation.js'
 import { fetchGuestInvitation, getWeather } from '@/composables/useCloud.js'
@@ -525,6 +525,13 @@ async function loadWeather() {
   }
 }
 
+onLoad((options) => {
+  const weddingId = String(options?.id || '')
+  if (!weddingId) return
+  const cached = guestStore.hydrate(weddingId)
+  if (cached) store.setWeddingData(cached, weddingId)
+})
+
 onShow(async () => {
   const hasLoadedWedding = store.cachedWeddingId === guestStore.invitationId
   if (guestStore.invitationId && !hasLoadedWedding) {
@@ -737,9 +744,8 @@ onShow(async () => {
   font-size: 26rpx;
   color: var(--theme-ink, $text-primary);
   font-weight: 600;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  line-height: 1.4;
+  word-break: break-word;
   letter-spacing: $tracking-cn-soft;
 }
 .guest-pass {

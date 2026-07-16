@@ -8,28 +8,29 @@ let cloudInitialized = false
 // 初始化云开发
 function initCloud() {
   const options = CLOUD_ENV ? { env: CLOUD_ENV, traceUser: true } : { traceUser: true }
-  const targets = []
   const wxCloud = typeof wx !== 'undefined' ? wx.cloud : null
   const uniCloud = typeof uni !== 'undefined' ? uni.cloud : null
+  const target = wxCloud?.init
+    ? { name: 'wx.cloud', api: wxCloud }
+    : (uniCloud?.init ? { name: 'uni.cloud', api: uniCloud } : null)
 
-  if (wxCloud?.init) {
-    targets.push({ name: 'wx.cloud', api: wxCloud })
-  }
-  if (uniCloud?.init && uniCloud !== wxCloud) {
-    targets.push({ name: 'uni.cloud', api: uniCloud })
-  }
+  if (!target) return false
 
-  if (!targets.length) return false
-
-  for (const target of targets) {
-    try {
-      target.api.init(options)
-      cloudInitialized = true
-    } catch (err) {
-      const message = err?.errMsg || err?.message || ''
-      if (!message.includes('already') && !message.includes('重复')) {
-        console.warn(`[cloud] ${target.name} init failed:`, err)
-      }
+  try {
+    const pending = target.api.init(options)
+    cloudInitialized = true
+    if (pending?.then) {
+      Promise.resolve(pending).catch((err) => {
+        const message = err?.errMsg || err?.message || ''
+        if (!message.includes('already') && !message.includes('重复')) {
+          console.warn(`[cloud] ${target.name} async init failed:`, err)
+        }
+      })
+    }
+  } catch (err) {
+    const message = err?.errMsg || err?.message || ''
+    if (!message.includes('already') && !message.includes('重复')) {
+      console.warn(`[cloud] ${target.name} init failed:`, err)
     }
   }
 
@@ -47,6 +48,14 @@ function getCloudApi(method = 'callFunction') {
   if (typeof wx !== 'undefined' && wx.cloud?.[method]) return wx.cloud
   if (typeof uni !== 'undefined' && uni.cloud?.[method]) return uni.cloud
   return null
+}
+
+function isDevToolsRuntime() {
+  try {
+    return typeof wx !== 'undefined' && wx.getDeviceInfo?.().platform === 'devtools'
+  } catch (err) {
+    return false
+  }
 }
 
 function normalizeCloudError(err, fallback = '云开发请求失败') {
@@ -70,6 +79,21 @@ function normalizeCloudError(err, fallback = '云开发请求失败') {
   return raw || fallback
 }
 
+function invokeCloudFunction(cloudApi, name, data) {
+  try {
+    // Use the SDK's Promise form exclusively. Supplying callbacks and observing
+    // the returned thenable at the same time can leave a second internal request
+    // lifecycle that later reports a generic WAService timeout.
+    const pending = cloudApi.callFunction({ name, data })
+    if (!pending || typeof pending.then !== 'function') {
+      return Promise.reject(new Error(`${name} 未返回可等待的云调用`))
+    }
+    return Promise.resolve(pending)
+  } catch (err) {
+    return Promise.reject(err)
+  }
+}
+
 // 云函数调用封装
 async function callFunction(name, data = {}, options = {}) {
   const { timeoutMs = 8000 } = options
@@ -79,7 +103,7 @@ async function callFunction(name, data = {}, options = {}) {
   }
 
   let timeoutId
-  const request = Promise.resolve().then(() => cloudApi.callFunction({ name, data }))
+  const request = invokeCloudFunction(cloudApi, name, data)
   const timeout = new Promise((_, reject) => {
     timeoutId = setTimeout(() => reject(new Error(`${name} 请求超时`)), timeoutMs)
   })
@@ -140,6 +164,14 @@ async function fetchGuestInvitation(weddingId) {
   const guestStore = useGuestInvitationStore()
   if (!weddingId) throw new Error('缺少婚礼ID')
 
+  if (
+    isDevToolsRuntime() &&
+    guestStore.invitationId === weddingId &&
+    guestStore.hasUsableSnapshot
+  ) {
+    return { data: guestStore.snapshot, fromCache: true }
+  }
+
   guestStore.setInvitationId(weddingId)
   guestStore.beginLoading()
   try {
@@ -196,14 +228,16 @@ async function pinBlessing(weddingId, blessingId, isPinned) {
 }
 
 // 记录浏览
-async function recordView(weddingId, openid) {
-  return callFunction('recordView', { weddingId, openid, type: 'view' }, { timeoutMs: 4000 })
+async function recordView(weddingId, openid, visualPreset = '') {
+  if (isDevToolsRuntime()) return null
+  return callFunction('recordView', { weddingId, openid, type: 'view', visualPreset }, { timeoutMs: 4000 })
 }
 
 // 记录分享
-async function recordShare(weddingId) {
+async function recordShare(weddingId, visualPreset = '') {
   if (!weddingId) return null
-  return callFunction('recordView', { weddingId, type: 'share' }, { timeoutMs: 4000 })
+  if (isDevToolsRuntime()) return null
+  return callFunction('recordView', { weddingId, type: 'share', visualPreset }, { timeoutMs: 4000 })
 }
 
 // 获取统计数据

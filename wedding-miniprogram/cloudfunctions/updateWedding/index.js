@@ -102,23 +102,47 @@ function readTheme(data = {}) {
 
 function normalizeThemeForCollection(collection, data = {}) {
   const rawTheme = readTheme(data)
-  if (!rawTheme || (collection !== 'weddings' && collection !== 'invitations')) return data
-  const theme = resolveTheme(rawTheme)
-
   if (collection === 'invitations') {
-    return {
+    const scenarioPreset = String(data.scenario_preset || data.template || 'rose-couture')
+    const normalized = {
       ...data,
-      theme,
-      commercial: {
-        ...(data.commercial || {}),
-        theme_key: theme
-      }
+      scenario_preset: scenarioPreset,
+      template: scenarioPreset,
+      visual_preset: resolveVisualPreset(data.visual_preset, scenarioPreset)
     }
+    if (!rawTheme) return normalized
+    const theme = resolveTheme(rawTheme)
+    normalized.theme = theme
+    normalized.commercial = { ...(data.commercial || {}), theme_key: theme }
+    return normalized
   }
+
+  if (!rawTheme || collection !== 'weddings') return data
+  const theme = resolveTheme(rawTheme)
 
   const normalized = { ...data }
   if (data.basic_info) normalized.basic_info = { ...data.basic_info, theme }
   if (data.commercial) normalized.commercial = { ...data.commercial, theme_key: theme }
   if (data.workspace) normalized.workspace = { ...data.workspace, theme_key: theme }
   return normalized
+}
+
+const VALID_VISUAL_PRESETS = ['cinematic-documentary', 'new-chinese-ceremony', 'garden-film', 'editorial-couture', 'night-banquet']
+const SCENARIO_VISUAL_MAP = {
+  'rose-couture': 'cinematic-documentary',
+  'champagne-editorial': 'editorial-couture',
+  'noir-banquet': 'night-banquet',
+  'garden-film': 'garden-film',
+  'heritage-ritual': 'new-chinese-ceremony',
+  'shandong-family': 'new-chinese-ceremony',
+  'travel-friendly': 'cinematic-documentary',
+  classic: 'cinematic-documentary',
+  luxury: 'editorial-couture',
+  modern: 'night-banquet'
+}
+
+function resolveVisualPreset(key, scenarioPreset) {
+  const normalized = String(key || '').trim().replace(/^visual-/, '')
+  if (VALID_VISUAL_PRESETS.includes(normalized)) return normalized
+  return SCENARIO_VISUAL_MAP[String(scenarioPreset || '').trim()] || 'cinematic-documentary'
 }

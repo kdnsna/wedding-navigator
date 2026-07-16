@@ -55,6 +55,7 @@
       <text class="poster-state-title">海报尚未展开</text>
       <text class="poster-state-copy">从新人寄来的邀请进入后，才会生成对应的珍藏海报。</text>
     </view>
+    <canvas canvas-id="shareCardCanvas" id="shareCardCanvas" class="share-card-canvas" />
   </view>
 </template>
 
@@ -64,8 +65,14 @@ import { onLoad, onShareAppMessage } from '@dcloudio/uni-app'
 import { useWeddingStore } from '@/stores/wedding.js'
 import { useGuestInvitationStore } from '@/stores/guest-invitation.js'
 import { fetchGuestInvitation, generatePoster } from '@/composables/useCloud.js'
-import { drawWeddingPoster, POSTER_CANVAS_STYLE } from '@/utils/posterCanvas.js'
-import { DEFAULT_SHARE_IMAGE, prepareShareImage } from '@/utils/shareCard.js'
+import {
+  drawWeddingPoster,
+  POSTER_CANVAS_DPR,
+  POSTER_CANVAS_HEIGHT,
+  POSTER_CANVAS_STYLE,
+  POSTER_CANVAS_WIDTH
+} from '@/utils/posterCanvas.js'
+import { DEFAULT_SHARE_IMAGE, generateWeddingShareCard } from '@/utils/shareCard.js'
 
 const store = useWeddingStore()
 const guestStore = useGuestInvitationStore()
@@ -86,9 +93,9 @@ const previewFrameStyle = computed(() => ({
   height: `${667 * previewScale.value}px`
 }))
 const posterScaleStyle = computed(() => ({
-  width: '375px',
-  height: '667px',
-  transform: `scale(${previewScale.value})`,
+  width: `${POSTER_CANVAS_WIDTH * POSTER_CANVAS_DPR}px`,
+  height: `${POSTER_CANVAS_HEIGHT * POSTER_CANVAS_DPR}px`,
+  transform: `scale(${previewScale.value / POSTER_CANVAS_DPR})`,
   transformOrigin: 'top left'
 }))
 
@@ -107,6 +114,11 @@ async function generateQRCode() {
   try {
     if (!guestStore.invitationId) {
       posterNotice.value = '小程序码暂未生成，海报仍可保存'
+      qrCodePath.value = ''
+      return
+    }
+    if (isDevToolsRuntime()) {
+      posterNotice.value = '开发者工具暂不生成小程序码，海报仍可保存'
       qrCodePath.value = ''
       return
     }
@@ -132,6 +144,14 @@ async function generateQRCode() {
     posterNotice.value = '小程序码暂未生成，海报仍可保存'
   } finally {
     loading.value = false
+  }
+}
+
+function isDevToolsRuntime() {
+  try {
+    return typeof wx !== 'undefined' && wx.getDeviceInfo?.().platform === 'devtools'
+  } catch (err) {
+    return false
   }
 }
 
@@ -181,7 +201,7 @@ async function saveToAlbum() {
             const handledError = Object.assign(new Error('需要相册授权'), { handled: true })
             uni.showModal({
               title: '需要授权',
-              content: '请允许保存图片到相册',
+              content: '保存婚礼分享海报需要相册写入权限，请在设置中允许后重试',
               confirmText: '去设置',
               success: (res) => {
                 if (res.confirm) {
@@ -217,6 +237,11 @@ function canvasToTempFilePath() {
   return new Promise((resolve, reject) => {
     uni.canvasToTempFilePath({
       canvasId: 'posterCanvas',
+      width: POSTER_CANVAS_WIDTH * POSTER_CANVAS_DPR,
+      height: POSTER_CANVAS_HEIGHT * POSTER_CANVAS_DPR,
+      destWidth: POSTER_CANVAS_WIDTH * POSTER_CANVAS_DPR,
+      destHeight: POSTER_CANVAS_HEIGHT * POSTER_CANVAS_DPR,
+      fileType: 'jpg',
       quality: 0.95,
       success: resolve,
       fail: reject
@@ -264,9 +289,17 @@ onShareAppMessage(() => {
 
 async function ensureWeddingLoaded(options = {}) {
   const weddingId = parseWeddingId(options) || guestStore.invitationId
-  if (weddingId) guestStore.setInvitationId(weddingId)
+  if (weddingId) {
+    const cached = guestStore.hydrate(weddingId)
+    if (cached) store.setWeddingData(cached, weddingId)
+  }
   if (!guestStore.invitationId) return false
-  if (guestStore.canRenderInvitation && store.cachedWeddingId === guestStore.invitationId) return true
+  if (guestStore.canRenderInvitation && store.cachedWeddingId === guestStore.invitationId) {
+    fetchGuestInvitation(guestStore.invitationId).catch((err) => {
+      console.warn('海报页后台刷新婚礼数据失败:', err)
+    })
+    return true
+  }
   try {
     await fetchGuestInvitation(guestStore.invitationId)
   } catch (err) {
@@ -298,8 +331,11 @@ onLoad(async (options) => {
   syncViewport()
   const ready = await ensureWeddingLoaded(options)
   if (!ready) return
-  prepareShareImage(store).then((path) => {
+  generateWeddingShareCard({ instance, store }).then((path) => {
     shareImageUrl.value = path
+  }).catch((err) => {
+    console.warn('海报页分享卡生成失败:', err)
+    shareImageUrl.value = DEFAULT_SHARE_IMAGE
   })
   await generateQRCode()
   await redrawPoster()
@@ -313,6 +349,14 @@ onLoad(async (options) => {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+}
+.share-card-canvas {
+  position: fixed;
+  left: -9999px;
+  top: -9999px;
+  width: 500px;
+  height: 400px;
+  pointer-events: none;
 }
 .poster-letter-state {
   flex: 1;

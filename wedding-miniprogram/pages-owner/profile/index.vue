@@ -59,12 +59,22 @@
     <view class="section">
       <SectionHeader title="婚礼工作区" kicker="WORKSPACES" :desc="`${userStore.workspaces.length} 个可管理婚礼空间`" compact />
       <view class="workspace-list" v-if="userStore.workspaces.length">
-        <view class="workspace-item" v-for="workspace in userStore.workspaces" :key="workspace.weddingId">
-          <view>
-            <text class="workspace-title">{{ workspace.title }}</text>
-            <text class="workspace-meta">{{ workspace.date || '未设置日期' }} · {{ workspace.status || 'draft' }}</text>
+        <view
+          class="workspace-item"
+          :class="{ active: isActiveWorkspace(workspace) }"
+          hover-class="workspace-item-pressed"
+          v-for="workspace in userStore.workspaces"
+          :key="workspace.weddingId"
+          @click="selectWorkspace(workspace)"
+        >
+          <view class="workspace-copy">
+            <text class="workspace-title">{{ workspace.title || '未具名婚书' }}</text>
+            <text class="workspace-meta">{{ workspace.date || '婚期未定' }} · {{ workspaceStatus(workspace.status) }}</text>
           </view>
-          <text class="workspace-plan">{{ workspace.plan || 'free' }}</text>
+          <view class="workspace-side">
+            <text class="workspace-plan" :class="{ active: isActiveWorkspace(workspace) }">{{ isActiveWorkspace(workspace) ? '当前' : planLabel(workspace.plan) }}</text>
+            <image class="workspace-arrow" src="/static/visuals/icon-chevron-right.svg" mode="aspectFit" />
+          </view>
         </view>
       </view>
       <EmptyState
@@ -94,12 +104,14 @@ import SectionHeader from '@/components/ui/SectionHeader.vue'
 import EmptyState from '@/components/ui/EmptyState.vue'
 import BottomActionBar from '@/components/ui/BottomActionBar.vue'
 import { useUserStore } from '@/stores/user.js'
+import { useWeddingStore } from '@/stores/wedding.js'
 import { syncOwnerProfile } from '@/composables/useCloud.js'
 import { useOwnerGuard } from '@/composables/useOwnerGuard.js'
 import { ENTITLEMENT_LABELS } from '@/utils/commercial.js'
 import { showError, showSuccess } from '@/utils/index.js'
 
 const userStore = useUserStore()
+const weddingStore = useWeddingStore()
 const saving = ref(false)
 const form = ref({ nickname: '', phone: '', role: '主人' })
 
@@ -185,8 +197,34 @@ function goDiagnostics() {
   })
 }
 
+function isActiveWorkspace(workspace) {
+  return String(workspace?.weddingId || '') === String(userStore.ownerActiveWeddingId || '')
+}
+
+function workspaceStatus(status) {
+  const labels = { published: '已寄出', active: '筹备中', draft: '草稿' }
+  return labels[String(status || '').toLowerCase()] || '筹备中'
+}
+
+function planLabel(plan) {
+  return String(plan || '').toLowerCase() === 'free' ? '免费版' : '高级版'
+}
+
+function selectWorkspace(workspace) {
+  const weddingId = String(workspace?.weddingId || '')
+  if (!weddingId || isActiveWorkspace(workspace)) return
+  userStore.setOwnerActiveWeddingId(weddingId)
+  weddingStore.setWeddingData({})
+  showSuccess('已切换婚书')
+  setTimeout(() => {
+    uni.navigateBack({
+      fail: () => uni.redirectTo({ url: '/pages-owner/manage/index' })
+    })
+  }, 240)
+}
+
 onShow(async () => {
-  if (!(await useOwnerGuard())) return
+  if (!(await useOwnerGuard({ allowNoWedding: true }))) return
   loadFromUser()
   await refreshProfile(true)
 })
@@ -296,10 +334,15 @@ onShow(async () => {
 .workspace-item:last-child {
   border-bottom: none;
 }
+.workspace-item.active { background: var(--accent-soft); }
+.workspace-item-pressed { background: $paper-deep; }
 .entitlement-item > view,
 .workspace-item > view {
   min-width: 0;
 }
+.workspace-copy { flex: 1; }
+.workspace-side { display: flex; align-items: center; gap: $sp-2; flex-shrink: 0; }
+.workspace-arrow { width: 28rpx; height: 28rpx; opacity: 0.42; }
 .entitlement-title,
 .workspace-title {
   display: block;
@@ -330,5 +373,9 @@ onShow(async () => {
 .entitlement-status.active {
   background: rgba(52,168,83,0.12);
   color: $color-success;
+}
+.workspace-plan.active {
+  background: var(--accent-soft);
+  color: var(--accent);
 }
 </style>
