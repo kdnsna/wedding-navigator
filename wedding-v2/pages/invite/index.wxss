@@ -1,0 +1,298 @@
+.wrap {
+  height: 100vh;
+}
+
+.page {
+  height: 100vh;
+  box-sizing: border-box;
+}
+
+/* ---------- Hero ---------- */
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 96rpx 48rpx 72rpx;
+}
+
+.hero-kicker {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  font-size: 20rpx;
+  letter-spacing: 0.36em;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+}
+
+.hero-kicker .line {
+  width: 56rpx;
+  height: 1rpx;
+  background: var(--hairline);
+}
+
+.hero-seal {
+  margin: 64rpx 0 48rpx;
+}
+
+.couple {
+  display: flex;
+  align-items: baseline;
+  gap: 24rpx;
+}
+
+.couple .name {
+  font-family: var(--serif);
+  font-size: 72rpx;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.couple .amp {
+  font-size: 44rpx;
+  color: var(--accent);
+  font-style: italic;
+}
+
+.invite-line {
+  margin-top: 28rpx;
+  font-size: 26rpx;
+  letter-spacing: 0.2em;
+  color: var(--ink-soft);
+}
+
+.date-block {
+  margin-top: 64rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40rpx 72rpx;
+  border-top: 1rpx solid var(--hairline);
+  border-bottom: 1rpx solid var(--hairline);
+}
+
+.date-big {
+  font-size: 64rpx;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+}
+
+.date-sub {
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  letter-spacing: 0.1em;
+  color: var(--ink-soft);
+}
+
+.venue-line {
+  margin-top: 40rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.venue-name {
+  font-size: 34rpx;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.venue-addr {
+  font-size: 24rpx;
+  color: var(--ink-soft);
+}
+
+/* ---------- 倒计时：玻璃面板 ---------- */
+
+.countdown {
+  margin: 16rpx 48rpx 0;
+  padding: 48rpx 0;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1rpx solid var(--glass-border);
+  border-radius: 40rpx;
+  box-shadow: var(--glass-shadow), var(--glass-specular);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.cd-label {
+  font-size: 22rpx;
+  letter-spacing: 0.28em;
+  color: var(--ink-soft);
+}
+
+.cd-num-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12rpx;
+  margin-top: 8rpx;
+}
+
+.cd-num {
+  font-size: 120rpx;
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--accent);
+}
+
+.cd-unit {
+  font-size: 28rpx;
+  color: var(--ink-soft);
+}
+
+.cd-today {
+  font-size: 40rpx;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+}
+
+/* ---------- 入口列表：玻璃卡片 ---------- */
+
+.entries {
+  margin: 56rpx 48rpx 0;
+}
+
+.entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24rpx;
+  padding: 34rpx 36rpx;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1rpx solid var(--glass-border);
+  border-radius: 32rpx;
+  box-shadow: var(--glass-shadow), var(--glass-specular);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.entry:active {
+  opacity: 0.7;
+  transform: scale(0.99);
+}
+
+.entry-title {
+  display: block;
+  font-size: 34rpx;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.entry-sub {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: var(--ink-faint);
+}
+
+.entry-arrow {
+  font-size: 44rpx;
+  color: var(--ink-faint);
+  transition: transform 0.15s ease;
+}
+
+.entry:active .entry-arrow {
+  transform: translateX(6rpx);
+}
+
+.entry-accent .entry-title,
+.entry-accent .entry-arrow {
+  color: var(--accent);
+}
+
+/* ---------- 分享 ---------- */
+
+.share-wrap {
+  margin: 64rpx 48rpx 0;
+}
+
+/* ---------- 状态卡（加载中 / 空态） ---------- */
+
+.state-card {
+  margin: 200rpx 48rpx 0;
+  padding: 72rpx 48rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.state-seal {
+  margin-bottom: 40rpx;
+}
+
+.state-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.state-text {
+  margin-top: 16rpx;
+  font-size: 24rpx;
+  line-height: 1.8;
+  color: var(--ink-soft);
+  text-align: center;
+}
+
+.state-btn {
+  margin-top: 48rpx;
+  width: 100%;
+}
+
+/* ---------- 主人入口 ---------- */
+
+.owner-entry {
+  margin: 24rpx 48rpx 0;
+  padding: 28rpx 36rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-color: rgba(142, 47, 40, 0.35);
+  transition: opacity 0.15s ease;
+}
+
+.owner-entry:active {
+  opacity: 0.7;
+}
+
+.owner-entry-text {
+  font-size: 26rpx;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+}
+
+/* ---------- 页脚 ---------- */
+
+.footer {
+  margin-top: 96rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.footer-rule {
+  width: 56rpx;
+  height: 1rpx;
+  background: var(--hairline);
+}
+
+.footer-text {
+  font-size: 26rpx;
+  letter-spacing: 0.12em;
+  color: var(--ink-soft);
+}
+
+.footer-sub {
+  font-size: 20rpx;
+  letter-spacing: 0.24em;
+  color: var(--ink-faint);
+}

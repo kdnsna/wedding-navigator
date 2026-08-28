@@ -1,0 +1,97 @@
+<view class="aurora">
+  <view class="blob blob-1"></view>
+  <view class="blob blob-2"></view>
+  <view class="blob blob-3"></view>
+  <view class="blob blob-4"></view>
+</view>
+
+<!-- 玻璃返回按钮 -->
+<view class="back-btn" style="top: calc({{statusBarHeight}}px + 16rpx)" bindtap="goBack">‹</view>
+
+<view class="status-bar-spacer" style="height: {{statusBarHeight}}px"></view>
+
+<view class="page-head">
+  <view class="kicker">Edit</view>
+  <view class="page-title">{{isEdit ? '编辑婚礼' : '创建婚礼'}}</view>
+  <view class="page-desc">{{isEdit ? '修改后保存，请柬立即更新' : '填好这些信息，请柬就成型了'}}</view>
+</view>
+
+<!-- 基本信息 -->
+<view class="card">
+  <view class="card-title">基本信息</view>
+  <view class="field-label">新郎姓名</view>
+  <input class="input" value="{{groom}}" maxlength="12" placeholder="如 张明" placeholder-class="input-placeholder" data-field="groom" bindinput="onInput" />
+  <view class="field-label">新娘姓名</view>
+  <input class="input" value="{{bride}}" maxlength="12" placeholder="如 李悦" placeholder-class="input-placeholder" data-field="bride" bindinput="onInput" />
+  <view class="field-label">邀请语</view>
+  <input class="input" value="{{invite}}" placeholder="诚邀您见证我们的婚礼" placeholder-class="input-placeholder" data-field="invite" bindinput="onInput" />
+</view>
+
+<!-- 日期时间 -->
+<view class="card">
+  <view class="card-title">日期时间</view>
+  <view class="field-label">婚礼日期</view>
+  <picker mode="date" value="{{dateISO}}" bindchange="onDateChange">
+    <view class="picker-field {{dateISO ? '' : 'is-placeholder'}}">{{dateISO || '请选择日期'}}</view>
+  </picker>
+  <view class="field-label">仪式时间</view>
+  <picker mode="time" value="{{time}}" bindchange="onTimeChange">
+    <view class="picker-field {{time ? '' : 'is-placeholder'}}">{{time || '请选择时间'}}</view>
+  </picker>
+  <view class="field-label">农历</view>
+  <input class="input" value="{{lunar}}" placeholder="如 丙午年 十月初六（可留空）" placeholder-class="input-placeholder" data-field="lunar" bindinput="onInput" />
+</view>
+
+<!-- 场地 -->
+<view class="card">
+  <view class="card-title">婚礼场地</view>
+  <view class="field-label">场地名称</view>
+  <input class="input" value="{{venueName}}" placeholder="如 西子湖四季酒店" placeholder-class="input-placeholder" data-field="venueName" bindinput="onInput" />
+  <view class="btn btn-ghost map-btn" bindtap="chooseVenue">在地图上选择</view>
+  <view class="field-label">详细地址</view>
+  <input class="input" value="{{address}}" placeholder="街道门牌，宾客导航用" placeholder-class="input-placeholder" data-field="address" bindinput="onInput" />
+  <view class="field-label">场地电话</view>
+  <input class="input" value="{{venuePhone}}" placeholder="问路联系电话（可留空）" placeholder-class="input-placeholder" data-field="venuePhone" bindinput="onInput" />
+</view>
+
+<!-- 婚礼流程 -->
+<view class="card">
+  <view class="card-title">婚礼流程</view>
+  <view class="timeline-row" wx:for="{{timeline}}" wx:key="index">
+    <picker mode="time" value="{{item.time}}" data-index="{{index}}" bindchange="onTimelineTime">
+      <view class="timeline-time {{item.time ? '' : 'is-placeholder'}}">{{item.time || '时间'}}</view>
+    </picker>
+    <input class="input timeline-input" value="{{item.title}}" placeholder="环节" placeholder-class="input-placeholder" data-index="{{index}}" bindinput="onTimelineTitle" />
+    <input class="input timeline-input" value="{{item.note}}" placeholder="备注" placeholder-class="input-placeholder" data-index="{{index}}" bindinput="onTimelineNote" />
+    <view class="row-del" data-index="{{index}}" bindtap="removeTimeline">×</view>
+  </view>
+  <view class="btn btn-ghost add-row-btn" bindtap="addTimeline">添加一个环节</view>
+</view>
+
+<!-- 路书 -->
+<view class="card">
+  <view class="card-title">路书</view>
+  <view class="field-label">交通指引</view>
+  <textarea class="textarea" value="{{transportText}}" placeholder="每行一条" placeholder-class="textarea-placeholder" data-field="transportText" bindinput="onInput" />
+  <view class="field-label">停车信息</view>
+  <textarea class="textarea" value="{{parkingText}}" placeholder="每行一条" placeholder-class="textarea-placeholder" data-field="parkingText" bindinput="onInput" />
+  <view class="field-label">温馨提示</view>
+  <textarea class="textarea" value="{{tipsText}}" placeholder="每行一条" placeholder-class="textarea-placeholder" data-field="tipsText" bindinput="onInput" />
+</view>
+
+<!-- 回执 -->
+<view class="card">
+  <view class="card-title">回执</view>
+  <view class="field-label">回复截止</view>
+  <input class="input" value="{{rsvpDeadline}}" placeholder="如 2026 年 11 月 1 日（可留空）" placeholder-class="input-placeholder" data-field="rsvpDeadline" bindinput="onInput" />
+  <view class="field-label">回执说明</view>
+  <input class="input" value="{{rsvpNote}}" placeholder="方便我们安排席位与伴手礼" placeholder-class="input-placeholder" data-field="rsvpNote" bindinput="onInput" />
+</view>
+
+<!-- 底部留白，避免被固定保存栏遮挡 -->
+<view class="save-spacer"></view>
+
+<!-- 固定保存栏 -->
+<view class="save-bar">
+  <view class="btn btn-primary {{saving ? 'is-disabled' : ''}}" bindtap="save">保存婚礼</view>
+</view>

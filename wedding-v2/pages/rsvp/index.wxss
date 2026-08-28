@@ -1,0 +1,172 @@
+/* ---------- 玻璃返回按钮 ---------- */
+
+/* 页头为返回按钮让位 */
+.page-head {
+  padding-top: 150rpx;
+}
+
+.back-btn {
+  position: fixed;
+  left: 32rpx;
+  z-index: 99;
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--glass-bg-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1rpx solid var(--glass-border);
+  border-radius: 50%;
+  box-shadow: var(--glass-shadow), var(--glass-specular);
+  font-size: 48rpx;
+  line-height: 1;
+  color: var(--ink);
+  transition: opacity 0.15s ease;
+}
+
+.back-btn:active {
+  opacity: 0.6;
+}
+
+/* ---------- 出席状态 pills ---------- */
+
+.pills {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 20rpx;
+}
+
+.pill {
+  flex: 1;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--glass-bg);
+  border: 1rpx solid var(--glass-border);
+  border-radius: 36rpx;
+  font-size: 26rpx;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+  transition: opacity 0.15s ease;
+}
+
+.pill:active {
+  opacity: 0.7;
+}
+
+.pill-on {
+  background: linear-gradient(135deg, #A2433B, var(--accent));
+  border-color: transparent;
+  color: #FDF8F1;
+  box-shadow: 0 8rpx 24rpx rgba(142, 47, 40, 0.3);
+}
+
+/* ---------- 人数 stepper ---------- */
+
+.stepper {
+  margin-top: 20rpx;
+  display: flex;
+  align-items: center;
+  gap: 40rpx;
+}
+
+.step-btn {
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--glass-bg);
+  border: 1rpx solid var(--glass-border);
+  border-radius: 50%;
+  box-shadow: var(--glass-specular);
+  font-size: 36rpx;
+  color: var(--ink);
+}
+
+.step-btn:active {
+  opacity: 0.7;
+}
+
+.step-num {
+  min-width: 72rpx;
+  text-align: center;
+  font-size: 44rpx;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.is-disabled {
+  opacity: 0.4;
+}
+
+.submit-btn {
+  margin-top: 56rpx;
+}
+
+/* ---------- 成功态 ---------- */
+
+.done {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 200rpx 48rpx 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.done-title {
+  margin-top: 56rpx;
+  font-size: 44rpx;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.done-sub {
+  margin-top: 20rpx;
+  font-size: 24rpx;
+  letter-spacing: 0.1em;
+  color: var(--ink-soft);
+  text-align: center;
+}
+
+.done-btn {
+  margin-top: 80rpx;
+  width: 100%;
+}
+
+/* ---------- 状态卡（加载中 / 空态） ---------- */
+
+.state-card {
+  margin: 200rpx 48rpx 0;
+  padding: 72rpx 48rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.state-seal {
+  margin-bottom: 40rpx;
+}
+
+.state-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.state-text {
+  margin-top: 16rpx;
+  font-size: 24rpx;
+  line-height: 1.8;
+  color: var(--ink-soft);
+  text-align: center;
+}
+
+.state-btn {
+  margin-top: 48rpx;
+  width: 100%;
+}

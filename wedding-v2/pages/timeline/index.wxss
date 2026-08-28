@@ -1,0 +1,163 @@
+.tl {
+  margin: 8rpx 48rpx 0;
+  padding: 16rpx 36rpx;
+}
+
+.tl-item {
+  display: flex;
+  align-items: stretch;
+}
+
+/* ---------- 左列：时间 ---------- */
+
+.tl-time {
+  width: 108rpx;
+  padding-top: 30rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+}
+
+/* ---------- 中列：节点与竖线 ---------- */
+
+.tl-track {
+  width: 40rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tl-dot {
+  flex-shrink: 0;
+  margin-top: 42rpx;
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 2rpx solid var(--ink-faint);
+}
+
+.tl-line {
+  flex: 1;
+  width: 1rpx;
+  margin: 8rpx 0;
+  background: var(--hairline);
+}
+
+/* ---------- 右列：内容 ---------- */
+
+.tl-body {
+  flex: 1;
+  padding: 30rpx 0 44rpx;
+}
+
+.tl-title-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.tl-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.tl-badge {
+  padding: 4rpx 16rpx;
+  border-radius: 20rpx;
+  background: linear-gradient(135deg, #A2433B, var(--accent));
+  color: #FDF8F1;
+  font-size: 20rpx;
+  letter-spacing: 0.12em;
+  box-shadow: 0 6rpx 20rpx rgba(142, 47, 40, 0.3);
+}
+
+.tl-note {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  line-height: 1.7;
+  color: var(--ink-soft);
+}
+
+/* ---------- 状态 ---------- */
+
+.tl-item.done .tl-time,
+.tl-item.done .tl-title,
+.tl-item.done .tl-note {
+  color: var(--ink-faint);
+}
+
+.tl-item.current .tl-time {
+  color: var(--accent);
+}
+
+.tl-item.current .tl-title {
+  color: var(--accent);
+}
+
+.tl-item.current .tl-dot {
+  border-color: var(--accent);
+  background: var(--accent);
+  box-shadow: 0 0 0 8rpx rgba(142, 47, 40, 0.14), 0 0 24rpx rgba(142, 47, 40, 0.35);
+}
+
+.tl-item.done .tl-dot {
+  border-color: var(--ink-faint);
+  background: var(--ink-faint);
+}
+
+/* ---------- 底部提示 ---------- */
+
+.tl-tip {
+  margin: 32rpx 48rpx 0;
+  text-align: center;
+  font-size: 22rpx;
+  letter-spacing: 0.16em;
+  color: var(--ink-faint);
+}
+
+/* ---------- 状态卡（加载中 / 空态） ---------- */
+
+.state-card {
+  margin: 200rpx 48rpx 0;
+  padding: 72rpx 48rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.state-seal {
+  margin-bottom: 40rpx;
+}
+
+.state-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.state-text {
+  margin-top: 16rpx;
+  font-size: 24rpx;
+  line-height: 1.8;
+  color: var(--ink-soft);
+  text-align: center;
+}
+
+.state-btn {
+  margin-top: 48rpx;
+  width: 100%;
+}
+
+/* ---------- 流程未发布空态 ---------- */
+
+.tl-empty {
+  margin: 80rpx 48rpx;
+  text-align: center;
+  font-size: 24rpx;
+  line-height: 1.8;
+  color: var(--ink-faint);
+}

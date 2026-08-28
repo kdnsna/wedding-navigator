@@ -1,0 +1,230 @@
+/* ---------- 玻璃返回按钮 ---------- */
+
+.back-btn {
+  position: fixed;
+  left: 32rpx;
+  z-index: 99;
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--glass-bg-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1rpx solid var(--glass-border);
+  border-radius: 50%;
+  box-shadow: var(--glass-shadow), var(--glass-specular);
+  font-size: 48rpx;
+  line-height: 1;
+  color: var(--ink);
+}
+
+/* 页头为返回按钮让位 */
+.owner-head {
+  padding-top: 150rpx;
+}
+
+/* ---------- 状态卡（加载中 / 空态） ---------- */
+
+.state-card {
+  margin: 200rpx 48rpx 0;
+  padding: 72rpx 48rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.state-seal {
+  margin-bottom: 40rpx;
+}
+
+.state-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.state-text {
+  margin-top: 16rpx;
+  font-size: 24rpx;
+  line-height: 1.8;
+  color: var(--ink-soft);
+  text-align: center;
+}
+
+.state-btn {
+  margin-top: 48rpx;
+  width: 100%;
+}
+
+/* ---------- 管理入口：玻璃行卡 ---------- */
+
+.entries {
+  margin: 0 48rpx 8rpx;
+}
+
+.entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24rpx;
+  padding: 34rpx 36rpx;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1rpx solid var(--glass-border);
+  border-radius: 32rpx;
+  box-shadow: var(--glass-shadow), var(--glass-specular);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.entry:active {
+  opacity: 0.7;
+  transform: scale(0.99);
+}
+
+.entry-title {
+  display: block;
+  font-size: 34rpx;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.entry-sub {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: var(--ink-faint);
+}
+
+.entry-arrow {
+  font-size: 44rpx;
+  color: var(--ink-faint);
+  transition: transform 0.15s ease;
+}
+
+.entry:active .entry-arrow {
+  transform: translateX(6rpx);
+}
+
+/* ---------- 分享 ---------- */
+
+.share-wrap {
+  margin: 8rpx 48rpx 40rpx;
+}
+
+/* ---------- 统计四联 ---------- */
+
+.stats {
+  margin: 0 48rpx 32rpx;
+  display: flex;
+  gap: 20rpx;
+}
+
+.stat {
+  flex: 1;
+  padding: 28rpx 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.stat-num {
+  font-size: 52rpx;
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--ink);
+}
+
+.stat-num.accent {
+  color: var(--accent);
+}
+
+.stat-label {
+  font-size: 20rpx;
+  letter-spacing: 0.12em;
+  color: var(--ink-faint);
+}
+
+/* ---------- 明细列表 ---------- */
+
+.rsvp-row,
+.bless-row {
+  align-items: flex-start;
+}
+
+.rsvp-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.rsvp-top {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.rsvp-name {
+  font-size: 30rpx;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.rsvp-pill {
+  padding: 2rpx 14rpx;
+  border-radius: 20rpx;
+  font-size: 20rpx;
+  letter-spacing: 0.06em;
+}
+
+.pill-attend {
+  background: rgba(142, 47, 40, 0.1);
+  color: var(--accent);
+}
+
+.pill-maybe {
+  background: rgba(168, 135, 90, 0.14);
+  color: var(--gold);
+}
+
+.pill-decline {
+  background: var(--hairline-soft);
+  color: var(--ink-faint);
+}
+
+.rsvp-note {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+.bless-text {
+  display: block;
+  font-size: 26rpx;
+  line-height: 1.7;
+}
+
+.bless-name {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: var(--ink-faint);
+}
+
+.rsvp-time {
+  flex-shrink: 0;
+  margin-left: 24rpx;
+  font-size: 20rpx;
+  color: var(--ink-faint);
+}
+
+.empty {
+  padding: 40rpx 0 16rpx;
+  text-align: center;
+  font-size: 24rpx;
+  color: var(--ink-faint);
+}

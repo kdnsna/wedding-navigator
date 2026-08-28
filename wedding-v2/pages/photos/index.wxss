@@ -1,0 +1,134 @@
+/* ---------- 玻璃返回按钮（同 rsvp 范式） ---------- */
+
+.back-btn {
+  position: fixed;
+  left: 32rpx;
+  z-index: 99;
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--glass-bg-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1rpx solid var(--glass-border);
+  border-radius: 50%;
+  box-shadow: var(--glass-shadow), var(--glass-specular);
+  font-size: 48rpx;
+  line-height: 1;
+  color: var(--ink);
+  transition: opacity 0.15s ease;
+}
+
+.back-btn:active {
+  opacity: 0.6;
+}
+
+/* 页头为返回按钮让位 */
+.page-head {
+  padding-top: 150rpx;
+}
+
+/* ---------- 空态卡（未打开婚礼） ---------- */
+
+.empty-card {
+  margin-top: 220rpx;
+  text-align: center;
+}
+
+.empty-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.empty-desc {
+  margin-top: 16rpx;
+  font-size: 24rpx;
+  color: var(--ink-soft);
+}
+
+.empty-btn {
+  margin-top: 48rpx;
+}
+
+/* ---------- 两列网格 ---------- */
+
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24rpx;
+  padding: 0 48rpx;
+}
+
+.tile {
+  width: calc((100% - 24rpx) / 2);
+  box-sizing: border-box;
+}
+
+/* 玻璃卡纸装裱：玻璃底 + 内留白 */
+.photo-tile {
+  padding: 14rpx 14rpx 20rpx;
+}
+
+.tile-img {
+  display: block;
+  width: 100%;
+  height: 320rpx;
+  border-radius: 24rpx;
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.tile-caption {
+  margin-top: 14rpx;
+  font-size: 24rpx;
+  text-align: center;
+  color: var(--ink-soft);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* ---------- 添加 tile：玻璃虚线 ---------- */
+
+.add-tile {
+  height: 402rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 2rpx dashed rgba(34, 30, 26, 0.28);
+  border-radius: 36rpx;
+  box-shadow: var(--glass-specular);
+  transition: opacity 0.15s ease;
+}
+
+.add-tile:active {
+  opacity: 0.7;
+}
+
+.add-tile-first {
+  height: 440rpx;
+  margin: 0 48rpx;
+}
+
+.add-plus {
+  font-size: 72rpx;
+  line-height: 1;
+  color: var(--ink-faint);
+}
+
+.add-text {
+  margin-top: 20rpx;
+  font-size: 24rpx;
+  letter-spacing: 0.12em;
+  color: var(--ink-soft);
+}
+
+.is-disabled {
+  opacity: 0.4;
+}

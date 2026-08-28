@@ -1,0 +1,113 @@
+<view class="aurora">
+  <view class="blob blob-1"></view>
+  <view class="blob blob-2"></view>
+  <view class="blob blob-3"></view>
+  <view class="blob blob-4"></view>
+</view>
+
+<view class="back-btn" style="top: calc({{statusBarHeight}}px + 16rpx)" bindtap="goBack">‹</view>
+<view class="status-bar-spacer" style="height: {{statusBarHeight}}px"></view>
+
+<!-- 加载中 -->
+<view class="state-card glass" wx:if="{{!loaded}}">
+  <text class="state-text">正在打开主人台…</text>
+</view>
+
+<!-- 未选择 / 婚礼不存在 -->
+<view class="state-card glass" wx:elif="{{!wedding}}">
+  <view class="seal state-seal">囍</view>
+  <text class="state-title serif">还没有打开的婚礼</text>
+  <text class="state-text">去首页创建或选择你们的婚礼</text>
+  <view class="btn btn-primary state-btn" bindtap="goHome">去首页</view>
+</view>
+
+<block wx:else>
+<view class="page-head owner-head">
+  <view class="kicker">Host View</view>
+  <view class="page-title">主人视角</view>
+  <view class="page-desc">宾客回执与祝福汇总 · 仅你和 TA 可见</view>
+</view>
+
+<!-- 管理入口 -->
+<view class="entries">
+  <navigator url="/pages/edit/index" class="entry">
+    <view>
+      <text class="entry-title serif">编辑婚礼信息</text>
+      <text class="entry-sub">新人、日期、场地、流程与路书</text>
+    </view>
+    <text class="entry-arrow serif">›</text>
+  </navigator>
+
+  <navigator url="/pages/photos/index" class="entry">
+    <view>
+      <text class="entry-title serif">管理照片</text>
+      <text class="entry-sub">上传婚纱相册照片，宾客可见</text>
+    </view>
+    <text class="entry-arrow serif">›</text>
+  </navigator>
+
+  <navigator url="/pages/invite/index" open-type="switchTab" class="entry">
+    <view>
+      <text class="entry-title serif">查看请柬</text>
+      <text class="entry-sub">宾客看到的请柬页</text>
+    </view>
+    <text class="entry-arrow serif">›</text>
+  </navigator>
+</view>
+
+<!-- 分享 -->
+<view class="share-wrap">
+  <button class="btn btn-primary" open-type="share">把请柬分享给宾客</button>
+</view>
+
+<!-- 回执统计 -->
+<view class="stats">
+  <view class="stat glass">
+    <text class="stat-num serif">{{stats.total}}</text>
+    <text class="stat-label">收到回执</text>
+  </view>
+  <view class="stat glass">
+    <text class="stat-num serif accent">{{stats.seats}}</text>
+    <text class="stat-label">出席席位</text>
+  </view>
+  <view class="stat glass">
+    <text class="stat-num serif">{{stats.maybe}}</text>
+    <text class="stat-label">待定</text>
+  </view>
+  <view class="stat glass">
+    <text class="stat-num serif">{{stats.decline}}</text>
+    <text class="stat-label">缺席</text>
+  </view>
+</view>
+
+<!-- 回执列表 -->
+<view class="card">
+  <view class="card-title">回执明细</view>
+  <view class="row rsvp-row" wx:for="{{rsvps}}" wx:key="createdAt">
+    <view class="rsvp-main">
+      <view class="rsvp-top">
+        <text class="rsvp-name serif">{{item.name}}</text>
+        <text class="rsvp-pill pill-{{item.attendance}}">{{item.attendanceLabel}}<block wx:if="{{item.count}}"> · {{item.count}} 人</block></text>
+      </view>
+      <text class="rsvp-note" wx:if="{{item.note}}">{{item.note}}</text>
+    </view>
+    <text class="rsvp-time">{{item.timeText}}</text>
+  </view>
+  <view class="empty" wx:if="{{!rsvps.length}}">还没有收到回执</view>
+</view>
+
+<!-- 祝福列表 -->
+<view class="card">
+  <view class="card-title">祝福墙（{{blessings.length}}）</view>
+  <view class="row bless-row" wx:for="{{blessings}}" wx:key="createdAt">
+    <view class="rsvp-main">
+      <text class="bless-text">{{item.text}}</text>
+      <text class="bless-name">{{item.name}}</text>
+    </view>
+    <text class="rsvp-time">{{item.timeText}}</text>
+  </view>
+  <view class="empty" wx:if="{{!blessings.length}}">还没有祝福</view>
+</view>
+</block>
+
+<view class="safe-bottom-plain"></view>

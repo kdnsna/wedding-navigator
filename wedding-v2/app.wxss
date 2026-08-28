@@ -1,0 +1,312 @@
+/* ============================================================
+   甜囍手册 · 设计系统 v2
+   「流光玻璃」：暖调极光底 / 磨砂玻璃层 / 绛红点睛 / 衬线标题
+   ============================================================ */
+
+page {
+  --paper: #F5EEE4;
+  --ink: #221E1A;
+  --ink-soft: #6E6357;
+  --ink-faint: #9C9082;
+  --accent: #8E2F28;
+  --accent-deep: #76261F;
+  --gold: #A8875A;
+
+  /* 玻璃质感 token */
+  --glass-bg: rgba(255, 255, 255, 0.42);
+  --glass-bg-strong: rgba(255, 255, 255, 0.58);
+  --glass-border: rgba(255, 255, 255, 0.65);
+  --glass-blur: blur(50rpx) saturate(1.6);
+  --glass-shadow: 0 12rpx 48rpx rgba(122, 84, 60, 0.12);
+  --glass-specular: inset 0 1rpx 0 rgba(255, 255, 255, 0.75);
+
+  --hairline: rgba(34, 30, 26, 0.14);
+  --hairline-soft: rgba(34, 30, 26, 0.07);
+  --serif: 'Songti SC', 'STSongti-SC', 'STSong', 'SimSun', serif;
+
+  background: var(--paper);
+  color: var(--ink);
+  font-family: -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif;
+  font-size: 28rpx;
+  line-height: 1.6;
+}
+
+/* ---------- 极光底色：径向渐变色团 + 缓慢漂移 ---------- */
+
+.aurora {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: -1;
+  overflow: hidden;
+  background: linear-gradient(165deg, #F8F2E9 0%, #F4EAE0 42%, #F0E4DC 100%);
+}
+
+.blob {
+  position: absolute;
+  border-radius: 50%;
+}
+
+.blob-1 {
+  width: 560rpx;
+  height: 560rpx;
+  top: -140rpx;
+  left: -120rpx;
+  background: radial-gradient(circle, rgba(238, 184, 190, 0.75) 0%, rgba(238, 184, 190, 0) 68%);
+  animation: drift-1 22s ease-in-out infinite alternate;
+}
+
+.blob-2 {
+  width: 640rpx;
+  height: 640rpx;
+  top: 30%;
+  right: -220rpx;
+  background: radial-gradient(circle, rgba(227, 207, 168, 0.7) 0%, rgba(227, 207, 168, 0) 68%);
+  animation: drift-2 26s ease-in-out infinite alternate;
+}
+
+.blob-3 {
+  width: 520rpx;
+  height: 520rpx;
+  bottom: -100rpx;
+  left: -80rpx;
+  background: radial-gradient(circle, rgba(197, 204, 216, 0.55) 0%, rgba(197, 204, 216, 0) 68%);
+  animation: drift-3 24s ease-in-out infinite alternate;
+}
+
+.blob-4 {
+  width: 360rpx;
+  height: 360rpx;
+  top: 52%;
+  left: 12%;
+  background: radial-gradient(circle, rgba(142, 47, 40, 0.16) 0%, rgba(142, 47, 40, 0) 70%);
+  animation: drift-1 30s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes drift-1 {
+  to { transform: translate(50rpx, 36rpx) scale(1.08); }
+}
+
+@keyframes drift-2 {
+  to { transform: translate(-60rpx, 44rpx) scale(1.12); }
+}
+
+@keyframes drift-3 {
+  to { transform: translate(44rpx, -40rpx) scale(1.06); }
+}
+
+/* ---------- 玻璃层 ---------- */
+
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1rpx solid var(--glass-border);
+  border-radius: 36rpx;
+  box-shadow: var(--glass-shadow), var(--glass-specular);
+}
+
+/* ---------- 页头：kicker + 衬线大标题 + 描述 ---------- */
+
+.page-head {
+  padding: 64rpx 48rpx 44rpx;
+}
+
+.kicker {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  font-size: 20rpx;
+  letter-spacing: 0.32em;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+}
+
+.kicker::before,
+.kicker::after {
+  content: '';
+  width: 40rpx;
+  height: 1rpx;
+  background: var(--hairline);
+}
+
+.page-title {
+  margin-top: 20rpx;
+  font-family: var(--serif);
+  font-size: 56rpx;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.25;
+}
+
+.page-desc {
+  margin-top: 16rpx;
+  padding-left: 20rpx;
+  border-left: 3rpx solid var(--accent);
+  font-size: 24rpx;
+  color: var(--ink-soft);
+  line-height: 1.7;
+}
+
+/* ---------- 卡片：玻璃面板 ---------- */
+
+.card {
+  margin: 0 48rpx 32rpx;
+  padding: 40rpx;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1rpx solid var(--glass-border);
+  border-radius: 36rpx;
+  box-shadow: var(--glass-shadow), var(--glass-specular);
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  font-family: var(--serif);
+  font-size: 32rpx;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.card-title::before {
+  content: '';
+  width: 10rpx;
+  height: 10rpx;
+  background: linear-gradient(135deg, #A8503F, var(--accent));
+  transform: rotate(45deg);
+  border-radius: 2rpx;
+}
+
+/* ---------- 发丝线列表行 ---------- */
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 30rpx 0;
+  border-bottom: 1rpx solid var(--hairline-soft);
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+/* ---------- 按钮 ---------- */
+
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 96rpx;
+  border-radius: 48rpx;
+  font-size: 28rpx;
+  letter-spacing: 0.12em;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.btn:active {
+  opacity: 0.85;
+  transform: scale(0.98);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #A2433B 0%, var(--accent) 55%, var(--accent-deep) 100%);
+  color: #FDF8F1;
+  box-shadow: 0 10rpx 32rpx rgba(142, 47, 40, 0.32), var(--glass-specular);
+}
+
+.btn-ghost {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  color: var(--ink);
+  border: 1rpx solid var(--glass-border);
+  box-shadow: var(--glass-specular);
+}
+
+/* button 组件默认样式清理 */
+button.btn {
+  padding: 0;
+  line-height: 96rpx;
+  border-radius: 48rpx;
+}
+
+button.btn::after {
+  border: none;
+}
+
+/* ---------- 输入 ---------- */
+
+.input,
+.textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 24rpx 0;
+  background: transparent;
+  border-bottom: 1rpx solid var(--hairline);
+  font-size: 28rpx;
+  color: var(--ink);
+}
+
+.textarea {
+  min-height: 140rpx;
+  line-height: 1.6;
+}
+
+.input-placeholder,
+.textarea-placeholder {
+  color: var(--ink-faint);
+}
+
+.field-label {
+  margin: 36rpx 0 4rpx;
+  font-size: 22rpx;
+  letter-spacing: 0.16em;
+  color: var(--ink-faint);
+}
+
+/* ---------- 囍字印章 ---------- */
+
+.seal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 28rpx;
+  background: linear-gradient(140deg, #A8503F 0%, var(--accent) 50%, var(--accent-deep) 100%);
+  color: #FDF8F1;
+  font-family: var(--serif);
+  font-size: 56rpx;
+  font-weight: 600;
+  box-shadow: 0 12rpx 36rpx rgba(142, 47, 40, 0.35), var(--glass-specular);
+}
+
+/* ---------- 通用工具 ---------- */
+
+.serif {
+  font-family: var(--serif);
+}
+
+.muted {
+  color: var(--ink-soft);
+}
+
+/* 状态栏占位（沉浸式自定义导航用） */
+.status-bar-spacer {
+  width: 100%;
+}
+
+/* 内容底部留白：避开浮动玻璃 tabBar */
+.safe-bottom {
+  height: calc(220rpx + env(safe-area-inset-bottom));
+}
+
+.safe-bottom-plain {
+  height: calc(48rpx + env(safe-area-inset-bottom));
+}

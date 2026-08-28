@@ -1,0 +1,101 @@
+/* ---------- 书写区 ---------- */
+
+.compose-btn {
+  margin-top: 48rpx;
+}
+
+.is-disabled {
+  opacity: 0.6;
+}
+
+/* ---------- 祝福列表：玻璃卡片 ---------- */
+
+.bless-list {
+  margin: 24rpx 48rpx 0;
+}
+
+.bless-item {
+  position: relative;
+  margin-bottom: 24rpx;
+  padding: 36rpx 36rpx 32rpx 76rpx;
+}
+
+.bless-quote {
+  position: absolute;
+  left: 28rpx;
+  top: 28rpx;
+  font-size: 56rpx;
+  line-height: 1;
+  color: var(--accent);
+  opacity: 0.85;
+}
+
+.bless-text {
+  display: block;
+  font-size: 28rpx;
+  line-height: 1.8;
+  color: var(--ink);
+}
+
+.bless-meta {
+  margin-top: 16rpx;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.bless-name {
+  font-size: 26rpx;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+}
+
+.bless-time {
+  font-size: 20rpx;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+}
+
+/* ---------- 空态 ---------- */
+
+.bless-empty {
+  margin: 80rpx 48rpx;
+  text-align: center;
+  font-size: 24rpx;
+  line-height: 1.8;
+  color: var(--ink-faint);
+}
+
+/* ---------- 状态卡（加载中 / 空态） ---------- */
+
+.state-card {
+  margin: 200rpx 48rpx 0;
+  padding: 72rpx 48rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.state-seal {
+  margin-bottom: 40rpx;
+}
+
+.state-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.state-text {
+  margin-top: 16rpx;
+  font-size: 24rpx;
+  line-height: 1.8;
+  color: var(--ink-soft);
+  text-align: center;
+}
+
+.state-btn {
+  margin-top: 48rpx;
+  width: 100%;
+}

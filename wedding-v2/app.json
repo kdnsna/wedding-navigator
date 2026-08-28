@@ -1,0 +1,68 @@
+{
+  "pages": [
+    "pages/home/index",
+    "pages/invite/index",
+    "pages/timeline/index",
+    "pages/guide/index",
+    "pages/blessing/index",
+    "pages/rsvp/index",
+    "pages/owner/index",
+    "pages/edit/index",
+    "pages/photos/index"
+  ],
+  "subPackages": [
+    {
+      "root": "album",
+      "pages": ["index/index"]
+    }
+  ],
+  "window": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "甜囍手册",
+    "navigationBarBackgroundColor": "#F5EEE4",
+    "backgroundColor": "#F5EEE4",
+    "backgroundTextStyle": "dark"
+  },
+  "tabBar": {
+    "custom": true,
+    "color": "#9A9184",
+    "selectedColor": "#8E2F28",
+    "backgroundColor": "#F5EEE4",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/invite/index",
+        "text": "请柬",
+        "iconPath": "assets/tab/invite.png",
+        "selectedIconPath": "assets/tab/invite-on.png"
+      },
+      {
+        "pagePath": "pages/timeline/index",
+        "text": "流程",
+        "iconPath": "assets/tab/timeline.png",
+        "selectedIconPath": "assets/tab/timeline-on.png"
+      },
+      {
+        "pagePath": "pages/guide/index",
+        "text": "路书",
+        "iconPath": "assets/tab/guide.png",
+        "selectedIconPath": "assets/tab/guide-on.png"
+      },
+      {
+        "pagePath": "pages/blessing/index",
+        "text": "祝福",
+        "iconPath": "assets/tab/blessing.png",
+        "selectedIconPath": "assets/tab/blessing-on.png"
+      }
+    ]
+  },
+  "permission": {
+    "scope.userLocation": {
+      "desc": "用于选择婚礼场地位置"
+    }
+  },
+  "requiredPrivateInfos": ["chooseLocation"],
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

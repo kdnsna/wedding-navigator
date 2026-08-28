@@ -1,0 +1,127 @@
+<view class="wrap">
+  <view class="aurora">
+    <view class="blob blob-1"></view>
+    <view class="blob blob-2"></view>
+    <view class="blob blob-3"></view>
+    <view class="blob blob-4"></view>
+  </view>
+
+<scroll-view scroll-y class="page" style="padding-top: {{statusBarHeight}}px">
+
+  <!-- 加载中 -->
+  <view class="state-card glass" wx:if="{{!loaded}}">
+    <text class="state-text">正在打开请柬…</text>
+  </view>
+
+  <!-- 未选择 / 请柬不存在 -->
+  <view class="state-card glass" wx:elif="{{!wedding}}">
+    <view class="seal state-seal">囍</view>
+    <text class="state-title serif">还没有打开的请柬</text>
+    <text class="state-text">从分享卡片进入，或去首页创建你们的婚礼</text>
+    <view class="btn btn-primary state-btn" bindtap="goHome">去首页</view>
+  </view>
+
+  <block wx:else>
+  <!-- Hero -->
+  <view class="hero">
+    <view class="hero-kicker">
+      <view class="line"></view>
+      <text>Wedding Invitation</text>
+      <view class="line"></view>
+    </view>
+
+    <view class="seal hero-seal">囍</view>
+
+    <view class="couple">
+      <text class="name">{{wedding.couple.groom}}</text>
+      <text class="amp serif">&</text>
+      <text class="name">{{wedding.couple.bride}}</text>
+    </view>
+
+    <text class="invite-line">{{wedding.couple.invite}}</text>
+
+    <view class="date-block">
+      <text class="date-big serif">{{wedding.date.display}}</text>
+      <text class="date-sub">{{wedding.date.lunar ? wedding.date.lunar + ' · ' : ''}}{{wedding.date.weekday}} · {{wedding.date.time}}</text>
+    </view>
+
+    <view class="venue-line">
+      <text class="venue-name serif">{{wedding.venue.name}}</text>
+      <text class="venue-addr">{{wedding.venue.address}}</text>
+    </view>
+  </view>
+
+  <!-- 倒计时 -->
+  <view class="countdown">
+    <block wx:if="{{daysLeft > 0}}">
+      <text class="cd-label">距婚礼还有</text>
+      <view class="cd-num-row">
+        <text class="cd-num serif">{{daysLeft}}</text>
+        <text class="cd-unit">天</text>
+      </view>
+    </block>
+    <block wx:elif="{{daysLeft === 0}}">
+      <text class="cd-today serif">今日大婚 · 恭候光临</text>
+    </block>
+    <block wx:else>
+      <text class="cd-today serif">礼成 · 感谢见证</text>
+    </block>
+  </view>
+
+  <!-- 入口 -->
+  <view class="entries">
+    <navigator url="/pages/timeline/index" open-type="switchTab" class="entry">
+      <view>
+        <text class="entry-title serif">婚礼流程</text>
+        <text class="entry-sub">当天每一个时刻的安排</text>
+      </view>
+      <text class="entry-arrow serif">›</text>
+    </navigator>
+
+    <navigator url="/pages/guide/index" open-type="switchTab" class="entry">
+      <view>
+        <text class="entry-title serif">婚礼路书</text>
+        <text class="entry-sub">导航、交通、停车与温馨提示</text>
+      </view>
+      <text class="entry-arrow serif">›</text>
+    </navigator>
+
+    <navigator url="/album/index/index" class="entry">
+      <view>
+        <text class="entry-title serif">婚纱影像</text>
+        <text class="entry-sub">光影里的我们</text>
+      </view>
+      <text class="entry-arrow serif">›</text>
+    </navigator>
+
+    <navigator url="/pages/rsvp/index" class="entry entry-accent">
+      <view>
+        <text class="entry-title serif">出席回执</text>
+        <text class="entry-sub">{{wedding.rsvp.deadline ? wedding.rsvp.deadline + ' 前回复' : '告诉我们你能否到场'}}</text>
+      </view>
+      <text class="entry-arrow serif">›</text>
+    </navigator>
+  </view>
+
+  <!-- 分享 -->
+  <view class="share-wrap">
+    <button class="btn btn-ghost share-btn" open-type="share">把请柬分享给亲友</button>
+  </view>
+
+  <!-- 主人入口（仅主人可见） -->
+  <view class="owner-entry glass" wx:if="{{isOwner}}" bindtap="goOwner">
+    <text class="owner-entry-text serif">这是你的婚礼 · 进入管理</text>
+    <text class="entry-arrow serif">›</text>
+  </view>
+
+  <!-- 页脚 -->
+  <view class="footer">
+    <view class="footer-rule"></view>
+    <text class="footer-text serif">{{wedding.couple.groom}} · {{wedding.couple.bride}}</text>
+    <text class="footer-sub">甜囍手册 · 婚礼导航</text>
+  </view>
+  </block>
+
+  <view class="safe-bottom"></view>
+</scroll-view>
+</view>

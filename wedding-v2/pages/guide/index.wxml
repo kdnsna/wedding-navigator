@@ -1,0 +1,67 @@
+<view class="aurora">
+  <view class="blob blob-1"></view>
+  <view class="blob blob-2"></view>
+  <view class="blob blob-3"></view>
+  <view class="blob blob-4"></view>
+</view>
+
+<view class="status-bar-spacer" style="height: {{statusBarHeight}}px"></view>
+
+<!-- 加载中 -->
+<view class="state-card glass" wx:if="{{!loaded}}">
+  <text class="state-text">正在打开请柬…</text>
+</view>
+
+<!-- 未选择 / 请柬不存在 -->
+<view class="state-card glass" wx:elif="{{!wedding}}">
+  <view class="seal state-seal">囍</view>
+  <text class="state-title serif">还没有打开的请柬</text>
+  <text class="state-text">从分享卡片进入，或去首页创建你们的婚礼</text>
+  <view class="btn btn-primary state-btn" bindtap="goHome">去首页</view>
+</view>
+
+<block wx:else>
+<view class="page-head">
+  <view class="kicker">Guest Guide</view>
+  <view class="page-title">婚礼路书</view>
+  <view class="page-desc">导航、交通、停车与当日的温馨提示</view>
+</view>
+
+<!-- 场地卡片 -->
+<view class="card venue-card">
+  <view class="card-title">{{wedding.venue.name}}</view>
+  <text class="venue-addr">{{wedding.venue.address}}</text>
+  <text class="venue-time">{{wedding.date.display}} {{wedding.date.weekday}} · {{wedding.date.time}}</text>
+
+  <view class="venue-actions">
+    <view class="btn btn-primary venue-btn" bindtap="openLocation">一键导航</view>
+    <view class="btn btn-ghost venue-btn" wx:if="{{wedding.venue.phone}}" bindtap="callVenue">拨打场地电话</view>
+  </view>
+</view>
+
+<!-- 交通 -->
+<view class="card" wx:if="{{wedding.guide.transport.length}}">
+  <view class="card-title">交通指引</view>
+  <view class="row guide-row" wx:for="{{wedding.guide.transport}}" wx:key="index">
+    <text class="guide-text">{{item}}</text>
+  </view>
+</view>
+
+<!-- 停车 -->
+<view class="card" wx:if="{{wedding.guide.parking.length}}">
+  <view class="card-title">停车信息</view>
+  <view class="row guide-row" wx:for="{{wedding.guide.parking}}" wx:key="index">
+    <text class="guide-text">{{item}}</text>
+  </view>
+</view>
+
+<!-- 温馨提示 -->
+<view class="card" wx:if="{{wedding.guide.tips.length}}">
+  <view class="card-title">温馨提示</view>
+  <view class="row guide-row" wx:for="{{wedding.guide.tips}}" wx:key="index">
+    <text class="guide-text">{{item}}</text>
+  </view>
+</view>
+</block>
+
+<view class="safe-bottom"></view>

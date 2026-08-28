@@ -1,0 +1,4 @@
+{
+  "desc": "甜囍手册页面索引",
+  "rules": [{ "action": "allow", "page": "*" }]
+}

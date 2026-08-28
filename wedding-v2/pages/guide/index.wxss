@@ -1,0 +1,74 @@
+.venue-card {
+  padding-bottom: 48rpx;
+}
+
+.venue-addr {
+  display: block;
+  margin-top: 20rpx;
+  font-size: 26rpx;
+  line-height: 1.7;
+  color: var(--ink-soft);
+}
+
+.venue-time {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 22rpx;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+
+.venue-actions {
+  margin-top: 40rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.venue-btn {
+  width: 100%;
+}
+
+.guide-row {
+  align-items: flex-start;
+}
+
+.guide-text {
+  flex: 1;
+  font-size: 26rpx;
+  line-height: 1.8;
+  color: var(--ink-soft);
+}
+
+/* ---------- 状态卡（加载中 / 空态） ---------- */
+
+.state-card {
+  margin: 200rpx 48rpx 0;
+  padding: 72rpx 48rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.state-seal {
+  margin-bottom: 40rpx;
+}
+
+.state-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.state-text {
+  margin-top: 16rpx;
+  font-size: 24rpx;
+  line-height: 1.8;
+  color: var(--ink-soft);
+  text-align: center;
+}
+
+.state-btn {
+  margin-top: 48rpx;
+  width: 100%;
+}

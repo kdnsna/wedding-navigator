@@ -1,0 +1,75 @@
+<view class="aurora">
+  <view class="blob blob-1"></view>
+  <view class="blob blob-2"></view>
+  <view class="blob blob-3"></view>
+  <view class="blob blob-4"></view>
+</view>
+
+<!-- 玻璃返回按钮 -->
+<view class="back-btn" style="top: calc({{statusBarHeight}}px + 16rpx)" bindtap="goBack">‹</view>
+
+<view class="status-bar-spacer" style="height: {{statusBarHeight}}px"></view>
+
+<!-- 加载中 -->
+<view class="state-card glass" wx:if="{{!loaded}}">
+  <text class="state-text">正在打开请柬…</text>
+</view>
+
+<!-- 未选择 / 请柬不存在 -->
+<view class="state-card glass" wx:elif="{{!wedding}}">
+  <view class="seal state-seal">囍</view>
+  <text class="state-title serif">还没有打开的请柬</text>
+  <text class="state-text">从分享卡片进入，或去首页创建你们的婚礼</text>
+  <view class="btn btn-primary state-btn" bindtap="goHome">去首页</view>
+</view>
+
+<block wx:else>
+<!-- 表单态 -->
+<block wx:if="{{!submitted}}">
+  <view class="page-head">
+    <view class="kicker">RSVP</view>
+    <view class="page-title">出席回执</view>
+    <view class="page-desc">{{wedding.rsvp.deadline ? wedding.rsvp.deadline + ' 前回复 · ' : ''}}{{wedding.rsvp.note}}</view>
+  </view>
+
+  <view class="card">
+    <view class="field-label">姓名</view>
+    <input class="input" value="{{name}}" maxlength="12" placeholder="方便我们认出你" placeholder-class="input-placeholder" bindinput="onNameInput" />
+
+    <view class="field-label">能否出席</view>
+    <view class="pills">
+      <view
+        wx:for="{{options}}"
+        wx:key="value"
+        class="pill {{attendance === item.value ? 'pill-on' : ''}}"
+        data-value="{{item.value}}"
+        bindtap="choose"
+      >{{item.label}}</view>
+    </view>
+
+    <block wx:if="{{attendance === 'attend'}}">
+      <view class="field-label">出席人数（含本人）</view>
+      <view class="stepper">
+        <view class="step-btn {{count <= 1 ? 'is-disabled' : ''}}" bindtap="countMinus">−</view>
+        <text class="step-num serif">{{count}}</text>
+        <view class="step-btn {{count >= 10 ? 'is-disabled' : ''}}" bindtap="countPlus">＋</view>
+      </view>
+    </block>
+
+    <view class="field-label">想说的话（可留空）</view>
+    <textarea class="textarea" value="{{note}}" maxlength="200" placeholder="饮食禁忌、随行安排等都可以写在这里" placeholder-class="textarea-placeholder" bindinput="onNoteInput" />
+
+    <view class="btn btn-primary submit-btn {{submitting ? 'is-disabled' : ''}}" bindtap="submit">提交回执</view>
+  </view>
+
+  <view class="safe-bottom-plain"></view>
+</block>
+
+<!-- 成功态 -->
+<view class="done" wx:else>
+  <view class="seal">囍</view>
+  <text class="done-title serif">已收到您的回执</text>
+  <text class="done-sub">{{wedding.date.display}} · {{wedding.venue.name}} · 恭候光临</text>
+  <view class="btn btn-ghost done-btn" bindtap="backHome">返回请柬</view>
+</view>
+</block>

@@ -1,0 +1,60 @@
+<view class="aurora">
+  <view class="blob blob-1"></view>
+  <view class="blob blob-2"></view>
+  <view class="blob blob-3"></view>
+  <view class="blob blob-4"></view>
+</view>
+
+<view class="status-bar-spacer" style="height: {{statusBarHeight}}px"></view>
+
+<!-- 品牌 Hero -->
+<view class="hero">
+  <view class="hero-kicker">
+    <view class="line"></view>
+    <text>Sweet Wedding</text>
+    <view class="line"></view>
+  </view>
+  <view class="seal hero-seal">囍</view>
+  <text class="hero-title serif">{{config.product.name}}</text>
+  <text class="hero-slogan">{{config.product.slogan}}</text>
+</view>
+
+<!-- 未配置云环境（部署者可见的指引） -->
+<view class="card" wx:if="{{!cloudOn}}">
+  <view class="card-title">尚未配置云环境</view>
+  <text class="setup-tip">这是一套多人请柬系统，需要先在开发者工具开通云开发，并把环境 ID 填进 config/app.js 的 cloudEnv。完整步骤见项目里的《部署指南》。</text>
+</view>
+
+<block wx:else>
+  <!-- 创建入口 -->
+  <view class="cta-wrap">
+    <view class="btn btn-primary" bindtap="create">创建我们的婚礼</view>
+  </view>
+
+  <!-- 我的婚礼 -->
+  <view class="mine" wx:if="{{myWeddings.length}}">
+    <view class="mine-header">
+      <view class="line"></view>
+      <text>我的婚礼</text>
+      <view class="line"></view>
+    </view>
+    <view class="mine-card glass" wx:for="{{myWeddings}}" wx:key="_id" data-id="{{item._id}}" bindtap="openWedding">
+      <view class="mine-info">
+        <text class="mine-names serif">{{item.couple.groom}} & {{item.couple.bride}}</text>
+        <text class="mine-date">{{item.date.display}} · {{item.venue.name}}</text>
+      </view>
+      <text class="mine-arrow serif">›</text>
+    </view>
+  </view>
+
+  <view class="mine-empty" wx:elif="{{!loading}}">
+    <text>还没有你的婚礼，点上方按钮开始创建</text>
+  </view>
+</block>
+
+<view class="footer">
+  <view class="footer-rule"></view>
+  <text class="footer-sub">{{config.product.name}} · 每一对新人都值得一张好看的请柬</text>
+</view>
+
+<view class="safe-bottom-plain"></view>

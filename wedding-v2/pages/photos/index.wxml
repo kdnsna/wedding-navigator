@@ -1,0 +1,54 @@
+<view class="aurora">
+  <view class="blob blob-1"></view>
+  <view class="blob blob-2"></view>
+  <view class="blob blob-3"></view>
+  <view class="blob blob-4"></view>
+</view>
+
+<!-- 玻璃返回按钮 -->
+<view class="back-btn" style="top: calc({{statusBarHeight}}px + 16rpx)" bindtap="goBack">‹</view>
+
+<view class="status-bar-spacer" style="height: {{statusBarHeight}}px"></view>
+
+<!-- 空态：未开云或未打开婚礼 -->
+<view wx:if="{{!ready}}" class="card empty-card">
+  <view class="empty-title serif">还没有打开的婚礼</view>
+  <view class="empty-desc">先去创建或打开一场婚礼，再来管理照片</view>
+  <view class="btn btn-primary empty-btn" bindtap="goHome">回到首页</view>
+</view>
+
+<!-- 正常态 -->
+<block wx:else>
+  <view class="page-head">
+    <view class="kicker">Photos</view>
+    <view class="page-title">照片管理</view>
+    <view class="page-desc">上传你们的婚纱照，宾客将在婚纱影像中看到</view>
+  </view>
+
+  <!-- 空态：还没有照片 -->
+  <view wx:if="{{!photos.length}}" class="add-tile add-tile-first {{uploading ? 'is-disabled' : ''}}" bindtap="addPhotos">
+    <text class="add-plus">＋</text>
+    <text class="add-text">添加第一张照片</text>
+  </view>
+
+  <!-- 两列网格 -->
+  <view wx:else class="grid">
+    <view
+      wx:for="{{photos}}"
+      wx:key="fileID"
+      class="tile glass photo-tile"
+      data-index="{{index}}"
+      bindtap="onPhotoTap"
+    >
+      <image class="tile-img" src="{{item.fileID}}" mode="aspectFill" />
+      <view class="tile-caption serif">{{item.caption || '未命名'}}</view>
+    </view>
+
+    <view class="tile add-tile {{uploading ? 'is-disabled' : ''}}" bindtap="addPhotos">
+      <text class="add-plus">＋</text>
+      <text class="add-text">添加照片</text>
+    </view>
+  </view>
+</block>
+
+<view class="safe-bottom-plain"></view>
