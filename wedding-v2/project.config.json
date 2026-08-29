@@ -2,6 +2,7 @@
   "description": "甜囍手册 · 婚礼导航小程序（原生重做版）",
   "appid": "wx2477cb578d01e89f",
   "compileType": "miniprogram",
+  "cloudfunctionRoot": "cloudfunctions/",
   "libVersion": "latest",
   "projectname": "sweet-wedding",
   "setting": {

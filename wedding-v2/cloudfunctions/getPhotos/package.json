@@ -1,0 +1,9 @@
+{
+  "name": "getphotos",
+  "version": "1.0.0",
+  "description": "按 weddingId 返回婚纱照临时访问链接",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

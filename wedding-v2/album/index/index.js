@@ -12,15 +12,27 @@ Page({
 
   onShow() {
     app.loadWedding().then(w => {
-      const photos = (w && w.photos) || []
-      const pad = n => (n < 10 ? '0' + n : '' + n)
-      const total = pad(photos.length)
-      this.setData({
-        loaded: true,
-        wedding: w,
-        photos: photos.map((p, i) => ({ ...p, num: `${pad(i + 1)} / ${total}` })),
-        urls: photos.map(p => p.fileID)
-      }, () => this.observe())
+      if (!w) {
+        this.setData({ loaded: true, wedding: null, photos: [], urls: [] })
+        return
+      }
+      // 免费版云存储仅创建者可读，照片经 getPhotos 云函数换取临时链接
+      wx.cloud.callFunction({
+        name: 'getPhotos',
+        data: { weddingId: w._id }
+      }).then(res => {
+        const photos = (res.result && res.result.photos) || []
+        const pad = n => (n < 10 ? '0' + n : '' + n)
+        const total = pad(photos.length)
+        this.setData({
+          loaded: true,
+          wedding: w,
+          photos: photos.map((p, i) => ({ ...p, num: `${pad(i + 1)} / ${total}` })),
+          urls: photos.map(p => p.url)
+        }, () => this.observe())
+      }).catch(() => {
+        this.setData({ loaded: true, wedding: w, photos: [], urls: [] })
+      })
     })
   },
 

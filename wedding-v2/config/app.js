@@ -6,7 +6,7 @@
  */
 
 module.exports = {
-  cloudEnv: '',
+  cloudEnv: 'cloud1-d5gqyur7g5a4d3c8d',
 
   product: {
     name: '甜囍手册',

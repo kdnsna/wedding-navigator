@@ -38,7 +38,7 @@
     data-i="{{index}}"
   >
     <view class="photo-mat" bindtap="preview" data-i="{{index}}">
-      <image class="photo" src="{{item.fileID}}" mode="widthFix" lazy-load />
+      <image class="photo" src="{{item.url}}" mode="widthFix" lazy-load />
     </view>
     <view class="photo-meta">
       <text class="photo-caption serif">{{item.caption}}</text>
