@@ -32,10 +32,10 @@
   <view class="card-title">写下祝福</view>
 
   <view class="field-label">怎么称呼你（可留空）</view>
-  <input class="input" value="{{name}}" maxlength="12" placeholder="你的名字或昵称" placeholder-class="input-placeholder" bindinput="onNameInput" />
+  <input class="input" value="{{name}}" maxlength="12" placeholder="你的名字或昵称" placeholder-class="input-placeholder" bindblur="onNameInput" />
 
   <view class="field-label">祝福的话</view>
-  <textarea class="textarea" value="{{text}}" maxlength="200" placeholder="百年好合，岁岁常相见…" placeholder-class="textarea-placeholder" bindinput="onTextInput" />
+  <textarea class="textarea" value="{{text}}" maxlength="200" placeholder="百年好合，岁岁常相见…" placeholder-class="textarea-placeholder" bindblur="onTextInput" />
 
   <view class="btn btn-primary compose-btn {{submitting ? 'is-disabled' : ''}}" bindtap="submit">送上祝福</view>
 </view>

@@ -1,6 +1,6 @@
 .tl {
   margin: 8rpx 48rpx 0;
-  padding: 16rpx 36rpx;
+  padding: 16rpx 28rpx;
 }
 
 .tl-item {
@@ -11,11 +11,13 @@
 /* ---------- 左列：时间 ---------- */
 
 .tl-time {
-  width: 108rpx;
+  width: 116rpx;
+  flex-shrink: 0;
   padding-top: 30rpx;
   font-size: 30rpx;
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
   color: var(--ink);
 }
 
@@ -59,12 +61,15 @@
 }
 
 .tl-title {
+  flex: 1;
+  min-width: 0;
   font-size: 32rpx;
   font-weight: 600;
   letter-spacing: 0.04em;
 }
 
 .tl-badge {
+  flex-shrink: 0;
   padding: 4rpx 16rpx;
   border-radius: 20rpx;
   background: linear-gradient(135deg, #A2433B, var(--accent));

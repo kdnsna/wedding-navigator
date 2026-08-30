@@ -85,6 +85,11 @@
   color: var(--ink-soft);
 }
 
+.date-time {
+  margin-top: 6rpx;
+  color: var(--ink);
+}
+
 .venue-line {
   margin-top: 40rpx;
   display: flex;

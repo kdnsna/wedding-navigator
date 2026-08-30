@@ -61,42 +61,45 @@
   font-size: 26rpx;
 }
 
-/* ---------- 流程行编辑器 ---------- */
+/* ---------- 流程行编辑器：竖排，移动端不挤压 ---------- */
 
 .timeline-row {
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
-  padding: 16rpx 0;
+  padding: 20rpx 0 8rpx;
   border-bottom: 1rpx solid var(--hairline-soft);
 }
 
+.timeline-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .timeline-time {
-  width: 116rpx;
-  flex-shrink: 0;
-  padding: 16rpx 0;
-  border-bottom: 1rpx solid var(--hairline);
+  min-width: 160rpx;
+  padding: 12rpx 24rpx;
+  border: 1rpx solid var(--hairline);
+  border-radius: 32rpx;
   font-size: 26rpx;
   text-align: center;
   color: var(--ink);
+  background: var(--glass-bg);
 }
 
 .timeline-time.is-placeholder {
   color: var(--ink-faint);
 }
 
-.timeline-input {
-  flex: 1;
-  min-width: 0;
-  padding: 16rpx 0;
-  font-size: 26rpx;
+.timeline-field {
+  font-size: 28rpx;
 }
 
 .row-del {
-  width: 48rpx;
-  flex-shrink: 0;
-  text-align: center;
-  font-size: 40rpx;
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
   line-height: 1;
   color: var(--ink-faint);
   transition: opacity 0.15s ease;

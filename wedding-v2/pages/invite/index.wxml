@@ -42,7 +42,8 @@
 
     <view class="date-block">
       <text class="date-big serif">{{wedding.date.display}}</text>
-      <text class="date-sub">{{wedding.date.lunar ? wedding.date.lunar + ' · ' : ''}}{{wedding.date.weekday}} · {{wedding.date.time}}</text>
+      <text class="date-sub">{{wedding.date.lunar ? wedding.date.lunar + ' · ' : ''}}{{wedding.date.weekday}}</text>
+      <text class="date-sub date-time" wx:if="{{wedding.date.time}}">{{wedding.date.time}}</text>
     </view>
 
     <view class="venue-line">
