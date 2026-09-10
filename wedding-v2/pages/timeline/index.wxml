@@ -28,7 +28,7 @@
 </view>
 
 <view class="tl glass" wx:if="{{items.length}}">
-  <view class="tl-item {{item.state}}" wx:for="{{items}}" wx:key="time">
+  <view class="tl-item {{item.state}}" wx:for="{{items}}" wx:key="index">
     <view class="tl-time serif">{{item.time}}</view>
 
     <view class="tl-track">

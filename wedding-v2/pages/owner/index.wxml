@@ -83,7 +83,7 @@
 <!-- 回执列表 -->
 <view class="card">
   <view class="card-title">回执明细</view>
-  <view class="row rsvp-row" wx:for="{{rsvps}}" wx:key="createdAt">
+  <view class="row rsvp-row" wx:for="{{rsvps}}" wx:key="_id">
     <view class="rsvp-main">
       <view class="rsvp-top">
         <text class="rsvp-name serif">{{item.name}}</text>
@@ -99,7 +99,7 @@
 <!-- 祝福列表 -->
 <view class="card">
   <view class="card-title">祝福墙（{{blessings.length}}）</view>
-  <view class="row bless-row" wx:for="{{blessings}}" wx:key="createdAt">
+  <view class="row bless-row" wx:for="{{blessings}}" wx:key="_id">
     <view class="rsvp-main">
       <text class="bless-text">{{item.text}}</text>
       <text class="bless-name">{{item.name}}</text>

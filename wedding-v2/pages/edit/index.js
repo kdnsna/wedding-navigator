@@ -246,8 +246,7 @@ Page({
       : store.createWedding(doc)
 
     req.then(id => {
-      return store.listMyWeddings()
-        .then(list => { app.globalData.myWeddings = list })
+      return app.refreshMine()
         .catch(() => {})
         .then(() => {
           wx.showToast({ title: '已保存' })
@@ -257,5 +256,43 @@ Page({
       this.setData({ saving: false })
       wx.showToast({ title: '保存失败，请重试', icon: 'none' })
     })
+  },
+
+  /** 删除这场婚礼（双重确认；连带清理照片） */
+  removeWedding() {
+    const d = this.data
+    if (!d.isEdit || !d.weddingId || d.saving) return
+    wx.showModal({
+      title: '删除这场婚礼',
+      content: '删除后请柬立即失效，宾客将无法再打开，也无法恢复。确定继续吗？',
+      confirmText: '继续',
+      confirmColor: '#8E2F28',
+      success: res => {
+        if (!res.confirm) return
+        wx.showModal({
+          title: '再次确认',
+          content: '真的要删除「' + d.groom + ' & ' + d.bride + '」的婚礼吗？',
+          confirmText: '删除',
+          confirmColor: '#8E2F28',
+          success: res2 => {
+            if (!res2.confirm) return
+            wx.showLoading({ title: '删除中', mask: true })
+            store.deleteWedding(d.weddingId).then(() => {
+              wx.hideLoading()
+              app.forgetWedding(d.weddingId)
+              wx.showToast({ title: '已删除', icon: 'none' })
+              setTimeout(() => wx.reLaunch({ url: '/pages/home/index' }), 600)
+            }).catch(() => {
+              wx.hideLoading()
+              wx.showToast({ title: '删除失败，请重试', icon: 'none' })
+            })
+          }
+        })
+      }
+    })
+  },
+
+  onShareAppMessage() {
+    return app.share()
   }
 })

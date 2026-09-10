@@ -33,6 +33,8 @@
   </view>
 
   <view class="card">
+    <view class="mine-hint" wx:if="{{mine}}">你已提交过回执，修改后再次提交会更新原来那条</view>
+
     <view class="field-label">姓名</view>
     <input class="input" value="{{name}}" maxlength="12" placeholder="方便我们认出你" placeholder-class="input-placeholder" bindblur="onNameInput" />
 

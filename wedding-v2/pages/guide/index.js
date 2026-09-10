@@ -29,10 +29,16 @@ Page({
   openLocation() {
     const w = this.data.wedding
     if (!w) return
-    const v = w.venue
+    const v = w.venue || {}
+    const latitude = Number(v.latitude)
+    const longitude = Number(v.longitude)
+    if (!latitude || !longitude) {
+      wx.showToast({ title: '场地坐标还没设置，请新人在编辑页用「在地图上选择」补上', icon: 'none' })
+      return
+    }
     wx.openLocation({
-      latitude: v.latitude,
-      longitude: v.longitude,
+      latitude,
+      longitude,
       name: v.name,
       address: v.address,
       scale: 16
@@ -50,11 +56,6 @@ Page({
   },
 
   onShareAppMessage() {
-    const w = this.data.wedding
-    if (!w) return { title: '甜囍手册 · 制作你的婚礼请柬', path: '/pages/home/index' }
-    return {
-      title: `${w.couple.groom} & ${w.couple.bride} · 诚邀您见证我们的婚礼`,
-      path: `/pages/invite/index?w=${w._id}`
-    }
+    return app.share()
   }
 })

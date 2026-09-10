@@ -18,7 +18,8 @@ Page({
     count: 1,
     note: '',
     submitting: false,
-    submitted: false
+    submitted: false,
+    mine: null      // 我已提交的回执；存在则再次提交时更新它而不是重复新增
   },
 
   onLoad(options) {
@@ -26,13 +27,30 @@ Page({
     if (options && options.w) {
       app.globalData.weddingId = options.w
       app.globalData.wedding = null
+      app.globalData.weddingAt = 0
+      app.globalData.weddingFromRestore = false
     }
   },
 
   onShow() {
     app.loadWedding().then(w => {
       this.setData({ loaded: true, wedding: w })
+      if (w) this.loadMine()
     })
+  },
+
+  /** 拉取「我的回执」：已提交过则回填表单 */
+  loadMine() {
+    store.getMyRSVP(app.globalData.weddingId).then(mine => {
+      if (!mine) return
+      this.setData({
+        mine,
+        name: mine.name || '',
+        attendance: mine.attendance || 'attend',
+        count: mine.count || 1,
+        note: mine.note || ''
+      })
+    }).catch(() => {})
   },
 
   goBack() {
@@ -72,13 +90,18 @@ Page({
     this.setData({ submitting: true })
 
     const attendanceLabel = OPTIONS.find(o => o.value === this.data.attendance).label
-    store.submitRSVP(app.globalData.weddingId, {
+    const payload = {
       name,
       attendance: this.data.attendance,
       attendanceLabel,
       count: this.data.attendance === 'attend' ? this.data.count : 0,
       note: this.data.note.trim()
-    }).then(() => {
+    }
+    const req = this.data.mine
+      ? store.updateRSVP(this.data.mine._id, payload)
+      : store.submitRSVP(app.globalData.weddingId, payload)
+
+    req.then(() => {
       this.setData({ submitting: false, submitted: true })
     }).catch(() => {
       this.setData({ submitting: false })
@@ -92,5 +115,9 @@ Page({
 
   goHome() {
     wx.reLaunch({ url: '/pages/home/index' })
+  },
+
+  onShareAppMessage() {
+    return app.share()
   }
 })

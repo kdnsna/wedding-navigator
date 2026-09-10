@@ -76,11 +76,6 @@ Page({
   },
 
   onShareAppMessage() {
-    const w = this.data.wedding
-    if (!w) return { title: '甜囍手册 · 制作你的婚礼请柬', path: '/pages/home/index' }
-    return {
-      title: `${w.couple.groom} & ${w.couple.bride} · 诚邀您见证我们的婚礼`,
-      path: `/pages/invite/index?w=${w._id}`
-    }
+    return app.share()
   }
 })

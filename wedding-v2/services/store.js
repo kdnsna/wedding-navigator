@@ -47,6 +47,20 @@ function updateWedding(id, data) {
   })
 }
 
+/** 删除婚礼（仅主人）：连带清理云存储里的照片 */
+function deleteWedding(id) {
+  return db().collection('weddings').doc(id).get()
+    .then(res => {
+      const photos = (res.data && res.data.photos) || []
+      const fileList = photos.map(p => p.fileID).filter(Boolean)
+      return db().collection('weddings').doc(id).remove().then(() => fileList)
+    })
+    .then(fileList => {
+      if (!fileList.length) return
+      return wx.cloud.deleteFile({ fileList }).catch(() => {})
+    })
+}
+
 /** 上传照片到云存储，返回 fileID */
 function uploadPhoto(weddingId, filePath) {
   const ext = (filePath.match(/\.(\w+)$/) || ['', 'jpg'])[1]
@@ -54,6 +68,12 @@ function uploadPhoto(weddingId, filePath) {
     cloudPath: `weddings/${weddingId}/${Date.now()}-${Math.floor(Math.random() * 1e4)}.${ext}`,
     filePath
   }).then(res => res.fileID)
+}
+
+/** 删除云存储文件（照片），失败静默 */
+function deleteFile(fileID) {
+  if (!fileID) return Promise.resolve()
+  return wx.cloud.deleteFile({ fileList: [fileID] }).catch(() => {})
 }
 
 /* ---------- 祝福 ---------- */
@@ -90,15 +110,35 @@ function listRSVPs(weddingId) {
     .then(res => res.data)
 }
 
+/** 我在某场婚礼已提交的回执（用于重复提交时更新而不是新增） */
+function getMyRSVP(weddingId) {
+  return db().collection('rsvps')
+    .where({ weddingId, _openid: '{openid}' })
+    .limit(1)
+    .get()
+    .then(res => res.data[0] || null)
+}
+
+/** 更新我的回执（仅创建者可写） */
+function updateRSVP(id, item) {
+  return db().collection('rsvps').doc(id).update({
+    data: { ...item, updatedAt: Date.now() }
+  })
+}
+
 module.exports = {
   useCloud,
   createWedding,
   listMyWeddings,
   getWedding,
   updateWedding,
+  deleteWedding,
   uploadPhoto,
+  deleteFile,
   listBlessings,
   addBlessing,
   submitRSVP,
-  listRSVPs
+  listRSVPs,
+  getMyRSVP,
+  updateRSVP
 }

@@ -47,6 +47,8 @@
     </view>
   </view>
 
+  <view class="mine-empty" wx:elif="{{failed}}" bindtap="refresh">加载失败，点这里重试</view>
+
   <view class="mine-empty" wx:elif="{{!loading}}">
     <text>还没有你的婚礼，点上方按钮开始创建</text>
   </view>

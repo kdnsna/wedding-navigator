@@ -39,7 +39,10 @@
 .couple {
   display: flex;
   align-items: baseline;
+  justify-content: center;
+  flex-wrap: wrap;
   gap: 24rpx;
+  max-width: 100%;
 }
 
 .couple .name {
@@ -47,6 +50,9 @@
   font-size: 72rpx;
   font-weight: 600;
   letter-spacing: 0.06em;
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .couple .amp {

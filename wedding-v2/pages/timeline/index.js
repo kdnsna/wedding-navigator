@@ -1,10 +1,10 @@
 const app = getApp()
 const { daysUntil } = require('../../utils/date')
 
-/** 把 "HH:mm" 转成当天分钟数 */
+/** 把 "HH:mm" 转成当天分钟数；无效时间返回 null */
 function toMinutes(time) {
-  const [h, m] = time.split(':').map(Number)
-  return h * 60 + m
+  const [h, m] = (time || '').split(':').map(Number)
+  return Number.isFinite(h) && Number.isFinite(m) ? h * 60 + m : null
 }
 
 Page({
@@ -36,7 +36,9 @@ Page({
         const cur = now.getHours() * 60 + now.getMinutes()
         list.forEach((it, i) => {
           const start = toMinutes(it.time)
-          const end = i + 1 < list.length ? toMinutes(list[i + 1].time) : 24 * 60
+          if (start == null) return
+          const next = i + 1 < list.length ? toMinutes(list[i + 1].time) : null
+          const end = next == null ? 24 * 60 : next
           if (cur >= start && cur < end) current = i
         })
       }
@@ -60,11 +62,6 @@ Page({
   },
 
   onShareAppMessage() {
-    const w = this.data.wedding
-    if (!w) return { title: '甜囍手册 · 制作你的婚礼请柬', path: '/pages/home/index' }
-    return {
-      title: `${w.couple.groom} & ${w.couple.bride} · 诚邀您见证我们的婚礼`,
-      path: `/pages/invite/index?w=${w._id}`
-    }
+    return app.share()
   }
 })

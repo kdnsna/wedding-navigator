@@ -30,6 +30,19 @@
   opacity: 0.6;
 }
 
+/* ---------- 已提交过回执的提示 ---------- */
+
+.mine-hint {
+  margin-bottom: 8rpx;
+  padding: 16rpx 24rpx;
+  background: rgba(142, 47, 40, 0.08);
+  border: 1rpx solid rgba(142, 47, 40, 0.2);
+  border-radius: 20rpx;
+  font-size: 22rpx;
+  line-height: 1.6;
+  color: var(--accent);
+}
+
 /* ---------- 出席状态 pills ---------- */
 
 .pills {

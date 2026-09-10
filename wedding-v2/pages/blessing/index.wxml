@@ -42,7 +42,7 @@
 
 <!-- 祝福列表 -->
 <view class="bless-list" wx:if="{{list.length}}">
-  <view class="bless-item glass" wx:for="{{list}}" wx:key="createdAt">
+  <view class="bless-item glass" wx:for="{{list}}" wx:key="_id">
     <text class="bless-quote serif">“</text>
     <text class="bless-text">{{item.text}}</text>
     <view class="bless-meta">

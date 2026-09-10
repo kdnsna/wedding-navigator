@@ -7,13 +7,14 @@ Page({
     wedding: null,
     photos: [],
     urls: [],
-    vis: {}
+    vis: {},
+    failed: false
   },
 
   onShow() {
     app.loadWedding().then(w => {
       if (!w) {
-        this.setData({ loaded: true, wedding: null, photos: [], urls: [] })
+        this.setData({ loaded: true, wedding: null, photos: [], urls: [], failed: false })
         return
       }
       // 免费版云存储仅创建者可读，照片经 getPhotos 云函数换取临时链接
@@ -27,11 +28,12 @@ Page({
         this.setData({
           loaded: true,
           wedding: w,
+          failed: false,
           photos: photos.map((p, i) => ({ ...p, num: `${pad(i + 1)} / ${total}` })),
           urls: photos.map(p => p.url)
         }, () => this.observe())
       }).catch(() => {
-        this.setData({ loaded: true, wedding: w, photos: [], urls: [] })
+        this.setData({ loaded: true, wedding: w, photos: [], urls: [], failed: true })
       })
     })
   },
@@ -63,5 +65,9 @@ Page({
     wx.navigateBack({
       fail: () => wx.switchTab({ url: '/pages/invite/index' })
     })
+  },
+
+  onShareAppMessage() {
+    return app.share()
   }
 })

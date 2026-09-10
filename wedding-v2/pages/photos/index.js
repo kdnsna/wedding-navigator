@@ -15,13 +15,16 @@ Page({
       this.setData({ ready: false, photos: [] })
       return
     }
-    if (!app.isOwner()) {
-      wx.showToast({ title: '只有主人能管理照片', icon: 'none' })
-      setTimeout(() => wx.navigateBack({ fail: () => {} }), 800)
-      return
-    }
-    app.loadWedding(true).then(w => {
-      this.setData({ ready: true, photos: (w && w.photos) || [] })
+    // 先确保「我的婚礼」列表就绪，冷启动直接进入时也能正确识别主人
+    app.ensureMine().then(() => {
+      if (!app.isOwner()) {
+        wx.showToast({ title: '只有主人能管理照片', icon: 'none' })
+        setTimeout(() => wx.navigateBack({ fail: () => {} }), 800)
+        return
+      }
+      app.loadWedding(true).then(w => {
+        this.setData({ ready: true, photos: (w && w.photos) || [] })
+      })
     })
   },
 
@@ -119,6 +122,7 @@ Page({
   },
 
   removePhoto(index) {
+    const photo = this.data.photos[index]
     wx.showModal({
       title: '删除这张照片',
       content: '删除后宾客将无法再看到它',
@@ -127,16 +131,17 @@ Page({
       success: res => {
         if (!res.confirm) return
         const photos = this.data.photos.filter((_, i) => i !== index)
-        this.savePhotos(photos, '已删除')
+        this.savePhotos(photos, '已删除', photo && photo.fileID)
       }
     })
   },
 
-  savePhotos(photos, okText) {
+  savePhotos(photos, okText, removedFileID) {
     wx.showLoading({ title: '保存中', mask: true })
     store.updateWedding(app.globalData.weddingId, { photos }).then(() => {
       wx.hideLoading()
       this.setData({ photos })
+      if (removedFileID) store.deleteFile(removedFileID)   // 顺手清理云存储里的文件
       wx.showToast({ title: okText, icon: 'none' })
     }).catch(() => {
       wx.hideLoading()
@@ -154,5 +159,9 @@ Page({
 
   goHome() {
     wx.reLaunch({ url: '/pages/home/index' })
+  },
+
+  onShareAppMessage() {
+    return app.share()
   }
 })

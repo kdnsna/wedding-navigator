@@ -47,6 +47,11 @@
   </view>
 </view>
 
+<!-- 加载失败 -->
+<view class="state-card glass album-empty" wx:elif="{{failed}}">
+  <text class="state-text">照片没加载出来，稍后再来看看</text>
+</view>
+
 <!-- 空相册 -->
 <view class="state-card glass album-empty" wx:else>
   <text class="state-text">新人还没有上传照片</text>

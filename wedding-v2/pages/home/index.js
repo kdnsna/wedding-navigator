@@ -1,5 +1,4 @@
 const app = getApp()
-const store = require('../../services/store')
 
 Page({
   data: {
@@ -7,7 +6,8 @@ Page({
     statusBarHeight: app.globalData.statusBarHeight,
     cloudOn: false,
     myWeddings: [],
-    loading: true
+    loading: true,
+    failed: false
   },
 
   onShow() {
@@ -17,11 +17,16 @@ Page({
       this.setData({ loading: false })
       return
     }
-    this.setData({ loading: true })
-    store.listMyWeddings().then(list => {
-      app.globalData.myWeddings = list
+    this.refresh()
+  },
+
+  refresh() {
+    this.setData({ loading: true, failed: false })
+    app.refreshMine().then(list => {
       this.setData({ myWeddings: list, loading: false })
-    }).catch(() => this.setData({ loading: false }))
+    }).catch(() => {
+      this.setData({ loading: false, failed: true })
+    })
   },
 
   create() {
@@ -30,5 +35,9 @@ Page({
 
   openWedding(e) {
     app.openWedding(e.currentTarget.dataset.id)
+  },
+
+  onShareAppMessage() {
+    return app.share()
   }
 })
