@@ -1,5 +1,7 @@
 # 甜囍手册 小程序
 
+> **当前为单场请柬模式**（高嘉琪 × 张靖 · 2026.11.14）：小程序入口只有 `pages/invite/index`，平台功能页未注册。说明见 [docs/invite-mode.md](docs/invite-mode.md)。
+
 甜囍手册 —— 基于 uni-app + Vue3 + Pinia + 微信云开发的婚礼当天行动手册小程序。
 
 ## 最新更新（2026-07-10）

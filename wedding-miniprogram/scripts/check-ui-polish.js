@@ -33,11 +33,16 @@ const files = scanRoots
   .filter(file => /\.(vue|js)$/.test(file))
 
 function collectRoutes() {
-  const pagesJson = JSON.parse(fs.readFileSync(path.join(root, 'pages.json'), 'utf8'))
+  // 并集：当前 pages.json（单场请柬）+ config/pages.platform.json（存档的平台版路由，未注册）
   const routes = []
-  for (const page of pagesJson.pages || []) routes.push(page.path)
-  for (const pkg of pagesJson.subPackages || []) {
-    for (const page of pkg.pages || []) routes.push(`${pkg.root}/${page.path}`)
+  for (const file of ['pages.json', 'config/pages.platform.json']) {
+    const abs = path.join(root, file)
+    if (!fs.existsSync(abs)) continue
+    const pagesJson = JSON.parse(fs.readFileSync(abs, 'utf8'))
+    for (const page of pagesJson.pages || []) routes.push(page.path)
+    for (const pkg of pagesJson.subPackages || []) {
+      for (const page of pkg.pages || []) routes.push(`${pkg.root}/${page.path}`)
+    }
   }
   return routes
 }

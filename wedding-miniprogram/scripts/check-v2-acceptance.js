@@ -49,7 +49,7 @@ function checkNoVueColorOrLegacyThemeLeaks() {
 }
 
 function checkThemeConstitution() {
-  const pagesJson = readJson('pages.json')
+  const pagesJson = readJson('config/pages.platform.json') // 平台版存档清单（单场请柬模式下未注册）
   assert(pagesJson.globalStyle.navigationBarBackgroundColor === '#F7F2E9', 'pages.json: navigation bar must use paper background')
   assert(pagesJson.globalStyle.backgroundColor === '#F7F2E9', 'pages.json: global background must use paper background')
   assert(pagesJson.tabBar.selectedColor === '#8A3B45', 'pages.json: selected tab must use the free wine accent')

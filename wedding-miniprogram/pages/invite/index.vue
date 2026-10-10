@@ -1,5 +1,4 @@
 <template>
-  <page-meta :page-style="sheetOpen ? 'overflow:hidden;' : ''" />
   <view class="inv" :class="{ ready }">
     <!-- 纸张颗粒 -->
     <view class="grain" :style="{ backgroundImage: art.grain }" />
@@ -217,7 +216,7 @@
         <view class="invite-time">婚礼仪式时间：{{ C.ceremonyTime }}</view>
         <view class="invite-venue">
           <view v-for="(t, i) in C.invitation.venueLines" :key="i">{{ t }}</view>
-          <view class="small">地址：{{ C.venue.address }}</view>
+          <view class="small"><text user-select selectable>地址：{{ C.venue.address }}</text></view>
         </view>
         <view class="invite-line"><view class="diamond" /></view>
         <view class="btn-map" hover-class="btn-map-on" @tap="openMap">
@@ -303,7 +302,7 @@
               <view class="sheet-btn solid" hover-class="sheet-btn-on" @tap="call(c.tel)">拨打</view>
             </view>
             <view v-if="c.wechat" class="sheet-row">
-              <view><text class="k">微信</text><text class="v">{{ c.wechat }}</text></view>
+              <view><text class="k">微信</text><text class="v" user-select selectable>{{ c.wechat }}</text></view>
               <view class="sheet-btn" hover-class="sheet-btn-on" @tap="copyWechat(c.wechat)">复制</view>
             </view>
           </view>
@@ -319,7 +318,7 @@
 import { ref, reactive, computed, getCurrentInstance, nextTick } from 'vue'
 import { onLoad as onPageLoad, onReady, onPageScroll, onShareAppMessage, onShareTimeline, onUnload } from '@dcloudio/uni-app'
 import CONFIG from '@/config/invite.js'
-import { layoutPhoto } from './photo.js'
+import { layoutPhoto } from '@/utils/invite-photo.js'
 import * as art from '@/utils/invite-art.js'
 
 const C = CONFIG
@@ -619,24 +618,9 @@ onUnload(() => {
 <style lang="scss">
 /* ============================================================
    A LOVE STORY, BY THE SEA（小程序版，逐项对照 H5 index.html）
-   配色：象牙白 #F5F0E8 / 纸面白 #FBF7EF / 沙色 #E6DCCB / 酒红 #773747（小字 #5E2A38）/ 海雾蓝 #A9C1CB / 深海蓝 #5F8494 / 墨色 #343A3D
+   色板见 styles/invite-palette.scss（与 H5 相同）
    ============================================================ */
-$ivory: #F5F0E8;
-$paper: #FBF7EF;
-$sand: #E6DCCB;
-$ivory-deep: #EDE6D9;
-$wine: #773747;
-$wine-ink: #5E2A38;
-$wine-soft: rgba(119, 55, 71, 0.45);
-$mist: #A9C1CB;
-$sea-deep: #5F8494;
-$graphite: #343A3D;
-$serif-en: "Cormorant Garamond", "Baskerville", "Palatino", "Times New Roman", serif;
-$serif-cn: "MaShanZheng", "Xingkai SC", "STXingkai", "Kaiti SC", "Songti SC", "Noto Serif SC", serif;
-$script-en: "Pinyon Script", "Snell Roundhand", "Savoye LET", "Apple Chancery", cursive;
-$script-cn: "MaShanZheng", "Xingkai SC", "STXingkai", "Kaiti SC", cursive;
-$sans-cn: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-$ease: cubic-bezier(0.22, 1, 0.36, 1);
+@import '@/styles/invite-palette.scss';
 
 page {
   background: $ivory;
@@ -912,7 +896,7 @@ page {
 .act-journey {
   overflow: hidden;
   padding-top: clamp(150px, 22vh, 200px);
-  background: linear-gradient(180deg, $ivory 0, #DCE5E7 60px, $mist 130px, #7D9DAA 220px, $sea-deep 320px, $sea-deep 100%);
+  background: linear-gradient(180deg, $ivory 0, $mist-pale 60px, $mist 130px, $sea-mid 220px, $sea-deep 320px, $sea-deep 100%);
 }
 .journey-copy {
   position: relative;
@@ -927,7 +911,7 @@ page {
 .journey-copy .p {
   font-family: $serif-cn;
   font-size: clamp(23px, 6.2vw, 31px);
-  color: #FDFBF4;
+  color: $foam;
   text-shadow: 0 1px 2px rgba(36, 56, 66, 0.25), 0 2px 16px rgba(36, 56, 66, 0.35);
   line-height: 2.15;
   letter-spacing: 0.12em;
@@ -1032,7 +1016,7 @@ page {
 .inter-copy .p {
   font-family: $serif-cn;
   font-size: clamp(25px, 7vw, 36px);
-  color: #FDFBF4;
+  color: $foam;
   text-shadow: 0 2px 22px rgba(52, 58, 61, 0.45);
   line-height: 2.1;
   letter-spacing: 0.22em;
@@ -1147,7 +1131,8 @@ page {
 .invite-venue .small { display: block; font-family: $sans-cn; font-size: 12.5px; opacity: 0.7; letter-spacing: 0.2em; }
 .invite-line {
   width: 42px; height: 1px;
-  background: rgba(119, 55, 71, 0.5);
+  background: $wine;
+  opacity: 0.5;
   margin: 32px auto;
   position: relative;
 }
@@ -1155,7 +1140,7 @@ page {
   position: absolute;
   left: 50%; top: 50%;
   width: 5px; height: 5px;
-  margin: -3.5px 0 0 -3.5px;
+  margin: -2.5px 0 0 -2.5px;
   transform: rotate(45deg);
   background: $paper;
   border: 1px solid $wine;
@@ -1216,7 +1201,7 @@ page {
   font-family: $sans-cn;
   font-size: 14.5px;
   letter-spacing: 0.12em;
-  line-height: 1.8;
+  line-height: normal;
   color: $graphite;
 }
 .glabel { display: flex; align-items: center; }
@@ -1360,7 +1345,7 @@ page {
   align-items: center; justify-content: center;
   text-align: center;
   padding: 120px 30px 140px;
-  background: linear-gradient(to bottom, $ivory 40%, #E4E6E2 75%, $mist 130%);
+  background: linear-gradient(to bottom, $ivory 40%, $shore 75%, $mist 130%);
   overflow: hidden;
 }
 .words {
