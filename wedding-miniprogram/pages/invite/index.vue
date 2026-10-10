@@ -144,7 +144,11 @@
               <image class="img" :style="P.gallery3.img" :src="srcOf('gallery3')" mode="scaleToFill" webp lazy-load
                 @load="onLoad('gallery3')" @error="onErr('gallery3')" />
             </view>
+            <view class="edge-fade ef-top" />
+            <view class="edge-fade ef-bot" />
           </view>
+          <view class="g-band g-band-top" />
+          <view class="g-band g-band-bot" />
         </view>
 
         <view class="g-row">
@@ -171,7 +175,11 @@
               <image class="img" :style="P.gallery6.img" :src="srcOf('gallery6')" mode="scaleToFill" webp lazy-load
                 @load="onLoad('gallery6')" @error="onErr('gallery6')" />
             </view>
+            <view class="edge-fade ef-top" />
+            <view class="edge-fade ef-bot" />
           </view>
+          <view class="g-band g-band-top" />
+          <view class="g-band g-band-bot" />
         </view>
 
         <view class="g-row">
@@ -200,6 +208,7 @@
         </view>
       </view>
       <view class="inter-veil" />
+      <view class="inter-fade" />
       <view class="inter-copy">
         <view v-for="(t, i) in C.interlude.lines" :key="i" :id="'rv' + (28 + i)" class="p reveal-line"
           :class="rc(28 + i)" :style="dl(28 + i)">{{ t }}</view>
@@ -1168,6 +1177,38 @@ page {
   padding: 56px 0 30px;
 }
 
+/* 全出血照片 ↔ 象牙白底色的过渡（与 H5 同一套）：
+   照片上下边缘各压一层渐变（色带色 → 照片边缘同色调 → 透明），照片上下再各垫一段淡色带
+   （象牙白 → 照片色调的淡色），硬边变成一座色彩的桥。只用叠加 view + linear-gradient，不依赖 mask-image。
+   渐变高度按人物位置定：蓝调那张头在 ~30% 处，上 18% / 下 15%；戒指那张头发在 ~7% 处，上边只留 7%。 */
+.g-bleed { position: relative; z-index: 0; }
+.g-phrase { position: relative; z-index: 1; }
+.g-bleed .photo::after { display: none; } /* 去掉 1px 亮边，否则渐变边缘会出一条细线 */
+.g-band { position: absolute; left: 0; right: 0; z-index: -1; pointer-events: none; }
+.g-band-top { bottom: 100%; height: 120px; background: linear-gradient(180deg, rgba(245, 240, 232, 0) 0%, $band-blue-top 100%); }
+.g-band-bot { top: 100%; height: 96px; background: linear-gradient(180deg, $band-blue-bot 0%, rgba(245, 240, 232, 0) 100%); }
+.edge-fade { position: absolute; left: 0; right: 0; z-index: 1; pointer-events: none; }
+/* 蓝调：象牙白 → 雾蓝 → 钴蓝的天；底部深绿草地 → 灰绿 → 雾色 */
+.ef-top {
+  top: 0; height: 18%;
+  background: linear-gradient(180deg, $band-blue-top 0%, rgba(178, 203, 220, 0.78) 26%, rgba(110, 160, 205, 0.34) 62%, rgba(40, 125, 195, 0) 100%);
+}
+.ef-bot {
+  bottom: 0; height: 15%;
+  background: linear-gradient(0deg, $band-blue-bot 0%, rgba(206, 216, 213, 0.86) 20%, rgba(122, 142, 136, 0.3) 58%, rgba(50, 69, 51, 0) 100%);
+}
+/* 戒指：上边很短；底部青草 → 浅草绿 */
+.g-rings .g-band-top { background: linear-gradient(180deg, rgba(245, 240, 232, 0) 0%, $band-rings-top 100%); }
+.g-rings .g-band-bot { background: linear-gradient(180deg, $band-rings-bot 0%, rgba(245, 240, 232, 0) 100%); }
+.g-rings .ef-top {
+  height: 7%;
+  background: linear-gradient(180deg, $band-rings-top 0%, rgba(200, 212, 205, 0.55) 45%, rgba(139, 157, 154, 0) 100%);
+}
+.g-rings .ef-bot {
+  height: 17%;
+  background: linear-gradient(0deg, $band-rings-bot 0%, rgba(208, 214, 192, 0.8) 26%, rgba(120, 132, 92, 0.3) 64%, rgba(101, 108, 81, 0) 100%);
+}
+
 /* ============ 04.5 所爱隔山海 ============ */
 .interlude { min-height: 460px; overflow: hidden; }
 .inter-bg { position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow: hidden; }
@@ -1175,6 +1216,14 @@ page {
 .inter-veil {
   position: absolute; top: 0; left: 0; right: 0; bottom: 0;
   background: linear-gradient(to bottom, $ivory 0%, rgba(245, 240, 232, 0.25) 18%, rgba(52, 58, 61, 0.28) 55%, rgba(52, 58, 61, 0.42) 100%);
+}
+/* 过场底边：草地剪影 → 暮色灰 → 象牙白，接上请柬那一幕（原来这里是一条硬边） */
+.inter-fade {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  height: 15%;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(0deg, $ivory 0%, rgba(245, 240, 232, 0.86) 22%, rgba(196, 196, 186, 0.5) 52%, rgba(120, 128, 120, 0.18) 78%, rgba(52, 58, 61, 0) 100%);
 }
 .inter-copy {
   position: absolute; top: 0; left: 0; right: 0; bottom: 0;

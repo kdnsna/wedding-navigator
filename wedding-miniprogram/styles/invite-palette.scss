@@ -20,3 +20,8 @@ $foam: #FDFBF4;       /* 深色背景上的白字 */
 $mist-pale: #DCE5E7;  /* 山海幕渐变：象牙白 → 海雾蓝 之间 */
 $sea-mid: #7D9DAA;    /* 山海幕渐变：海雾蓝 → 深海蓝 之间 */
 $shore: #E4E6E2;      /* 尾声渐变 */
+/* 全出血照片上下的淡色带（照片边缘色调的淡色）：蓝调那张 = 雾蓝 / 灰绿雾；戒指那张 = 浅鼠尾草 */
+$band-blue-top: #DCE5EA;
+$band-blue-bot: #DCE3DF;
+$band-rings-top: #E4E8E1;
+$band-rings-bot: #E3E6DA;
