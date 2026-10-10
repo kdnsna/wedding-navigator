@@ -69,7 +69,7 @@ function walk(dir, out = []) {
   assert(v.address === '荣成市成山大道东段1号', 'CONFIG.venue.address')
   assert(C.guide.items.length === 7 && C.guide.items.some((g) => g.title === '住宿安排'), 'CONFIG.guide: 7 张卡，含「住宿安排」')
   assert(!C.music.enabled || /^https:\/\//.test(C.music.src), 'CONFIG.music: 开启时必须是 https 授权音频')
-  assert(/^https:\/\//.test(C.share.imageUrl), 'CONFIG.share.imageUrl 必须是 https')
+  assert(/^https:\/\//.test(C.share.imageUrl) || C.share.imageUrl === '/static/share-card.jpg', 'CONFIG.share.imageUrl 必须是 https，或包内的 /static/share-card.jpg（5:4 分享卡）')
   assert(/^(https:\/\/|cloud:\/\/)/.test(C.assetBase) && C.assetBase.endsWith('/'), 'CONFIG.assetBase 必须是 https:// 或 cloud://，并以 / 结尾')
   for (const [k, im] of Object.entries(C.images)) {
     assert(im.variants.length && im.fallback && im.w && im.h && im.pos.length === 2, `CONFIG.images.${k} 不完整`)
@@ -80,7 +80,7 @@ function walk(dir, out = []) {
   for (const f of staticFiles) {
     const rel = path.relative(root, f)
     assert(!/\.(mp3|m4a|aac|wav|ogg|flac)$/i.test(f), `${rel}: 包内不能放音频`)
-    assert(!/\.(jpe?g|webp)$/i.test(f), `${rel}: 照片不要打进包里（走 CONFIG.assetBase）`)
+    assert(!/\.(jpe?g|webp)$/i.test(f) || rel.endsWith('static/share-card.jpg'), `${rel}: 照片不要打进包里（走 CONFIG.assetBase）`)
   }
   assert(!fs.existsSync(path.join(root, 'static/visuals/hero')), 'static/visuals/hero: 平台模板封面图应留在 legacy-assets/（包外）')
   const fonts = read('config/invite-fonts.js')

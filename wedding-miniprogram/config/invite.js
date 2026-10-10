@@ -12,7 +12,7 @@
 //   assets/ 整个上传到云存储根目录 our-wedding/ 下，然后把这里改成
 //   'cloud://<环境ID>.<存储桶ID>/our-wedding/'（云开发控制台 → 存储 → 任意文件的 File ID 前缀）。
 //   App.vue 会在 assetBase 以 cloud:// 开头时自动 wx.cloud.init。
-const assetBase = 'https://kdnsna.github.io/our-wedding/'
+const assetBase = 'cloud://cloud1-d5gqyur7g5a4d3c8d.636c-cloud1-d5gqyur7g5a4d3c8d-1305910249/our-wedding/'
 
 // 照片：w/h 是原图像素；variants 按宽度从小到大；fallback 是 WebP 失败时的 JPEG。
 // pos 等同 H5 的 object-position（0–1），保证人物头部不被裁。
@@ -98,7 +98,7 @@ const CONFIG = {
   share: {
     title: '高嘉琪 & 张靖 · 婚礼邀请 · 2026.11.14 威海荣成',
     desc: '山海很远，相见值得。2026.11.14，我们在荣成等你赴约。',
-    imageUrl: 'https://kdnsna.github.io/our-wedding/share-cover.jpg',
+    imageUrl: '/static/share-card.jpg',
     path: '/pages/invite/index'
   },
 
