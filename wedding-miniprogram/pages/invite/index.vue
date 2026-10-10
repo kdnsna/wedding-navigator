@@ -416,12 +416,18 @@ const rc = (n) => (revealed[n] ? 'in' : '')
 const dl = (n) => `transition-delay:${((n % 6) * 0.12).toFixed(2)}s;`
 
 let observers = []
+// 小程序里优先用页面实例自己的 createIntersectionObserver（最稳）；H5 预览用 uni 的实现
+function makeObserver(opts) {
+  const scope = inst.proxy && inst.proxy.$scope
+  if (scope && typeof scope.createIntersectionObserver === 'function') return scope.createIntersectionObserver(opts)
+  return uni.createIntersectionObserver(inst.proxy, opts)
+}
 function observeReveals() {
   if (typeof uni.createIntersectionObserver !== 'function') {
     for (let i = 0; i <= 38; i++) revealed[i] = true
     return
   }
-  const io = uni.createIntersectionObserver(inst.proxy, { thresholds: [0, 0.18], observeAll: true })
+  const io = makeObserver({ thresholds: [0, 0.18], observeAll: true })
   io.relativeToViewport().observe('.reveal, .reveal-line', (res) => {
     const n = Number(String(res.id || '').replace('rv', ''))
     if (Number.isNaN(n) || revealed[n]) return
@@ -431,7 +437,7 @@ function observeReveals() {
   observers.push(io)
 
   // 邀请页进入视口（或已经滚过它到尾声）就收起「婚礼信息」按钮
-  const io2 = uni.createIntersectionObserver(inst.proxy, { thresholds: [0] })
+  const io2 = makeObserver({ thresholds: [0] })
   io2.relativeToViewport({ bottom: -Math.round(H * 0.12) }).observe('#invitation', (res) => {
     const top = (res.boundingClientRect || {}).top || 0
     infoAway.value = res.intersectionRatio > 0 || top < 0
