@@ -1,0 +1,24 @@
+{
+  "lazyCodeLoading": "requiredComponents",
+  "pages": [
+    {
+      "path": "pages/invite/index",
+      "style": {
+        "navigationBarTitleText": "高嘉琪 & 张靖 · 婚礼邀请",
+        "navigationStyle": "custom",
+        "navigationBarTextStyle": "black",
+        "backgroundColor": "#F5F0E8",
+        "backgroundColorTop": "#F5F0E8",
+        "backgroundColorBottom": "#F5F0E8"
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "高嘉琪 & 张靖 · 婚礼邀请",
+    "navigationBarBackgroundColor": "#F5F0E8",
+    "backgroundColor": "#F5F0E8",
+    "backgroundTextStyle": "dark"
+  },
+  "condition": {}
+}
