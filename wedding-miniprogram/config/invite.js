@@ -94,7 +94,7 @@ const CONFIG = {
     title: '海风来信',
     titleEn: 'Letter from the Sea Breeze',
     volume: 0.6,
-    credit: '背景音乐 · 海风来信（原创配乐 · 高嘉琪 & 张靖）'
+    credit: '背景音乐 · 海风来信（高嘉琪原创）'
   },
 
   // 分享卡片：标题沿用 H5 #share-config；封面复用 H5 的分享封面（1080×1080）
