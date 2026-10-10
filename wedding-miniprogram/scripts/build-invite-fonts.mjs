@@ -34,7 +34,8 @@ const brushText = [
   C.invitation.zh, join(C.invitation.venueLines),
   C.guide.title,
   C.rsvp.sheetTitle, C.contacts.map((c) => c.name).join(''),
-  join(C.ending.lines)
+  join(C.ending.lines),
+  C.music && C.music.enabled ? C.music.title || '' : ''
 ].join('')
 const glyphs = [...new Set([...brushText])].filter((ch) => ch.trim()).sort().join('')
 

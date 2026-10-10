@@ -85,13 +85,16 @@ const CONFIG = {
     scale: 16
   },
 
-  // 背景音乐：小程序里放不了网易云外链播放器。默认关闭，不打包任何音频。
-  // 以后有授权音频（https 直链）再把 enabled 设为 true、填 src 与 credit。
+  // 背景音乐：原创配乐「海风来信」（D 大调，96 秒无缝循环；旋律与配器均为原创，音色 GeneralUser GS 免署名可商用）。
+  // 小程序里放不了网易云/QQ 音乐外链播放器，所以音频直接打进包里（AAC 80 kbps，约 0.96 MB）。
+  // src 可以是包内路径（/static/music/...）或 https / cloud:// 直链；enabled 改成 false 即整体关闭（按钮和页脚署名一起消失）。
   music: {
-    enabled: false,
-    src: '',
-    title: '',
-    credit: ''
+    enabled: true,
+    src: '/static/music/haifeng-laixin.m4a',
+    title: '海风来信',
+    titleEn: 'Letter from the Sea Breeze',
+    volume: 0.6,
+    credit: '背景音乐 · 海风来信（原创配乐 · 高嘉琪 & 张靖）'
   },
 
   // 分享卡片：标题沿用 H5 #share-config；封面复用 H5 的分享封面（1080×1080）

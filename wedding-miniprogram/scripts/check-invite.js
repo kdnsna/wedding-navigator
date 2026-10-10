@@ -68,7 +68,15 @@ function walk(dir, out = []) {
   assert(v.latitude > 36.9 && v.latitude < 37.5 && v.longitude > 122.2 && v.longitude < 122.8, 'CONFIG.venue: 经纬度应在荣成市区附近')
   assert(v.address === '荣成市成山大道东段1号', 'CONFIG.venue.address')
   assert(C.guide.items.length === 7 && C.guide.items.some((g) => g.title === '住宿安排'), 'CONFIG.guide: 7 张卡，含「住宿安排」')
-  assert(!C.music.enabled || /^https:\/\//.test(C.music.src), 'CONFIG.music: 开启时必须是 https 授权音频')
+  const musicPkg = /^\/static\/music\/[\w.-]+\.(m4a|mp3|aac)$/.test(C.music.src || '')
+  assert(!C.music.enabled || /^(https|cloud):\/\//.test(C.music.src) || musicPkg, 'CONFIG.music: 开启时 src 必须是 https / cloud:// 授权音频，或包内的 /static/music/*.m4a|mp3|aac（原创/有授权）')
+  if (C.music.enabled && musicPkg) {
+    const mf = path.join(root, C.music.src.slice(1))
+    assert(fs.existsSync(mf), `CONFIG.music.src 指向的包内音频不存在：${C.music.src}`)
+    if (fs.existsSync(mf)) assert(fs.statSync(mf).size < 1.2 * 1024 * 1024, `${C.music.src}: 背景音乐应压到 1.2 MB 以内（AAC ~80 kbps）`)
+    assert(/createInnerAudioContext/.test(page) && !/getBackgroundAudioManager/.test(page), 'pages/invite: 背景音乐用 InnerAudioContext（不用 BackgroundAudioManager，免 requiredBackgroundModes）')
+    assert(!(mp.requiredBackgroundModes || []).length, 'manifest.json: 请柬不需要 requiredBackgroundModes')
+  }
   assert(/^https:\/\//.test(C.share.imageUrl) || C.share.imageUrl === '/static/share-card.jpg', 'CONFIG.share.imageUrl 必须是 https，或包内的 /static/share-card.jpg（5:4 分享卡）')
   assert(/^(https:\/\/|cloud:\/\/)/.test(C.assetBase) && C.assetBase.endsWith('/'), 'CONFIG.assetBase 必须是 https:// 或 cloud://，并以 / 结尾')
   for (const [k, im] of Object.entries(C.images)) {
@@ -79,7 +87,8 @@ function walk(dir, out = []) {
   const staticFiles = walk(path.join(root, 'static'))
   for (const f of staticFiles) {
     const rel = path.relative(root, f)
-    assert(!/\.(mp3|m4a|aac|wav|ogg|flac)$/i.test(f), `${rel}: 包内不能放音频`)
+    const isMusic = C.music.enabled && musicPkg && '/' + rel.split(path.sep).join('/') === C.music.src
+    assert(isMusic || !/\.(mp3|m4a|aac|wav|ogg|flac)$/i.test(f), `${rel}: 包内只允许 CONFIG.music.src 指向的那一首背景音乐`)
     assert(!/\.(jpe?g|webp)$/i.test(f) || rel.endsWith('static/share-card.jpg'), `${rel}: 照片不要打进包里（走 CONFIG.assetBase）`)
   }
   assert(!fs.existsSync(path.join(root, 'static/visuals/hero')), 'static/visuals/hero: 平台模板封面图应留在 legacy-assets/（包外）')
@@ -129,7 +138,11 @@ function walk(dir, out = []) {
       const files = walk(dist).filter((f) => !path.relative(dist, f).startsWith('cloudfunctions') && !f.endsWith('cloudbaserc.json'))
       const bytes = files.reduce((n, f) => n + fs.statSync(f).size, 0)
       console.log(`主包（mp-weixin 产物，不含云函数）：${(bytes / 1024).toFixed(1)} KB（${bytes} 字节，上限 2048 KB）`)
-      assert(bytes < 1024 * 1024, `主包 ${bytes} 字节：单场请柬应远小于 1 MB（上限 2 MB）`)
+      // 不含音频时应远小于 1 MB；包内背景音乐（≤ 1.2 MB）另算，总量仍须给 2 MB 上限留足余量
+      const musicBytes = files.filter((f) => /\.(mp3|m4a|aac)$/i.test(f)).reduce((n, f) => n + fs.statSync(f).size, 0)
+      if (musicBytes) console.log(`  其中背景音乐：${(musicBytes / 1024).toFixed(1)} KB；其余：${((bytes - musicBytes) / 1024).toFixed(1)} KB`)
+      assert(bytes - musicBytes < 1024 * 1024, `主包（不含音频）${bytes - musicBytes} 字节：单场请柬应远小于 1 MB`)
+      assert(bytes < 1.75 * 1024 * 1024, `主包 ${bytes} 字节：含音频也要给 2 MB 上限留余量（< 1.75 MB）`)
       const app = JSON.parse(fs.readFileSync(path.join(dist, 'app.json'), 'utf8'))
       assert(JSON.stringify(app.pages) === '["pages/invite/index"]' && !app.subPackages && !app.tabBar, 'dist app.json: 只应有 pages/invite/index')
     }

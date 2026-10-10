@@ -1,15 +1,27 @@
 <template>
-  <view class="inv" :class="{ ready }">
+  <view class="inv" :class="{ ready }" @tap="onAnyTap">
     <!-- 纸张颗粒 -->
     <view class="grain" :style="{ backgroundImage: art.grain }" />
 
     <!-- 固定快捷入口 -->
-    <view
-      v-if="musicOn"
-      class="fab fab-music"
-      :class="{ on: musicPlaying, lifted: !infoAway }"
-      @tap="toggleMusic"
-    ><text class="note">♪&#xFE0E;</text></view>
+    <!-- 背景音乐：胶囊菜单正下方、右对齐；播放时唱片环慢转 + 三根音柱起伏，暂停时静止 -->
+    <view v-if="musicOn" class="music" :style="musicPos">
+      <view
+        class="music-btn"
+        :class="{ on: musicPlaying }"
+        hover-class="music-btn-hover"
+        :aria-label="musicPlaying ? '暂停背景音乐' : '播放背景音乐'"
+        aria-role="button"
+        @tap.stop="toggleMusic"
+      >
+        <view class="music-ring" />
+        <view class="music-bars"><view class="bar b1" /><view class="bar b2" /><view class="bar b3" /></view>
+      </view>
+      <view class="music-title" :class="{ show: musicTitleShow }">
+        <view class="mt-zh">{{ C.music.title }}</view>
+        <view v-if="C.music.titleEn" class="mt-en">{{ C.music.titleEn }}</view>
+      </view>
+    </view>
     <view class="fab fab-info" :class="{ 'is-away': infoAway }" @tap="goInvitation">{{ C.infoFab }}</view>
 
     <!-- ============ 01 · THE OPENING ============ -->
@@ -282,7 +294,7 @@
       </view>
     </view>
 
-    <view class="footer" :class="{ 'has-music': musicOn }">
+    <view class="footer">
       <view>{{ C.footer }}</view>
       <view v-if="musicOn && C.music.credit" class="credit">{{ C.music.credit }}</view>
     </view>
@@ -316,7 +328,7 @@
 
 <script setup>
 import { ref, reactive, computed, getCurrentInstance, nextTick } from 'vue'
-import { onLoad as onPageLoad, onReady, onPageScroll, onShareAppMessage, onShareTimeline, onUnload } from '@dcloudio/uni-app'
+import { onLoad as onPageLoad, onReady, onShow, onHide, onPageScroll, onShareAppMessage, onShareTimeline, onUnload } from '@dcloudio/uni-app'
 import CONFIG from '@/config/invite.js'
 import { layoutPhoto } from '@/utils/invite-photo.js'
 import * as art from '@/utils/invite-art.js'
@@ -577,23 +589,99 @@ function copyText(text, okMsg, failMsg) {
 }
 const copyWechat = (w) => copyText(w, C.rsvp.copied, C.rsvp.copyFailed.replace('{wechat}', w))
 
-/* ---------- 音乐（默认关闭；CONFIG.music.enabled + src 才出现 ♪，只在点按后播放） ---------- */
+/* ---------- 背景音乐「海风来信」（InnerAudioContext；进页尝试自动播放，被拦就等第一次点按） ---------- */
 const musicOn = !!(C.music && C.music.enabled && C.music.src)
 const musicPlaying = ref(false)
+const musicTitleShow = ref(false)
+// 按钮位置：胶囊菜单下方 8px，右边缘与胶囊对齐（拿不到胶囊信息时按状态栏 + 44px 估算）
+const musicPos = (() => {
+  let top = 0
+  let right = 16
+  try {
+    const r = uni.getMenuButtonBoundingClientRect && uni.getMenuButtonBoundingClientRect()
+    if (r && r.bottom) {
+      top = r.bottom + 8
+      right = Math.max(8, W - r.right)
+    }
+  } catch (e) { /* noop */ }
+  if (!top) top = (win.statusBarHeight || 20) + 44 + 8
+  return `top:${top}px;right:${right}px;`
+})()
 let audio = null
+let wantPlay = true        // 用户意愿：默认想听；点按暂停后为 false，直到再次点按
+let hidden = false
+let needGesture = false    // 自动播放被拦（或迟迟没出声）→ 等第一次点按
+let gestureTimer = 0
+let titleTimer = 0
+let titleShown = false
+function flashTitle() {
+  musicTitleShow.value = true
+  clearTimeout(titleTimer)
+  titleTimer = setTimeout(() => { musicTitleShow.value = false }, 3000)
+}
+function ensureAudio() {
+  if (audio || !musicOn) return audio
+  try {
+    if (typeof uni.setInnerAudioOption === 'function') {
+      uni.setInnerAudioOption({ obeyMuteSwitch: false, fail: () => {} })
+    }
+  } catch (e) { /* noop */ }
+  audio = uni.createInnerAudioContext()
+  audio.src = C.music.src
+  audio.loop = true
+  audio.autoplay = false
+  audio.obeyMuteSwitch = false
+  audio.volume = typeof C.music.volume === 'number' ? C.music.volume : 0.6
+  audio.onPlay(() => {
+    musicPlaying.value = true
+    needGesture = false
+    clearTimeout(gestureTimer)
+    if (!titleShown) { titleShown = true; flashTitle() }
+  })
+  audio.onPause(() => { musicPlaying.value = false })
+  audio.onStop(() => { musicPlaying.value = false })
+  audio.onEnded(() => { if (audio && wantPlay && !hidden) audio.play() }) // loop 兜底
+  audio.onError(() => {
+    musicPlaying.value = false
+    needGesture = true
+  })
+  return audio
+}
+function startMusic() {
+  if (!ensureAudio()) return
+  audio.play()
+  // 有的机型 play() 既不报错也不出声：1.5 s 内没进 onPlay 就改为等点按
+  clearTimeout(gestureTimer)
+  gestureTimer = setTimeout(() => { if (!musicPlaying.value) needGesture = true }, 1500)
+}
 function toggleMusic() {
   if (!musicOn) return
-  if (!audio) {
-    audio = uni.createInnerAudioContext()
-    audio.src = C.music.src
-    audio.loop = true
-    audio.onPlay(() => { musicPlaying.value = true })
-    audio.onPause(() => { musicPlaying.value = false })
-    audio.onStop(() => { musicPlaying.value = false })
+  if (musicPlaying.value) {
+    wantPlay = false
+    needGesture = false
+    audio && audio.pause()
+  } else {
+    wantPlay = true
+    startMusic()
+    flashTitle()
   }
-  if (musicPlaying.value) audio.pause()
-  else audio.play()
 }
+// 自动播放没成功时，页面任意一次点按都开始播放（音乐按钮自己 @tap.stop，不会走到这里）
+function onAnyTap() {
+  if (musicOn && needGesture && wantPlay && !musicPlaying.value) {
+    needGesture = false
+    startMusic()
+  }
+}
+onShow(() => {
+  hidden = false
+  if (musicOn && wantPlay && !musicPlaying.value) startMusic()
+})
+onHide(() => {
+  hidden = true
+  clearTimeout(gestureTimer)
+  if (audio && musicPlaying.value) audio.pause() // wantPlay 保持不变，回来时 onShow 接着放
+})
 
 /* ---------- 分享 ---------- */
 onPageLoad(() => {
@@ -617,7 +705,13 @@ onReady(() => {
 onUnload(() => {
   observers.forEach((o) => o.disconnect && o.disconnect())
   observers = []
-  if (audio) audio.destroy()
+  clearTimeout(gestureTimer)
+  clearTimeout(titleTimer)
+  if (audio) {
+    try { audio.stop() } catch (e) { /* noop */ }
+    audio.destroy()
+    audio = null
+  }
 })
 </script>
 
@@ -732,17 +826,88 @@ page {
 }
 .fab-info:active { transform: scale(0.94); }
 .fab-info.is-away { opacity: 0; pointer-events: none; transform: translateY(14px); }
-.fab-music {
-  bottom: calc(20px + env(safe-area-inset-bottom));
-  width: 42px; height: 42px;
-  font-size: 15px;
-  transition: transform 0.25s ease, bottom 0.35s ease;
+
+/* ---------- 背景音乐按钮（胶囊下方右对齐） ---------- */
+.music {
+  position: fixed;
+  z-index: 91;
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  pointer-events: none;
 }
-.fab-music.lifted { bottom: calc(72px + env(safe-area-inset-bottom)); }
-.fab-music.on { background: $wine; color: $ivory; border-color: $wine; }
-.fab-music.on .note { animation: bob 1.6s ease-in-out infinite; }
-.note { display: inline-block; }
-@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+.music-btn {
+  position: relative;
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  border: 1px solid rgba(119, 55, 71, 0.32);
+  background: rgba(245, 240, 232, 0.9);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 3px 14px rgba(52, 58, 61, 0.12);
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: auto;
+  transition: background 0.4s ease, border-color 0.4s ease, transform 0.25s ease;
+}
+.music-btn-hover { transform: scale(0.92); }
+.music-btn.on { background: $wine; border-color: $wine; }
+/* 唱片环：一段缺口的细圆环，播放时慢转 */
+.music-ring {
+  position: absolute; top: 3px; left: 3px; right: 3px; bottom: 3px;
+  border-radius: 50%;
+  border: 1px solid rgba(119, 55, 71, 0.28);
+  border-top-color: transparent;
+  transition: border-color 0.4s ease;
+}
+.music-btn.on .music-ring {
+  border-color: rgba(251, 247, 239, 0.55);
+  border-top-color: transparent;
+  animation: musicSpin 6s linear infinite;
+}
+.music-btn.on::after {
+  content: "";
+  position: absolute; top: -1px; left: -1px; right: -1px; bottom: -1px;
+  border-radius: 50%;
+  border: 1px solid rgba(119, 55, 71, 0.45);
+  animation: musicPulse 2.4s ease-out infinite;
+  pointer-events: none;
+}
+/* 三根音柱：暂停时高低错落静止，播放时轻轻起伏 */
+.music-bars { position: relative; display: flex; align-items: flex-end; height: 12px; }
+.bar {
+  width: 2px; height: 12px;
+  margin: 0 1.5px;
+  border-radius: 1px;
+  background: $wine;
+  transform-origin: 50% 100%;
+  transition: background 0.4s ease;
+}
+.b1 { transform: scaleY(0.45); }
+.b2 { transform: scaleY(0.9); }
+.b3 { transform: scaleY(0.6); }
+.music-btn.on .bar { background: $ivory; animation: musicBar 1.2s ease-in-out infinite; }
+.music-btn.on .b2 { animation-delay: -0.4s; }
+.music-btn.on .b3 { animation-delay: -0.8s; }
+@keyframes musicBar { 0%, 100% { transform: scaleY(0.35); } 50% { transform: scaleY(1); } }
+@keyframes musicSpin { to { transform: rotate(360deg); } }
+@keyframes musicPulse { 0% { transform: scale(1); opacity: 0.7; } 100% { transform: scale(1.45); opacity: 0; } }
+/* 曲名：首次出声（或点按播放）时在按钮左侧浮现，3 秒后淡出 */
+.music-title {
+  margin-right: 10px;
+  padding: 5px 12px 6px;
+  border-radius: 14px;
+  background: rgba(251, 247, 239, 0.86);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 3px 14px rgba(52, 58, 61, 0.08);
+  text-align: right;
+  opacity: 0;
+  transform: translateX(6px);
+  transition: opacity 0.6s ease, transform 0.6s $ease;
+}
+.music-title.show { opacity: 1; transform: translateX(0); }
+.mt-zh { font-family: $serif-cn; font-size: 14px; line-height: 1.3; letter-spacing: 0.18em; color: $wine-ink; }
+.mt-en { font-family: $serif-en; font-style: italic; font-size: 10px; line-height: 1.3; letter-spacing: 0.06em; color: rgba(52, 58, 61, 0.6); }
 
 /* ---------- 幕 通用 ---------- */
 .act { position: relative; }
@@ -1394,12 +1559,12 @@ page {
   color: rgba(52, 58, 61, 0.45);
   background: $ivory;
 }
-.footer.has-music { padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
 .credit { margin: 10px auto 0; max-width: 300px; font-size: 10px; line-height: 1.7; letter-spacing: 0.06em; color: rgba(52, 58, 61, 0.42); }
 
 @media (prefers-reduced-motion: reduce) {
   .reveal, .reveal-line { transition: none; opacity: 1; transform: none; }
   .kb, .bk, .j-wave { animation: none; }
+  .music-btn.on .music-ring, .music-btn.on::after, .music-btn.on .bar { animation: none; }
   .opening-names, .h1, .sub, .sub2, .scroll-hint { animation: none; opacity: 1; }
 }
 </style>
