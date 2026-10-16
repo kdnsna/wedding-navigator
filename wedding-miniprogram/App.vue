@@ -1,58 +1,72 @@
 <script setup>
-import { onLaunch, onShow, onHide } from '@dcloudio/uni-app'
-import { initCloud } from '@/composables/useCloud.js'
-import { useUserStore } from '@/stores/user.js'
+/* 单场请柬模式（高嘉琪 × 张靖）：入口只有 pages/invite/index。
+   多新人平台版的启动逻辑（用户 store、云开发初始化）见 git 历史与 docs/invite-mode.md。 */
+import { onLaunch } from '@dcloudio/uni-app'
+import CONFIG from '@/config/invite.js'
+import FONT_DATA from '@/config/invite-fonts.js'
+import { CLOUD_ENV } from '@/config/cloud.js'
 
 onLaunch(() => {
-  useUserStore().loadFromStorage()
-  initCloud()
+  // 图片改放云存储（assetBase 以 cloud:// 开头）时才需要初始化云开发
+  if (String(CONFIG.assetBase).startsWith('cloud://') && typeof wx !== 'undefined' && wx.cloud) {
+    try { wx.cloud.init({ env: CLOUD_ENV, traceUser: false }) } catch (e) { /* 已初始化 */ }
+  }
+  loadInviteFonts()
   checkUpdate()
 })
 
-onShow(() => {})
-onHide(() => {})
+// 版本比较：基础库 3.7.9 起 loadFontFace 才支持 Data URL
+function versionAtLeast(v, min) {
+  const a = String(v || '0').split('.').map(Number)
+  const b = min.split('.').map(Number)
+  for (let i = 0; i < 3; i++) {
+    if ((a[i] || 0) !== b[i]) return (a[i] || 0) > b[i]
+  }
+  return true
+}
 
-// 全局错误捕获
-uni.onError((err) => {
-  console.error('[Global Error]', err)
-})
-
-// 全局未处理的 Promise 拒绝
-if (typeof uni.onUnhandledRejection === 'function') {
-  uni.onUnhandledRejection((res) => {
-    console.error('[Unhandled Rejection]', res.reason)
-  })
+function loadInviteFonts() {
+  if (typeof uni.loadFontFace !== 'function') return
+  let sdk = '9.9.9'
+  try {
+    // #ifdef MP-WEIXIN
+    sdk = (uni.getAppBaseInfo ? uni.getAppBaseInfo() : uni.getSystemInfoSync()).SDKVersion
+    // #endif
+  } catch (e) { /* noop */ }
+  const dataOk = versionAtLeast(sdk, '3.7.9')
+  for (const f of CONFIG.fonts) {
+    const https = () => uni.loadFontFace({ global: true, family: f.family, source: `url("${f.https}")`, fail: () => {} })
+    if (dataOk && FONT_DATA[f.key]) {
+      uni.loadFontFace({
+        global: true,
+        family: f.family,
+        source: `url("data:font/woff;base64,${FONT_DATA[f.key]}")`,
+        fail: https
+      })
+    } else {
+      https()
+    }
+  }
 }
 
 // 版本更新检测
 function checkUpdate() {
-  if (typeof uni.getUpdateManager === 'function') {
-    const updateManager = uni.getUpdateManager()
-    updateManager.onCheckForUpdate((res) => {
-      if (res.hasUpdate) {
-        updateManager.onUpdateReady(() => {
-          uni.showModal({
-            title: '更新提示',
-            content: '新版本已准备好，是否重启应用？',
-            confirmText: '立即重启',
-            cancelText: '稍后',
-            success: (modalRes) => {
-              if (modalRes.confirm) {
-                updateManager.applyUpdate()
-              }
-            }
-          })
-        })
-        updateManager.onUpdateFailed(() => {
-          uni.showModal({
-            title: '更新失败',
-            content: '新版本下载失败，请检查网络后重试',
-            showCancel: false
-          })
-        })
-      }
+  if (typeof uni.getUpdateManager !== 'function') return
+  const updateManager = uni.getUpdateManager()
+  updateManager.onCheckForUpdate((res) => {
+    if (!res.hasUpdate) return
+    updateManager.onUpdateReady(() => {
+      uni.showModal({
+        title: '更新提示',
+        content: '请柬有新版本，是否重启查看？',
+        confirmText: '立即重启',
+        cancelText: '稍后',
+        success: (modalRes) => {
+          if (modalRes.confirm) updateManager.applyUpdate()
+        }
+      })
     })
-  }
+  })
 }
 
 </script>

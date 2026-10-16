@@ -32,17 +32,22 @@ function stripComments(source) {
 }
 
 function collectVueRoutes() {
-  const pagesJson = JSON.parse(read('pages.json'))
+  // 单场请柬模式：pages.json 只注册 pages/invite/index；多新人平台版的路由存档在 config/pages.platform.json（未注册、不可达），
+  // 平台代码仍在仓库里，所以这里对两份清单的并集做检查，保证恢复平台模式时代码依旧完整。
   const routes = []
-  for (const page of pagesJson.pages || []) {
-    routes.push(page.path)
-  }
-  for (const pkg of pagesJson.subPackages || []) {
-    for (const page of pkg.pages || []) {
-      routes.push(`${pkg.root}/${page.path}`)
+  for (const file of ['pages.json', 'config/pages.platform.json']) {
+    if (!fs.existsSync(path.join(root, file))) continue
+    const pagesJson = JSON.parse(read(file))
+    for (const page of pagesJson.pages || []) {
+      routes.push(page.path)
+    }
+    for (const pkg of pagesJson.subPackages || []) {
+      for (const page of pkg.pages || []) {
+        routes.push(`${pkg.root}/${page.path}`)
+      }
     }
   }
-  return routes
+  return [...new Set(routes)]
 }
 
 function checkPagesExist() {
@@ -304,7 +309,7 @@ function checkDataContracts() {
 }
 
 function checkTemplateSystem() {
-  const pagesJson = readJson('pages.json')
+  const pagesJson = readJson('config/pages.platform.json')
   assert(pagesJson.globalStyle.navigationBarBackgroundColor === '#F7F2E9', 'pages.json: global navigation bar must use paper background')
   assert(pagesJson.globalStyle.backgroundColor === '#F7F2E9', 'pages.json: global page background must use paper background')
   assert(pagesJson.tabBar.selectedColor === '#8A3B45', 'pages.json: tabBar selected color must use free wine accent')
@@ -578,7 +583,7 @@ function checkVisualAssets() {
     'hero-travel-friendly.jpg'
   ]
   for (const file of expectedHeroImages) {
-    assertJpegSize(`static/visuals/hero/${file}`, 750, 1334)
+    assertJpegSize(`legacy-assets/visuals/hero/${file}`, 750, 1334)
   }
 
   const visualsDir = path.join(root, 'static/visuals')
@@ -608,7 +613,9 @@ function checkVisualAssets() {
     const source = read(rel)
     for (const match of source.matchAll(visualRefPattern)) {
       const normalized = match[1].replace(/^@\//, '').replace(/^\//, '')
-      assert(fs.existsSync(path.join(root, normalized)), `${rel}: visual asset reference is missing: ${match[1]}`)
+      // 单场请柬模式：平台模板封面图（只被未注册的平台页面引用）移到了包外 legacy-assets/，恢复平台模式时移回 static/
+      const parked = normalized.replace(/^static\/visuals\/hero\//, 'legacy-assets/visuals/hero/')
+      assert(fs.existsSync(path.join(root, normalized)) || fs.existsSync(path.join(root, parked)), `${rel}: visual asset reference is missing: ${match[1]}`)
     }
   }
   const legacyIconPngPattern = new RegExp('static/visuals/' + '(?:icon|empty)-[^\\\'"]+\\.png')

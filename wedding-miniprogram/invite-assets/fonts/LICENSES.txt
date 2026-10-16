@@ -1,0 +1,5 @@
+三款字体都以 SIL Open Font License 1.1 授权，可嵌入使用：
+- Ma Shan Zheng（马善政）© The Ma Shan Zheng Project Authors — https://fonts.google.com/specimen/Ma+Shan+Zheng
+  本目录 MaShanZheng-invite.* 只含请柬里用到的字（scripts/build-invite-fonts.mjs 生成）
+- Cormorant Garamond → OFL-CormorantGaramond.txt
+- Pinyon Script → OFL-PinyonScript.txt

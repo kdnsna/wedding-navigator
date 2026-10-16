@@ -2,187 +2,23 @@
   "lazyCodeLoading": "requiredComponents",
   "pages": [
     {
-      "path": "pages/index/index",
+      "path": "pages/invite/index",
       "style": {
-        "navigationBarTitleText": "我们的婚礼",
-        "navigationStyle": "custom"
+        "navigationBarTitleText": "高嘉琪 & 张靖 · 婚礼邀请",
+        "navigationStyle": "custom",
+        "navigationBarTextStyle": "black",
+        "backgroundColor": "#F5F0E8",
+        "backgroundColorTop": "#F5F0E8",
+        "backgroundColorBottom": "#F5F0E8"
       }
-    },
-    {
-      "path": "pages/album/index",
-      "style": {
-        "navigationBarTitleText": "婚纱相册"
-      }
-    },
-    {
-      "path": "pages/guide/index",
-      "style": {
-        "navigationBarTitleText": "婚礼路书"
-      }
-    },
-    {
-      "path": "pages/timeline/index",
-      "style": {
-        "navigationBarTitleText": "婚礼流程"
-      }
-    },
-    {
-      "path": "pages/more/index",
-      "style": {
-        "navigationBarTitleText": "更多"
-      }
-    },
-    {
-      "path": "pages/rsvp/index",
-      "style": {
-        "navigationBarTitleText": "出席回执"
-      }
-    },
-    {
-      "path": "pages/blessing/index",
-      "style": {
-        "navigationBarTitleText": "祝福墙"
-      }
-    },
-    {
-      "path": "pages/poster/index",
-      "style": {
-        "navigationBarTitleText": "婚礼海报",
-        "navigationStyle": "custom"
-      }
-    },
-    {
-      "path": "pages/privacy/index",
-      "style": {
-        "navigationBarTitleText": "隐私保护指引"
-      }
-    }
-  ],
-  "subPackages": [
-    {
-      "root": "pages-owner",
-      "pages": [
-        {
-          "path": "wizard/index",
-          "style": {
-            "navigationBarTitleText": "创建婚礼"
-          }
-        },
-        {
-          "path": "manage/index",
-          "style": {
-            "navigationBarTitleText": "婚礼管理"
-          }
-        },
-        {
-          "path": "invitation/edit",
-          "style": {
-            "navigationBarTitleText": "编辑婚书"
-          }
-        },
-        {
-          "path": "template/preview",
-          "style": {
-            "navigationBarTitleText": "模板预览",
-            "navigationStyle": "custom"
-          }
-        },
-        {
-          "path": "album/manage",
-          "style": {
-            "navigationBarTitleText": "相册管理"
-          }
-        },
-        {
-          "path": "guide/edit",
-          "style": {
-            "navigationBarTitleText": "编辑路书"
-          }
-        },
-        {
-          "path": "timeline/edit",
-          "style": {
-            "navigationBarTitleText": "编辑流程"
-          }
-        },
-        {
-          "path": "guests/manage",
-          "style": {
-            "navigationBarTitleText": "宾客管理"
-          }
-        },
-        {
-          "path": "blessing/manage",
-          "style": {
-            "navigationBarTitleText": "祝福管理"
-          }
-        },
-        {
-          "path": "share/index",
-          "style": {
-            "navigationBarTitleText": "分享设置"
-          }
-        },
-        {
-          "path": "stats/index",
-          "style": {
-            "navigationBarTitleText": "数据统计"
-          }
-        },
-        {
-          "path": "diagnostics/index",
-          "style": {
-            "navigationBarTitleText": "发布诊断"
-          }
-        },
-        {
-          "path": "profile/index",
-          "style": {
-            "navigationBarTitleText": "账号与权益"
-          }
-        }
-      ]
     }
   ],
   "globalStyle": {
     "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "甜囍手册",
-    "navigationBarBackgroundColor": "#F7F2E9",
-    "backgroundColor": "#F7F2E9"
-  },
-  "tabBar": {
-    "color": "#8C8072",
-    "selectedColor": "#8A3B45",
-    "backgroundColor": "#F7F2E9",
-    "borderStyle": "black",
-    "list": [
-      {
-        "pagePath": "pages/index/index",
-        "text": "首页"
-      },
-      {
-        "pagePath": "pages/album/index",
-        "text": "相册"
-      },
-      {
-        "pagePath": "pages/guide/index",
-        "text": "路书"
-      },
-      {
-        "pagePath": "pages/timeline/index",
-        "text": "流程"
-      },
-      {
-        "pagePath": "pages/more/index",
-        "text": "更多"
-      }
-    ]
-  },
-  "preloadRule": {
-    "pages/index/index": {
-      "network": "all",
-      "packages": ["pages-owner"]
-    }
+    "navigationBarTitleText": "高嘉琪 & 张靖 · 婚礼邀请",
+    "navigationBarBackgroundColor": "#F5F0E8",
+    "backgroundColor": "#F5F0E8",
+    "backgroundTextStyle": "dark"
   },
   "condition": {}
 }

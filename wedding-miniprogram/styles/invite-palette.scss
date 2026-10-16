@@ -1,0 +1,27 @@
+/* 婚礼请柬（高嘉琪 × 张靖）色板：与 H5 kdnsna/our-wedding 完全相同。
+   象牙白 / 纸面白 / 沙色 / 酒红 / 深酒红 / 海雾蓝 / 深海蓝 / 墨色；只在 pages/invite 使用，不进平台主题系统。 */
+$ivory: #F5F0E8;
+$paper: #FBF7EF;
+$sand: #E6DCCB;
+$ivory-deep: #EDE6D9;
+$wine: #773747;
+$wine-ink: #5E2A38;
+$wine-soft: rgba(119, 55, 71, 0.45);
+$mist: #A9C1CB;
+$sea-deep: #5F8494;
+$graphite: #343A3D;
+$serif-en: "Cormorant Garamond", "Baskerville", "Palatino", "Times New Roman", serif;
+$serif-cn: "MaShanZheng", "Xingkai SC", "STXingkai", "Kaiti SC", "Songti SC", "Noto Serif SC", serif;
+$script-en: "Pinyon Script", "Snell Roundhand", "Savoye LET", "Apple Chancery", cursive;
+$script-cn: "MaShanZheng", "Xingkai SC", "STXingkai", "Kaiti SC", cursive;
+$sans-cn: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+$ease: cubic-bezier(0.22, 1, 0.36, 1);
+$foam: #FDFBF4;       /* 深色背景上的白字 */
+$mist-pale: #DCE5E7;  /* 山海幕渐变：象牙白 → 海雾蓝 之间 */
+$sea-mid: #7D9DAA;    /* 山海幕渐变：海雾蓝 → 深海蓝 之间 */
+$shore: #E4E6E2;      /* 尾声渐变 */
+/* 全出血照片上下的淡色带（照片边缘色调的淡色）：蓝调那张 = 雾蓝 / 灰绿雾；戒指那张 = 浅鼠尾草 */
+$band-blue-top: #DCE5EA;
+$band-blue-bot: #DCE3DF;
+$band-rings-top: #E4E8E1;
+$band-rings-bot: #E3E6DA;
