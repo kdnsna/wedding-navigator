@@ -698,7 +698,20 @@ onPageLoad(() => {
     uni.showShareMenu({ withShareTicket: false, menus: ['shareAppMessage', 'shareTimeline'], fail: () => {} })
   }
 })
-onShareAppMessage(() => ({ title: C.share.title, path: C.share.path, imageUrl: C.share.imageUrl }))
+onShareAppMessage(() => {
+  const base = { title: C.share.title, path: C.share.path, imageUrl: C.share.imageUrl }
+  // 网络图偶发读不到时，回退到包内 5:4 封面，避免空白卡
+  const promise = new Promise((resolve) => {
+    const local = '/static/share-card.jpg'
+    uni.getImageInfo({
+      src: C.share.imageUrl,
+      success: () => resolve(base),
+      fail: () => resolve({ ...base, imageUrl: local })
+    })
+    setTimeout(() => resolve(base), 2500)
+  })
+  return { ...base, promise }
+})
 onShareTimeline(() => ({ title: C.share.title, query: '', imageUrl: C.share.imageUrl }))
 
 onReady(() => {
