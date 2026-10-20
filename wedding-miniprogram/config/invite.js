@@ -101,7 +101,7 @@ const CONFIG = {
   share: {
     title: '高嘉琪 & 张靖 · 婚礼邀请 · 2026.11.14 威海荣成',
     desc: '山海很远，相见值得。2026.11.14，我们在荣成等你赴约。',
-    imageUrl: '/static/share-card.jpg',
+    imageUrl: 'https://kdnsna.github.io/our-wedding/share-card-54.jpg',
     path: '/pages/invite/index'
   },
 
