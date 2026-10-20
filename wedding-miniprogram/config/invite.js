@@ -97,11 +97,11 @@ const CONFIG = {
     credit: '背景音乐 · 海风来信（高嘉琪原创）'
   },
 
-  // 分享卡片：标题沿用 H5 #share-config；封面复用 H5 的分享封面（1080×1080）
+  // 分享卡片：标题沿用 H5；封面必须用代码包内 750×600（微信读网络图常失败会变空白卡）
   share: {
     title: '高嘉琪 & 张靖 · 婚礼邀请 · 2026.11.14 威海荣成',
     desc: '山海很远，相见值得。2026.11.14，我们在荣成等你赴约。',
-    imageUrl: 'https://kdnsna.github.io/our-wedding/share-card-54.jpg',
+    imageUrl: '/static/share-card.jpg',
     path: '/pages/invite/index'
   },
 
