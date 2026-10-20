@@ -285,6 +285,8 @@
           <view class="env" :style="{ backgroundImage: art.envelope }" />
           <text>{{ C.rsvp.button }}</text>
         </view>
+        <!-- open-type=share 强制走 onShareAppMessage，避免转发旧空白卡 -->
+        <button class="btn-share" open-type="share" hover-class="btn-share-on">发给好友</button>
       </view>
     </view>
 
@@ -331,6 +333,8 @@
         <view class="sheet-close" @tap="closeSheet">{{ C.rsvp.close }}</view>
       </view>
     </view>
+    <!-- 离屏画布：把包内分享图导出为 temp 路径，供 onShareAppMessage 使用 -->
+    <canvas canvas-id="shareCanvas" id="shareCanvas" class="share-canvas" :style="{ width: '750px', height: '600px' }" />
     <view class="toast" :class="{ show: toast.show }">{{ toast.msg }}</view>
   </view>
 </template>
@@ -684,6 +688,7 @@ function onAnyTap() {
 }
 onShow(() => {
   hidden = false
+  enableShareMenu()
   if (musicOn && wantPlay && !musicPlaying.value) startMusic()
 })
 onHide(() => {
@@ -692,30 +697,107 @@ onHide(() => {
   if (audio && musicPlaying.value) audio.pause() // wantPlay 保持不变，回来时 onShow 接着放
 })
 
-/* ---------- 分享 ---------- */
-onPageLoad(() => {
+/* ---------- 分享（包内图 + 同步返回；网络图不可靠） ---------- */
+const SHARE_LOCAL = '/static/share-card.jpg'
+const SHARE_TITLE = (C.share && C.share.title) || '高嘉琪 & 张靖 · 婚礼邀请 · 2026.11.14 威海荣成'
+const SHARE_PATH = (C.share && C.share.path) || '/pages/invite/index'
+const shareImagePath = ref(SHARE_LOCAL)
+
+function enableShareMenu() {
   if (typeof uni.showShareMenu === 'function') {
-    uni.showShareMenu({ withShareTicket: false, menus: ['shareAppMessage', 'shareTimeline'], fail: () => {} })
+    uni.showShareMenu({
+      withShareTicket: false,
+      menus: ['shareAppMessage', 'shareTimeline'],
+      fail: () => {}
+    })
   }
+}
+
+function buildSharePayload(imageUrl) {
+  const payload = {
+    title: SHARE_TITLE,
+    path: SHARE_PATH,
+    imageUrl: imageUrl || shareImagePath.value || SHARE_LOCAL
+  }
+  try {
+    console.log('[invite-share]', payload.title, payload.imageUrl)
+  } catch (e) { /* noop */ }
+  return payload
+}
+
+function prepareShareImage() {
+  // 1) 校验包内图，缓存本地绝对路径
+  uni.getImageInfo({
+    src: SHARE_LOCAL,
+    success: (info) => {
+      if (info && info.path) shareImagePath.value = info.path
+      // 2) 可选：画到离屏 canvas 再导出临时路径（部分基础库对 temp 路径更稳）
+      tryDrawShareTemp(info)
+    },
+    fail: () => {
+      shareImagePath.value = SHARE_LOCAL
+    }
+  })
+}
+
+function tryDrawShareTemp(info) {
+  try {
+    const w = (info && info.width) || 750
+    const h = (info && info.height) || 600
+    const ctx = uni.createCanvasContext && uni.createCanvasContext('shareCanvas', inst && inst.proxy)
+    if (!ctx) return
+    ctx.drawImage(SHARE_LOCAL, 0, 0, w, h)
+    ctx.draw(false, () => {
+      uni.canvasToTempFilePath({
+        canvasId: 'shareCanvas',
+        width: w,
+        height: h,
+        destWidth: 750,
+        destHeight: 600,
+        fileType: 'jpg',
+        quality: 0.92,
+        success: (res) => {
+          if (res && res.tempFilePath) shareImagePath.value = res.tempFilePath
+        },
+        fail: () => {}
+      }, inst && inst.proxy)
+    })
+  } catch (e) { /* canvas 不可用时继续用包内路径 */ }
+}
+
+// 必须在 setup 顶层同步注册（不可放进 onMounted）
+onPageLoad(() => {
+  enableShareMenu()
 })
 onShareAppMessage(() => {
-  const base = { title: C.share.title, path: C.share.path, imageUrl: C.share.imageUrl }
-  // 网络图偶发读不到时，回退到包内 5:4 封面，避免空白卡
+  const sync = buildSharePayload()
   const promise = new Promise((resolve) => {
-    const local = '/static/share-card.jpg'
+    let settled = false
+    const done = (img) => {
+      if (settled) return
+      settled = true
+      resolve(buildSharePayload(img))
+    }
+    if (shareImagePath.value && shareImagePath.value !== SHARE_LOCAL) {
+      done(shareImagePath.value)
+      return
+    }
     uni.getImageInfo({
-      src: C.share.imageUrl,
-      success: () => resolve(base),
-      fail: () => resolve({ ...base, imageUrl: local })
+      src: SHARE_LOCAL,
+      success: (info) => done((info && info.path) || SHARE_LOCAL),
+      fail: () => done(SHARE_LOCAL)
     })
-    setTimeout(() => resolve(base), 2500)
+    setTimeout(() => done(shareImagePath.value || SHARE_LOCAL), 1800)
   })
-  return { ...base, promise }
+  // 同步字段保证标题绝不丢失；promise 在 2s 内带上更稳的 temp 路径
+  return { ...sync, promise }
 })
-onShareTimeline(() => ({ title: C.share.title, query: '', imageUrl: C.share.imageUrl }))
+onShareTimeline(() => buildSharePayload())
 
 onReady(() => {
   ready.value = true
+  enableShareMenu()
+  prepareShareImage()
   nextTick(() => {
     observeReveals()
     measure()
@@ -1483,6 +1565,30 @@ page {
 }
 .btn-rsvp-on { transform: scale(0.97); }
 .env { width: 15px; height: 15px; margin-right: 10px; background-size: 15px 15px; background-repeat: no-repeat; }
+.btn-share {
+  display: block;
+  margin: 18px auto 0;
+  padding: 11px 36px;
+  background: transparent;
+  color: $wine;
+  border: 1px solid rgba(119, 55, 71, 0.45);
+  border-radius: 999px;
+  font-size: 12px;
+  letter-spacing: 0.28em;
+  line-height: 1.8;
+  box-sizing: border-box;
+}
+.btn-share::after { border: none; }
+.btn-share-on { transform: scale(0.97); opacity: 0.85; }
+.share-canvas {
+  position: fixed;
+  left: -9999px;
+  top: 0;
+  width: 750px;
+  height: 600px;
+  pointer-events: none;
+  opacity: 0;
+}
 
 /* ---------- 回执抽屉 ---------- */
 .sheet { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 120; visibility: hidden; }
