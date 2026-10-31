@@ -426,7 +426,7 @@ const interStyle = computed(() => {
   return {
     sky: `background:linear-gradient(180deg, ${INTER_SKY.top} 0%, ${INTER_SKY.top} 34%, ${INTER_SKY.mid} 62%, ${INTER_SKY.low} 100%);`,
     blend: `height:${blendH}px;background:linear-gradient(180deg, ${INTER_SKY.top} 0%, rgba(75,121,173,0.58) 40%, rgba(75,121,173,0) 100%);`,
-    layer: `position:absolute;top:auto;left:50%;bottom:0;width:270%;height:${Math.round(imgH)}px;transform:translateX(-46%) translateY(-8px);`
+    layer: `position:absolute;top:auto;left:50%;bottom:0;width:270%;height:${Math.round(imgH)}px;transform:translateX(-46%) translateY(2px);`
   }
 })
 
@@ -1508,8 +1508,8 @@ page {
 }
 /* 竖屏：诗句压在上方的天空里（约 16%–45% 高度），不落在人身上 */
 .interlude.portrait .inter-copy { justify-content: flex-start; padding-top: 22%; }
-/* 竖屏时照片贴底，两人脚在画面最下沿：底部白过渡收窄到 46px，只压草尖，不压人 */
-.interlude.portrait .inter-fade { height: 46px; }
+/* 竖屏时照片贴底，两人脚离下沿只有约 40px：底部白过渡压到 22px，只碰画面最外缘的草，脚完整露出来 */
+.interlude.portrait .inter-fade { height: 22px; }
 .interlude.portrait .inter-veil {
   background: linear-gradient(to bottom, $ivory 0%, rgba(245, 240, 232, 0.22) 15%, rgba(52, 58, 61, 0.06) 48%, rgba(52, 58, 61, 0.10) 100%);
 }
