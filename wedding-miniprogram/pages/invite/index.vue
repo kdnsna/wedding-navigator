@@ -623,8 +623,10 @@ function startAuto() {
     last = now
     const next = autoTop + (AUTO_SPEED * dt) / 1000
     if (autoMax && next >= autoMax) {
+      // 到底：把滑块也回到「已暂停」状态，别留一个按不动的暂停图标
       autoTop = autoMax
       autoLastSet = now
+      autoOn.value = false
       stopAuto()
       uni.pageScrollTo({ scrollTop: autoMax, duration: 0 })
       return
