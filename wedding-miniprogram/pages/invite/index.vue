@@ -1,5 +1,6 @@
 <template>
-  <view class="inv" :class="{ ready }" @tap="onAnyTap">
+  <view class="inv" :class="{ ready }" @tap="onAnyTap"
+        @touchstart="onTouchStart" @touchmove="onTouchMove" @touchend="onTouchEnd" @touchcancel="onTouchEnd">
     <!-- 纸张颗粒 -->
     <view class="grain" :style="{ backgroundImage: art.grain }" />
 
@@ -23,6 +24,18 @@
       </view>
     </view>
     <view class="fab fab-info" :class="{ 'is-away': infoAway }" @tap="goInvitation">{{ C.infoFab }}</view>
+    <!-- 自动下滑：左下角半透明圆钮，暂停/继续（≥44px 触控区） -->
+    <view
+      class="auto-fab"
+      :class="{ on: autoRunning }"
+      hover-class="auto-fab-hover"
+      :aria-label="autoRunning ? '暂停自动下滑' : '继续自动下滑'"
+      aria-role="button"
+      @tap.stop="toggleAuto"
+    >
+      <view v-if="autoRunning" class="ic-pause"><view class="pb" /><view class="pb" /></view>
+      <view v-else class="ic-play" />
+    </view>
 
     <!-- ============ 01 · THE OPENING ============ -->
     <view class="act act-opening" id="opening">
@@ -37,7 +50,7 @@
       <view class="frame"><view class="frame-in" /></view>
       <view class="opening-copy" :style="openingStyle">
         <view class="opening-names">
-          <text>{{ C.groomName }}</text><text class="opening-cross">×</text><text>{{ C.brideName }}</text>
+          <text>{{ C.groomName }}</text><text class="opening-amp">&amp;</text><text>{{ C.brideName }}</text>
         </view>
         <view class="h1"><view>{{ C.opening.title[0] }}</view><view>{{ C.opening.title[1] }}</view></view>
         <view class="sub">
@@ -200,12 +213,14 @@
     </view>
 
     <!-- ============ 04.5 · 所爱隔山海 ============ -->
-    <view class="act interlude" id="interlude" :style="{ height: S.interH + 'px' }">
+    <view class="act interlude" :class="{ portrait: S.interPortrait }" id="interlude" :style="{ height: S.interH + 'px' }">
       <view class="inter-bg">
-        <view class="layer inter-layer" :class="{ loaded: loaded.interlude }" :style="P.interlude.layer + par.interlude">
+        <view class="inter-sky" :style="interStyle.sky" />
+        <view class="layer inter-layer" :class="{ loaded: loaded.interlude }" :style="interStyle.layer + par.interlude">
           <image class="img" :style="P.interlude.img" :src="srcOf('interlude')" mode="scaleToFill" webp lazy-load
             @load="onLoad('interlude')" @error="onErr('interlude')" />
         </view>
+        <view class="inter-blend" :style="interStyle.blend" />
       </view>
       <view class="inter-veil" />
       <view class="inter-fade" />
@@ -285,6 +300,8 @@
           <view class="env" :style="{ backgroundImage: art.envelope }" />
           <text>{{ C.rsvp.button }}</text>
         </view>
+        <!-- open-type=share 强制走 onShareAppMessage，避免转发旧空白卡 -->
+        <button class="btn-share" open-type="share" hover-class="btn-share-on">发给好友</button>
       </view>
     </view>
 
@@ -331,6 +348,8 @@
         <view class="sheet-close" @tap="closeSheet">{{ C.rsvp.close }}</view>
       </view>
     </view>
+    <!-- 离屏画布：把包内分享图导出为 temp 路径，供 onShareAppMessage 使用 -->
+    <canvas canvas-id="shareCanvas" id="shareCanvas" class="share-canvas" :style="{ width: '750px', height: '600px' }" />
     <view class="toast" :class="{ show: toast.show }">{{ toast.msg }}</view>
   </view>
 </template>
@@ -371,7 +390,9 @@ const S = (() => {
     c5: col(5) - 18,
     c6: col(6) - 18,
     bleedW: gW + 44,
-    interH: Math.max(H * 0.74, 460)
+    // 所爱隔山海：竖屏铺满一屏（< 1.5 屏上限），两人接近全身、诗句落在上方天空；横屏/大屏仍按 0.74 屏
+    interH: Math.max(H * (H > W ? 1 : 0.74), 520),
+    interPortrait: H > W
   }
 })()
 
@@ -389,8 +410,25 @@ const P = {
   gallery6: layoutPhoto('gallery6', S.bleedW, S.bleedW * 0.625, { dpr, scale: 1.15 }),
   gallery7: layoutPhoto('gallery7', S.c7, (S.c7 * 4) / 3, { dpr }),
   gallery8: layoutPhoto('gallery8', S.c5, (S.c5 * 4) / 3, { dpr }),
-  interlude: layoutPhoto('interlude', W, S.interH, { dpr, layerPct: 140, scale: 1.16 })
+  // 山海屏：竖屏时图片按「宽 270%、贴底、顶端透明淡出」铺，两人完整入画（同 H5 竖屏做法）；
+  // 横屏/宽屏时退回到 140% 高度 + 视差的老做法。
+  interlude: S.interPortrait
+    ? layoutPhoto('interlude', W * 2.7, (W * 2.7) / (CONFIG.images.interlude.w / CONFIG.images.interlude.h), { dpr: Math.min(dpr, 2) })
+    : layoutPhoto('interlude', W, S.interH, { dpr, layerPct: 140, scale: 1.16 })
 }
+
+// 山海屏天空色：取照片最顶部那一条的平均色（实测 #4B79AD），渐变接上去看不出接缝
+const INTER_SKY = { top: '#4B79AD', mid: '#4E7CB0', low: '#6E96C4' }
+const interStyle = computed(() => {
+  if (!S.interPortrait) return { sky: 'display:none;', blend: 'display:none;', layer: P.interlude.layer }
+  const imgH = (W * 2.7) / (CONFIG.images.interlude.w / CONFIG.images.interlude.h)
+  const blendH = Math.max(88, Math.round(imgH * 0.24))
+  return {
+    sky: `background:linear-gradient(180deg, ${INTER_SKY.top} 0%, ${INTER_SKY.top} 34%, ${INTER_SKY.mid} 62%, ${INTER_SKY.low} 100%);`,
+    blend: `height:${blendH}px;background:linear-gradient(180deg, ${INTER_SKY.top} 0%, rgba(75,121,173,0.58) 40%, rgba(75,121,173,0) 100%);`,
+    layer: `position:absolute;top:auto;left:50%;bottom:0;width:270%;height:${Math.round(imgH)}px;transform:translateX(-46%) translateY(-8px);`
+  }
+})
 
 // 画廊三行（与 H5 的 g-a…g-f 排法、旋转、比例一致）；rv = 滚动显现序号（决定 H5 里的错峰延迟）
 const galleryRows = [
@@ -490,11 +528,11 @@ function speedStyle(top, h, speed, scale) {
   const off = Math.max(-room, Math.min(room, raw))
   return `transform:translateY(${off.toFixed(1)}px) scale(${scale});`
 }
-const par = reactive({ gallery3: 'transform:scale(1.15);', gallery6: 'transform:scale(1.15);', interlude: 'transform:scale(1.16);' })
+const par = reactive({ gallery3: 'transform:scale(1.15);', gallery6: 'transform:scale(1.15);', interlude: S.interPortrait ? '' : 'transform:scale(1.16);' })
 function updateParallax() {
   par.gallery3 = speedStyle(pos.g3Top, pos.g3H, 0.09, 1.15)
   par.gallery6 = speedStyle(pos.g6Top, pos.g6H, 0.09, 1.15)
-  if (pos.interH) par.interlude = speedStyle(pos.interTop, pos.interH, 0.12, 1.15)
+  if (pos.interH && !S.interPortrait) par.interlude = speedStyle(pos.interTop, pos.interH, 0.12, 1.15)
 }
 
 let measureTimer = 0
@@ -528,11 +566,100 @@ let lastScroll = 0
 onPageScroll((e) => {
   const now = Date.now()
   scrollY.value = e.scrollTop
+  autoScrollTop = e.scrollTop          // 记下真实滚动位置（手指滑动也会走到这里）
+  // 自动滚的时候位置是我们自己写的，事件会晚几帧到；只把「不是刚写的那次」的大跳当成用户自己滚
+  if (autoRunning.value && Date.now() - autoLastSet > 260 && Math.abs(e.scrollTop - autoTop) > 48) {
+    pauseAutoByTouch()
+  }
   if (now - lastScroll > 16) {
     lastScroll = now
     updateParallax()
   }
 })
+
+/* ---------- 自动下滑：约 27px/秒连续下滚；碰屏幕暂停，闲置 6.5s 恢复；到底/弹层/切后台都停 ---------- */
+const AUTO_SPEED = 29          // px/秒
+const AUTO_TICK = 33           // ms（≈30fps）
+const AUTO_IDLE = 6500         // 手指离开后多久恢复（ms）
+const autoOn = ref(true)       // 用户总开关（左下角按钮控制）
+const autoRunning = ref(false) // 实际是否正在滚
+let autoTop = 0                // 我们自己维护的滚动位置（小数累加，避免整数取整丢步）
+let autoScrollTop = 0          // 最近一次真实 scrollTop
+let autoTimer = 0
+let idleTimer = 0
+let autoMax = 0                // 可滚动的最大距离（到底）
+let autoLastSet = 0            // 上一次由我们写滚动位置的时间
+let autoTicks = 0              // 自上次校正以来的帧数
+let autoPausedByTouch = false
+
+function measureMax() {
+  const q = uni.createSelectorQuery().in(inst.proxy)
+  q.select('#ending').boundingClientRect()
+  q.selectViewport().scrollOffset()
+  q.exec((r) => {
+    if (!r || !r[0] || !r[1]) return
+    autoMax = Math.max(0, r[0].bottom + (r[1].scrollTop || 0) - H + 60)
+  })
+}
+function canAuto() {
+  return autoOn.value && !sheetOpen.value && !hidden && !autoPausedByTouch
+}
+function stopAuto() {
+  clearInterval(autoTimer)
+  autoTimer = 0
+  autoRunning.value = false
+}
+function startAuto() {
+  if (!canAuto() || autoTimer) return
+  autoTop = autoScrollTop
+  autoRunning.value = true
+  let last = Date.now()
+  autoTimer = setInterval(() => {
+    if (!canAuto()) { stopAuto(); return }
+    if (!autoMax) measureMax()
+    // 按真实经过的时间累加：setInterval 被系统拖慢时速度也不变
+    const now = Date.now()
+    const dt = Math.min(now - last, 400)
+    last = now
+    const next = autoTop + (AUTO_SPEED * dt) / 1000
+    if (autoMax && next >= autoMax) {
+      autoTop = autoMax
+      autoLastSet = now
+      stopAuto()
+      uni.pageScrollTo({ scrollTop: autoMax, duration: 0 })
+      return
+    }
+    autoTop = next
+    autoLastSet = now
+    uni.pageScrollTo({ scrollTop: Math.round(next), duration: 0 })
+    // 每约 0.5s 用真实位置校正一次，防止长时间累积漂移
+    if (++autoTicks % 15 === 0 && Math.abs(autoScrollTop - next) < 200) autoTop = autoScrollTop
+  }, AUTO_TICK)
+}
+// 碰屏幕 → 立刻停；松手 6.5 秒后接着滚
+function pauseAutoByTouch() {
+  autoPausedByTouch = true
+  stopAuto()
+  clearTimeout(idleTimer)
+  idleTimer = setTimeout(() => {
+    autoPausedByTouch = false
+    if (autoOn.value) startAuto()
+  }, AUTO_IDLE)
+}
+function toggleAuto() {
+  autoOn.value = !autoOn.value
+  clearTimeout(idleTimer)
+  autoPausedByTouch = false
+  if (autoOn.value) {
+    measureMax()
+    startAuto()
+  } else {
+    stopAuto()
+  }
+}
+function onTouchStart() { pauseAutoByTouch() }
+function onTouchMove() { pauseAutoByTouch() }
+function onTouchEnd() { pauseAutoByTouch() }
 
 /* ---------- 婚礼信息按钮 ---------- */
 const infoAway = ref(false)
@@ -571,8 +698,8 @@ function openMap() {
 
 /* ---------- 回执抽屉 ---------- */
 const sheetOpen = ref(false)
-const openSheet = () => { sheetOpen.value = true }
-const closeSheet = () => { sheetOpen.value = false }
+const openSheet = () => { sheetOpen.value = true; stopAuto() }
+const closeSheet = () => { sheetOpen.value = false; if (autoOn.value) startAuto() }
 const noop = () => {}
 function call(tel) {
   uni.makePhoneCall({ phoneNumber: tel, fail: () => {} })
@@ -684,31 +811,129 @@ function onAnyTap() {
 }
 onShow(() => {
   hidden = false
+  enableShareMenu()
   if (musicOn && wantPlay && !musicPlaying.value) startMusic()
+  // 回到前台：量一下可滚范围，接着自动下滑
+  measureMax()
+  startAuto()
 })
 onHide(() => {
   hidden = true
   clearTimeout(gestureTimer)
+  stopAuto()
   if (audio && musicPlaying.value) audio.pause() // wantPlay 保持不变，回来时 onShow 接着放
 })
 
-/* ---------- 分享 ---------- */
-onPageLoad(() => {
+/* ---------- 分享（包内图 + 同步返回；网络图不可靠） ---------- */
+const SHARE_LOCAL = '/static/share-card.jpg'
+const SHARE_TITLE = (C.share && C.share.title) || '高嘉琪 & 张靖 · 婚礼邀请 · 2026.11.14 威海荣成'
+const SHARE_PATH = (C.share && C.share.path) || '/pages/invite/index'
+const shareImagePath = ref(SHARE_LOCAL)
+
+function enableShareMenu() {
   if (typeof uni.showShareMenu === 'function') {
-    uni.showShareMenu({ withShareTicket: false, menus: ['shareAppMessage', 'shareTimeline'], fail: () => {} })
+    uni.showShareMenu({
+      withShareTicket: false,
+      menus: ['shareAppMessage', 'shareTimeline'],
+      fail: () => {}
+    })
   }
+}
+
+function buildSharePayload(imageUrl) {
+  const payload = {
+    title: SHARE_TITLE,
+    path: SHARE_PATH,
+    imageUrl: imageUrl || shareImagePath.value || SHARE_LOCAL
+  }
+  try {
+    console.log('[invite-share]', payload.title, payload.imageUrl)
+  } catch (e) { /* noop */ }
+  return payload
+}
+
+function prepareShareImage() {
+  // 1) 校验包内图，缓存本地绝对路径
+  uni.getImageInfo({
+    src: SHARE_LOCAL,
+    success: (info) => {
+      if (info && info.path) shareImagePath.value = info.path
+      // 2) 可选：画到离屏 canvas 再导出临时路径（部分基础库对 temp 路径更稳）
+      tryDrawShareTemp(info)
+    },
+    fail: () => {
+      shareImagePath.value = SHARE_LOCAL
+    }
+  })
+}
+
+function tryDrawShareTemp(info) {
+  try {
+    const w = (info && info.width) || 750
+    const h = (info && info.height) || 600
+    const ctx = uni.createCanvasContext && uni.createCanvasContext('shareCanvas', inst && inst.proxy)
+    if (!ctx) return
+    ctx.drawImage(SHARE_LOCAL, 0, 0, w, h)
+    ctx.draw(false, () => {
+      uni.canvasToTempFilePath({
+        canvasId: 'shareCanvas',
+        width: w,
+        height: h,
+        destWidth: 750,
+        destHeight: 600,
+        fileType: 'jpg',
+        quality: 0.92,
+        success: (res) => {
+          if (res && res.tempFilePath) shareImagePath.value = res.tempFilePath
+        },
+        fail: () => {}
+      }, inst && inst.proxy)
+    })
+  } catch (e) { /* canvas 不可用时继续用包内路径 */ }
+}
+
+// 必须在 setup 顶层同步注册（不可放进 onMounted）
+onPageLoad(() => {
+  enableShareMenu()
 })
-onShareAppMessage(() => ({ title: C.share.title, path: C.share.path, imageUrl: C.share.imageUrl }))
-onShareTimeline(() => ({ title: C.share.title, query: '', imageUrl: C.share.imageUrl }))
+onShareAppMessage(() => {
+  const sync = buildSharePayload()
+  const promise = new Promise((resolve) => {
+    let settled = false
+    const done = (img) => {
+      if (settled) return
+      settled = true
+      resolve(buildSharePayload(img))
+    }
+    if (shareImagePath.value && shareImagePath.value !== SHARE_LOCAL) {
+      done(shareImagePath.value)
+      return
+    }
+    uni.getImageInfo({
+      src: SHARE_LOCAL,
+      success: (info) => done((info && info.path) || SHARE_LOCAL),
+      fail: () => done(SHARE_LOCAL)
+    })
+    setTimeout(() => done(shareImagePath.value || SHARE_LOCAL), 1800)
+  })
+  // 同步字段保证标题绝不丢失；promise 在 2s 内带上更稳的 temp 路径
+  return { ...sync, promise }
+})
+onShareTimeline(() => buildSharePayload())
 
 onReady(() => {
   ready.value = true
+  enableShareMenu()
+  prepareShareImage()
   nextTick(() => {
     observeReveals()
     measure()
     // 字体（马善政）晚一点到，排版高度会变：再量两次
     setTimeout(measure, 800)
     setTimeout(measure, 2500)
+    // 自动下滑：等开场动画进完再开始，别一进来就动
+    setTimeout(() => { measureMax(); startAuto() }, 1600)
+    setTimeout(measureMax, 3200)
   })
 })
 onUnload(() => {
@@ -716,6 +941,8 @@ onUnload(() => {
   observers = []
   clearTimeout(gestureTimer)
   clearTimeout(titleTimer)
+  clearTimeout(idleTimer)
+  stopAuto()
   if (audio) {
     try { audio.stop() } catch (e) { /* noop */ }
     audio.destroy()
@@ -835,6 +1062,34 @@ page {
 }
 .fab-info:active { transform: scale(0.94); }
 .fab-info.is-away { opacity: 0; pointer-events: none; transform: translateY(14px); }
+
+/* ---------- 自动下滑开关（左下角，44px 触控区） ---------- */
+.auto-fab {
+  position: fixed;
+  z-index: 90;
+  left: 16px;
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(119, 55, 71, 0.32);
+  background: rgba(245, 240, 232, 0.9);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 3px 14px rgba(52, 58, 61, 0.12);
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.4s ease, border-color 0.4s ease, transform 0.25s ease, opacity 0.35s ease;
+}
+.auto-fab-hover { transform: scale(0.94); }
+.auto-fab.on { background: rgba(119, 55, 71, 0.9); border-color: rgba(119, 55, 71, 0.9); }
+.ic-pause { display: flex; align-items: center; }
+.ic-pause .pb { width: 2.5px; height: 12px; margin: 0 2px; border-radius: 1px; background: $ivory; }
+.ic-play {
+  width: 0; height: 0;
+  margin-left: 2px;
+  border-left: 12px solid $wine;
+  border-top: 7px solid transparent;
+  border-bottom: 7px solid transparent;
+}
 
 /* ---------- 背景音乐按钮（胶囊下方右对齐） ---------- */
 .music {
@@ -971,33 +1226,45 @@ page {
 .opening-names {
   font-family: $serif-cn;
   color: $wine;
-  font-size: clamp(22px, 5.4vw, 28px);
-  letter-spacing: 0.14em;
-  line-height: 1.6;
+  font-size: clamp(30px, 8vw, 40px);
+  letter-spacing: 0.08em;
+  line-height: 1.35;
+  white-space: nowrap;
   margin-bottom: 14px;
   opacity: 0;
   animation: fadeIn 1s ease 0.3s forwards;
 }
-.opening-cross { color: $sea-deep; margin: 0 12px; }
+/* 两个名字中间的 &：香槟金，斜体衬线，约名字的 0.72 倍，垂直居中 */
+.opening-amp {
+  display: inline-block;
+  font-family: $serif-en;
+  font-style: italic;
+  font-size: 0.72em;
+  letter-spacing: 0;
+  color: $gold;
+  margin: 0 7px;
+  transform: translateY(-0.06em);
+}
 .h1 {
   font-family: $serif-en;
-  font-weight: 400;
+  font-weight: 500;
   color: $wine;
-  font-size: clamp(30px, 8.4vw, 58px);
-  letter-spacing: 0.34em;
-  line-height: 1.4;
+  font-size: clamp(17px, 4.2vw, 24px);
+  letter-spacing: 0.22em;
+  line-height: 1.55;
+  white-space: nowrap;
   opacity: 0;
-  animation: titleIn 2.4s $ease 0.5s forwards;
+  animation: titleIn 1.6s $ease 0.5s forwards;
 }
 @keyframes titleIn {
-  0% { opacity: 0; letter-spacing: 0.42em; transform: translateY(10px); }
-  100% { opacity: 1; letter-spacing: 0.18em; transform: translateY(0); }
+  0% { opacity: 0; letter-spacing: 0.3em; transform: translateY(8px); }
+  100% { opacity: 1; letter-spacing: 0.22em; transform: translateY(0); }
 }
 .sub {
-  margin-top: 20px;
-  font-size: 12.5px;
-  letter-spacing: 0.26em;
-  line-height: 2.3;
+  margin-top: 14px;
+  font-size: 11.5px;
+  letter-spacing: 0.22em;
+  line-height: 2;
   color: $graphite;
   opacity: 0;
   animation: fadeIn 1.6s ease 1.8s forwards;
@@ -1005,15 +1272,15 @@ page {
 .sub .dot { display: none; margin: 0 10px; color: $wine-ink; }
 .sub .place { display: block; margin: 0 10px; color: $wine-ink; }
 @media (min-width: 481px) {
-  .sub { font-size: 13px; letter-spacing: 0.34em; line-height: 1.8; }
+  .sub { font-size: 12px; letter-spacing: 0.28em; line-height: 1.8; }
   .sub .dot { display: inline; }
   .sub .place { display: inline; }
 }
 .sub2 {
-  margin-top: 18px;
+  margin-top: 14px;
   font-family: $serif-cn;
-  font-size: 15px;
-  letter-spacing: 0.22em;
+  font-size: 14px;
+  letter-spacing: 0.18em;
   color: rgba(119, 55, 71, 0.9);
   opacity: 0;
   animation: fadeIn 1.8s ease 2.6s forwards;
@@ -1210,9 +1477,13 @@ page {
 }
 
 /* ============ 04.5 所爱隔山海 ============ */
-.interlude { min-height: 460px; overflow: hidden; }
+.interlude { min-height: 520px; overflow: hidden; }
 .inter-bg { position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow: hidden; }
+.inter-sky { position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
 .inter-layer { transition: opacity 1.2s ease; transform: scale(1.16); }
+/* 竖屏：照片层按「宽 270%、贴底」摆（尺寸在 interStyle.layer 里算），顶端用天空色淡出，接缝看不见 */
+.interlude.portrait .inter-layer { transform: none; }
+.inter-blend { position: absolute; left: 0; right: 0; top: 0; z-index: 1; pointer-events: none; }
 .inter-veil {
   position: absolute; top: 0; left: 0; right: 0; bottom: 0;
   background: linear-gradient(to bottom, $ivory 0%, rgba(245, 240, 232, 0.25) 18%, rgba(52, 58, 61, 0.28) 55%, rgba(52, 58, 61, 0.42) 100%);
@@ -1232,6 +1503,13 @@ page {
   text-align: center;
   padding: 0 30px;
   z-index: 3;
+}
+/* 竖屏：诗句压在上方的天空里（约 16%–45% 高度），不落在人身上 */
+.interlude.portrait .inter-copy { justify-content: flex-start; padding-top: 22%; }
+/* 竖屏时照片贴底，两人脚在画面最下沿：底部白过渡收窄到 46px，只压草尖，不压人 */
+.interlude.portrait .inter-fade { height: 46px; }
+.interlude.portrait .inter-veil {
+  background: linear-gradient(to bottom, $ivory 0%, rgba(245, 240, 232, 0.22) 15%, rgba(52, 58, 61, 0.06) 48%, rgba(52, 58, 61, 0.10) 100%);
 }
 .inter-copy .p {
   font-family: $serif-cn;
@@ -1341,10 +1619,10 @@ page {
 }
 .invite-names .amp, .tail .names .amp {
   font-family: $serif-en;
-  font-style: normal;
-  color: $wine;
-  margin: 0 10px;
-  font-size: 1.1em;
+  font-style: italic;
+  color: $gold;
+  margin: 0 9px;
+  font-size: 1.05em;
 }
 .invite-time { margin-top: 12px; font-size: 12.5px; letter-spacing: 0.22em; color: rgba(52, 58, 61, 0.7); }
 .invite-venue { margin-top: 26px; font-family: $serif-cn; font-size: 19px; letter-spacing: 0.12em; line-height: 2.15; }
@@ -1470,6 +1748,30 @@ page {
 }
 .btn-rsvp-on { transform: scale(0.97); }
 .env { width: 15px; height: 15px; margin-right: 10px; background-size: 15px 15px; background-repeat: no-repeat; }
+.btn-share {
+  display: block;
+  margin: 18px auto 0;
+  padding: 11px 36px;
+  background: transparent;
+  color: $wine;
+  border: 1px solid rgba(119, 55, 71, 0.45);
+  border-radius: 999px;
+  font-size: 12px;
+  letter-spacing: 0.28em;
+  line-height: 1.8;
+  box-sizing: border-box;
+}
+.btn-share::after { border: none; }
+.btn-share-on { transform: scale(0.97); opacity: 0.85; }
+.share-canvas {
+  position: fixed;
+  left: -9999px;
+  top: 0;
+  width: 750px;
+  height: 600px;
+  pointer-events: none;
+  opacity: 0;
+}
 
 /* ---------- 回执抽屉 ---------- */
 .sheet { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 120; visibility: hidden; }
@@ -1615,5 +1917,6 @@ page {
   .kb, .bk, .j-wave { animation: none; }
   .music-btn.on .music-ring, .music-btn.on::after, .music-btn.on .bar { animation: none; }
   .opening-names, .h1, .sub, .sub2, .scroll-hint { animation: none; opacity: 1; }
+  .auto-fab, .auto-fab-hover { transition: none; }
 }
 </style>

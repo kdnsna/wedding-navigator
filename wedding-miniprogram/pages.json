@@ -9,7 +9,9 @@
         "navigationBarTextStyle": "black",
         "backgroundColor": "#F5F0E8",
         "backgroundColorTop": "#F5F0E8",
-        "backgroundColorBottom": "#F5F0E8"
+        "backgroundColorBottom": "#F5F0E8",
+        "enableShareAppMessage": true,
+        "enableShareTimeline": true
       }
     }
   ],

@@ -26,12 +26,13 @@ const images = {
   story2: { w: 1080, h: 1080, pos: [0.5, 0.5], alt: '新娘坐在沙发前，裙摆与花瓣铺满地面',
     variants: [[540, 'assets/story-2-540-BZBlwNyY.webp'], [1080, 'assets/story-2-1080-Bp3i8q0F.webp']],
     fallback: 'assets/story-2-Co59vzR2.jpg' },
-  journey1: { w: 1440, h: 1080, pos: [0.42, 0.5], alt: '荣成海边：石拱桥下停着两只小船',
-    variants: [[960, 'assets/journey-1-960-C6a94aZa.webp'], [1440, 'assets/journey-1-1440-ehtZbAfY.webp']],
-    fallback: 'assets/journey-1-Dai5S5pp.jpg' },
-  journey2: { w: 1080, h: 763, pos: [0.62, 0.5], alt: '荣成海湾与白色栏杆',
+  // 03 · The Journey：主图＝荣成海湾与白色栏杆，右下小图＝石拱桥下两只小船（2026-10-31 对调）
+  journey1: { w: 1080, h: 763, pos: [0.62, 0.5], alt: '荣成海湾与白色栏杆',
     variants: [[540, 'assets/journey-2-540-DTsW3Xfn.webp'], [1080, 'assets/journey-2-1080-DvJIfOY9.webp']],
     fallback: 'assets/journey-2-DZGYweoO.jpg' },
+  journey2: { w: 1440, h: 1080, pos: [0.42, 0.5], alt: '荣成海边：石拱桥下停着两只小船',
+    variants: [[960, 'assets/journey-1-960-C6a94aZa.webp'], [1440, 'assets/journey-1-1440-ehtZbAfY.webp']],
+    fallback: 'assets/journey-1-Dai5S5pp.jpg' },
   gallery1: { w: 1200, h: 1800, pos: [0.5, 0.38], alt: '哥特拱窗前的逆光相拥',
     variants: [[600, 'assets/gallery-1-600-CjJZsZue.webp'], [1200, 'assets/gallery-1-1200-DHLhD5Mw.webp']],
     fallback: 'assets/gallery-1-D-wsdgzM.jpg' },
@@ -56,7 +57,8 @@ const images = {
   gallery8: { w: 1200, h: 1800, pos: [0.5, 0.5], alt: '日落时分的吻，头纱铺开',
     variants: [[600, 'assets/gallery-8-600-cfR0sBCG.webp'], [1200, 'assets/gallery-8-1200-BYJjGNVq.webp']],
     fallback: 'assets/gallery-8-Ct44r6qK.jpg' },
-  interlude: { w: 1920, h: 1280, pos: [0.4, 0.5], alt: '夕阳下牵手起舞的剪影',
+  // pos[0] 横向取景：偏左一点，两人全身居中；pos[1] 只在图片高度大于框高时生效（竖屏按「宽 270%、贴底」排，见页面 P.interlude）
+  interlude: { w: 1920, h: 1280, pos: [0.4, 0.58], alt: '夕阳下牵手起舞的剪影',
     variants: [[1200, 'assets/interlude-1200-C3OSpo0o.webp'], [1920, 'assets/interlude-1920-BJzQLs_P.webp']],
     fallback: 'assets/interlude-D4TK7R_L.jpg' }
 }
@@ -74,9 +76,7 @@ const CONFIG = {
   ],
 
   // 婚礼地点导航：uni.openLocation 需要 GCJ-02 经纬度。
-  // ⚠️ 待新人确认：37.167282, 122.521789 取自 Tripadvisor 猫途鹰 / 中国假日旅游网「荣成华星宾馆」酒店页的地图中心点
-  // （tripadvisor.cn 地图为高德，按 GCJ-02 处理）。请在腾讯地图坐标拾取器 https://lbs.qq.com/getPoint/ 搜「荣成华星宾馆」核对，
-  // 有偏差直接改这两个数。打不开地图时会自动复制地址。
+  // 用户已核对，勿改：37.167282, 122.521789（荣成华星宾馆，GCJ-02；打不开地图时会自动复制地址）。
   venue: {
     name: '荣成华星宾馆',
     address: '荣成市成山大道东段1号',
@@ -97,7 +97,7 @@ const CONFIG = {
     credit: '背景音乐 · 海风来信（高嘉琪原创）'
   },
 
-  // 分享卡片：标题沿用 H5 #share-config；封面复用 H5 的分享封面（1080×1080）
+  // 分享卡片：标题沿用 H5；封面必须用代码包内 750×600（微信读网络图常失败会变空白卡）
   share: {
     title: '高嘉琪 & 张靖 · 婚礼邀请 · 2026.11.14 威海荣成',
     desc: '山海很远，相见值得。2026.11.14，我们在荣成等你赴约。',
