@@ -378,7 +378,7 @@ const dpr = win.pixelRatio || 2
 
 const S = (() => {
   const storyW = Math.min(W, 640) - 52
-  const gW = Math.min(W, 760) - 44
+  const gW = Math.min(W, 760) - 12
   const col = (n) => ((gW - 176) * n) / 12 + (n - 1) * 16
   return {
     heroH: Math.max(H, 560),
@@ -1405,7 +1405,7 @@ page {
 .act-gallery { padding: 120px 0 80px; max-width: 760px; margin: 0 auto; overflow: hidden; }
 .g-tag { margin: 0 22px 56px; }
 .g-grid { padding: 0 22px; }
-.g-row { display: flex; align-items: flex-start; }
+.g-row { display: flex; align-items: flex-start; margin: 0 -16px; padding-bottom: 4px; }
 .g-item { position: relative; flex: none; }
 .matte {
   background: $paper;
@@ -1424,7 +1424,8 @@ page {
 }
 .r-l { transform: rotate(-1.3deg); }
 .r-r { transform: rotate(1.4deg); }
-/* 12 栏网格（栏距 16px）用 flex 还原：7/5、6/6、7/5 */
+/* 12 栏网格（栏距 16px）用 flex 还原：7/5、6/6、7/5。
+   整行左右各出血 16px（.g-row 的负 margin），只留 6px 到屏幕边；照片比原来约大 9%，旋转 1.4° 也不会被裁 */
 .g-a, .g-e { width: calc((100% - 176px) * 7 / 12 + 96px); }
 .g-b, .g-f { width: calc((100% - 176px) * 5 / 12 + 64px); margin-left: 16px; }
 .g-c, .g-d { width: calc((100% - 176px) / 2 + 80px); }
