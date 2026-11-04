@@ -83,6 +83,7 @@
           :class="rc(3 + i)" :style="dl(3 + i)">
           <text v-for="(s, j) in line" :key="j" :class="{ em: s.em }">{{ s.t }}</text>
         </view>
+        <view class="p story-note">{{ C.whispers.story }}</view>
       </view>
       <view id="rv9" class="story-names reveal" :class="rc(9)">
         <text>{{ C.story.origins[0] }} </text><text class="mist">×</text><text> {{ C.story.origins[1] }}</text>
@@ -97,6 +98,7 @@
         <view v-for="(t, i) in C.journey.lines" :key="i" :id="'rv' + (12 + i)" class="p reveal-line"
           :class="rc(12 + i)" :style="dl(12 + i)">{{ t }}</view>
         <view id="rv15" class="journey-place reveal-line" :class="rc(15)" :style="dl(15)">{{ C.journey.place }}</view>
+        <view class="journey-place journey-note">{{ C.whispers.journey }}</view>
       </view>
       <view class="j-scene" :style="{ height: S.journeyH + 'px' }">
         <view class="j-photo">
@@ -316,6 +318,7 @@
       <view id="rv38" class="tail reveal" :class="rc(38)">
         <view>{{ C.ending.date }}</view>
         <view class="names"><text>{{ C.groomName }}</text><text class="amp">&amp;</text><text>{{ C.brideName }}</text></view>
+        <view class="p ending-note">{{ C.whispers.ending }}</view>
         <view>{{ C.ending.place }}</view>
       </view>
     </view>
@@ -1304,8 +1307,8 @@ page {
 @keyframes hint { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
 
 /* ============ 02 OUR STORY ============ */
-.act-story { padding: 120px 26px 100px; max-width: 640px; margin: 0 auto; }
-.act-story .act-tag { margin-bottom: 38px; }
+.act-story { padding: 96px 26px 80px; max-width: 640px; margin: 0 auto; }
+.act-story .act-tag { margin-bottom: 30px; }
 .story-photo-main { width: 100%; border-radius: 2px; }
 .story-photo-detail {
   width: 52%;
@@ -1315,16 +1318,24 @@ page {
   z-index: 2;
 }
 .story-text {
-  margin-top: 56px;
+  margin-top: 44px;
   font-family: $serif-cn;
   font-size: clamp(19px, 5vw, 23px);
-  line-height: 2.3;
+  line-height: 2.15;
   color: $graphite;
 }
-.story-text .p { margin-bottom: 4px; }
+.story-text .p { margin-bottom: 2px; }
+.story-text .story-note {
+  margin: 14px 0 0;
+  font-family: $sans-cn;
+  font-size: 12px;
+  line-height: 1.9;
+  letter-spacing: 0.12em;
+  color: $wine-ink;
+}
 .story-text .em { color: $wine; }
 .story-names {
-  margin-top: 34px;
+  margin-top: 26px;
   display: flex;
   align-items: center;
   font-size: 12px;
@@ -1344,7 +1355,7 @@ page {
 /* ============ 03 THE JOURNEY ============ */
 .act-journey {
   overflow: hidden;
-  padding-top: clamp(150px, 22vh, 200px);
+  padding-top: clamp(120px, 18vh, 160px);
   background: linear-gradient(180deg, $ivory 0, $mist-pale 60px, $mist 130px, $sea-mid 220px, $sea-deep 320px, $sea-deep 100%);
 }
 .journey-copy {
@@ -1355,25 +1366,33 @@ page {
   padding: 0 30px;
   z-index: 3;
 }
-.journey-copy .act-tag { color: rgba(253, 251, 244, 0.95); text-shadow: 0 1px 8px rgba(36, 56, 66, 0.35); margin-bottom: 26px; justify-content: center; }
+.journey-copy .act-tag { color: rgba(253, 251, 244, 0.95); text-shadow: 0 1px 8px rgba(36, 56, 66, 0.35); margin-bottom: 20px; justify-content: center; }
 .journey-copy .act-tag::before { background: rgba(253, 251, 244, 0.75); opacity: 1; }
 .journey-copy .p {
   font-family: $serif-cn;
   font-size: clamp(23px, 6.2vw, 31px);
   color: $foam;
   text-shadow: 0 1px 2px rgba(36, 56, 66, 0.25), 0 2px 16px rgba(36, 56, 66, 0.35);
-  line-height: 2.15;
+  line-height: 2;
   letter-spacing: 0.12em;
 }
-.journey-copy .lead { font-size: clamp(14px, 3.8vw, 17px); opacity: 0.95; letter-spacing: 0.3em; margin-bottom: 14px; }
+.journey-copy .lead { font-size: clamp(14px, 3.8vw, 17px); opacity: 0.95; letter-spacing: 0.3em; margin-bottom: 10px; }
 .journey-place {
-  margin-top: 18px;
+  margin-top: 14px;
   font-family: $serif-en;
   font-size: 11px;
   letter-spacing: 0.4em;
   color: rgba(253, 251, 244, 0.82);
 }
-.j-scene { position: relative; margin-top: clamp(-10px, 2vh, 24px); width: 100%; }
+.journey-copy .journey-note {
+  margin-top: 8px;
+  font-family: $sans-cn;
+  font-size: 12px;
+  line-height: 1.8;
+  letter-spacing: 0.16em;
+  color: rgba(253, 251, 244, 0.88);
+}
+.j-scene { position: relative; margin-top: clamp(-8px, 1.5vh, 18px); width: 100%; }
 .j-photo { position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow: hidden; background: $sea-deep; }
 .j-layer { transition: opacity 1.4s ease; }
 .j-fade-top, .j-fade-bottom { position: absolute; left: 0; right: 0; z-index: 1; pointer-events: none; }
@@ -1391,7 +1410,7 @@ page {
 .j-wave.l2 { height: 78%; opacity: 0.6; animation: tide 24s linear infinite reverse; }
 .j-wave.l3 { height: 52%; animation: tide 18s linear infinite; }
 @keyframes tide { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(-50%, 0, 0); } }
-.j-after { display: flow-root; background: $ivory; padding-bottom: 8px; }
+.j-after { display: flow-root; background: $ivory; padding-bottom: 4px; }
 .j-card {
   position: relative;
   width: 48%;
@@ -1399,17 +1418,17 @@ page {
   margin: -96px 24px 0 auto;
   z-index: 4;
 }
-.jc-cap { font-size: 16px !important; padding-top: 7px !important; }
+.jc-cap { font-size: 16px !important; padding-top: 6px !important; }
 
 /* ============ 04 THE GALLERY ============ */
-.act-gallery { padding: 120px 0 80px; max-width: 760px; margin: 0 auto; overflow: hidden; }
-.g-tag { margin: 0 22px 56px; }
+.act-gallery { padding: 96px 0 64px; max-width: 760px; margin: 0 auto; overflow: hidden; }
+.g-tag { margin: 0 22px 44px; }
 .g-grid { padding: 0 22px; }
 .g-row { display: flex; align-items: flex-start; margin: 0 -16px; padding-bottom: 4px; }
 .g-item { position: relative; flex: none; }
 .matte {
   background: $paper;
-  padding: 9px 9px 10px;
+  padding: 7px 7px 8px;
   box-shadow: 0 18px 46px rgba(52, 58, 61, 0.16);
   border-radius: 2px;
 }
@@ -1419,8 +1438,8 @@ page {
   color: rgba(52, 58, 61, 0.72);
   font-size: 18px;
   letter-spacing: 0.02em;
-  padding: 9px 0 0;
-  line-height: 1.8;
+  padding: 7px 0 0;
+  line-height: 1.6;
 }
 .r-l { transform: rotate(-1.3deg); }
 .r-r { transform: rotate(1.4deg); }
@@ -1430,12 +1449,12 @@ page {
 .g-b, .g-f { width: calc((100% - 176px) * 5 / 12 + 64px); margin-left: 16px; }
 .g-c, .g-d { width: calc((100% - 176px) / 2 + 80px); }
 .g-d { margin-left: 16px; }
-.g-b { margin-top: 68px; }
-.g-c { margin-top: 34px; }
-.g-d { margin-top: 86px; }
-.g-e { margin-top: 40px; }
-.g-f { margin-top: 104px; }
-.g-bleed { margin: 44px -22px 0; }
+.g-b { margin-top: 54px; }
+.g-c { margin-top: 28px; }
+.g-d { margin-top: 68px; }
+.g-e { margin-top: 32px; }
+.g-f { margin-top: 82px; }
+.g-bleed { margin: 34px -22px 0; }
 .bleed-layer { transform: scale(1.15); }
 .g-phrase {
   text-align: center;
@@ -1443,8 +1462,8 @@ page {
   color: $wine;
   font-size: clamp(26px, 7vw, 36px);
   letter-spacing: 0.02em;
-  line-height: 1.8;
-  padding: 56px 0 30px;
+  line-height: 1.6;
+  padding: 44px 0 24px;
 }
 
 /* 全出血照片 ↔ 象牙白底色的过渡（与 H5 同一套）：
@@ -1519,22 +1538,22 @@ page {
   font-size: clamp(25px, 7vw, 36px);
   color: $foam;
   text-shadow: 0 2px 22px rgba(52, 58, 61, 0.45);
-  line-height: 2.1;
+  line-height: 1.95;
   letter-spacing: 0.22em;
 }
 .inter-copy .small {
-  margin-top: 22px;
+  margin-top: 16px;
   font-family: $script-en;
   font-size: clamp(18px, 4.8vw, 23px);
   color: rgba(253, 251, 244, 0.9);
   text-shadow: 0 1px 10px rgba(52, 58, 61, 0.55);
   letter-spacing: 0.06em;
-  line-height: 1.8;
+  line-height: 1.7;
 }
 
 /* ============ 05 THE INVITATION ============ */
 .act-invite {
-  padding: 130px 24px calc(110px + env(safe-area-inset-bottom));
+  padding: 104px 24px calc(88px + env(safe-area-inset-bottom));
   background: radial-gradient(ellipse 70% 42% at 50% 30%, rgba(119, 55, 71, 0.05), rgba(119, 55, 71, 0) 70%);
 }
 .invite-card {
@@ -1542,7 +1561,7 @@ page {
   margin: 0 auto;
   text-align: center;
   border: 1px solid rgba(119, 55, 71, 0.22);
-  padding: 78px 28px 56px;
+  padding: 62px 26px 46px;
   position: relative;
   background: $paper;
   box-shadow: 0 24px 70px rgba(52, 58, 61, 0.10);
@@ -1590,7 +1609,7 @@ page {
   font-size: 11px;
   letter-spacing: 0.34em;
   color: rgba(52, 58, 61, 0.72);
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 .h2 {
   font-family: $serif-en;
@@ -1598,8 +1617,8 @@ page {
   font-size: clamp(26px, 7vw, 38px);
   letter-spacing: 0.3em;
   color: $graphite;
-  margin-bottom: 10px;
-  line-height: 1.8;
+  margin-bottom: 8px;
+  line-height: 1.5;
 }
 .invite-zh {
   font-family: $serif-cn;
@@ -1607,14 +1626,15 @@ page {
   letter-spacing: 0.14em;
   white-space: nowrap;
   color: $graphite;
-  margin-top: 12px;
+  margin-top: 8px;
+  line-height: 1.8;
 }
-.invite-date { margin: 44px 0 10px; font-family: $serif-en; color: $wine; }
+.invite-date { margin: 34px 0 8px; font-family: $serif-en; color: $wine; }
 .invite-date .day { font-size: clamp(76px, 23vw, 124px); line-height: 1; letter-spacing: 0.02em; }
-.invite-date .ym { margin-top: 12px; font-size: 15px; letter-spacing: 0.5em; }
+.invite-date .ym { margin-top: 9px; font-size: 15px; letter-spacing: 0.5em; }
 .invite-week { font-size: 12px; letter-spacing: 0.34em; color: $graphite; opacity: 0.75; }
 .invite-names {
-  margin-top: 38px;
+  margin-top: 30px;
   font-family: $serif-cn;
   font-size: clamp(23px, 6vw, 28px);
   letter-spacing: 0.16em;
@@ -1627,14 +1647,14 @@ page {
   margin: 0 9px;
   font-size: 1.05em;
 }
-.invite-time { margin-top: 12px; font-size: 12.5px; letter-spacing: 0.22em; color: rgba(52, 58, 61, 0.7); }
-.invite-venue { margin-top: 26px; font-family: $serif-cn; font-size: 19px; letter-spacing: 0.12em; line-height: 2.15; }
+.invite-time { margin-top: 9px; font-size: 12.5px; letter-spacing: 0.22em; color: rgba(52, 58, 61, 0.7); }
+.invite-venue { margin-top: 20px; font-family: $serif-cn; font-size: 19px; letter-spacing: 0.12em; line-height: 1.9; }
 .invite-venue .small { display: block; font-family: $sans-cn; font-size: 12.5px; opacity: 0.7; letter-spacing: 0.2em; }
 .invite-line {
   width: 42px; height: 1px;
   background: $wine;
   opacity: 0.5;
-  margin: 32px auto;
+  margin: 26px auto;
   position: relative;
 }
 .diamond {
@@ -1650,7 +1670,7 @@ page {
   display: inline-flex;
   align-items: center;
   margin-top: 6px;
-  padding: 13px 36px;
+  padding: 11px 34px;
   border: 1px solid $wine;
   color: $wine;
   font-size: 13px;
@@ -1666,22 +1686,23 @@ page {
 .btn-map-on .a-ivory { opacity: 1; }
 .btn-map-on .a-wine { opacity: 0; }
 .invite-note {
-  margin-top: 30px;
+  margin-top: 24px;
   font-family: $script-en;
   font-size: 20px;
   letter-spacing: 0.02em;
+  line-height: 1.6;
   color: rgba(52, 58, 61, 0.68);
 }
 
 /* ---------- 赴约指南 ---------- */
-.guide { max-width: 560px; margin: 76px auto 0; text-align: left; }
+.guide { max-width: 560px; margin: 60px auto 0; text-align: left; }
 .guide-title {
   text-align: center;
   font-family: $serif-cn;
   letter-spacing: 0.3em;
   font-size: 19px;
   color: $wine;
-  margin-bottom: 24px;
+  margin-bottom: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1698,7 +1719,7 @@ page {
 .guide-item.open { background: rgba(251, 247, 239, 0.6); }
 .guide-head {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 19px 6px;
+  padding: 15px 6px;
   font-family: $sans-cn;
   font-size: 14.5px;
   letter-spacing: 0.12em;
@@ -1719,9 +1740,9 @@ page {
 .guide-item.open .chev { transform: rotate(225deg); }
 .guide-body { max-height: 0; overflow: hidden; transition: max-height 0.45s ease; }
 .inner {
-  padding: 2px 6px 22px 36px;
+  padding: 0 6px 18px 32px;
   font-size: 13.5px;
-  line-height: 2.15;
+  line-height: 1.9;
   color: rgba(52, 58, 61, 0.85);
 }
 .inner .b { font-weight: 600; color: $graphite; }
@@ -1734,12 +1755,12 @@ page {
 }
 
 /* ---------- 回执 ---------- */
-.rsvp { max-width: 560px; margin: 60px auto 0; text-align: center; }
-.rsvp-p { font-size: 13px; opacity: 0.75; letter-spacing: 0.1em; margin-bottom: 20px; }
+.rsvp { max-width: 560px; margin: 48px auto 0; text-align: center; }
+.rsvp-p { font-size: 13px; opacity: 0.75; letter-spacing: 0.1em; margin-bottom: 16px; }
 .btn-rsvp {
   display: inline-flex;
   align-items: center;
-  padding: 13px 42px;
+  padding: 11px 42px;
   background: $wine;
   color: $ivory;
   border-radius: 999px;
@@ -1753,7 +1774,7 @@ page {
 .env { width: 15px; height: 15px; margin-right: 10px; background-size: 15px 15px; background-repeat: no-repeat; }
 .btn-share {
   display: block;
-  margin: 18px auto 0;
+  margin: 14px auto 0;
   padding: 11px 36px;
   background: transparent;
   color: $wine;
@@ -1865,18 +1886,18 @@ page {
 
 /* ============ 06 THE ENDING ============ */
 .act-ending {
-  min-height: 80vh;
+  min-height: 72vh;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
   text-align: center;
-  padding: 120px 30px 140px;
+  padding: 96px 30px 112px;
   background: linear-gradient(to bottom, $ivory 40%, $shore 75%, $mist 130%);
   overflow: hidden;
 }
 .words {
   font-family: $serif-cn;
   font-size: clamp(21px, 5.6vw, 27px);
-  line-height: 2.35;
+  line-height: 2.1;
   letter-spacing: 0.14em;
   color: $graphite;
   position: relative;
@@ -1885,35 +1906,43 @@ page {
 .ending-wave {
   width: 120px; height: 14px;
   opacity: 0.8;
-  margin-top: 44px;
+  margin-top: 34px;
   background-size: 120px 14px;
   background-repeat: no-repeat;
   position: relative;
   z-index: 3;
 }
 .tail {
-  margin-top: 40px;
+  margin-top: 32px;
   font-family: $serif-en;
   color: $wine;
   font-size: 14px;
   letter-spacing: 0.4em;
-  line-height: 2.5;
+  line-height: 2.15;
   position: relative;
   z-index: 3;
 }
 .tail .names { font-family: $serif-cn; font-size: 20px; letter-spacing: 0.22em; color: $graphite; }
 .tail .names .amp { font-size: 1.15em; }
+.tail .ending-note {
+  margin-top: 8px;
+  font-family: $sans-cn;
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  line-height: 1.8;
+  color: $wine-ink;
+}
 
 .footer {
   text-align: center;
-  padding: 26px 20px calc(30px + env(safe-area-inset-bottom));
+  padding: 22px 20px calc(24px + env(safe-area-inset-bottom));
   font-size: 10.5px;
   letter-spacing: 0.24em;
   line-height: 1.8;
   color: rgba(52, 58, 61, 0.45);
   background: $ivory;
 }
-.credit { margin: 10px auto 0; max-width: 300px; font-size: 10px; line-height: 1.7; letter-spacing: 0.06em; color: rgba(52, 58, 61, 0.42); }
+.credit { margin: 8px auto 0; max-width: 300px; font-size: 10px; line-height: 1.7; letter-spacing: 0.06em; color: rgba(52, 58, 61, 0.42); }
 
 @media (prefers-reduced-motion: reduce) {
   .reveal, .reveal-line { transition: none; opacity: 1; transform: none; }

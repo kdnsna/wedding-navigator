@@ -1,7 +1,7 @@
 /* ============================================================
    高嘉琪 × 张靖 · 婚礼请柬（小程序版）唯一配置
    ------------------------------------------------------------
-   内容与 H5（kdnsna/our-wedding，index.html 里的 CONFIG 与正文）逐字一致。
+   主体内容与 H5（kdnsna/our-wedding，index.html 里的 CONFIG 与正文）一致，新增点缀文案也集中在这里。
    改文案、电话、时间、图片地址，只改这里。
    本文件不能 import 任何东西：scripts/build-invite-fonts.mjs 会直接读取它来做字体子集。
    ============================================================ */
@@ -116,7 +116,12 @@ const CONFIG = {
     { family: 'MaShanZheng', key: 'mashanzheng', https: 'https://kdnsna.github.io/our-wedding/assets/MaShanZheng-subset-1xoUNzcr.woff2' }
   ],
 
-  /* ---------------- 正文（逐字取自 H5） ---------------- */
+  /* ---------------- 正文（主体沿用 H5，whispers 为本页轻点缀） ---------------- */
+  whispers: {
+    story: '遇见你，山海都温柔',
+    journey: '想和你，看遍每一片海',
+    ending: '从此朝暮，身边都是你'
+  },
   opening: {
     title: ['A LOVE STORY', 'BY THE SEA'],
     date: '2026.11.14',
