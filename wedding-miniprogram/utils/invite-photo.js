@@ -48,3 +48,28 @@ export function layoutPhoto(key, boxW, boxH, o = {}) {
     img
   }
 }
+
+/**
+ * 竖屏全幅：不走 cover。按原比例放到 widthRatio 倍屏宽，底边对齐、水平锚点取景。
+ * 上面多出来的天空由页面用同色渐变接上，人可以全身入画，也不会被拉变形。
+ * @param {number} [o.widthRatio=2.7]
+ * @param {number} [o.anchorX=0.5] 0 贴左，1 贴右
+ */
+export function layoutAnchored(key, boxW, boxH, o = {}) {
+  const im = CONFIG.images[key]
+  const widthRatio = o.widthRatio || 2.7
+  const anchorX = o.anchorX == null ? 0.5 : o.anchorX
+  const dpr = Math.min(o.dpr || 2, 3)
+  const Ai = im.w / im.h
+  const imgW = boxW * widthRatio
+  const imgH = imgW / Ai
+  const need = imgW * dpr
+  const pick = im.variants.find(([w]) => w >= need) || im.variants[im.variants.length - 1]
+  return {
+    src: assetUrl(pick[1]),
+    fallback: assetUrl(im.fallback),
+    alt: im.alt,
+    layer: 'height:100%;',
+    img: `width:${(widthRatio * 100).toFixed(3)}%;height:${((imgH / boxH) * 100).toFixed(3)}%;left:${(-((widthRatio - 1) * anchorX) * 100).toFixed(3)}%;top:${(((boxH - imgH) / boxH) * 100).toFixed(3)}%;`
+  }
+}
