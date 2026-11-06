@@ -1,51 +1,52 @@
 <template>
-  <view class="inv" :class="{ ready }" @tap="onAnyTap">
-    <!-- 纸张颗粒 -->
+  <view class="inv" :class="{ ready, opened }" @tap="onAnyTap">
     <view class="grain" :style="{ backgroundImage: art.grain }" />
-
-    <!-- 固定快捷入口 -->
-    <!-- 背景音乐：胶囊菜单正下方、右对齐；播放时唱片环慢转 + 三根音柱起伏，暂停时静止 -->
-    <view v-if="musicOn" class="music" :style="musicPos">
-      <view
-        class="music-btn"
-        :class="{ on: musicPlaying }"
-        hover-class="music-btn-hover"
-        :aria-label="musicPlaying ? '暂停背景音乐' : '播放背景音乐'"
-        aria-role="button"
-        @tap.stop="toggleMusic"
-      >
-        <view class="music-ring" />
-        <view class="music-bars"><view class="bar b1" /><view class="bar b2" /><view class="bar b3" /></view>
+    <view class="topbar-space" :style="{ height: (barSpace) + 'px' }" />
+    <view class="topbar" :style="topbarStyle">
+      <view class="progress"><view class="progress-bar" :style="{ width: progress + '%' }" /></view>
+      <view class="topbar-row">
+        <text class="chap">{{ chapterLabel }}</text>
+        <view
+          v-if="musicOn"
+          class="music-chip"
+          :class="{ on: musicPlaying }"
+          hover-class="music-chip-on"
+          :aria-label="musicPlaying ? '暂停背景音乐，海风来信，高嘉琪原创' : '播放背景音乐，海风来信，高嘉琪原创'"
+          aria-role="button"
+          @tap.stop="toggleMusic"
+        >{{ musicPlaying ? '暂停音乐' : '播放音乐' }}</view>
       </view>
-      <view class="music-title" :class="{ show: musicTitleShow }">
-        <view class="mt-zh">{{ C.music.title }}</view>
-        <view v-if="C.music.titleEn" class="mt-en">{{ C.music.titleEn }}</view>
-      </view>
+      <view v-if="musicOn && musicPlaying" class="music-line">海风来信 · 高嘉琪原创</view>
     </view>
-    <view class="fab fab-info" :class="{ 'is-away': infoAway }" @tap="goInvitation">{{ C.infoFab }}</view>
 
-    <!-- ============ 01 · THE OPENING ============ -->
+    <!-- ============ 01 · 开场：日期地点在纸上，不压在婚纱上 ============ -->
     <view class="act act-opening" id="opening">
-      <view class="photo photo-flat hero-photo">
-        <view class="layer kb" :class="{ loaded: loaded.hero }" :style="P.hero.layer">
-          <image class="img" :style="P.hero.img" :src="srcOf('hero')" mode="scaleToFill" webp
-            @load="onLoad('hero')" @error="onErr('hero')" />
+      <view class="lead">
+        <view class="lead-date num">{{ dateLabel }}</view>
+        <view class="lead-meta">{{ weekdayCn }} · {{ C.ceremonyTime }}</view>
+        <view class="lead-place">威海荣成 · {{ C.venue.name }}</view>
+      </view>
+      <view class="hero-frame">
+        <view class="photo photo-flat hero-photo">
+          <view class="layer" :class="{ loaded: loaded.hero }" :style="P.hero.layer">
+            <image class="img" :style="P.hero.img" :src="srcOf('hero')" mode="scaleToFill" webp
+              @load="onLoad('hero')" @error="onErr('hero')" />
+          </view>
+        </view>
+        <view v-if="!opened" class="cover" hover-class="cover-on" aria-role="button" aria-label="翻开请柬。日期、时间和地点已写在上方，轻触即可进入。" @tap.stop="openInvite">
+          <view class="cover-names">
+            <text>{{ C.groomName }}</text><text class="opening-cross">×</text><text>{{ C.brideName }}</text>
+          </view>
+          <view class="cover-open">轻触翻开</view>
         </view>
       </view>
-      <view class="veil" />
-      <view class="bokeh"><view v-for="n in 6" :key="n" class="bk" :class="'bk' + n" /></view>
-      <view class="frame"><view class="frame-in" /></view>
-      <view class="opening-copy" :style="openingStyle">
-        <view class="opening-names">
+      <view class="lead-after">
+        <view v-if="opened" class="opening-names">
           <text>{{ C.groomName }}</text><text class="opening-cross">×</text><text>{{ C.brideName }}</text>
         </view>
-        <view class="h1"><view>{{ C.opening.title[0] }}</view><view>{{ C.opening.title[1] }}</view></view>
-        <view class="sub">
-          <text>{{ C.opening.date }}</text><text class="dot">·</text><text class="place">{{ C.opening.place }}</text>
-        </view>
         <view class="sub2">{{ C.opening.sub2 }}</view>
+        <view class="to-info" hover-class="to-info-on" @tap="goInvitation">查看婚礼信息</view>
       </view>
-      <view class="scroll-hint"><view class="hint-line" /></view>
     </view>
 
     <!-- ============ 02 · OUR STORY ============ -->
@@ -71,8 +72,9 @@
           <text v-for="(s, j) in line" :key="j" :class="{ em: s.em }">{{ s.t }}</text>
         </view>
       </view>
+      <view v-if="C.story.aside" class="story-aside">{{ C.story.aside }}</view>
       <view id="rv9" class="story-names reveal" :class="rc(9)">
-        <text>{{ C.story.origins[0] }} </text><text class="mist">×</text><text> {{ C.story.origins[1] }}</text>
+        <text>{{ C.story.origins[0] }}</text><text class="origin-cross">×</text><text>{{ C.story.origins[1] }}</text>
       </view>
     </view>
 
@@ -125,7 +127,7 @@
             <view class="matte" :class="g.rot">
               <view class="photo photo-flat">
                 <view class="sp" :style="{ paddingTop: g.pt }" />
-                <view class="layer" :class="{ loaded: loaded[g.key] }" :style="P[g.key].layer">
+                <view class="layer" :class="{ loaded: loaded[g.key], quiet: g.quiet }" :style="P[g.key].layer">
                   <image class="img" :style="P[g.key].img" :src="srcOf(g.key)" mode="scaleToFill" webp lazy-load
                     @load="onLoad(g.key)" @error="onErr(g.key)" />
                 </view>
@@ -135,7 +137,7 @@
           </view>
         </view>
 
-        <view id="rv20" class="g-phrase reveal-line" :class="rc(20)" :style="dl(20)">{{ C.gallery.phrases[0] }}</view>
+        <view class="g-gap" />
 
         <view id="rv21" class="g-bleed reveal" :class="rc(21)">
           <view class="photo photo-flat">
@@ -156,7 +158,7 @@
             <view class="matte" :class="g.rot">
               <view class="photo photo-flat">
                 <view class="sp" :style="{ paddingTop: g.pt }" />
-                <view class="layer" :class="{ loaded: loaded[g.key] }" :style="P[g.key].layer">
+                <view class="layer" :class="{ loaded: loaded[g.key], quiet: g.quiet }" :style="P[g.key].layer">
                   <image class="img" :style="P[g.key].img" :src="srcOf(g.key)" mode="scaleToFill" webp lazy-load
                     @load="onLoad(g.key)" @error="onErr(g.key)" />
                 </view>
@@ -166,7 +168,7 @@
           </view>
         </view>
 
-        <view id="rv24" class="g-phrase reveal-line" :class="rc(24)" :style="dl(24)">{{ C.gallery.phrases[1] }}</view>
+        <view class="g-gap" />
 
         <view id="rv25" class="g-bleed g-rings reveal" :class="rc(25)">
           <view class="photo photo-flat">
@@ -187,7 +189,7 @@
             <view class="matte" :class="g.rot">
               <view class="photo photo-flat">
                 <view class="sp" :style="{ paddingTop: g.pt }" />
-                <view class="layer" :class="{ loaded: loaded[g.key] }" :style="P[g.key].layer">
+                <view class="layer" :class="{ loaded: loaded[g.key], quiet: g.quiet }" :style="P[g.key].layer">
                   <image class="img" :style="P[g.key].img" :src="srcOf(g.key)" mode="scaleToFill" webp lazy-load
                     @load="onLoad(g.key)" @error="onErr(g.key)" />
                 </view>
@@ -200,20 +202,20 @@
     </view>
 
     <!-- ============ 04.5 · 所爱隔山海 ============ -->
-    <view class="act interlude" id="interlude" :style="{ height: S.interH + 'px' }">
-      <view class="inter-bg">
-        <view class="layer inter-layer" :class="{ loaded: loaded.interlude }" :style="P.interlude.layer + par.interlude">
-          <image class="img" :style="P.interlude.img" :src="srcOf('interlude')" mode="scaleToFill" webp lazy-load
-            @load="onLoad('interlude')" @error="onErr('interlude')" />
-        </view>
-      </view>
-      <view class="inter-veil" />
-      <view class="inter-fade" />
+    <view class="act interlude" id="interlude">
+      <view class="inter-kicker">见山</view>
       <view class="inter-copy">
         <view v-for="(t, i) in C.interlude.lines" :key="i" :id="'rv' + (28 + i)" class="p reveal-line"
           :class="rc(28 + i)" :style="dl(28 + i)">{{ t }}</view>
-        <view id="rv30" class="small reveal-line" :class="rc(30)" :style="dl(30)">{{ C.interlude.en }}</view>
       </view>
+      <view class="inter-bg">
+        <view class="layer inter-layer" :class="{ loaded: loaded.gallery7 }" :style="P.interlude.layer">
+          <image class="img" :style="P.interlude.img" :src="srcOf('gallery7')" mode="scaleToFill" webp lazy-load
+            @load="onLoad('gallery7')" @error="onErr('gallery7')" />
+        </view>
+        <view class="inter-fade" />
+      </view>
+      <view class="inter-note">草地山前</view>
     </view>
 
     <!-- ============ 05 · THE INVITATION ============ -->
@@ -222,19 +224,13 @@
         <view class="card-inner-line" />
         <view class="cn tl" /><view class="cn tr" /><view class="cn bl" /><view class="cn br" />
         <view class="seal"><view class="seal-ring" />{{ seal }}</view>
-        <view class="invite-families">{{ C.invitation.families }}</view>
-        <view class="h2">{{ C.invitation.title }}</view>
         <view class="invite-zh">{{ C.invitation.zh }}</view>
-        <view class="invite-date">
-          <view class="day">{{ C.date.d }}</view>
-          <view class="ym">{{ C.invitation.month }}</view>
-        </view>
-        <view class="invite-week">{{ weekday }}</view>
-        <view class="invite-line"><view class="diamond" /></view>
         <view class="invite-names">
-          <text>{{ C.groomName }}</text><text class="amp">&amp;</text><text>{{ C.brideName }}</text>
+          <text>{{ C.groomName }}</text><text class="amp">×</text><text>{{ C.brideName }}</text>
         </view>
-        <view class="invite-time">婚礼仪式时间：{{ C.ceremonyTime }}</view>
+        <view class="invite-date num">{{ dateLabel }}</view>
+        <view class="invite-week">{{ weekdayCn }} · {{ C.ceremonyTime }}</view>
+        <view class="invite-line"><view class="diamond" /></view>
         <view class="invite-venue">
           <view v-for="(t, i) in C.invitation.venueLines" :key="i">{{ t }}</view>
           <view class="small"><text user-select selectable>地址：{{ C.venue.address }}</text></view>
@@ -247,7 +243,6 @@
             <view class="arrow-img a-ivory" :style="{ backgroundImage: art.mapArrow.ivory }" />
           </view>
         </view>
-        <view class="invite-note">{{ C.invitation.note }}</view>
       </view>
 
       <!-- 赴约指南 -->
@@ -299,29 +294,29 @@
       </view>
       <view id="rv37" class="ending-wave reveal" :class="rc(37)" :style="{ backgroundImage: art.endingWave }" />
       <view id="rv38" class="tail reveal" :class="rc(38)">
-        <view>{{ C.ending.date }}</view>
-        <view class="names"><text>{{ C.groomName }}</text><text class="amp">&amp;</text><text>{{ C.brideName }}</text></view>
-        <view>{{ C.ending.place }}</view>
+        <view class="names"><text>{{ C.groomName }}</text><text class="amp">×</text><text>{{ C.brideName }}</text></view>
+        <view class="num">{{ dateLabel }}</view>
+        <view>威海荣成</view>
       </view>
     </view>
 
     <view class="footer">
-      <view>{{ C.footer }}</view>
-      <view v-if="musicOn && C.music.credit" class="credit">{{ C.music.credit }}</view>
+      <view class="num">{{ C.groomName }} × {{ C.brideName }} · {{ dateLabel }}</view>
+      <view v-if="musicOn" class="credit">海风来信 · 高嘉琪原创</view>
     </view>
 
     <!-- 回执抽屉：电话 + 微信 -->
     <view class="sheet" :class="{ open: sheetOpen }" @touchmove.stop.prevent="noop">
       <view class="sheet-mask" @tap="closeSheet" />
       <view class="sheet-panel">
-        <view class="grip" />
-        <view class="sheet-title">{{ C.rsvp.sheetTitle }}</view>
-        <view class="sheet-sub"><view v-for="(t, i) in C.rsvp.sheetSub" :key="i">{{ t }}</view></view>
+        <view class="sheet-title">联系两位新人</view>
+        <view class="sheet-sub">高嘉琪留了微信，可以复制添加。张靖没有留微信，请直接打电话。我们不收集你的回复。</view>
         <view class="sheet-list">
           <view v-for="c in C.contacts" :key="c.tel" class="sheet-person">
             <view class="sheet-name">{{ c.name }}</view>
+            <view class="sheet-role">{{ c.wechat ? '电话，或加微信' : '请电话联系' }}</view>
             <view class="sheet-row">
-              <view><text class="k">电话</text><text class="v">{{ fmtTel(c.tel) }}</text></view>
+              <view><text class="k">电话</text><text class="v num">{{ fmtTel(c.tel) }}</text></view>
               <view class="sheet-btn solid" hover-class="sheet-btn-on" @tap="call(c.tel)">拨打</view>
             </view>
             <view v-if="c.wechat" class="sheet-row">
@@ -360,6 +355,10 @@ const win = windowInfo()
 const W = win.windowWidth || 375
 const H = win.windowHeight || 667
 const dpr = win.pixelRatio || 2
+// 竖屏才把「所爱隔山海」改成底对齐全身；横屏预览仍走原来的 cover，避免宽屏被拉成一条天空
+const barTop = (win.statusBarHeight || 20) + 6
+const barSpace = barTop + 52
+const topbarStyle = `padding-top:${barTop}px;`
 
 const S = (() => {
   const storyW = Math.min(W, 640) - 52
@@ -375,7 +374,7 @@ const S = (() => {
     c5: col(5) - 18,
     c6: col(6) - 18,
     bleedW: gW + 44,
-    interH: Math.max(H * 0.74, 460)
+    interH: Math.max(Math.round(H * 0.92), 560)
   }
 })()
 
@@ -393,13 +392,14 @@ const P = {
   gallery6: layoutPhoto('gallery6', S.bleedW, S.bleedW * 0.625, { dpr, scale: 1.15 }),
   gallery7: layoutPhoto('gallery7', S.c7, (S.c7 * 4) / 3, { dpr }),
   gallery8: layoutPhoto('gallery8', S.c5, (S.c5 * 4) / 3, { dpr }),
-  interlude: layoutPhoto('interlude', W, S.interH, { dpr, layerPct: 140, scale: 1.16 })
+  // 山海幕用已有的「草地山前」竖图，不再用只有海天的剪影
+  interlude: layoutPhoto('gallery7', W, S.interH, { dpr })
 }
 
 // 画廊三行（与 H5 的 g-a…g-f 排法、旋转、比例一致）；rv = 滚动显现序号（决定 H5 里的错峰延迟）
 const galleryRows = [
   [
-    { key: 'gallery1', cls: 'g-a', rot: 'r-l', pt: '133.333%', rv: 18 },
+    { key: 'gallery1', cls: 'g-a', rot: 'r-l', pt: '133.333%', rv: 18, quiet: true },
     { key: 'gallery2', cls: 'g-b', rot: 'r-r', pt: '133.333%', rv: 19 }
   ],
   [
@@ -407,8 +407,7 @@ const galleryRows = [
     { key: 'gallery5', cls: 'g-d', rot: 'r-l', pt: '100%', rv: 23 }
   ],
   [
-    { key: 'gallery7', cls: 'g-e', rot: 'r-l', pt: '133.333%', rv: 26 },
-    { key: 'gallery8', cls: 'g-f', rot: 'r-r', pt: '133.333%', rv: 27 }
+    { key: 'gallery8', cls: 'g-e', rot: 'r-l', pt: '133.333%', rv: 26 }
   ]
 ]
 
@@ -428,10 +427,13 @@ function onErr(key) {
 const fmtTel = (t) => t.replace(/^(\d{3})(\d{4})(\d{4})$/, '$1 $2 $3')
 const fill = (t) => t.replace('{ceremonyTime}', C.ceremonyTime)
 const seal = C.groomName.charAt(0) + ' · ' + C.brideName.charAt(0)
-const weekday = (() => {
+const dateLabel = `${C.date.y}.${String(C.date.m).padStart(2, '0')}.${String(C.date.d).padStart(2, '0')}`
+const weekdayCn = (() => {
   const d = new Date(C.date.y, C.date.m - 1, C.date.d)
-  return ['SUNDAY · 星期日', 'MONDAY · 星期一', 'TUESDAY · 星期二', 'WEDNESDAY · 星期三', 'THURSDAY · 星期四', 'FRIDAY · 星期五', 'SATURDAY · 星期六'][d.getDay()]
+  return ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'][d.getDay()]
 })()
+const opened = ref(false)
+function openInvite() { opened.value = true }
 
 /* ---------- 页面淡入 + 滚动显现（IntersectionObserver，threshold 0.18，同 H5） ---------- */
 const ready = ref(false)
@@ -472,7 +474,19 @@ function observeReveals() {
 
 /* ---------- 视差：首屏渐隐 / 山海文字 / data-speed 照片（只动 transform、opacity） ---------- */
 const scrollY = ref(0)
-const pos = reactive({ journeyTop: 0, journeyH: 0, g3Top: 0, g3H: 0, g6Top: 0, g6H: 0, interTop: 0, interH: 0 })
+const progress = ref(0)
+const chapterLabel = ref('日期')
+const chapterMarks = [
+  { id: 'opening', label: '日期' },
+  { id: 'story', label: '故事' },
+  { id: 'journey', label: '赴海' },
+  { id: 'gallery', label: '相册' },
+  { id: 'interlude', label: '见山' },
+  { id: 'invitation', label: '请柬' },
+  { id: 'ending', label: '尾声' }
+]
+const chapterTop = {}
+const pos = reactive({ journeyTop: 0, journeyH: 0, g3Top: 0, g3H: 0, g6Top: 0, g6H: 0, interTop: 0, interH: 0, pageH: 1 })
 const reduced = false
 const openingStyle = computed(() => {
   const y = scrollY.value
@@ -494,11 +508,15 @@ function speedStyle(top, h, speed, scale) {
   const off = Math.max(-room, Math.min(room, raw))
   return `transform:translateY(${off.toFixed(1)}px) scale(${scale});`
 }
-const par = reactive({ gallery3: 'transform:scale(1.15);', gallery6: 'transform:scale(1.15);', interlude: 'transform:scale(1.16);' })
+const par = reactive({
+  gallery3: 'transform:scale(1.08);',
+  gallery6: 'transform:scale(1.06);transform-origin:center 22%;'
+})
+const interLayerStyle = computed(() => P.interlude.layer)
 function updateParallax() {
-  par.gallery3 = speedStyle(pos.g3Top, pos.g3H, 0.09, 1.15)
-  par.gallery6 = speedStyle(pos.g6Top, pos.g6H, 0.09, 1.15)
-  if (pos.interH) par.interlude = speedStyle(pos.interTop, pos.interH, 0.12, 1.15)
+  par.gallery3 = speedStyle(pos.g3Top, pos.g3H, 0.05, 1.08)
+  const g6 = speedStyle(pos.g6Top, pos.g6H, 0.04, 1.06)
+  par.gallery6 = g6 + 'transform-origin:center 22%;'
 }
 
 let measureTimer = 0
@@ -513,6 +531,8 @@ function measure() {
   q.select('#rv25 .photo').boundingClientRect()
   q.select('#interlude').boundingClientRect()
   q.selectViewport().scrollOffset()
+  chapterMarks.forEach((c) => q.select('#' + c.id).boundingClientRect())
+  q.select('.inv').boundingClientRect()
   q.exec((r) => {
     if (!r || !r[4]) return
     const st = r[4].scrollTop || 0
@@ -523,6 +543,12 @@ function measure() {
       }
     }
     set(0, 'journey'); set(1, 'g3'); set(2, 'g6'); set(3, 'inter')
+    chapterMarks.forEach((c, i) => {
+      const box = r[5 + i]
+      if (box) chapterTop[c.id] = box.top + st
+    })
+    const inv = r[5 + chapterMarks.length]
+    if (inv && inv.height) pos.pageH = inv.height
     scrollY.value = st
     updateParallax()
   })
@@ -532,6 +558,13 @@ let lastScroll = 0
 onPageScroll((e) => {
   const now = Date.now()
   scrollY.value = e.scrollTop
+  const total = Math.max(1, (pos.pageH || 1) - H)
+  progress.value = Math.max(0, Math.min(100, (e.scrollTop / total) * 100))
+  let label = chapterMarks[0].label
+  for (const c of chapterMarks) {
+    if (chapterTop[c.id] != null && e.scrollTop + 80 >= chapterTop[c.id]) label = c.label
+  }
+  chapterLabel.value = label
   if (now - lastScroll > 16) {
     lastScroll = now
     updateParallax()
@@ -589,12 +622,17 @@ function showToast(msg) {
   clearTimeout(toastTimer)
   toastTimer = setTimeout(() => { toast.show = false }, 2200)
 }
+function silenceNativeToast() {
+  ;[0, 40, 120, 360].forEach((ms) => {
+    setTimeout(() => { try { uni.hideToast() } catch (e) { /* noop */ } }, ms)
+  })
+}
 function copyText(text, okMsg, failMsg) {
   uni.setClipboardData({
     data: text,
     showToast: false,
     success: () => {
-      try { uni.hideToast() } catch (e) { /* noop */ }
+      silenceNativeToast()
       showToast(okMsg)
     },
     fail: () => showToast(failMsg)
@@ -621,9 +659,10 @@ const musicPos = (() => {
   return `top:${top}px;right:${right}px;`
 })()
 let audio = null
-let wantPlay = true        // 用户意愿：默认想听；点按暂停后为 false，直到再次点按
+let wantPlay = true
+let userPaused = false     // 用户暂停后，翻页、回前台、随便点一下都不再自动响起
 let hidden = false
-let needGesture = false    // 自动播放被拦（或迟迟没出声）→ 等第一次点按
+let needGesture = false
 let gestureTimer = 0
 let titleTimer = 0
 let titleShown = false
@@ -670,17 +709,19 @@ function startMusic() {
 function toggleMusic() {
   if (!musicOn) return
   if (musicPlaying.value) {
+    userPaused = true
     wantPlay = false
     needGesture = false
     audio && audio.pause()
   } else {
+    userPaused = false
     wantPlay = true
     startMusic()
-    flashTitle()
   }
 }
-// 自动播放没成功时，页面任意一次点按都开始播放（音乐按钮自己 @tap.stop，不会走到这里）
+// 只有「还没成功播过、用户也没暂停」时，第一次点按才补播放。暂停之后不再复活。
 function onAnyTap() {
+  if (userPaused) return
   if (musicOn && needGesture && wantPlay && !musicPlaying.value) {
     needGesture = false
     startMusic()
@@ -689,7 +730,7 @@ function onAnyTap() {
 onShow(() => {
   hidden = false
   enableShareMenu()
-  if (musicOn && wantPlay && !musicPlaying.value) startMusic()
+  if (musicOn && wantPlay && !userPaused && !musicPlaying.value) startMusic()
 })
 onHide(() => {
   hidden = true
@@ -851,7 +892,7 @@ page {
 .photo {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, $ivory-deep 0%, $sand 50%, $mist 130%);
+  background: linear-gradient(160deg, $ivory-deep 0%, $sand 100%);
 }
 .photo::after {
   content: "";
@@ -1014,15 +1055,15 @@ page {
 .mt-en { font-family: $serif-en; font-style: italic; font-size: 10px; line-height: 1.3; letter-spacing: 0.06em; color: rgba(52, 58, 61, 0.6); }
 
 /* ---------- 幕 通用 ---------- */
-.act { position: relative; }
+.act { position: relative; scroll-margin-top: 76px; }
 .act-tag {
   display: flex;
   align-items: center;
-  font-family: $serif-en;
-  font-size: 11px;
-  letter-spacing: 0.42em;
+  font-family: $sans-cn;
+  font-size: 13px;
+  letter-spacing: 0.14em;
   color: $wine-ink;
-  text-transform: uppercase;
+  text-transform: none;
 }
 .act-tag::before {
   content: "";
@@ -1034,13 +1075,16 @@ page {
 }
 
 /* ============ 01 THE OPENING ============ */
-.act-opening { height: 100vh; min-height: 560px; overflow: hidden; }
+.act-opening { height: auto; min-height: 0; overflow: visible; padding: 12px 22px 36px; }
 .hero-photo { position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
 .kb { animation: kenburns 24s ease-in-out infinite alternate; }
 @keyframes kenburns { from { transform: scale(1); } to { transform: scale(1.09); } }
 .frame {
   position: absolute;
-  top: 14px; left: 14px; right: 14px; bottom: 14px;
+  top: calc(14px + env(safe-area-inset-top));
+  right: calc(14px + env(safe-area-inset-right));
+  bottom: calc(14px + env(safe-area-inset-bottom));
+  left: calc(14px + env(safe-area-inset-left));
   border: 1px solid rgba(119, 55, 71, 0.25);
   pointer-events: none;
   z-index: 3;
@@ -1053,12 +1097,18 @@ page {
 .veil {
   position: absolute; top: 0; left: 0; right: 0; bottom: 0;
   z-index: 1;
-  background: linear-gradient(to bottom, rgba(245,240,232,0.06) 30%, rgba(245,240,232,0.52) 76%, $ivory 100%);
+  /* 脸在画面上半：上面几乎不铺白，字落在下半的裙摆上才加重 */
+  background: linear-gradient(to bottom,
+    rgba(245, 240, 232, 0.02) 18%,
+    rgba(245, 240, 232, 0.08) 42%,
+    rgba(245, 240, 232, 0.55) 68%,
+    rgba(245, 240, 232, 0.9) 88%,
+    $ivory 100%);
 }
 .opening-copy {
   position: absolute;
   left: 0; right: 0;
-  bottom: 15%;
+  bottom: calc(15% + env(safe-area-inset-bottom) * 0.25);
   text-align: center;
   padding: 0 24px;
   z-index: 4;
@@ -1066,27 +1116,39 @@ page {
 .opening-names {
   font-family: $serif-cn;
   color: $wine;
-  font-size: clamp(22px, 5.4vw, 28px);
-  letter-spacing: 0.14em;
-  line-height: 1.6;
-  margin-bottom: 14px;
+  font-size: clamp(26px, 7.2vw, 34px);
+  letter-spacing: 0.12em;
+  line-height: 1.45;
+  margin-bottom: 12px;
+  white-space: nowrap;
   opacity: 0;
   animation: fadeIn 1s ease 0.3s forwards;
 }
-.opening-cross { color: $sea-deep; margin: 0 12px; }
+/* 分隔号离开书法字，改成衬线斜体香槟金；字距归零，空隙只靠 margin */
+.opening-cross {
+  display: inline-block;
+  margin: 0 0.42em 0 0.28em;
+  font-family: $serif-en;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 0.78em;
+  line-height: 1;
+  letter-spacing: 0;
+  color: $gold;
+}
 .h1 {
   font-family: $serif-en;
   font-weight: 400;
   color: $wine;
-  font-size: clamp(30px, 8.4vw, 58px);
-  letter-spacing: 0.34em;
-  line-height: 1.4;
+  font-size: clamp(24px, 7.4vw, 44px);
+  letter-spacing: 0.1em;
+  line-height: 1.35;
   opacity: 0;
   animation: titleIn 2.4s $ease 0.5s forwards;
 }
 @keyframes titleIn {
-  0% { opacity: 0; letter-spacing: 0.42em; transform: translateY(10px); }
-  100% { opacity: 1; letter-spacing: 0.18em; transform: translateY(0); }
+  0% { opacity: 0; letter-spacing: 0.2em; transform: translateY(10px); }
+  100% { opacity: 1; letter-spacing: 0.1em; transform: translateY(0); }
 }
 .sub {
   margin-top: 20px;
@@ -1105,10 +1167,10 @@ page {
   .sub .place { display: inline; }
 }
 .sub2 {
-  margin-top: 18px;
+  margin-top: 16px;
   font-family: $serif-cn;
-  font-size: 15px;
-  letter-spacing: 0.22em;
+  font-size: 14.5px;
+  letter-spacing: 0.1em;
   color: rgba(119, 55, 71, 0.9);
   opacity: 0;
   animation: fadeIn 1.8s ease 2.6s forwards;
@@ -1116,7 +1178,8 @@ page {
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 .scroll-hint {
   position: absolute;
-  left: 50%; bottom: 34px;
+  left: 50%;
+  bottom: calc(28px + env(safe-area-inset-bottom));
   transform: translateX(-50%);
   opacity: 0;
   animation: fadeIn 1.5s ease 3.2s forwards;
@@ -1130,48 +1193,60 @@ page {
 @keyframes hint { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
 
 /* ============ 02 OUR STORY ============ */
-.act-story { padding: 120px 26px 100px; max-width: 640px; margin: 0 auto; }
+.act-story { padding: 56px 26px 72px; max-width: 640px; margin: 0 auto; }
 .act-story .act-tag { margin-bottom: 38px; }
 .story-photo-main { width: 100%; border-radius: 2px; }
 .story-photo-detail {
-  width: 52%;
-  margin: -64px 0 0 auto;
-  border: 6px solid $ivory;
+  width: 42%;
+  margin: 22px 0 0 auto;
+  border: 1px solid rgba(176, 141, 87, 0.45);
   border-radius: 2px;
   z-index: 2;
 }
 .story-text {
-  margin-top: 56px;
-  font-family: $serif-cn;
-  font-size: clamp(19px, 5vw, 23px);
-  line-height: 2.3;
+  margin-top: 40px;
+  font-family: $sans-cn;
+  font-size: 16px;
+  line-height: 1.95;
+  letter-spacing: 0.01em;
   color: $graphite;
 }
 .story-text .p { margin-bottom: 4px; }
 .story-text .em { color: $wine; }
 .story-names {
-  margin-top: 34px;
+  margin-top: 30px;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   font-size: 12px;
-  letter-spacing: 0.28em;
+  line-height: 1.9;
+  letter-spacing: 0.12em;
   color: $wine-ink;
 }
 .story-names::before {
   content: "";
   width: 26px; height: 1px;
-  margin-right: 14px;
-  background: $wine;
-  opacity: 0.55;
+  margin-right: 12px;
+  background: $gold;
+  opacity: 0.72;
   flex: none;
 }
-.story-names .mist { color: $sea-deep; }
+.story-names .origin-cross {
+  display: inline-block;
+  margin: 0 0.45em;
+  font-family: $serif-en;
+  font-style: italic;
+  font-size: 1.15em;
+  line-height: 1;
+  letter-spacing: 0;
+  color: $gold;
+}
 
 /* ============ 03 THE JOURNEY ============ */
 .act-journey {
   overflow: hidden;
-  padding-top: clamp(150px, 22vh, 200px);
-  background: linear-gradient(180deg, $ivory 0, $mist-pale 60px, $mist 130px, $sea-mid 220px, $sea-deep 320px, $sea-deep 100%);
+  padding-top: 36px;
+  background: $ivory;
 }
 .journey-copy {
   position: relative;
@@ -1181,30 +1256,37 @@ page {
   padding: 0 30px;
   z-index: 3;
 }
-.journey-copy .act-tag { color: rgba(253, 251, 244, 0.95); text-shadow: 0 1px 8px rgba(36, 56, 66, 0.35); margin-bottom: 26px; justify-content: center; }
-.journey-copy .act-tag::before { background: rgba(253, 251, 244, 0.75); opacity: 1; }
+.journey-copy .act-tag { color: $wine-ink; text-shadow: none; margin-bottom: 18px; justify-content: center; }
+.journey-copy .act-tag::before { background: $gold; opacity: 0.7; }
 .journey-copy .p {
-  font-family: $serif-cn;
-  font-size: clamp(23px, 6.2vw, 31px);
-  color: $foam;
-  text-shadow: 0 1px 2px rgba(36, 56, 66, 0.25), 0 2px 16px rgba(36, 56, 66, 0.35);
-  line-height: 2.15;
-  letter-spacing: 0.12em;
+  font-family: $sans-cn;
+  font-size: 17px;
+  color: $graphite;
+  text-shadow: none;
+  line-height: 1.9;
+  letter-spacing: 0.04em;
 }
-.journey-copy .lead { font-size: clamp(14px, 3.8vw, 17px); opacity: 0.95; letter-spacing: 0.3em; margin-bottom: 14px; }
+.journey-copy .lead { font-size: clamp(14px, 3.8vw, 17px); opacity: 0.95; letter-spacing: 0.22em; margin-bottom: 14px; }
 .journey-place {
-  margin-top: 18px;
-  font-family: $serif-en;
-  font-size: 11px;
-  letter-spacing: 0.4em;
-  color: rgba(253, 251, 244, 0.82);
+  margin-top: 10px;
+  font-family: $sans-cn;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  color: $wine-ink;
 }
 .j-scene { position: relative; margin-top: clamp(-10px, 2vh, 24px); width: 100%; }
 .j-photo { position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow: hidden; background: $sea-deep; }
 .j-layer { transition: opacity 1.4s ease; }
 .j-fade-top, .j-fade-bottom { position: absolute; left: 0; right: 0; z-index: 1; pointer-events: none; }
-.j-fade-top { top: 0; height: 34%; background: linear-gradient(180deg, $sea-deep 0%, rgba(95, 132, 148, 0.55) 40%, rgba(95, 132, 148, 0) 100%); }
-.j-fade-bottom { bottom: 0; height: 34%; background: linear-gradient(180deg, rgba(245, 240, 232, 0) 0%, rgba(245, 240, 232, 0.5) 55%, rgba(245, 240, 232, 0.92) 88%, $ivory 100%); }
+/* 上沿从深海蓝接到照片自己的天色，少留一层发灰的色块；下沿短一些，船和桥脚还在 */
+.j-fade-top {
+  top: 0; height: 16%;
+  background: linear-gradient(180deg, $ivory 0%, rgba(245, 240, 232, 0.55) 42%, rgba(245, 240, 232, 0) 100%);
+}
+.j-fade-bottom {
+  bottom: 0; height: 24%;
+  background: linear-gradient(180deg, rgba(245, 240, 232, 0) 0%, rgba(245, 240, 232, 0.35) 42%, rgba(245, 240, 232, 0.82) 78%, $ivory 100%);
+}
 .j-waves { position: absolute; left: 0; right: 0; bottom: -1px; height: 64px; pointer-events: none; z-index: 2; overflow: hidden; }
 .j-wave {
   position: absolute; left: 0; bottom: 0;
@@ -1228,7 +1310,7 @@ page {
 .jc-cap { font-size: 16px !important; padding-top: 7px !important; }
 
 /* ============ 04 THE GALLERY ============ */
-.act-gallery { padding: 120px 0 80px; max-width: 760px; margin: 0 auto; overflow: hidden; }
+.act-gallery { padding: 56px 0 48px; max-width: 760px; margin: 0 auto; overflow: hidden; }
 .g-tag { margin: 0 22px 56px; }
 .g-grid { padding: 0 22px; }
 .g-row { display: flex; align-items: flex-start; }
@@ -1236,17 +1318,17 @@ page {
 .matte {
   background: $paper;
   padding: 9px 9px 10px;
-  box-shadow: 0 18px 46px rgba(52, 58, 61, 0.16);
   border-radius: 2px;
+  box-shadow: 0 16px 40px rgba(52, 58, 61, 0.13), inset 0 0 0 1px rgba(176, 141, 87, 0.18);
 }
 .figcaption {
-  font-family: $script-en;
+  font-family: $sans-cn;
   text-align: center;
   color: rgba(52, 58, 61, 0.72);
-  font-size: 18px;
-  letter-spacing: 0.02em;
-  padding: 9px 0 0;
-  line-height: 1.8;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  padding: 8px 0 0;
+  line-height: 1.6;
 }
 .r-l { transform: rotate(-1.3deg); }
 .r-r { transform: rotate(1.4deg); }
@@ -1260,7 +1342,7 @@ page {
 .g-d { margin-top: 86px; }
 .g-e { margin-top: 40px; }
 .g-f { margin-top: 104px; }
-.g-bleed { margin: 44px -22px 0; }
+.g-bleed { margin: 28px 0 0; }
 .bleed-layer { transform: scale(1.15); }
 .g-phrase {
   text-align: center;
@@ -1283,14 +1365,14 @@ page {
 .g-band-top { bottom: 100%; height: 120px; background: linear-gradient(180deg, rgba(245, 240, 232, 0) 0%, $band-blue-top 100%); }
 .g-band-bot { top: 100%; height: 96px; background: linear-gradient(180deg, $band-blue-bot 0%, rgba(245, 240, 232, 0) 100%); }
 .edge-fade { position: absolute; left: 0; right: 0; z-index: 1; pointer-events: none; }
-/* 蓝调：象牙白 → 雾蓝 → 钴蓝的天；底部深绿草地 → 灰绿 → 雾色 */
+/* 蓝调：淡色带尽快溶进照片自己的钴蓝天，不在天上留一条发白的带；人在中下，渐变不压脸 */
 .ef-top {
-  top: 0; height: 18%;
-  background: linear-gradient(180deg, $band-blue-top 0%, rgba(178, 203, 220, 0.78) 26%, rgba(110, 160, 205, 0.34) 62%, rgba(40, 125, 195, 0) 100%);
+  top: 0; height: 14%;
+  background: linear-gradient(180deg, $band-blue-top 0%, rgba(90, 160, 200, 0.5) 34%, rgba(2, 116, 196, 0.16) 70%, rgba(2, 116, 196, 0) 100%);
 }
 .ef-bot {
-  bottom: 0; height: 15%;
-  background: linear-gradient(0deg, $band-blue-bot 0%, rgba(206, 216, 213, 0.86) 20%, rgba(122, 142, 136, 0.3) 58%, rgba(50, 69, 51, 0) 100%);
+  bottom: 0; height: 12%;
+  background: linear-gradient(0deg, $band-blue-bot 0%, rgba(206, 216, 213, 0.8) 28%, rgba(122, 142, 136, 0.22) 64%, rgba(50, 69, 51, 0) 100%);
 }
 /* 戒指：上边很短；底部青草 → 浅草绿 */
 .g-rings .g-band-top { background: linear-gradient(180deg, rgba(245, 240, 232, 0) 0%, $band-rings-top 100%); }
@@ -1308,6 +1390,7 @@ page {
 .interlude { min-height: 460px; overflow: hidden; }
 .inter-bg { position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow: hidden; }
 .inter-layer { transition: opacity 1.2s ease; transform: scale(1.16); }
+.inter-sky, .inter-bridge { display: none; }
 .inter-veil {
   position: absolute; top: 0; left: 0; right: 0; bottom: 0;
   background: linear-gradient(to bottom, $ivory 0%, rgba(245, 240, 232, 0.25) 18%, rgba(52, 58, 61, 0.28) 55%, rgba(52, 58, 61, 0.42) 100%);
@@ -1319,6 +1402,35 @@ page {
   z-index: 1;
   pointer-events: none;
   background: linear-gradient(0deg, $ivory 0%, rgba(245, 240, 232, 0.86) 22%, rgba(196, 196, 186, 0.5) 52%, rgba(120, 128, 120, 0.18) 78%, rgba(52, 58, 61, 0) 100%);
+}
+/* 竖屏：照片按原比例放到 2.7 倍屏宽、底对齐。天空用照片顶端的颜色补上，诗句落在天上，人不被裁成半身。 */
+.interlude.is-portrait { background: $sky-dusk; }
+.interlude.is-portrait .inter-bg { background: $sky-dusk; }
+.interlude.is-portrait .inter-layer { transform: none; }
+.interlude.is-portrait .inter-sky {
+  display: block;
+  position: absolute; left: 0; right: 0; top: 0;
+  height: 46%;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(180deg, $sky-dusk 0%, $sky-dusk 32%, rgba(76, 122, 174, 0.55) 68%, rgba(76, 122, 174, 0) 100%);
+}
+.interlude.is-portrait .inter-bridge {
+  display: block;
+  position: absolute; left: 0; right: 0; top: 0;
+  height: 84px;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(180deg, $ivory 0%, rgba(245, 240, 232, 0.4) 48%, rgba(76, 122, 174, 0) 100%);
+}
+.interlude.is-portrait .inter-veil { display: none; }
+.interlude.is-portrait .inter-fade {
+  height: 48px;
+  background: linear-gradient(0deg, $ivory 0%, rgba(245, 240, 232, 0.72) 46%, rgba(245, 240, 232, 0) 100%);
+}
+.interlude.is-portrait .inter-copy {
+  justify-content: flex-start;
+  padding-top: clamp(108px, 15vh, 148px);
 }
 .inter-copy {
   position: absolute; top: 0; left: 0; right: 0; bottom: 0;
@@ -1332,9 +1444,9 @@ page {
   font-family: $serif-cn;
   font-size: clamp(25px, 7vw, 36px);
   color: $foam;
-  text-shadow: 0 2px 22px rgba(52, 58, 61, 0.45);
-  line-height: 2.1;
-  letter-spacing: 0.22em;
+  text-shadow: 0 1px 2px rgba(28, 52, 74, 0.35), 0 8px 22px rgba(28, 52, 74, 0.28);
+  line-height: 2.05;
+  letter-spacing: 0.16em;
 }
 .inter-copy .small {
   margin-top: 22px;
@@ -1348,26 +1460,26 @@ page {
 
 /* ============ 05 THE INVITATION ============ */
 .act-invite {
-  padding: 130px 24px calc(110px + env(safe-area-inset-bottom));
-  background: radial-gradient(ellipse 70% 42% at 50% 30%, rgba(119, 55, 71, 0.05), rgba(119, 55, 71, 0) 70%);
+  padding: 36px 20px calc(48px + env(safe-area-inset-bottom));
+  background: $ivory;
 }
 .invite-card {
   max-width: 560px;
   margin: 0 auto;
   text-align: center;
-  border: 1px solid rgba(119, 55, 71, 0.22);
+  border: 1px solid rgba(176, 141, 87, 0.34);
   padding: 78px 28px 56px;
   position: relative;
-  background: $paper;
-  box-shadow: 0 24px 70px rgba(52, 58, 61, 0.10);
+  background: linear-gradient(135deg, rgba(176, 141, 87, 0.04), rgba(176, 141, 87, 0) 46%), $paper;
+  box-shadow: 0 22px 58px rgba(52, 58, 61, 0.09);
 }
 .card-inner-line {
   position: absolute; top: 8px; left: 8px; right: 8px; bottom: 8px;
-  border: 1px solid rgba(119, 55, 71, 0.14);
+  border: 1px solid rgba(176, 141, 87, 0.2);
   pointer-events: none;
 }
 .cn { position: absolute; width: 22px; height: 22px; pointer-events: none; z-index: 2; }
-.cn::before, .cn::after { content: ""; position: absolute; background: $wine; opacity: 0.55; }
+.cn::before, .cn::after { content: ""; position: absolute; background: $gold; opacity: 0.68; }
 .cn::before { width: 100%; height: 1px; }
 .cn::after { width: 1px; height: 100%; }
 .cn.tl { top: -1px; left: -1px; }
@@ -1401,53 +1513,55 @@ page {
 }
 .invite-families {
   font-family: $serif-en;
-  font-size: 11px;
-  letter-spacing: 0.34em;
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
   color: rgba(52, 58, 61, 0.72);
   margin-bottom: 14px;
 }
 .h2 {
   font-family: $serif-en;
   font-weight: 400;
-  font-size: clamp(26px, 7vw, 38px);
-  letter-spacing: 0.3em;
+  font-size: clamp(26px, 7vw, 36px);
+  letter-spacing: 0.16em;
   color: $graphite;
   margin-bottom: 10px;
-  line-height: 1.8;
+  line-height: 1.35;
 }
 .invite-zh {
   font-family: $serif-cn;
-  font-size: clamp(15px, 4.4vw, 18px);
-  letter-spacing: 0.14em;
+  font-size: clamp(14px, 4.2vw, 18px);
+  letter-spacing: 0.08em;
   white-space: nowrap;
   color: $graphite;
   margin-top: 12px;
 }
-.invite-date { margin: 44px 0 10px; font-family: $serif-en; color: $wine; }
-.invite-date .day { font-size: clamp(76px, 23vw, 124px); line-height: 1; letter-spacing: 0.02em; }
-.invite-date .ym { margin-top: 12px; font-size: 15px; letter-spacing: 0.5em; }
-.invite-week { font-size: 12px; letter-spacing: 0.34em; color: $graphite; opacity: 0.75; }
+.invite-date { margin: 18px 0 6px; font-family: $sans-cn; font-size: 22px; letter-spacing: 0.06em; color: $graphite; line-height: 1.3; }
+.invite-date .day { font-size: 22px; line-height: 1.3; letter-spacing: 0.06em; }
+.invite-date .ym { margin-top: 12px; font-size: 15px; letter-spacing: 0.32em; }
+.invite-week { font-size: 12px; letter-spacing: 0.22em; color: $graphite; opacity: 0.75; }
 .invite-names {
-  margin-top: 38px;
+  margin-top: 14px;
   font-family: $serif-cn;
-  font-size: clamp(23px, 6vw, 28px);
-  letter-spacing: 0.16em;
+  font-size: clamp(28px, 8vw, 36px);
+  letter-spacing: 0.08em;
   color: $graphite;
 }
 .invite-names .amp, .tail .names .amp {
   font-family: $serif-en;
-  font-style: normal;
-  color: $wine;
-  margin: 0 10px;
-  font-size: 1.1em;
+  font-style: italic;
+  font-weight: 500;
+  color: $gold;
+  margin: 0 0.42em;
+  letter-spacing: 0;
+  font-size: 0.86em;
 }
 .invite-time { margin-top: 12px; font-size: 12.5px; letter-spacing: 0.22em; color: rgba(52, 58, 61, 0.7); }
 .invite-venue { margin-top: 26px; font-family: $serif-cn; font-size: 19px; letter-spacing: 0.12em; line-height: 2.15; }
 .invite-venue .small { display: block; font-family: $sans-cn; font-size: 12.5px; opacity: 0.7; letter-spacing: 0.2em; }
 .invite-line {
   width: 42px; height: 1px;
-  background: $wine;
-  opacity: 0.5;
+  background: $gold;
+  opacity: 0.62;
   margin: 32px auto;
   position: relative;
 }
@@ -1458,25 +1572,31 @@ page {
   margin: -2.5px 0 0 -2.5px;
   transform: rotate(45deg);
   background: $paper;
-  border: 1px solid $wine;
+  border: 1px solid $gold;
 }
 .btn-map {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  margin-top: 6px;
-  padding: 13px 36px;
-  border: 1px solid $wine;
-  color: $wine;
-  font-size: 13px;
-  letter-spacing: 0.3em;
-  line-height: 1.8;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 48px;
+  margin-top: 8px;
+  padding: 12px 20px;
+  border: none;
+  background: $wine;
+  color: $ivory;
+  font-size: 15px;
+  letter-spacing: 0.14em;
+  line-height: 1.4;
   border-radius: 999px;
-  transition: background 0.35s, color 0.35s, transform 0.2s;
+  transition: opacity 0.2s, transform 0.2s;
 }
 .btn-map-on { background: $wine; color: $ivory; transform: scale(0.97); }
 .arrow { position: relative; width: 11px; height: 11px; margin-left: 10px; }
 .arrow-img { position: absolute; top: 0; left: 0; width: 11px; height: 11px; background-size: 11px 11px; background-repeat: no-repeat; }
-.a-ivory { opacity: 0; }
+.a-wine { opacity: 0; }
+.a-ivory { opacity: 1; }
 .btn-map-on .a-ivory { opacity: 1; }
 .btn-map-on .a-wine { opacity: 0; }
 .invite-note {
@@ -1567,15 +1687,19 @@ page {
 .env { width: 15px; height: 15px; margin-right: 10px; background-size: 15px 15px; background-repeat: no-repeat; }
 .btn-share {
   display: block;
+  width: auto;
   margin: 18px auto 0;
   padding: 11px 36px;
   background: transparent;
   color: $wine;
   border: 1px solid rgba(119, 55, 71, 0.45);
   border-radius: 999px;
+  font-family: $sans-cn;
+  font-weight: 400;
   font-size: 12px;
-  letter-spacing: 0.28em;
-  line-height: 1.8;
+  letter-spacing: 0.24em;
+  line-height: 1.4;
+  min-height: 44px;
   box-sizing: border-box;
 }
 .btn-share::after { border: none; }
@@ -1638,25 +1762,32 @@ page {
 .sheet-btn {
   flex: none;
   display: inline-flex; align-items: center; justify-content: center;
+  box-sizing: border-box;
   min-width: 84px;
+  min-height: 44px;
   padding: 8px 16px;
   margin-left: 12px;
   border: 1px solid $wine;
   border-radius: 999px;
   background: transparent;
   color: $wine;
+  font-family: $sans-cn;
   font-size: 13px;
   letter-spacing: 0.2em;
-  line-height: 1.8;
+  line-height: 1.4;
 }
 .sheet-btn.solid { background: $wine; color: $ivory; }
 .sheet-btn-on { transform: scale(0.96); }
 .sheet-close {
-  display: inline-block;
-  margin-top: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: 44px;
+  margin-top: 12px;
   font-size: 13px;
-  letter-spacing: 0.3em;
-  color: rgba(52, 58, 61, 0.55);
+  letter-spacing: 0.28em;
+  color: rgba(52, 58, 61, 0.62);
   padding: 8px 20px;
 }
 .toast {
@@ -1679,19 +1810,19 @@ page {
 
 /* ============ 06 THE ENDING ============ */
 .act-ending {
-  min-height: 80vh;
+  min-height: 0;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
   text-align: center;
-  padding: 120px 30px 140px;
-  background: linear-gradient(to bottom, $ivory 40%, $shore 75%, $mist 130%);
+  padding: 72px 28px 48px;
+  background: $ivory;
   overflow: hidden;
 }
 .words {
-  font-family: $serif-cn;
-  font-size: clamp(21px, 5.6vw, 27px);
-  line-height: 2.35;
-  letter-spacing: 0.14em;
+  font-family: $sans-cn;
+  font-size: 18px;
+  line-height: 2;
+  letter-spacing: 0.04em;
   color: $graphite;
   position: relative;
   z-index: 3;
@@ -1706,28 +1837,145 @@ page {
   z-index: 3;
 }
 .tail {
-  margin-top: 40px;
-  font-family: $serif-en;
-  color: $wine;
+  margin-top: 28px;
+  font-family: $sans-cn;
+  color: $wine-ink;
   font-size: 14px;
-  letter-spacing: 0.4em;
-  line-height: 2.5;
+  letter-spacing: 0.08em;
+  line-height: 2.1;
   position: relative;
   z-index: 3;
 }
-.tail .names { font-family: $serif-cn; font-size: 20px; letter-spacing: 0.22em; color: $graphite; }
-.tail .names .amp { font-size: 1.15em; }
+.tail .names { font-family: $serif-cn; font-size: 20px; letter-spacing: 0.18em; color: $graphite; }
 
 .footer {
   text-align: center;
-  padding: 26px 20px calc(30px + env(safe-area-inset-bottom));
-  font-size: 10.5px;
-  letter-spacing: 0.24em;
-  line-height: 1.8;
-  color: rgba(52, 58, 61, 0.45);
+  padding: 28px 22px calc(28px + env(safe-area-inset-bottom));
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  line-height: 1.7;
+  color: rgba(52, 58, 61, 0.78);
   background: $ivory;
 }
-.credit { margin: 10px auto 0; max-width: 300px; font-size: 10px; line-height: 1.7; letter-spacing: 0.06em; color: rgba(52, 58, 61, 0.42); }
+.credit { margin: 8px auto 0; max-width: 320px; font-size: 13px; line-height: 1.7; letter-spacing: 0.04em; color: rgba(52, 58, 61, 0.72); }
+
+/* ---------- 定稿：顶栏、开场、山、数字 ---------- */
+.num { font-family: $sans-cn; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+.act-tag { display: none; }
+.topbar {
+  position: fixed; left: 0; right: 0; top: 0; z-index: 40;
+  background: rgba(245, 240, 232, 0.96);
+}
+.progress { height: 2px; background: rgba(176, 141, 87, 0.22); }
+.progress-bar { height: 2px; background: $gold; }
+.topbar-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px 6px; }
+.chap { font-family: $sans-cn; font-size: 13px; letter-spacing: 0.12em; color: $wine-ink; }
+.music-chip {
+  min-height: 32px; padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(119, 55, 71, 0.4);
+  color: $wine-ink;
+  background: transparent;
+  font-family: $sans-cn;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+}
+.music-chip.on { background: $wine; color: $ivory; border-color: $wine; }
+.music-chip-on { opacity: 0.8; }
+.music-line {
+  padding: 0 16px 6px;
+  text-align: right;
+  font-family: $sans-cn;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: rgba(52, 58, 61, 0.72);
+}
+.lead, .lead-after { text-align: center; }
+.lead-date { font-size: 34px; line-height: 1.15; color: $wine-ink; letter-spacing: 0.04em; }
+.lead-meta, .lead-place { margin-top: 6px; font-family: $sans-cn; font-size: 15px; letter-spacing: 0.06em; color: $graphite; }
+.hero-frame { position: relative; height: 52vh; min-height: 300px; margin-top: 16px; overflow: hidden; }
+.hero-photo { position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
+.cover {
+  position: absolute; left: 14px; right: 14px; bottom: 14px;
+  padding: 16px 14px 14px;
+  text-align: center;
+  background: rgba(251, 247, 239, 0.95);
+  border: 1px solid rgba(176, 141, 87, 0.4);
+}
+.cover-names { font-family: $serif-cn; font-size: 26px; color: $wine; letter-spacing: 0.06em; }
+.cover-open { margin-top: 8px; font-family: $sans-cn; font-size: 14px; letter-spacing: 0.08em; color: $wine-ink; }
+.opening-names, .sub2 { opacity: 1; animation: none; }
+.lead-after { padding-top: 20px; }
+.sub2 { position: static; margin-top: 10px; font-family: $sans-cn; font-size: 15px; letter-spacing: 0.04em; color: $graphite; }
+.to-info {
+  display: inline-block;
+  margin-top: 14px;
+  font-family: $sans-cn;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  color: $wine;
+  border-bottom: 1px solid rgba(119, 55, 71, 0.4);
+  padding-bottom: 2px;
+}
+.quiet { filter: grayscale(1) contrast(1.04); }
+.journey-copy .lead {
+  font-family: $serif-cn;
+  font-size: 30px;
+  letter-spacing: 0.12em;
+  color: $wine;
+  line-height: 1.4;
+}
+.g-gap { height: 28px; }
+.interlude { height: auto; min-height: 0; overflow: visible; padding: 8px 0 12px; background: $ivory; }
+.inter-kicker, .inter-note {
+  text-align: center;
+  font-family: $sans-cn;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  color: rgba(52, 58, 61, 0.74);
+}
+.inter-kicker { margin-bottom: 4px; }
+.inter-copy {
+  position: relative; top: auto; left: auto; right: auto; bottom: auto;
+  display: block;
+  padding: 4px 24px 12px;
+  text-align: center;
+}
+.inter-copy .p {
+  font-family: $serif-cn;
+  font-size: 26px;
+  line-height: 1.55;
+  letter-spacing: 0.1em;
+  color: $wine-ink;
+  text-shadow: none;
+}
+.inter-bg {
+  position: relative;
+  top: auto; left: auto; right: auto; bottom: auto;
+  height: 72vh;
+  min-height: 420px;
+  margin: 0 16px;
+  overflow: hidden;
+}
+.inter-layer { transform: none; height: 100%; }
+.inter-fade { height: 28px; }
+.inter-note { margin-top: 10px; }
+.sheet-role { margin-top: 2px; font-family: $sans-cn; font-size: 12px; letter-spacing: 0.06em; color: rgba(52, 58, 61, 0.62); }
+.sheet-sub { padding: 0 4px; }
+.toast { top: auto; bottom: calc(24px + env(safe-area-inset-bottom)); font-size: 14px; letter-spacing: 0.04em; padding: 12px 16px; }
+.guide-head, .inner, .rsvp-p, .invite-time, .invite-venue, .invite-venue .small, .invite-week {
+  font-family: $sans-cn;
+}
+
+@media (max-width: 360px) {
+  .act-story { padding-left: 20px; padding-right: 20px; }
+  .act-invite { padding-left: 16px; padding-right: 16px; }
+  .invite-card { padding-left: 18px; padding-right: 18px; }
+  .h2 { letter-spacing: 0.12em; }
+  .invite-families { font-size: 10px; letter-spacing: 0.12em; }
+  .opening-copy { padding-left: 18px; padding-right: 18px; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .reveal, .reveal-line { transition: none; opacity: 1; transform: none; }

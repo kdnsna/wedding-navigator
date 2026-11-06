@@ -17,7 +17,7 @@ const assetBase = 'cloud://cloud1-d5gqyur7g5a4d3c8d.636c-cloud1-d5gqyur7g5a4d3c8
 // 照片：w/h 是原图像素；variants 按宽度从小到大；fallback 是 WebP 失败时的 JPEG。
 // pos 等同 H5 的 object-position（0–1），保证人物头部不被裁。
 const images = {
-  hero: { w: 1535, h: 2302, pos: [0.5, 0.5], alt: '主视觉双人婚纱照',
+  hero: { w: 1535, h: 2302, pos: [0.5, 0.36], alt: '主视觉双人婚纱照',
     variants: [[750, 'assets/hero-750-PB7KbFCh.webp'], [1535, 'assets/hero-1535-DetY04Ct.webp']],
     fallback: 'assets/hero-BI7fSnRm.jpg' },
   story1: { w: 1200, h: 1500, pos: [0.5, 0.5], alt: '欧式暖光室内的双人合影，新娘手捧花束',
@@ -50,7 +50,7 @@ const images = {
   gallery6: { w: 1200, h: 800, pos: [0.5, 0], alt: '草地上一起亮出婚戒',
     variants: [[750, 'assets/gallery-6-750-CIgpNxfU.webp'], [1200, 'assets/gallery-6-1200-BKKACda3.webp']],
     fallback: 'assets/gallery-6-CXScKaLw.jpg' },
-  gallery7: { w: 1200, h: 1800, pos: [0.5, 0.5], alt: '草地山前，头纱随风扬起',
+  gallery7: { w: 1200, h: 1800, pos: [0.72, 0.58], alt: '草地山前，头纱随风扬起',
     variants: [[600, 'assets/gallery-7-600-DE-9Knev.webp'], [1200, 'assets/gallery-7-1200-CnB9iDuZ.webp']],
     fallback: 'assets/gallery-7-D6p0uZ1O.jpg' },
   gallery8: { w: 1200, h: 1800, pos: [0.5, 0.5], alt: '日落时分的吻，头纱铺开',
@@ -134,14 +134,16 @@ const CONFIG = {
       [{ t: '后来才懂——' }],
       [{ t: '所有的出发，都是为了相遇。' }]
     ],
-    origins: ['滨州博兴', '泰安新泰 · 相伴于济南']
+    origins: ['滨州博兴', '泰安新泰 · 相伴于济南'],
+    // TODO: 若要补一句真实小事，只写一句放进 aside，不要编。
+    aside: ''
   },
   journey: {
     tag: '03 · The Journey',
-    lead: '山海之间，天地为证',
-    lines: ['这一次，', '我们想邀请你，', '一起奔赴山海。'],
-    place: 'RONGCHENG · BY THE SEA',
-    postcard: 'See you by the sea'
+    lead: '奔赴山海',
+    lines: ['这一次，我们想邀请你一起奔赴山海。'],
+    place: '威海荣成',
+    postcard: '荣成海湾'
   },
   gallery: {
     tag: '04 · The Gallery',
@@ -213,7 +215,7 @@ const CONFIG = {
   },
   ending: {
     lines: ['山海很远，相见值得。', '谢谢你远道而来，', '见证我们，成为彼此的归处。'],
-    date: '2026 . 11 . 14',
+    date: '2026.11.14',
     place: 'WEIHAI · RONGCHENG'
   },
   footer: 'A LOVE STORY, BY THE SEA · 2026',
