@@ -6,6 +6,8 @@
 import CONFIG from '@/config/invite.js'
 
 export function assetUrl(rel) {
+  if (!rel) return ''
+  if (rel.startsWith('/') || rel.startsWith('http') || rel.startsWith('cloud://')) return rel
   return CONFIG.assetBase + rel
 }
 

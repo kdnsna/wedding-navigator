@@ -59,20 +59,20 @@ const images = {
   interlude: { w: 1920, h: 1280, pos: [0.5, 0.58], alt: '夕阳下牵手起舞，透光头纱像海风展开',
     variants: [[1200, 'assets/interlude-1200-C3OSpo0o.webp'], [1920, 'assets/interlude-1920-BJzQLs_P.webp']],
     fallback: 'assets/interlude-D4TK7R_L.jpg' },
-  // 4.1 新图。原片只作来源；下面是 1200w WebP（invite-assets/v41/，未打进主包）。
-  // 上传到云存储 our-wedding/assets/ 后与下列路径一致。尺寸为编码结果。
+  // 4.1 新图。原片只作来源；下面是 1200w WebP（invite-assets/v41/）。
+  // 4.1.1 预览保留 static/assets 三张既定文件，发布自检限制精确路径和合计大小。
   // opening-couple-1200.webp 166450B 1200x1800，来自 50b8ef4b JPG 1535x2302（868953B）
   // story-glance-1200.webp 48630B 1200x800，来自 3049bb1e JPG 2302x1535（596164B）
   // departure-1200.webp 124010B 1200x800，来自 4c55c6fe JPG 2302x1535（1140055B）
   openingCouple: { w: 1200, h: 1800, pos: [1, 0.5], alt: '花拱与窗光前，新娘转身与新郎相伴',
-    variants: [[1200, 'assets/opening-couple-1200.webp']],
-    fallback: 'assets/opening-couple-1200.webp' },
+    variants: [[1200, '/static/assets/opening-couple-1200.webp']],
+    fallback: '/static/assets/opening-couple-1200.webp' },
   storyGlance: { w: 1200, h: 800, pos: [0.48, 0.5], alt: '暖光室内，两人相互注视的真实合影',
-    variants: [[1200, 'assets/story-glance-1200.webp']],
-    fallback: 'assets/story-glance-1200.webp' },
+    variants: [[1200, '/static/assets/story-glance-1200.webp']],
+    fallback: '/static/assets/story-glance-1200.webp' },
   departure: { w: 1200, h: 800, pos: [0.5, 0.54], alt: '两人在草地山前牵手前行，长裙纱拖在身后',
-    variants: [[1200, 'assets/departure-1200.webp']],
-    fallback: 'assets/departure-1200.webp' }
+    variants: [[1200, '/static/assets/departure-1200.webp']],
+    fallback: '/static/assets/departure-1200.webp' }
 }
 
 const CONFIG = {
