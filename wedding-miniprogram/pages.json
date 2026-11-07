@@ -7,9 +7,9 @@
         "navigationBarTitleText": "高嘉琪 & 张靖 · 婚礼邀请",
         "navigationStyle": "custom",
         "navigationBarTextStyle": "black",
-        "backgroundColor": "#F5F0E8",
-        "backgroundColorTop": "#F5F0E8",
-        "backgroundColorBottom": "#F5F0E8",
+        "backgroundColor": "#F7F2E8",
+        "backgroundColorTop": "#F7F2E8",
+        "backgroundColorBottom": "#243D49",
         "enableShareAppMessage": true,
         "enableShareTimeline": true
       }
@@ -18,8 +18,8 @@
   "globalStyle": {
     "navigationBarTextStyle": "black",
     "navigationBarTitleText": "高嘉琪 & 张靖 · 婚礼邀请",
-    "navigationBarBackgroundColor": "#F5F0E8",
-    "backgroundColor": "#F5F0E8",
+    "navigationBarBackgroundColor": "#F7F2E8",
+    "backgroundColor": "#F7F2E8",
     "backgroundTextStyle": "dark"
   },
   "condition": {}

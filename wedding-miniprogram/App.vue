@@ -1,9 +1,8 @@
 <script setup>
-/* 单场请柬模式（高嘉琪 × 张靖）：入口只有 pages/invite/index。
+/* 单场请柬模式（高嘉琪 & 张靖）：入口只有 pages/invite/index。
    多新人平台版的启动逻辑（用户 store、云开发初始化）见 git 历史与 docs/invite-mode.md。 */
 import { onLaunch } from '@dcloudio/uni-app'
 import CONFIG from '@/config/invite.js'
-import FONT_DATA from '@/config/invite-fonts.js'
 import { CLOUD_ENV } from '@/config/cloud.js'
 
 onLaunch(() => {
@@ -11,43 +10,9 @@ onLaunch(() => {
   if (String(CONFIG.assetBase).startsWith('cloud://') && typeof wx !== 'undefined' && wx.cloud) {
     try { wx.cloud.init({ env: CLOUD_ENV, traceUser: false }) } catch (e) { /* 已初始化 */ }
   }
-  loadInviteFonts()
+  // 4.1 用系统宋体 / 黑体。不加载 Pinyon Script、马善政（书法花体已退出请柬）。
   checkUpdate()
 })
-
-// 版本比较：基础库 3.7.9 起 loadFontFace 才支持 Data URL
-function versionAtLeast(v, min) {
-  const a = String(v || '0').split('.').map(Number)
-  const b = min.split('.').map(Number)
-  for (let i = 0; i < 3; i++) {
-    if ((a[i] || 0) !== b[i]) return (a[i] || 0) > b[i]
-  }
-  return true
-}
-
-function loadInviteFonts() {
-  if (typeof uni.loadFontFace !== 'function') return
-  let sdk = '9.9.9'
-  try {
-    // #ifdef MP-WEIXIN
-    sdk = (uni.getAppBaseInfo ? uni.getAppBaseInfo() : uni.getSystemInfoSync()).SDKVersion
-    // #endif
-  } catch (e) { /* noop */ }
-  const dataOk = versionAtLeast(sdk, '3.7.9')
-  for (const f of CONFIG.fonts) {
-    const https = () => uni.loadFontFace({ global: true, family: f.family, source: `url("${f.https}")`, fail: () => {} })
-    if (dataOk && FONT_DATA[f.key]) {
-      uni.loadFontFace({
-        global: true,
-        family: f.family,
-        source: `url("data:font/woff;base64,${FONT_DATA[f.key]}")`,
-        fail: https
-      })
-    } else {
-      https()
-    }
-  }
-}
 
 // 版本更新检测
 function checkUpdate() {
