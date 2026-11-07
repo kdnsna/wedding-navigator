@@ -6,6 +6,8 @@
 import CONFIG from '@/config/invite.js'
 
 export function assetUrl(rel) {
+  if (!rel) return ''
+  if (rel.startsWith('/') || rel.startsWith('http') || rel.startsWith('cloud://')) return rel
   return CONFIG.assetBase + rel
 }
 
@@ -23,10 +25,10 @@ export function layoutPhoto(key, boxW, boxH, o = {}) {
   const layerPct = o.layerPct || 100
   const scale = o.scale || 1
   const dpr = Math.min(o.dpr || 2, 3)
-  const [px, py] = im.pos
+  const [px, py] = o.pos || im.pos
   const Ai = im.w / im.h
   const layerH = (boxH * layerPct) / 100
-  const AL = boxW / layerH
+  const AL = boxW / Math.max(layerH, 1)
   let img
   let renderW
   if (Ai > AL) {
@@ -39,7 +41,10 @@ export function layoutPhoto(key, boxW, boxH, o = {}) {
     renderW = boxW
   }
   const need = renderW * scale * dpr
-  const pick = im.variants.find(([w]) => w >= need) || im.variants[im.variants.length - 1]
+  const cap = o.maxEdge || Infinity
+  const capped = im.variants.filter(([w]) => w <= cap)
+  const variants = capped.length ? capped : im.variants
+  const pick = variants.find(([w]) => w >= need) || variants[variants.length - 1]
   return {
     src: assetUrl(pick[1]),
     fallback: assetUrl(im.fallback),

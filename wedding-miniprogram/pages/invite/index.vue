@@ -1,355 +1,353 @@
 <template>
-  <view class="inv" :class="{ ready }" @tap="onAnyTap">
-    <!-- 纸张颗粒 -->
-    <view class="grain" :style="{ backgroundImage: art.grain }" />
-
-    <!-- 固定快捷入口 -->
-    <!-- 背景音乐：胶囊菜单正下方、右对齐；播放时唱片环慢转 + 三根音柱起伏，暂停时静止 -->
-    <view v-if="musicOn" class="music" :style="musicPos">
-      <view
-        class="music-btn"
-        :class="{ on: musicPlaying }"
-        hover-class="music-btn-hover"
-        :aria-label="musicPlaying ? '暂停背景音乐' : '播放背景音乐'"
-        aria-role="button"
-        @tap.stop="toggleMusic"
-      >
-        <view class="music-ring" />
-        <view class="music-bars"><view class="bar b1" /><view class="bar b2" /><view class="bar b3" /></view>
-      </view>
-      <view class="music-title" :class="{ show: musicTitleShow }">
-        <view class="mt-zh">{{ C.music.title }}</view>
-        <view v-if="C.music.titleEn" class="mt-en">{{ C.music.titleEn }}</view>
-      </view>
-    </view>
-    <view class="fab fab-info" :class="{ 'is-away': infoAway }" @tap="goInvitation">{{ C.infoFab }}</view>
-
-    <!-- ============ 01 · THE OPENING ============ -->
-    <view class="act act-opening" id="opening">
-      <view class="photo photo-flat hero-photo">
-        <view class="layer kb" :class="{ loaded: loaded.hero }" :style="P.hero.layer">
-          <image class="img" :style="P.hero.img" :src="srcOf('hero')" mode="scaleToFill" webp
-            @load="onLoad('hero')" @error="onErr('hero')" />
-        </view>
-      </view>
-      <view class="veil" />
-      <view class="bokeh"><view v-for="n in 6" :key="n" class="bk" :class="'bk' + n" /></view>
-      <view class="frame"><view class="frame-in" /></view>
-      <view class="opening-copy" :style="openingStyle">
-        <view class="opening-names">
-          <text>{{ C.groomName }}</text><text class="opening-cross">×</text><text>{{ C.brideName }}</text>
-        </view>
-        <view class="h1"><view>{{ C.opening.title[0] }}</view><view>{{ C.opening.title[1] }}</view></view>
-        <view class="sub">
-          <text>{{ C.opening.date }}</text><text class="dot">·</text><text class="place">{{ C.opening.place }}</text>
-        </view>
-        <view class="sub2">{{ C.opening.sub2 }}</view>
-      </view>
-      <view class="scroll-hint"><view class="hint-line" /></view>
-    </view>
-
-    <!-- ============ 02 · OUR STORY ============ -->
-    <view class="act act-story" id="story">
-      <view id="rv0" class="act-tag reveal" :class="rc(0)">{{ C.story.tag }}</view>
-      <view id="rv1" class="photo photo-shadow story-photo-main reveal" :class="rc(1)">
-        <view class="sp" style="padding-top:125%" />
-        <view class="layer" :class="{ loaded: loaded.story1 }" :style="P.story1.layer">
-          <image class="img" :style="P.story1.img" :src="srcOf('story1')" mode="scaleToFill" webp lazy-load
-            @load="onLoad('story1')" @error="onErr('story1')" />
-        </view>
-      </view>
-      <view id="rv2" class="photo photo-shadow story-photo-detail reveal" :class="rc(2)">
-        <view class="sp" style="padding-top:100%" />
-        <view class="layer" :class="{ loaded: loaded.story2 }" :style="P.story2.layer">
-          <image class="img" :style="P.story2.img" :src="srcOf('story2')" mode="scaleToFill" webp lazy-load
-            @load="onLoad('story2')" @error="onErr('story2')" />
-        </view>
-      </view>
-      <view class="story-text">
-        <view v-for="(line, i) in C.story.lines" :key="i" :id="'rv' + (3 + i)" class="p reveal-line"
-          :class="rc(3 + i)" :style="dl(3 + i)">
-          <text v-for="(s, j) in line" :key="j" :class="{ em: s.em }">{{ s.t }}</text>
-        </view>
-      </view>
-      <view id="rv9" class="story-names reveal" :class="rc(9)">
-        <text>{{ C.story.origins[0] }} </text><text class="mist">×</text><text> {{ C.story.origins[1] }}</text>
-      </view>
-    </view>
-
-    <!-- ============ 03 · THE JOURNEY ============ -->
-    <view class="act act-journey" id="journey">
-      <view class="journey-copy" :style="journeyStyle">
-        <view id="rv10" class="act-tag reveal" :class="rc(10)">{{ C.journey.tag }}</view>
-        <view id="rv11" class="p lead reveal-line" :class="rc(11)" :style="dl(11)">{{ C.journey.lead }}</view>
-        <view v-for="(t, i) in C.journey.lines" :key="i" :id="'rv' + (12 + i)" class="p reveal-line"
-          :class="rc(12 + i)" :style="dl(12 + i)">{{ t }}</view>
-        <view id="rv15" class="journey-place reveal-line" :class="rc(15)" :style="dl(15)">{{ C.journey.place }}</view>
-      </view>
-      <view class="j-scene" :style="{ height: S.journeyH + 'px' }">
-        <view class="j-photo">
-          <view class="layer j-layer" :class="{ loaded: loaded.journey1 }" :style="P.journey1.layer">
-            <image class="img" :style="P.journey1.img" :src="srcOf('journey1')" mode="scaleToFill" webp lazy-load
-              @load="onLoad('journey1')" @error="onErr('journey1')" />
+  <view class="inv" :class="{ reduced: reducedMotion }">
+    <!-- 开场 A：门启，光至。长页在进入故事后才挂载，首屏只取 opening-couple。 -->
+    <view v-if="!entered" class="opening" :class="[phase, { reduced: reducedMotion }]">
+      <view class="scene">
+        <view class="layer" :style="P.opening.layer">
+          <image
+            v-if="srcOf('opening')"
+            class="img"
+            :style="P.opening.img"
+            :src="srcOf('opening')"
+            :alt="P.opening.alt"
+            mode="scaleToFill"
+            webp
+            @error="onErr('opening')"
+          />
+          <view v-if="isFailed('opening')" class="img-fallback">
+            <text>照片暂时未能加载</text>
+            <button class="retry-btn" hover-class="hit-on" @tap="retryPhoto('opening')">重新加载</button>
           </view>
-          <view class="j-fade-top" />
-          <view class="j-fade-bottom" />
-        </view>
-        <view class="j-waves">
-          <view class="j-wave l1" :style="{ backgroundImage: art.waves[0] }" />
-          <view class="j-wave l2" :style="{ backgroundImage: art.waves[1] }" />
-          <view class="j-wave l3" :style="{ backgroundImage: art.waves[2] }" />
         </view>
       </view>
-      <view class="j-after">
-        <view id="rv16" class="j-card reveal" :class="rc(16)">
-          <view class="matte r-r">
-            <view class="photo photo-flat">
-              <view class="sp" style="padding-top:75%" />
-              <view class="layer" :class="{ loaded: loaded.journey2 }" :style="P.journey2.layer">
-                <image class="img" :style="P.journey2.img" :src="srcOf('journey2')" mode="scaleToFill" webp lazy-load
-                  @load="onLoad('journey2')" @error="onErr('journey2')" />
-              </view>
+
+      <view class="door left">
+        <view class="door-copy" :style="{ top: doorTop + 'px' }">
+          <view class="eyebrow">婚礼请柬</view>
+          <view class="door-names">
+            <view>{{ C.groomName }}</view>
+            <view class="amp">{{ amp }}</view>
+            <view>{{ C.brideName }}</view>
+          </view>
+          <view class="door-invite">
+            <view v-for="(line, i) in inviteLines" :key="i">{{ line }}</view>
+          </view>
+        </view>
+      </view>
+
+      <view class="door right">
+        <view class="door-facts" :style="{ top: factsTop + 'px' }">
+          <view class="door-date">{{ C.opening.date }}</view>
+          <view class="door-time">
+            <view>{{ weekShort }}</view>
+            <view>{{ timeCompact }}</view>
+          </view>
+          <view class="door-venue">
+            <view>{{ placeCity }}</view>
+            <view>{{ hotelName }}</view>
+            <view>{{ lawn }}</view>
+          </view>
+        </view>
+        <view class="door-note" :style="{ bottom: noteBottom + 'px' }">
+          <view v-for="(line, i) in noteLines" :key="i">{{ line }}</view>
+        </view>
+      </view>
+
+      <view class="cover-actions">
+        <button class="hit open-btn" hover-class="hit-on" @tap="openDoors">
+          <text>开启请柬</text>
+          <text class="glyph">↔</text>
+        </button>
+      </view>
+
+      <view class="after-info">
+        <view class="after-head">
+          <view class="after-names">
+            <view class="after-title">
+              <text>{{ C.groomName }}</text>
+              <text class="amp inline"> {{ amp }} </text>
+              <text>{{ C.brideName }}</text>
             </view>
-            <view class="figcaption jc-cap">{{ C.journey.postcard }}</view>
+            <view class="after-invite">{{ C.invitation.zh }}</view>
           </view>
+          <button class="hit enter-btn" hover-class="hit-on" @tap="enterStory">
+            <text>进入故事</text>
+            <text class="glyph">↓</text>
+          </button>
         </view>
+        <view class="after-facts">
+          <view class="after-date">{{ C.opening.date }} · {{ weekShort }} · {{ timeCompact }}</view>
+          <view class="after-venue">{{ placeCity }} · {{ hotelName }} · {{ lawn }}</view>
+          <view class="after-address">{{ C.venue.address }}</view>
+        </view>
+        <button v-if="musicOn" class="text-hit after-music" hover-class="hit-on" @tap="toggleMusic">
+          {{ openMusicLabel }}
+        </button>
       </view>
     </view>
 
-    <!-- ============ 04 · THE GALLERY ============ -->
-    <view class="act act-gallery" id="gallery">
-      <view id="rv17" class="act-tag reveal g-tag" :class="rc(17)">{{ C.gallery.tag }}</view>
-      <view class="g-grid">
-        <view class="g-row">
-          <view v-for="g in galleryRows[0]" :key="g.key" :id="'rv' + g.rv" class="g-item reveal" :class="[g.cls, rc(g.rv)]">
-            <view class="matte" :class="g.rot">
-              <view class="photo photo-flat">
-                <view class="sp" :style="{ paddingTop: g.pt }" />
-                <view class="layer" :class="{ loaded: loaded[g.key] }" :style="P[g.key].layer">
-                  <image class="img" :style="P[g.key].img" :src="srcOf(g.key)" mode="scaleToFill" webp lazy-load
-                    @load="onLoad(g.key)" @error="onErr(g.key)" />
+    <block v-if="entered">
+      <!-- 02 来处与相遇 -->
+      <view id="story" class="origins" :style="{ height: winH + 'px' }">
+        <view class="eyebrow abs" :style="{ top: eyebrowTop + 'px', left: '48rpx' }">{{ C.story.tag }}</view>
+        <view class="story-h1" :style="{ top: y(130) }">
+          <view>{{ storyText(0) }}</view>
+          <view class="ln2">{{ storyText(1) }}</view>
+        </view>
+        <view class="origin-meta" :style="{ top: y(302) }">
+          <view>{{ originA }}</view>
+          <view>{{ originB }}</view>
+        </view>
+        <view class="gold-line abs" :style="{ top: y(391) }" />
+        <view class="shot glance" :style="{ height: box.glance + 'px' }">
+          <view class="layer" :style="P.glance.layer">
+            <image v-if="srcOf('glance')" class="img" :style="P.glance.img" :src="srcOf('glance')" :alt="P.glance.alt" mode="scaleToFill" webp lazy-load @error="onErr('glance')" />
+            <view v-if="isFailed('glance')" class="img-fallback"><text>照片暂时未能加载</text><button class="retry-btn" hover-class="hit-on" @tap="retryPhoto('glance')">重新加载</button></view>
+          </view>
+        </view>
+      </view>
+
+      <view class="city">
+        <view class="eyebrow wine">{{ originA }} · {{ originB }}</view>
+        <view class="city-h">
+          <view>{{ storyText(2) }}</view>
+          <view class="stop">
+            <view v-for="(line, i) in stopLines" :key="i">{{ line }}</view>
+          </view>
+        </view>
+      </view>
+
+      <view class="shot" :style="{ height: box.portrait + 'px' }">
+        <view class="layer" :style="P.story1.layer">
+          <image v-if="srcOf('story1')" class="img" :style="P.story1.img" :src="srcOf('story1')" :alt="P.story1.alt" mode="scaleToFill" webp lazy-load @error="onErr('story1')" />
+          <view v-if="isFailed('story1')" class="img-fallback"><text>照片暂时未能加载</text><button class="retry-btn" hover-class="hit-on" @tap="retryPhoto('story1')">重新加载</button></view>
+        </view>
+      </view>
+
+      <view class="meaning">
+        <view class="meaning-h">
+          <view>{{ storyText(4) }}</view>
+          <view>{{ togetherLine }}</view>
+        </view>
+      </view>
+
+      <view class="depart-copy">
+        <view v-for="(line, i) in departLines" :key="i">{{ line }}</view>
+      </view>
+      <view class="shot" :style="{ height: box.depart + 'px' }">
+        <view class="layer" :style="P.departure.layer">
+          <image v-if="srcOf('departure')" class="img" :style="P.departure.img" :src="srcOf('departure')" :alt="P.departure.alt" mode="scaleToFill" webp lazy-load @error="onErr('departure')" />
+          <view v-if="isFailed('departure')" class="img-fallback"><text>照片暂时未能加载</text><button class="retry-btn" hover-class="hit-on" @tap="retryPhoto('departure')">重新加载</button></view>
+        </view>
+      </view>
+      <view class="next on-deep" hover-class="next-on" aria-role="button" @tap="go('#shanhai')">
+        <text>03 · 山海</text>
+        <text class="next-arrow">→</text>
+      </view>
+
+      <!-- 03 山与海 -->
+      <view id="shanhai" class="mountain" :style="{ height: winH + 'px' }">
+        <view class="layer" :style="P.mountain.layer">
+          <image v-if="srcOf('mountain')" class="img" :style="P.mountain.img" :src="srcOf('mountain')" :alt="P.mountain.alt" mode="scaleToFill" webp lazy-load @error="onErr('mountain')" />
+          <view v-if="isFailed('mountain')" class="img-fallback"><text>照片暂时未能加载</text><button class="retry-btn" hover-class="hit-on" @tap="retryPhoto('mountain')">重新加载</button></view>
+        </view>
+        <view class="eyebrow abs on-sky" :style="{ top: eyebrowTop + 'px', left: '48rpx' }">03 · 奔赴山海</view>
+        <view class="character mountain-char" :style="{ top: y(105) }">山</view>
+        <view class="mountain-note" :style="{ height: box.mountainNote + 'px' }">{{ C.interlude.lines[0] }}</view>
+      </view>
+
+      <view class="invite-pause">
+        <view class="gold-line" />
+        <view class="pause-copy">{{ shanhaiInvite }}</view>
+      </view>
+
+      <view id="sea" class="sea light-status">
+        <view class="sea-head" :style="{ height: box.seaHead + 'px' }">
+          <view class="eyebrow">{{ C.opening.sub2 }}</view>
+          <view class="character">海</view>
+          <view v-if="musicOn" class="sea-music">{{ C.music.credit }}</view>
+        </view>
+        <view class="shot" :style="{ height: box.sea + 'px' }">
+          <view class="layer" :style="P.sea.layer">
+            <image v-if="srcOf('sea')" class="img" :style="P.sea.img" :src="srcOf('sea')" :alt="P.sea.alt" mode="scaleToFill" webp lazy-load @error="onErr('sea')" />
+            <view v-if="isFailed('sea')" class="img-fallback"><text>照片暂时未能加载</text><button class="retry-btn" hover-class="hit-on" @tap="retryPhoto('sea')">重新加载</button></view>
+          </view>
+        </view>
+        <view class="sea-quote" :style="{ height: box.seaQuote + 'px' }">
+          <view>{{ C.interlude.lines[1] }}</view>
+          <view class="sea-small">{{ C.ending.lines[0] }}</view>
+        </view>
+      </view>
+
+      <view class="evidence">
+        <view class="shot" :style="{ height: box.evidence + 'px' }">
+          <view class="layer" :style="P.evidence.layer">
+            <image v-if="srcOf('evidence')" class="img" :style="P.evidence.img" :src="srcOf('evidence')" :alt="P.evidence.alt" mode="scaleToFill" webp lazy-load @error="onErr('evidence')" />
+            <view v-if="isFailed('evidence')" class="img-fallback"><text>照片暂时未能加载</text><button class="retry-btn" hover-class="hit-on" @tap="retryPhoto('evidence')">重新加载</button></view>
+          </view>
+        </view>
+        <view class="evidence-cap">
+          <text class="evidence-place">{{ placeCity }}</text>
+          <text>荣成海湾</text>
+        </view>
+      </view>
+      <view class="next on-ivory" hover-class="next-on" aria-role="button" @tap="go('#guide')">
+        <text>04 · 赴约指南</text>
+        <text class="next-arrow">→</text>
+      </view>
+
+      <!-- 04 赴约指南 -->
+      <view id="guide">
+        <view id="guide-hero" class="hero" :style="{ paddingTop: eyebrowTop + 'px' }">
+          <view class="eyebrow wine">04 · 赴约指南</view>
+          <view class="hero-names">
+            <text>{{ C.groomName }}</text>
+            <text class="amp inline"> {{ amp }} </text>
+            <text>{{ C.brideName }}</text>
+          </view>
+          <view class="hero-invite">{{ C.invitation.zh }}</view>
+          <view class="date-lockup">
+            <view class="day">{{ monthDay }}</view>
+            <view class="year">
+              <view>{{ C.date.y }}</view>
+              <view>{{ weekShort }}</view>
+            </view>
+          </view>
+          <view class="hero-time">{{ timeCompact }}</view>
+          <view class="hero-venue">
+            <view v-for="(line, i) in C.invitation.venueLines" :key="i">{{ line }}</view>
+          </view>
+          <view class="hero-address" user-select selectable>{{ C.venue.address }}</view>
+          <button class="text-hit share-link" open-type="share" hover-class="hit-on">
+            <text>把请柬发给好友</text>
+            <view class="ne" />
+          </button>
+          <button class="hit map-btn" hover-class="hit-on" @tap="openMap">
+            <text>{{ C.invitation.mapLabel }}</text>
+            <view class="ne light" />
+          </button>
+        </view>
+
+        <view id="guide-rest">
+          <view class="guide">
+            <view class="guide-title">{{ C.guide.title }}</view>
+            <view v-for="block in timeline" :key="block.date" class="tl-row">
+              <view class="tl-date">{{ block.date }}</view>
+              <view class="tl-copy">
+                <view class="tl-title">{{ block.title }}</view>
+                <view v-for="(line, j) in block.lines" :key="j" class="tl-p">
+                  <text v-for="(s, k) in line" :key="k" :class="{ b: s.b }">{{ showSeg(s.t) }}</text>
                 </view>
               </view>
-              <view v-if="C.gallery.captions[g.key]" class="figcaption">{{ C.gallery.captions[g.key] }}</view>
             </view>
-          </view>
-        </view>
 
-        <view id="rv20" class="g-phrase reveal-line" :class="rc(20)" :style="dl(20)">{{ C.gallery.phrases[0] }}</view>
-
-        <view id="rv21" class="g-bleed reveal" :class="rc(21)">
-          <view class="photo photo-flat">
-            <view class="sp" style="padding-top:62.5%" />
-            <view class="layer bleed-layer" :class="{ loaded: loaded.gallery3 }" :style="P.gallery3.layer + par.gallery3">
-              <image class="img" :style="P.gallery3.img" :src="srcOf('gallery3')" mode="scaleToFill" webp lazy-load
-                @load="onLoad('gallery3')" @error="onErr('gallery3')" />
-            </view>
-            <view class="edge-fade ef-top" />
-            <view class="edge-fade ef-bot" />
-          </view>
-          <view class="g-band g-band-top" />
-          <view class="g-band g-band-bot" />
-        </view>
-
-        <view class="g-row">
-          <view v-for="g in galleryRows[1]" :key="g.key" :id="'rv' + g.rv" class="g-item reveal" :class="[g.cls, rc(g.rv)]">
-            <view class="matte" :class="g.rot">
-              <view class="photo photo-flat">
-                <view class="sp" :style="{ paddingTop: g.pt }" />
-                <view class="layer" :class="{ loaded: loaded[g.key] }" :style="P[g.key].layer">
-                  <image class="img" :style="P[g.key].img" :src="srcOf(g.key)" mode="scaleToFill" webp lazy-load
-                    @load="onLoad(g.key)" @error="onErr(g.key)" />
+            <view class="details">
+              <view v-for="(item, i) in details" :key="item.title" class="detail">
+                <view class="summary" hover-class="summary-on" aria-role="button" :aria-expanded="item.open ? 'true' : 'false'" @tap="toggleDetail(i)">
+                  <text>{{ item.title }}</text>
+                  <text class="mark">{{ item.open ? '−' : '＋' }}</text>
                 </view>
-              </view>
-              <view v-if="C.gallery.captions[g.key]" class="figcaption">{{ C.gallery.captions[g.key] }}</view>
-            </view>
-          </view>
-        </view>
-
-        <view id="rv24" class="g-phrase reveal-line" :class="rc(24)" :style="dl(24)">{{ C.gallery.phrases[1] }}</view>
-
-        <view id="rv25" class="g-bleed g-rings reveal" :class="rc(25)">
-          <view class="photo photo-flat">
-            <view class="sp" style="padding-top:62.5%" />
-            <view class="layer bleed-layer" :class="{ loaded: loaded.gallery6 }" :style="P.gallery6.layer + par.gallery6">
-              <image class="img" :style="P.gallery6.img" :src="srcOf('gallery6')" mode="scaleToFill" webp lazy-load
-                @load="onLoad('gallery6')" @error="onErr('gallery6')" />
-            </view>
-            <view class="edge-fade ef-top" />
-            <view class="edge-fade ef-bot" />
-          </view>
-          <view class="g-band g-band-top" />
-          <view class="g-band g-band-bot" />
-        </view>
-
-        <view class="g-row">
-          <view v-for="g in galleryRows[2]" :key="g.key" :id="'rv' + g.rv" class="g-item reveal" :class="[g.cls, rc(g.rv)]">
-            <view class="matte" :class="g.rot">
-              <view class="photo photo-flat">
-                <view class="sp" :style="{ paddingTop: g.pt }" />
-                <view class="layer" :class="{ loaded: loaded[g.key] }" :style="P[g.key].layer">
-                  <image class="img" :style="P[g.key].img" :src="srcOf(g.key)" mode="scaleToFill" webp lazy-load
-                    @load="onLoad(g.key)" @error="onErr(g.key)" />
-                </view>
-              </view>
-              <view v-if="C.gallery.captions[g.key]" class="figcaption">{{ C.gallery.captions[g.key] }}</view>
-            </view>
-          </view>
-        </view>
-      </view>
-    </view>
-
-    <!-- ============ 04.5 · 所爱隔山海 ============ -->
-    <view class="act interlude" id="interlude" :style="{ height: S.interH + 'px' }">
-      <view class="inter-bg">
-        <view class="layer inter-layer" :class="{ loaded: loaded.interlude }" :style="P.interlude.layer + par.interlude">
-          <image class="img" :style="P.interlude.img" :src="srcOf('interlude')" mode="scaleToFill" webp lazy-load
-            @load="onLoad('interlude')" @error="onErr('interlude')" />
-        </view>
-      </view>
-      <view class="inter-veil" />
-      <view class="inter-fade" />
-      <view class="inter-copy">
-        <view v-for="(t, i) in C.interlude.lines" :key="i" :id="'rv' + (28 + i)" class="p reveal-line"
-          :class="rc(28 + i)" :style="dl(28 + i)">{{ t }}</view>
-        <view id="rv30" class="small reveal-line" :class="rc(30)" :style="dl(30)">{{ C.interlude.en }}</view>
-      </view>
-    </view>
-
-    <!-- ============ 05 · THE INVITATION ============ -->
-    <view class="act act-invite" id="invitation">
-      <view id="rv31" class="invite-card reveal" :class="rc(31)">
-        <view class="card-inner-line" />
-        <view class="cn tl" /><view class="cn tr" /><view class="cn bl" /><view class="cn br" />
-        <view class="seal"><view class="seal-ring" />{{ seal }}</view>
-        <view class="invite-families">{{ C.invitation.families }}</view>
-        <view class="h2">{{ C.invitation.title }}</view>
-        <view class="invite-zh">{{ C.invitation.zh }}</view>
-        <view class="invite-date">
-          <view class="day">{{ C.date.d }}</view>
-          <view class="ym">{{ C.invitation.month }}</view>
-        </view>
-        <view class="invite-week">{{ weekday }}</view>
-        <view class="invite-line"><view class="diamond" /></view>
-        <view class="invite-names">
-          <text>{{ C.groomName }}</text><text class="amp">&amp;</text><text>{{ C.brideName }}</text>
-        </view>
-        <view class="invite-time">婚礼仪式时间：{{ C.ceremonyTime }}</view>
-        <view class="invite-venue">
-          <view v-for="(t, i) in C.invitation.venueLines" :key="i">{{ t }}</view>
-          <view class="small"><text user-select selectable>地址：{{ C.venue.address }}</text></view>
-        </view>
-        <view class="invite-line"><view class="diamond" /></view>
-        <view class="btn-map" hover-class="btn-map-on" @tap="openMap">
-          <text>{{ C.invitation.mapLabel }}</text>
-          <view class="arrow">
-            <view class="arrow-img a-wine" :style="{ backgroundImage: art.mapArrow.wine }" />
-            <view class="arrow-img a-ivory" :style="{ backgroundImage: art.mapArrow.ivory }" />
-          </view>
-        </view>
-        <view class="invite-note">{{ C.invitation.note }}</view>
-      </view>
-
-      <!-- 赴约指南 -->
-      <view id="rv32" class="guide reveal" :class="rc(32)">
-        <view class="guide-title"><text>{{ C.guide.title }}</text></view>
-        <view v-for="(item, i) in C.guide.items" :key="i" class="guide-item" :class="{ open: openGuide[i] }">
-          <view class="guide-head" @tap="toggleGuide(i)">
-            <view class="glabel">
-              <view class="gicon" :style="{ backgroundImage: art.guideIcons[item.icon] }" />
-              <text>{{ item.title }}</text>
-            </view>
-            <view class="chev" />
-          </view>
-          <view class="guide-body" :style="{ maxHeight: guideH[i] + 'px' }">
-            <view class="inner" :id="'gb' + i">
-              <block v-for="(line, j) in item.lines" :key="j">
-                <block v-if="line.contacts">
-                  <view v-for="c in C.contacts" :key="c.tel" class="contact-line">
-                    <text>{{ c.name }}　</text><text class="tel-link" @tap.stop="call(c.tel)">{{ fmtTel(c.tel) }}</text>
+                <view v-show="item.open" class="detail-body">
+                  <view v-for="(line, j) in item.lines" :key="j" class="detail-p">
+                    <text v-for="(s, k) in line" :key="k" :class="{ b: s.b }">{{ showSeg(s.t) }}</text>
                   </view>
-                </block>
-                <view v-else class="gline">
-                  <text v-for="(s, k) in line" :key="k" :class="{ b: s.b }">{{ fill(s.t) }}</text>
                 </view>
-              </block>
+              </view>
             </view>
+          </view>
+
+          <view class="contacts">
+            <view class="contacts-title">联系我们</view>
+            <view class="contacts-intro">{{ contactsIntro }}</view>
+            <view v-for="c in C.contacts" :key="c.tel" class="person">
+              <view class="person-head">
+                <view class="person-name">{{ c.name }}</view>
+                <view class="person-tel" user-select selectable hover-class="text-on" @tap="call(c.tel)">{{ c.tel }}</view>
+              </view>
+              <view class="person-actions">
+                <view class="call" hover-class="text-on" aria-role="button" @tap="call(c.tel)">拨打电话</view>
+                <view v-if="c.wechat" class="wechat-row">
+                  <text user-select selectable>微信 {{ c.wechat }}</text>
+                  <button class="copy-btn" hover-class="hit-on" @tap="copyWechat(c.wechat)">
+                    {{ copyState === 'copied' ? '已复制' : copyState === 'failed' ? '请长按' : '复制' }}
+                  </button>
+                </view>
+                <view v-else class="phone-only">仅电话联系</view>
+              </view>
+              <view v-if="c.wechat && copyNote" class="copy-note">{{ copyNote }}</view>
+            </view>
+          </view>
+
+          <view class="next on-deep" hover-class="next-on" aria-role="button" @tap="go('#finale')">
+            <text>05 · 归处</text>
+            <text class="next-arrow">→</text>
           </view>
         </view>
       </view>
 
-      <!-- 宾客回执（只拨号 / 复制微信，不收集任何信息） -->
-      <view id="rv33" class="rsvp reveal" :class="rc(33)">
-        <view class="rsvp-p">{{ C.rsvp.prompt }}</view>
-        <view class="btn-rsvp" hover-class="btn-rsvp-on" @tap="openSheet">
-          <view class="env" :style="{ backgroundImage: art.envelope }" />
-          <text>{{ C.rsvp.button }}</text>
-        </view>
-        <!-- open-type=share 强制走 onShareAppMessage，避免转发旧空白卡 -->
-        <button class="btn-share" open-type="share" hover-class="btn-share-on">发给好友</button>
-      </view>
-    </view>
-
-    <!-- ============ 06 · THE ENDING ============ -->
-    <view class="act act-ending" id="ending">
-      <view class="bokeh"><view v-for="n in 6" :key="n" class="bk" :class="'bk' + n" /></view>
-      <view class="words">
-        <view v-for="(t, i) in C.ending.lines" :key="i" :id="'rv' + (34 + i)" class="p reveal-line"
-          :class="rc(34 + i)" :style="dl(34 + i)">{{ t }}</view>
-      </view>
-      <view id="rv37" class="ending-wave reveal" :class="rc(37)" :style="{ backgroundImage: art.endingWave }" />
-      <view id="rv38" class="tail reveal" :class="rc(38)">
-        <view>{{ C.ending.date }}</view>
-        <view class="names"><text>{{ C.groomName }}</text><text class="amp">&amp;</text><text>{{ C.brideName }}</text></view>
-        <view>{{ C.ending.place }}</view>
-      </view>
-    </view>
-
-    <view class="footer">
-      <view>{{ C.footer }}</view>
-      <view v-if="musicOn && C.music.credit" class="credit">{{ C.music.credit }}</view>
-    </view>
-
-    <!-- 回执抽屉：电话 + 微信 -->
-    <view class="sheet" :class="{ open: sheetOpen }" @touchmove.stop.prevent="noop">
-      <view class="sheet-mask" @tap="closeSheet" />
-      <view class="sheet-panel">
-        <view class="grip" />
-        <view class="sheet-title">{{ C.rsvp.sheetTitle }}</view>
-        <view class="sheet-sub"><view v-for="(t, i) in C.rsvp.sheetSub" :key="i">{{ t }}</view></view>
-        <view class="sheet-list">
-          <view v-for="c in C.contacts" :key="c.tel" class="sheet-person">
-            <view class="sheet-name">{{ c.name }}</view>
-            <view class="sheet-row">
-              <view><text class="k">电话</text><text class="v">{{ fmtTel(c.tel) }}</text></view>
-              <view class="sheet-btn solid" hover-class="sheet-btn-on" @tap="call(c.tel)">拨打</view>
-            </view>
-            <view v-if="c.wechat" class="sheet-row">
-              <view><text class="k">微信</text><text class="v" user-select selectable>{{ c.wechat }}</text></view>
-              <view class="sheet-btn" hover-class="sheet-btn-on" @tap="copyWechat(c.wechat)">复制</view>
-            </view>
+      <!-- 05 归处 -->
+      <view id="finale" class="finale light-status">
+        <view class="final-photo" :style="{ height: winH + 'px' }">
+          <view class="layer" :style="P.finale.layer">
+            <image v-if="srcOf('finale')" class="img" :style="P.finale.img" :src="srcOf('finale')" :alt="P.finale.alt" mode="scaleToFill" webp lazy-load @error="onErr('finale')" />
+            <view v-if="isFailed('finale')" class="img-fallback"><text>照片暂时未能加载</text><button class="retry-btn" hover-class="hit-on" @tap="retryPhoto('finale')">重新加载</button></view>
+          </view>
+          <view class="eyebrow abs on-finale" :style="{ top: eyebrowTop + 'px', left: '48rpx' }">05 · 归处</view>
+          <view class="final-words" :style="{ top: y(130) }">
+            <view v-for="(line, i) in finaleLines" :key="i">{{ line }}</view>
           </view>
         </view>
-        <view class="sheet-close" @tap="closeSheet">{{ C.rsvp.close }}</view>
+        <view class="thanks">
+          <view class="thanks-quote">
+            <view v-for="(line, i) in thanksLines" :key="i">{{ line }}</view>
+          </view>
+          <view class="thanks-names">
+            <text>{{ C.groomName }}</text>
+            <text class="amp inline"> {{ amp }} </text>
+            <text>{{ C.brideName }}</text>
+          </view>
+          <view class="thanks-date">{{ C.opening.date }} · {{ placeCity }}</view>
+          <view v-if="musicOn" class="letter-end">
+            <view class="music-title">《{{ C.music.title }}》</view>
+            <view class="music-credit">{{ C.music.credit }}</view>
+            <button class="text-hit finale-music" hover-class="hit-on" @tap="toggleMusic">{{ endMusicLabel }}</button>
+          </view>
+          <button class="finale-share" open-type="share" hover-class="hit-on">
+            <text>把这封请柬发给好友</text>
+            <view class="ne light" />
+          </button>
+        </view>
+        <view class="footer">
+          <view>{{ C.opening.sub2 }}</view>
+          <view>{{ C.opening.date }} · {{ placeCity }}</view>
+        </view>
       </view>
-    </view>
-    <!-- 离屏画布：把包内分享图导出为 temp 路径，供 onShareAppMessage 使用 -->
+
+      <button v-if="musicOn && !finaleVisible" class="music-fab" :class="{ 'above-map': mapBarOn }" hover-class="music-fab-on" :aria-label="musicFabLabel" @tap="toggleMusic">
+        {{ musicFabLabel }}
+      </button>
+      <view class="map-bar" :class="{ visible: mapBarOn, 'with-music': musicOn && !finaleVisible }">
+        <button class="hit map-btn center" hover-class="hit-on" @tap="openMap">
+          <text>{{ C.invitation.mapLabel }}</text>
+          <view class="ne light" />
+        </button>
+      </view>
+    </block>
+
     <canvas canvas-id="shareCanvas" id="shareCanvas" class="share-canvas" :style="{ width: '750px', height: '600px' }" />
-    <view class="toast" :class="{ show: toast.show }">{{ toast.msg }}</view>
   </view>
 </template>
 
 <script setup>
 import { ref, reactive, computed, getCurrentInstance, nextTick } from 'vue'
-import { onLoad as onPageLoad, onReady, onShow, onHide, onPageScroll, onShareAppMessage, onShareTimeline, onUnload } from '@dcloudio/uni-app'
+import { onLoad, onReady, onShow, onHide, onPageScroll, onShareAppMessage, onShareTimeline, onUnload } from '@dcloudio/uni-app'
 import CONFIG from '@/config/invite.js'
 import { layoutPhoto } from '@/utils/invite-photo.js'
-import * as art from '@/utils/invite-art.js'
 
 const C = CONFIG
+const amp = '&'
 const inst = getCurrentInstance()
 
-/* ---------- 尺寸（等同 H5 的 vw / vh / sizes） ---------- */
 function windowInfo() {
   try {
     if (uni.getWindowInfo) return uni.getWindowInfo()
@@ -357,210 +355,249 @@ function windowInfo() {
   return uni.getSystemInfoSync()
 }
 const win = windowInfo()
-const W = win.windowWidth || 375
-const H = win.windowHeight || 667
+const W = win.windowWidth || 390
+const winH = win.windowHeight || 844
 const dpr = win.pixelRatio || 2
+const safeBottom = Math.max(0, winH - ((win.safeArea && win.safeArea.bottom) || winH))
 
-const S = (() => {
-  const storyW = Math.min(W, 640) - 52
-  const gW = Math.min(W, 760) - 44
-  const col = (n) => ((gW - 176) * n) / 12 + (n - 1) * 16
-  return {
-    heroH: Math.max(H, 560),
-    storyW,
-    detailW: storyW * 0.52 - 12,
-    journeyH: Math.min(W, 620),
-    cardW: Math.min(W * 0.48, 250) - 18,
-    c7: col(7) - 18,
-    c5: col(5) - 18,
-    c6: col(6) - 18,
-    bleedW: gW + 44,
-    interH: Math.max(H * 0.74, 460)
-  }
-})()
+function yPx(designPx) {
+  return Math.round((designPx / 844) * winH)
+}
+function y(designPx) {
+  return yPx(designPx) + 'px'
+}
+
+let menuBottom = 0
+try {
+  const rect = uni.getMenuButtonBoundingClientRect && uni.getMenuButtonBoundingClientRect()
+  if (rect && rect.bottom) menuBottom = rect.bottom
+} catch (e) { /* noop */ }
+const statusBar = win.statusBarHeight || 20
+const eyebrowTop = Math.max(yPx(27), statusBar + 6)
+const doorTop = eyebrowTop
+const factsTop = Math.max(yPx(166), menuBottom + 12)
+const noteBottom = 120 + safeBottom
+
+const box = {
+  glance: yPx(370),
+  portrait: yPx(590),
+  depart: yPx(330),
+  mountainNote: yPx(164),
+  seaHead: yPx(280),
+  sea: yPx(300),
+  seaQuote: yPx(264),
+  evidence: yPx(218)
+}
 
 const P = {
-  hero: layoutPhoto('hero', W, S.heroH, { dpr }),
-  story1: layoutPhoto('story1', S.storyW, S.storyW * 1.25, { dpr }),
-  story2: layoutPhoto('story2', S.detailW, S.detailW, { dpr }),
-  journey1: layoutPhoto('journey1', W, S.journeyH, { dpr }),
-  journey2: layoutPhoto('journey2', S.cardW, S.cardW * 0.75, { dpr }),
-  gallery1: layoutPhoto('gallery1', S.c7, (S.c7 * 4) / 3, { dpr }),
-  gallery2: layoutPhoto('gallery2', S.c5, (S.c5 * 4) / 3, { dpr }),
-  gallery3: layoutPhoto('gallery3', S.bleedW, S.bleedW * 0.625, { dpr, scale: 1.15 }),
-  gallery4: layoutPhoto('gallery4', S.c6, S.c6, { dpr }),
-  gallery5: layoutPhoto('gallery5', S.c6, S.c6, { dpr }),
-  gallery6: layoutPhoto('gallery6', S.bleedW, S.bleedW * 0.625, { dpr, scale: 1.15 }),
-  gallery7: layoutPhoto('gallery7', S.c7, (S.c7 * 4) / 3, { dpr }),
-  gallery8: layoutPhoto('gallery8', S.c5, (S.c5 * 4) / 3, { dpr }),
-  interlude: layoutPhoto('interlude', W, S.interH, { dpr, layerPct: 140, scale: 1.16 })
+  opening: layoutPhoto('openingCouple', W, winH, { dpr, maxEdge: 1200 }),
+  glance: layoutPhoto('storyGlance', W, box.glance, { dpr, maxEdge: 1200 }),
+  story1: layoutPhoto('story1', W, box.portrait, { dpr, maxEdge: 750 }),
+  departure: layoutPhoto('departure', W, box.depart, { dpr, maxEdge: 1200 }),
+  mountain: layoutPhoto('gallery7', W, winH, { dpr, maxEdge: 1200 }),
+  sea: layoutPhoto('interlude', W, box.sea, { dpr, maxEdge: 1200 }),
+  evidence: layoutPhoto('journey2', W, box.evidence, { dpr, maxEdge: 1080 }),
+  finale: layoutPhoto('gallery8', W, winH, { dpr, maxEdge: 1200 })
 }
 
-// 画廊三行（与 H5 的 g-a…g-f 排法、旋转、比例一致）；rv = 滚动显现序号（决定 H5 里的错峰延迟）
-const galleryRows = [
-  [
-    { key: 'gallery1', cls: 'g-a', rot: 'r-l', pt: '133.333%', rv: 18 },
-    { key: 'gallery2', cls: 'g-b', rot: 'r-r', pt: '133.333%', rv: 19 }
-  ],
-  [
-    { key: 'gallery4', cls: 'g-c', rot: 'r-r', pt: '100%', rv: 22 },
-    { key: 'gallery5', cls: 'g-d', rot: 'r-l', pt: '100%', rv: 23 }
-  ],
-  [
-    { key: 'gallery7', cls: 'g-e', rot: 'r-l', pt: '133.333%', rv: 26 },
-    { key: 'gallery8', cls: 'g-f', rot: 'r-r', pt: '133.333%', rv: 27 }
-  ]
-]
-
-/* ---------- 照片：成功淡入；WebP 失败换 JPEG，再失败就留底色 ---------- */
-const loaded = reactive({})
 const failed = reactive({})
-const srcOf = (key) => (failed[key] === 1 ? P[key].fallback : failed[key] === 2 ? '' : P[key].src)
-function onLoad(key) {
-  loaded[key] = true
-  scheduleMeasure()
+function srcOf(key) {
+  const shot = P[key]
+  if (!shot) return ''
+  if ((failed[key] || 0) >= 2) return ''
+  if (failed[key] === 1) return shot.fallback
+  return shot.src
 }
 function onErr(key) {
-  failed[key] = (failed[key] || 0) + 1
+  const shot = P[key]
+  const next = (failed[key] || 0) + 1
+  failed[key] = shot && shot.fallback === shot.src && next === 1 ? 2 : next
+}
+function isFailed(key) {
+  return (failed[key] || 0) >= 2
+}
+function retryPhoto(key) {
+  if (P[key]) failed[key] = 0
 }
 
-/* ---------- 文案辅助 ---------- */
-const fmtTel = (t) => t.replace(/^(\d{3})(\d{4})(\d{4})$/, '$1 $2 $3')
-const fill = (t) => t.replace('{ceremonyTime}', C.ceremonyTime)
-const seal = C.groomName.charAt(0) + ' · ' + C.brideName.charAt(0)
-const weekday = (() => {
-  const d = new Date(C.date.y, C.date.m - 1, C.date.d)
-  return ['SUNDAY · 星期日', 'MONDAY · 星期一', 'TUESDAY · 星期二', 'WEDNESDAY · 星期三', 'THURSDAY · 星期四', 'FRIDAY · 星期五', 'SATURDAY · 星期六'][d.getDay()]
+function readReducedMotion() {
+  const bags = []
+  try { if (typeof uni.getSystemSetting === 'function') bags.push(uni.getSystemSetting() || {}) } catch (e) { /* noop */ }
+  try { if (typeof uni.getAppBaseInfo === 'function') bags.push(uni.getAppBaseInfo() || {}) } catch (e) { /* noop */ }
+  try { bags.push((uni.getSystemInfoSync && uni.getSystemInfoSync()) || {}) } catch (e) { /* noop */ }
+  return bags.some((info) => info.reducedMotion === 'reduce' || info.reducedMotion === true || info.prefersReducedMotion === true)
+}
+const reducedMotion = ref(readReducedMotion())
+
+const phase = ref('closed')
+const entered = ref(false)
+
+const weekShort = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][new Date(C.date.y, C.date.m - 1, C.date.d).getDay()]
+const timeCompact = C.ceremonyTime.replace(/\s+/g, '')
+const monthDay = C.date.m + '.' + String(C.date.d).padStart(2, '0')
+const inviteLines = C.invitation.zh.split(/(?<=，)/)
+const noteLines = C.opening.sub2.split(/(?<=，)/)
+const placeCity = C.invitation.venueLines[0].split('·').pop().trim()
+const venuePair = C.invitation.venueLines[1].split('·').map((s) => s.trim())
+const hotelName = venuePair[0]
+const lawn = venuePair[1] || ''
+
+function storyText(i) {
+  return (C.story.lines[i] || []).map((s) => s.t).join('')
+}
+const originA = C.story.origins[0]
+const originBits = String(C.story.origins[1] || '').split('·').map((s) => s.trim())
+const originB = originBits[0] || ''
+const together = originBits[1] || ''
+const togetherLine = together ? (together.endsWith('。') ? together : together + '。') : ''
+const stopLines = (() => {
+  const text = storyText(3)
+  const at = text.indexOf('停下脚步')
+  if (at < 0) return [text]
+  return [text.slice(0, at), text.slice(at)]
+})()
+const departLines = (() => {
+  const text = storyText(5)
+  const at = text.indexOf('都是为了')
+  if (at < 0) return [text]
+  return [text.slice(0, at), text.slice(at)]
+})()
+const shanhaiInvite = C.journey.lines.join('').replace('邀请你，', '邀请你')
+const finaleLines = (C.ending.lines[0] || '').split(/(?<=，)/).filter(Boolean)
+const thanksLines = (() => {
+  const rest = C.ending.lines[2] || ''
+  const at = rest.indexOf('，')
+  return [C.ending.lines[1], at < 0 ? rest : rest.slice(0, at + 1), at < 0 ? '' : rest.slice(at + 1)].filter(Boolean)
 })()
 
-/* ---------- 页面淡入 + 滚动显现（IntersectionObserver，threshold 0.18，同 H5） ---------- */
-const ready = ref(false)
-const revealed = reactive({})
-const rc = (n) => (revealed[n] ? 'in' : '')
-// H5：reveal-line 的 transitionDelay = (全局序号 % 6) × 0.12s
-const dl = (n) => `transition-delay:${((n % 6) * 0.12).toFixed(2)}s;`
+function linesOf(item) {
+  return (item.lines || []).filter((line) => Array.isArray(line))
+}
+const timeline = [
+  { date: '11.13', title: '亲友抵达', lines: linesOf(C.guide.items[0]) },
+  {
+    date: '11.14',
+    title: '婚礼当天 · ' + timeCompact,
+    lines: linesOf(C.guide.items[1]).filter((line) => {
+      const text = line.map((s) => s.t).join('')
+      return !text.startsWith('仪式时间') && !text.startsWith('联系人')
+    })
+  }
+]
+const details = reactive(C.guide.items.slice(2, 6).map((item, i) => ({
+  title: item.title,
+  open: i === 0,
+  lines: linesOf(item)
+})))
+function toggleDetail(i) {
+  details[i].open = !details[i].open
+  nextTick(measureDark)
+}
+const contactsIntro = (C.guide.items[6].lines[0] || []).map((s) => s.t).join('')
+const fill = (t) => String(t).replace('{ceremonyTime}', C.ceremonyTime)
+const showSeg = (t) => fill(t).replace('点击上方「婚礼地点导航」', '点击下方「婚礼地点导航」')
 
+const heroGone = ref(false)
+const guideVisible = ref(false)
+const finaleVisible = ref(false)
+const mapBarOn = computed(() => heroGone.value && guideVisible.value)
 let observers = []
-// 小程序里优先用页面实例自己的 createIntersectionObserver（最稳）；H5 预览用 uni 的实现
+let measureTimer = 0
 function makeObserver(opts) {
   const scope = inst.proxy && inst.proxy.$scope
   if (scope && typeof scope.createIntersectionObserver === 'function') return scope.createIntersectionObserver(opts)
   return uni.createIntersectionObserver(inst.proxy, opts)
 }
-function observeReveals() {
-  if (typeof uni.createIntersectionObserver !== 'function') {
-    for (let i = 0; i <= 38; i++) revealed[i] = true
-    return
-  }
-  const io = makeObserver({ thresholds: [0, 0.18], observeAll: true })
-  io.relativeToViewport().observe('.reveal, .reveal-line', (res) => {
-    const n = Number(String(res.id || '').replace('rv', ''))
-    if (Number.isNaN(n) || revealed[n]) return
-    const r = res.boundingClientRect || {}
-    if (res.intersectionRatio >= 0.17 || (res.intersectionRatio > 0 && r.height > H)) revealed[n] = true
+function observeGuide() {
+  if (typeof uni.createIntersectionObserver !== 'function') return
+  observers.forEach((item) => item.disconnect && item.disconnect())
+  observers = []
+  const hero = makeObserver({ thresholds: [0] })
+  hero.relativeToViewport().observe('#guide-hero', (res) => {
+    const bottom = (res.boundingClientRect || {}).bottom || 0
+    heroGone.value = !(res.intersectionRatio > 0) && bottom < 1
   })
-  observers.push(io)
-
-  // 邀请页进入视口（或已经滚过它到尾声）就收起「婚礼信息」按钮
-  const io2 = makeObserver({ thresholds: [0] })
-  io2.relativeToViewport({ bottom: -Math.round(H * 0.12) }).observe('#invitation', (res) => {
-    const top = (res.boundingClientRect || {}).top || 0
-    infoAway.value = res.intersectionRatio > 0 || top < 0
+  observers.push(hero)
+  const rest = makeObserver({ thresholds: [0] })
+  rest.relativeToViewport().observe('#guide-rest', (res) => {
+    guideVisible.value = res.intersectionRatio > 0
   })
-  observers.push(io2)
+  observers.push(rest)
+  const finale = makeObserver({ thresholds: [0] })
+  finale.relativeToViewport().observe('#finale', (res) => {
+    finaleVisible.value = res.intersectionRatio > 0
+  })
+  observers.push(finale)
 }
 
-/* ---------- 视差：首屏渐隐 / 山海文字 / data-speed 照片（只动 transform、opacity） ---------- */
-const scrollY = ref(0)
-const pos = reactive({ journeyTop: 0, journeyH: 0, g3Top: 0, g3H: 0, g6Top: 0, g6H: 0, interTop: 0, interH: 0 })
-const reduced = false
-const openingStyle = computed(() => {
-  const y = scrollY.value
-  if (reduced || y >= H) return y >= H ? 'opacity:0;' : ''
-  const p = y / H
-  return `opacity:${Math.max(0, 1 - p * 1.6).toFixed(3)};transform:translateY(${(y * 0.28).toFixed(1)}px);`
-})
-const journeyStyle = computed(() => {
-  const top = pos.journeyTop - scrollY.value
-  if (!pos.journeyH || !(top < H && top + pos.journeyH > 0)) return ''
-  const p = (H - top) / (H + pos.journeyH)
-  return `transform:translateY(${((p - 0.5) * 56).toFixed(1)}px);`
-})
-function speedStyle(top, h, speed, scale) {
-  const t = top - scrollY.value
-  if (!h || !(t < H && t + h > 0)) return `transform:scale(${scale});`
-  const room = ((scale - 1) / 2) * h - 1
-  const raw = (t + h / 2 - H / 2) * speed
-  const off = Math.max(-room, Math.min(room, raw))
-  return `transform:translateY(${off.toFixed(1)}px) scale(${scale});`
-}
-const par = reactive({ gallery3: 'transform:scale(1.15);', gallery6: 'transform:scale(1.15);', interlude: 'transform:scale(1.16);' })
-function updateParallax() {
-  par.gallery3 = speedStyle(pos.g3Top, pos.g3H, 0.09, 1.15)
-  par.gallery6 = speedStyle(pos.g6Top, pos.g6H, 0.09, 1.15)
-  if (pos.interH) par.interlude = speedStyle(pos.interTop, pos.interH, 0.12, 1.15)
-}
-
-let measureTimer = 0
-function scheduleMeasure() {
-  clearTimeout(measureTimer)
-  measureTimer = setTimeout(measure, 160)
-}
-function measure() {
+let darkZones = []
+let statusLight = false
+let guideGeometry = null
+function measureDark() {
   const q = uni.createSelectorQuery().in(inst.proxy)
-  q.select('#journey').boundingClientRect()
-  q.select('#rv21 .photo').boundingClientRect()
-  q.select('#rv25 .photo').boundingClientRect()
-  q.select('#interlude').boundingClientRect()
+  q.select('#sea').boundingClientRect()
+  q.select('#finale').boundingClientRect()
+  q.select('#guide-hero').boundingClientRect()
+  q.select('#guide-rest').boundingClientRect()
   q.selectViewport().scrollOffset()
-  q.exec((r) => {
-    if (!r || !r[4]) return
-    const st = r[4].scrollTop || 0
-    const set = (i, k) => {
-      if (r[i]) {
-        pos[k + 'Top'] = r[i].top + st
-        pos[k + 'H'] = r[i].height
+  q.exec((res) => {
+    if (!res || !res[4]) return
+    const scrollTop = res[4].scrollTop || 0
+    darkZones = [res[0], res[1]].filter(Boolean).map((rect) => ({
+      a: rect.top + scrollTop,
+      b: rect.bottom + scrollTop
+    }))
+    if (res[2] && res[3]) {
+      guideGeometry = {
+        heroBottom: res[2].bottom + scrollTop,
+        restTop: res[3].top + scrollTop,
+        restBottom: res[3].bottom + scrollTop
       }
     }
-    set(0, 'journey'); set(1, 'g3'); set(2, 'g6'); set(3, 'inter')
-    scrollY.value = st
-    updateParallax()
+    syncStatus(scrollTop)
+  })
+}
+function syncStatus(scrollTop) {
+  if (guideGeometry) {
+    heroGone.value = scrollTop >= guideGeometry.heroBottom - 1
+    guideVisible.value = scrollTop + winH > guideGeometry.restTop && scrollTop < guideGeometry.restBottom
+  }
+  const y0 = scrollTop + 8
+  const light = darkZones.some((zone) => y0 >= zone.a && y0 < zone.b)
+  if (light === statusLight) return
+  statusLight = light
+  if (typeof uni.setNavigationBarColor !== 'function') return
+  uni.setNavigationBarColor({
+    frontColor: light ? '#ffffff' : '#000000',
+    backgroundColor: light ? '#243D49' : '#F7F2E8',
+    fail: () => {}
+  })
+}
+onPageScroll((e) => {
+  syncStatus(e.scrollTop || 0)
+})
+
+function go(selector) {
+  uni.pageScrollTo({ selector, duration: reducedMotion.value ? 0 : 320 })
+}
+function openDoors() {
+  if (phase.value !== 'closed') return
+  phase.value = 'opened'
+  if (musicOn && !musicPlaying.value) {
+    wantPlay = true
+    startMusic()
+  }
+}
+function enterStory() {
+  entered.value = true
+  nextTick(() => {
+    observeGuide()
+    measureDark()
+    clearTimeout(measureTimer)
+    measureTimer = setTimeout(measureDark, 600)
   })
 }
 
-let lastScroll = 0
-onPageScroll((e) => {
-  const now = Date.now()
-  scrollY.value = e.scrollTop
-  if (now - lastScroll > 16) {
-    lastScroll = now
-    updateParallax()
-  }
-})
-
-/* ---------- 婚礼信息按钮 ---------- */
-const infoAway = ref(false)
-function goInvitation() {
-  uni.pageScrollTo({ selector: '#invitation', duration: 600 })
-}
-
-/* ---------- 手风琴 ---------- */
-const openGuide = reactive(C.guide.items.map(() => false))
-const guideH = reactive(C.guide.items.map(() => 0))
-function toggleGuide(i) {
-  const open = !openGuide[i]
-  openGuide[i] = open
-  if (!open) {
-    guideH[i] = 0
-    return
-  }
-  uni.createSelectorQuery().in(inst.proxy).select('#gb' + i).boundingClientRect((rect) => {
-    guideH[i] = rect ? Math.ceil(rect.height) + 2 : 600
-    scheduleMeasure()
-  }).exec()
-}
-
-/* ---------- 地图导航：openLocation（GCJ-02），失败就复制地址 ---------- */
 function openMap() {
   const v = C.venue
   uni.openLocation({
@@ -569,206 +606,150 @@ function openMap() {
     name: v.name,
     address: v.address,
     scale: v.scale,
-    fail: () => copyText(v.address, `地址已复制：${v.address}`, `地址：${v.address}`)
+    fail: () => {
+      uni.setClipboardData({
+        data: v.address,
+        showToast: false,
+        success: () => {
+          try { uni.hideToast() } catch (e) { /* noop */ }
+          uni.showToast({ title: '地址已复制：' + v.address, icon: 'none' })
+        },
+        fail: () => {
+          uni.showToast({ title: '地址：' + v.address, icon: 'none' })
+        }
+      })
+    }
+  })
+}
+function call(tel) {
+  uni.makePhoneCall({
+    phoneNumber: String(tel),
+    fail: (err) => {
+      if (/cancel/i.test(String((err && err.errMsg) || ''))) return
+      uni.showToast({ title: '未能打开拨号，请长按号码拨打', icon: 'none' })
+    }
   })
 }
 
-/* ---------- 回执抽屉 ---------- */
-const sheetOpen = ref(false)
-const openSheet = () => { sheetOpen.value = true }
-const closeSheet = () => { sheetOpen.value = false }
-const noop = () => {}
-function call(tel) {
-  uni.makePhoneCall({ phoneNumber: tel, fail: () => {} })
-}
-const toast = reactive({ show: false, msg: '' })
-let toastTimer = 0
-function showToast(msg) {
-  toast.msg = msg
-  toast.show = true
-  clearTimeout(toastTimer)
-  toastTimer = setTimeout(() => { toast.show = false }, 2200)
-}
-function copyText(text, okMsg, failMsg) {
+const copyState = ref('')
+const copyNote = computed(() => {
+  if (copyState.value === 'copied') return C.rsvp.copied
+  if (copyState.value === 'failed') return C.rsvp.copyFailed.replace('{wechat}', wechatId)
+  return ''
+})
+const wechatId = (C.contacts.find((c) => c.wechat) || {}).wechat || ''
+function copyWechat(id) {
   uni.setClipboardData({
-    data: text,
+    data: id,
     showToast: false,
     success: () => {
       try { uni.hideToast() } catch (e) { /* noop */ }
-      showToast(okMsg)
+      copyState.value = 'copied'
+      uni.showToast({ title: C.rsvp.copied, icon: 'none' })
     },
-    fail: () => showToast(failMsg)
+    fail: () => {
+      copyState.value = 'failed'
+      uni.showToast({ title: C.rsvp.copyFailed.replace('{wechat}', id), icon: 'none' })
+    }
   })
 }
-const copyWechat = (w) => copyText(w, C.rsvp.copied, C.rsvp.copyFailed.replace('{wechat}', w))
 
-/* ---------- 背景音乐「海风来信」（InnerAudioContext；进页尝试自动播放，被拦就等第一次点按） ---------- */
 const musicOn = !!(C.music && C.music.enabled && C.music.src)
 const musicPlaying = ref(false)
-const musicTitleShow = ref(false)
-// 按钮位置：胶囊菜单下方 8px，右边缘与胶囊对齐（拿不到胶囊信息时按状态栏 + 44px 估算）
-const musicPos = (() => {
-  let top = 0
-  let right = 16
-  try {
-    const r = uni.getMenuButtonBoundingClientRect && uni.getMenuButtonBoundingClientRect()
-    if (r && r.bottom) {
-      top = r.bottom + 8
-      right = Math.max(8, W - r.right)
-    }
-  } catch (e) { /* noop */ }
-  if (!top) top = (win.statusBarHeight || 20) + 44 + 8
-  return `top:${top}px;right:${right}px;`
-})()
+const openMusicLabel = computed(() => (musicPlaying.value ? '暂停《' + C.music.title + '》' : '播放《' + C.music.title + '》'))
+const endMusicLabel = computed(() => (musicPlaying.value ? '暂停《' + C.music.title + '》' : '播放这封来信的旋律'))
+const musicFabLabel = computed(() => (musicPlaying.value ? '暂停音乐' : '播放音乐'))
 let audio = null
-let wantPlay = true        // 用户意愿：默认想听；点按暂停后为 false，直到再次点按
+let wantPlay = false
 let hidden = false
-let needGesture = false    // 自动播放被拦（或迟迟没出声）→ 等第一次点按
-let gestureTimer = 0
-let titleTimer = 0
-let titleShown = false
-function flashTitle() {
-  musicTitleShow.value = true
-  clearTimeout(titleTimer)
-  titleTimer = setTimeout(() => { musicTitleShow.value = false }, 3000)
+function reportMusicError() {
+  musicPlaying.value = false
+  if (!wantPlay || hidden) return
+  wantPlay = false
+  uni.showToast({ title: '音乐暂时无法播放，请稍后再试', icon: 'none' })
 }
 function ensureAudio() {
   if (audio || !musicOn) return audio
   try {
-    if (typeof uni.setInnerAudioOption === 'function') {
-      uni.setInnerAudioOption({ obeyMuteSwitch: false, fail: () => {} })
-    }
-  } catch (e) { /* noop */ }
-  audio = uni.createInnerAudioContext()
+    if (typeof uni.setInnerAudioOption === 'function') uni.setInnerAudioOption({ obeyMuteSwitch: false, fail: () => {} })
+    audio = uni.createInnerAudioContext()
+  } catch (e) {
+    reportMusicError()
+    return null
+  }
   audio.src = C.music.src
   audio.loop = true
   audio.autoplay = false
   audio.obeyMuteSwitch = false
   audio.volume = typeof C.music.volume === 'number' ? C.music.volume : 0.6
-  audio.onPlay(() => {
-    musicPlaying.value = true
-    needGesture = false
-    clearTimeout(gestureTimer)
-    if (!titleShown) { titleShown = true; flashTitle() }
-  })
+  audio.onPlay(() => { musicPlaying.value = true })
   audio.onPause(() => { musicPlaying.value = false })
   audio.onStop(() => { musicPlaying.value = false })
-  audio.onEnded(() => { if (audio && wantPlay && !hidden) audio.play() }) // loop 兜底
-  audio.onError(() => {
-    musicPlaying.value = false
-    needGesture = true
-  })
+  audio.onEnded(() => { if (audio && wantPlay && !hidden) audio.play() })
+  audio.onError(reportMusicError)
   return audio
 }
 function startMusic() {
-  if (!ensureAudio()) return
-  audio.play()
-  // 有的机型 play() 既不报错也不出声：1.5 s 内没进 onPlay 就改为等点按
-  clearTimeout(gestureTimer)
-  gestureTimer = setTimeout(() => { if (!musicPlaying.value) needGesture = true }, 1500)
+  if (hidden || !ensureAudio()) return
+  try { audio.play() } catch (e) { reportMusicError() }
 }
 function toggleMusic() {
   if (!musicOn) return
   if (musicPlaying.value) {
     wantPlay = false
-    needGesture = false
-    audio && audio.pause()
+    if (audio) audio.pause()
   } else {
     wantPlay = true
     startMusic()
-    flashTitle()
   }
 }
-// 自动播放没成功时，页面任意一次点按都开始播放（音乐按钮自己 @tap.stop，不会走到这里）
-function onAnyTap() {
-  if (musicOn && needGesture && wantPlay && !musicPlaying.value) {
-    needGesture = false
-    startMusic()
-  }
-}
-onShow(() => {
-  hidden = false
-  enableShareMenu()
-  if (musicOn && wantPlay && !musicPlaying.value) startMusic()
-})
-onHide(() => {
-  hidden = true
-  clearTimeout(gestureTimer)
-  if (audio && musicPlaying.value) audio.pause() // wantPlay 保持不变，回来时 onShow 接着放
-})
 
-/* ---------- 分享（包内图 + 同步返回；网络图不可靠） ---------- */
-const SHARE_LOCAL = '/static/share-card.jpg'
-const SHARE_TITLE = (C.share && C.share.title) || '高嘉琪 & 张靖 · 婚礼邀请 · 2026.11.14 威海荣成'
-const SHARE_PATH = (C.share && C.share.path) || '/pages/invite/index'
+const SHARE_LOCAL = C.share.imageUrl || '/static/share-card.jpg'
 const shareImagePath = ref(SHARE_LOCAL)
-
 function enableShareMenu() {
   if (typeof uni.showShareMenu === 'function') {
-    uni.showShareMenu({
-      withShareTicket: false,
-      menus: ['shareAppMessage', 'shareTimeline'],
-      fail: () => {}
-    })
+    uni.showShareMenu({ withShareTicket: false, menus: ['shareAppMessage', 'shareTimeline'], fail: () => {} })
   }
 }
-
 function buildSharePayload(imageUrl) {
-  const payload = {
-    title: SHARE_TITLE,
-    path: SHARE_PATH,
+  return {
+    title: C.share.title,
+    desc: C.share.desc,
+    path: C.share.path,
     imageUrl: imageUrl || shareImagePath.value || SHARE_LOCAL
   }
-  try {
-    console.log('[invite-share]', payload.title, payload.imageUrl)
-  } catch (e) { /* noop */ }
-  return payload
 }
-
 function prepareShareImage() {
-  // 1) 校验包内图，缓存本地绝对路径
   uni.getImageInfo({
     src: SHARE_LOCAL,
     success: (info) => {
       if (info && info.path) shareImagePath.value = info.path
-      // 2) 可选：画到离屏 canvas 再导出临时路径（部分基础库对 temp 路径更稳）
-      tryDrawShareTemp(info)
+      try {
+        const ctx = uni.createCanvasContext && uni.createCanvasContext('shareCanvas', inst && inst.proxy)
+        if (!ctx) return
+        const w = info.width || 750
+        const h = info.height || 600
+        ctx.drawImage(SHARE_LOCAL, 0, 0, w, h)
+        ctx.draw(false, () => {
+          uni.canvasToTempFilePath({
+            canvasId: 'shareCanvas',
+            width: w,
+            height: h,
+            destWidth: 750,
+            destHeight: 600,
+            fileType: 'jpg',
+            quality: 0.92,
+            success: (res) => { if (res && res.tempFilePath) shareImagePath.value = res.tempFilePath },
+            fail: () => {}
+          }, inst && inst.proxy)
+        })
+      } catch (e) { /* 继续用包内分享图 */ }
     },
-    fail: () => {
-      shareImagePath.value = SHARE_LOCAL
-    }
+    fail: () => { shareImagePath.value = SHARE_LOCAL }
   })
 }
 
-function tryDrawShareTemp(info) {
-  try {
-    const w = (info && info.width) || 750
-    const h = (info && info.height) || 600
-    const ctx = uni.createCanvasContext && uni.createCanvasContext('shareCanvas', inst && inst.proxy)
-    if (!ctx) return
-    ctx.drawImage(SHARE_LOCAL, 0, 0, w, h)
-    ctx.draw(false, () => {
-      uni.canvasToTempFilePath({
-        canvasId: 'shareCanvas',
-        width: w,
-        height: h,
-        destWidth: 750,
-        destHeight: 600,
-        fileType: 'jpg',
-        quality: 0.92,
-        success: (res) => {
-          if (res && res.tempFilePath) shareImagePath.value = res.tempFilePath
-        },
-        fail: () => {}
-      }, inst && inst.proxy)
-    })
-  } catch (e) { /* canvas 不可用时继续用包内路径 */ }
-}
-
-// 必须在 setup 顶层同步注册（不可放进 onMounted）
-onPageLoad(() => {
-  enableShareMenu()
-})
+onLoad(() => { enableShareMenu() })
 onShareAppMessage(() => {
   const sync = buildSharePayload()
   const promise = new Promise((resolve) => {
@@ -789,28 +770,26 @@ onShareAppMessage(() => {
     })
     setTimeout(() => done(shareImagePath.value || SHARE_LOCAL), 1800)
   })
-  // 同步字段保证标题绝不丢失；promise 在 2s 内带上更稳的 temp 路径
   return { ...sync, promise }
 })
 onShareTimeline(() => buildSharePayload())
-
 onReady(() => {
-  ready.value = true
   enableShareMenu()
   prepareShareImage()
-  nextTick(() => {
-    observeReveals()
-    measure()
-    // 字体（马善政）晚一点到，排版高度会变：再量两次
-    setTimeout(measure, 800)
-    setTimeout(measure, 2500)
-  })
+})
+onShow(() => {
+  hidden = false
+  enableShareMenu()
+  if (musicOn && wantPlay && !musicPlaying.value) startMusic()
+})
+onHide(() => {
+  hidden = true
+  if (audio && musicPlaying.value) audio.pause()
 })
 onUnload(() => {
-  observers.forEach((o) => o.disconnect && o.disconnect())
+  clearTimeout(measureTimer)
+  observers.forEach((item) => item.disconnect && item.disconnect())
   observers = []
-  clearTimeout(gestureTimer)
-  clearTimeout(titleTimer)
   if (audio) {
     try { audio.stop() } catch (e) { /* noop */ }
     audio.destroy()
@@ -820,919 +799,759 @@ onUnload(() => {
 </script>
 
 <style lang="scss">
-/* ============================================================
-   A LOVE STORY, BY THE SEA（小程序版，逐项对照 H5 index.html）
-   色板见 styles/invite-palette.scss（与 H5 相同）
-   ============================================================ */
-@import '@/styles/invite-palette.scss';
+$iv-ivory: #F7F2E8;
+$iv-paper: #FCF9F2;
+$iv-ink: #292B2C;
+$iv-muted: #5F6263;
+$iv-wine: #742F35;
+$iv-deep: #243D49;
+$iv-gold: #B89B6A;
+$iv-hair: #C9C4B9;
+$iv-serif: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "STSong", "SimSun", serif;
+$iv-sans: "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
+$iv-door: cubic-bezier(0.22, 1, 0.36, 1);
 
-page {
-  background: $ivory;
-}
+page { background: $iv-ivory; }
 .inv {
-  position: relative;
-  background: $ivory;
-  color: $graphite;
-  font-family: $sans-cn;
+  background: $iv-ivory;
+  color: $iv-ink;
+  font-family: $iv-sans;
+  font-size: 30rpx;
   line-height: 1.8;
   overflow-x: hidden;
-  -webkit-font-smoothing: antialiased;
-  opacity: 0;
-  transition: opacity 0.9s ease;
 }
-.inv.ready { opacity: 1; }
-.grain {
-  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  z-index: 80;
-  pointer-events: none;
-}
-
-/* ---------- 照片槽位 ---------- */
-.photo {
-  position: relative;
-  overflow: hidden;
-  background: linear-gradient(135deg, $ivory-deep 0%, $sand 50%, $mist 130%);
-}
-.photo::after {
-  content: "";
-  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-  box-shadow: inset 0 0 0 1px rgba(251, 247, 239, 0.55);
-  pointer-events: none;
-  z-index: 2;
-}
-.photo-shadow { box-shadow: 0 14px 40px rgba(52, 58, 61, 0.10); }
-.sp { width: 100%; height: 0; }
-.layer {
-  position: absolute; top: 0; left: 0;
-  width: 100%; height: 100%;
-  overflow: hidden;
-  opacity: 0;
-  transition: opacity 1.2s ease, transform 1.4s $ease;
-}
-.layer.loaded { opacity: 1; }
-.img { position: absolute; display: block; max-width: none; }
-
-/* ---------- 漂浮光斑 ---------- */
-.bokeh { position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow: hidden; pointer-events: none; z-index: 2; }
-.bk {
-  position: absolute;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(251, 247, 239, 0.9), rgba(251, 247, 239, 0) 70%);
-  filter: blur(1px);
-  animation: floatUp linear infinite;
-  opacity: 0;
-}
-.bk1 { width: 10px; height: 10px; left: 12%; bottom: 18%; animation-duration: 11s; animation-delay: 0s; }
-.bk2 { width: 6px; height: 6px; left: 24%; bottom: 10%; animation-duration: 14s; animation-delay: 3s; }
-.bk3 { width: 14px; height: 14px; left: 70%; bottom: 14%; animation-duration: 12s; animation-delay: 1.5s; }
-.bk4 { width: 7px; height: 7px; left: 84%; bottom: 26%; animation-duration: 16s; animation-delay: 5s; }
-.bk5 { width: 9px; height: 9px; left: 45%; bottom: 8%; animation-duration: 13s; animation-delay: 7s; }
-.bk6 { width: 5px; height: 5px; left: 58%; bottom: 30%; animation-duration: 15s; animation-delay: 2.2s; }
-@keyframes floatUp {
-  0% { transform: translateY(0); opacity: 0; }
-  15% { opacity: 0.85; }
-  70% { opacity: 0.5; }
-  100% { transform: translateY(-46vh); opacity: 0; }
-}
-
-/* ---------- 滚动显现 ---------- */
-.reveal {
-  opacity: 0;
-  transform: translateY(36px);
-  transition: opacity 1.1s $ease, transform 1.1s $ease;
-}
-.reveal.in { opacity: 1; transform: translateY(0); }
-.reveal-line { opacity: 0; transform: translateY(18px); transition: opacity 0.9s ease, transform 0.9s ease; }
-.reveal-line.in { opacity: 1; transform: translateY(0); }
-
-/* ---------- 固定快捷按钮 ---------- */
-.fab {
-  position: fixed;
-  z-index: 90;
-  right: 16px;
-  display: flex; align-items: center; justify-content: center;
-  border: 1px solid rgba(119, 55, 71, 0.35);
-  background: rgba(245, 240, 232, 0.92);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  color: $wine;
-  border-radius: 999px;
-  box-shadow: 0 4px 18px rgba(52, 58, 61, 0.12);
-  font-family: $sans-cn;
-  line-height: 1.8;
-}
-.fab-info {
-  bottom: calc(20px + env(safe-area-inset-bottom));
-  padding: 10px 20px;
-  font-size: 13px;
-  letter-spacing: 0.2em;
-  transition: opacity 0.35s ease, transform 0.35s ease;
-}
-.fab-info:active { transform: scale(0.94); }
-.fab-info.is-away { opacity: 0; pointer-events: none; transform: translateY(14px); }
-
-/* ---------- 背景音乐按钮（胶囊下方右对齐） ---------- */
-.music {
-  position: fixed;
-  z-index: 91;
-  display: flex;
-  flex-direction: row-reverse;
-  align-items: center;
-  pointer-events: none;
-}
-.music-btn {
-  position: relative;
-  width: 34px; height: 34px;
-  border-radius: 50%;
-  border: 1px solid rgba(119, 55, 71, 0.32);
-  background: rgba(245, 240, 232, 0.9);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  box-shadow: 0 3px 14px rgba(52, 58, 61, 0.12);
-  display: flex; align-items: center; justify-content: center;
-  pointer-events: auto;
-  transition: background 0.4s ease, border-color 0.4s ease, transform 0.25s ease;
-}
-.music-btn-hover { transform: scale(0.92); }
-.music-btn.on { background: $wine; border-color: $wine; }
-/* 唱片环：一段缺口的细圆环，播放时慢转 */
-.music-ring {
-  position: absolute; top: 3px; left: 3px; right: 3px; bottom: 3px;
-  border-radius: 50%;
-  border: 1px solid rgba(119, 55, 71, 0.28);
-  border-top-color: transparent;
-  transition: border-color 0.4s ease;
-}
-.music-btn.on .music-ring {
-  border-color: rgba(251, 247, 239, 0.55);
-  border-top-color: transparent;
-  animation: musicSpin 6s linear infinite;
-}
-.music-btn.on::after {
-  content: "";
-  position: absolute; top: -1px; left: -1px; right: -1px; bottom: -1px;
-  border-radius: 50%;
-  border: 1px solid rgba(119, 55, 71, 0.45);
-  animation: musicPulse 2.4s ease-out infinite;
-  pointer-events: none;
-}
-/* 三根音柱：暂停时高低错落静止，播放时轻轻起伏 */
-.music-bars { position: relative; display: flex; align-items: flex-end; height: 12px; }
-.bar {
-  width: 2px; height: 12px;
-  margin: 0 1.5px;
-  border-radius: 1px;
-  background: $wine;
-  transform-origin: 50% 100%;
-  transition: background 0.4s ease;
-}
-.b1 { transform: scaleY(0.45); }
-.b2 { transform: scaleY(0.9); }
-.b3 { transform: scaleY(0.6); }
-.music-btn.on .bar { background: $ivory; animation: musicBar 1.2s ease-in-out infinite; }
-.music-btn.on .b2 { animation-delay: -0.4s; }
-.music-btn.on .b3 { animation-delay: -0.8s; }
-@keyframes musicBar { 0%, 100% { transform: scaleY(0.35); } 50% { transform: scaleY(1); } }
-@keyframes musicSpin { to { transform: rotate(360deg); } }
-@keyframes musicPulse { 0% { transform: scale(1); opacity: 0.7; } 100% { transform: scale(1.45); opacity: 0; } }
-/* 曲名：首次出声（或点按播放）时在按钮左侧浮现，3 秒后淡出 */
-.music-title {
-  margin-right: 10px;
-  padding: 5px 12px 6px;
-  border-radius: 14px;
-  background: rgba(251, 247, 239, 0.86);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  box-shadow: 0 3px 14px rgba(52, 58, 61, 0.08);
-  text-align: right;
-  opacity: 0;
-  transform: translateX(6px);
-  transition: opacity 0.6s ease, transform 0.6s $ease;
-}
-.music-title.show { opacity: 1; transform: translateX(0); }
-.mt-zh { font-family: $serif-cn; font-size: 14px; line-height: 1.3; letter-spacing: 0.18em; color: $wine-ink; }
-.mt-en { font-family: $serif-en; font-style: italic; font-size: 10px; line-height: 1.3; letter-spacing: 0.06em; color: rgba(52, 58, 61, 0.6); }
-
-/* ---------- 幕 通用 ---------- */
-.act { position: relative; }
-.act-tag {
-  display: flex;
-  align-items: center;
-  font-family: $serif-en;
-  font-size: 11px;
-  letter-spacing: 0.42em;
-  color: $wine-ink;
-  text-transform: uppercase;
-}
-.act-tag::before {
-  content: "";
-  width: 26px; height: 1px;
-  margin-right: 14px;
-  background: $wine;
-  opacity: 0.55;
-  flex: none;
-}
-
-/* ============ 01 THE OPENING ============ */
-.act-opening { height: 100vh; min-height: 560px; overflow: hidden; }
-.hero-photo { position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
-.kb { animation: kenburns 24s ease-in-out infinite alternate; }
-@keyframes kenburns { from { transform: scale(1); } to { transform: scale(1.09); } }
-.frame {
-  position: absolute;
-  top: 14px; left: 14px; right: 14px; bottom: 14px;
-  border: 1px solid rgba(119, 55, 71, 0.25);
-  pointer-events: none;
-  z-index: 3;
-}
-.frame-in {
-  position: absolute;
-  top: 4px; left: 4px; right: 4px; bottom: 4px;
-  border: 1px solid rgba(119, 55, 71, 0.12);
-}
-.veil {
-  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-  z-index: 1;
-  background: linear-gradient(to bottom, rgba(245,240,232,0.06) 30%, rgba(245,240,232,0.52) 76%, $ivory 100%);
-}
-.opening-copy {
-  position: absolute;
-  left: 0; right: 0;
-  bottom: 15%;
-  text-align: center;
-  padding: 0 24px;
-  z-index: 4;
-}
-.opening-names {
-  font-family: $serif-cn;
-  color: $wine;
-  font-size: clamp(22px, 5.4vw, 28px);
-  letter-spacing: 0.14em;
-  line-height: 1.6;
-  margin-bottom: 14px;
-  opacity: 0;
-  animation: fadeIn 1s ease 0.3s forwards;
-}
-.opening-cross { color: $sea-deep; margin: 0 12px; }
-.h1 {
-  font-family: $serif-en;
-  font-weight: 400;
-  color: $wine;
-  font-size: clamp(30px, 8.4vw, 58px);
-  letter-spacing: 0.34em;
-  line-height: 1.4;
-  opacity: 0;
-  animation: titleIn 2.4s $ease 0.5s forwards;
-}
-@keyframes titleIn {
-  0% { opacity: 0; letter-spacing: 0.42em; transform: translateY(10px); }
-  100% { opacity: 1; letter-spacing: 0.18em; transform: translateY(0); }
-}
-.sub {
-  margin-top: 20px;
-  font-size: 12.5px;
-  letter-spacing: 0.26em;
-  line-height: 2.3;
-  color: $graphite;
-  opacity: 0;
-  animation: fadeIn 1.6s ease 1.8s forwards;
-}
-.sub .dot { display: none; margin: 0 10px; color: $wine-ink; }
-.sub .place { display: block; margin: 0 10px; color: $wine-ink; }
-@media (min-width: 481px) {
-  .sub { font-size: 13px; letter-spacing: 0.34em; line-height: 1.8; }
-  .sub .dot { display: inline; }
-  .sub .place { display: inline; }
-}
-.sub2 {
-  margin-top: 18px;
-  font-family: $serif-cn;
-  font-size: 15px;
-  letter-spacing: 0.22em;
-  color: rgba(119, 55, 71, 0.9);
-  opacity: 0;
-  animation: fadeIn 1.8s ease 2.6s forwards;
-}
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-.scroll-hint {
-  position: absolute;
-  left: 50%; bottom: 34px;
-  transform: translateX(-50%);
-  opacity: 0;
-  animation: fadeIn 1.5s ease 3.2s forwards;
-  z-index: 4;
-}
-.hint-line {
-  width: 1px; height: 44px;
-  background: linear-gradient($wine, rgba(119, 55, 71, 0));
-  animation: hint 2.2s ease-in-out infinite;
-}
-@keyframes hint { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
-
-/* ============ 02 OUR STORY ============ */
-.act-story { padding: 120px 26px 100px; max-width: 640px; margin: 0 auto; }
-.act-story .act-tag { margin-bottom: 38px; }
-.story-photo-main { width: 100%; border-radius: 2px; }
-.story-photo-detail {
-  width: 52%;
-  margin: -64px 0 0 auto;
-  border: 6px solid $ivory;
-  border-radius: 2px;
-  z-index: 2;
-}
-.story-text {
-  margin-top: 56px;
-  font-family: $serif-cn;
-  font-size: clamp(19px, 5vw, 23px);
-  line-height: 2.3;
-  color: $graphite;
-}
-.story-text .p { margin-bottom: 4px; }
-.story-text .em { color: $wine; }
-.story-names {
-  margin-top: 34px;
-  display: flex;
-  align-items: center;
-  font-size: 12px;
-  letter-spacing: 0.28em;
-  color: $wine-ink;
-}
-.story-names::before {
-  content: "";
-  width: 26px; height: 1px;
-  margin-right: 14px;
-  background: $wine;
-  opacity: 0.55;
-  flex: none;
-}
-.story-names .mist { color: $sea-deep; }
-
-/* ============ 03 THE JOURNEY ============ */
-.act-journey {
-  overflow: hidden;
-  padding-top: clamp(150px, 22vh, 200px);
-  background: linear-gradient(180deg, $ivory 0, $mist-pale 60px, $mist 130px, $sea-mid 220px, $sea-deep 320px, $sea-deep 100%);
-}
-.journey-copy {
-  position: relative;
-  display: flex; flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: 0 30px;
-  z-index: 3;
-}
-.journey-copy .act-tag { color: rgba(253, 251, 244, 0.95); text-shadow: 0 1px 8px rgba(36, 56, 66, 0.35); margin-bottom: 26px; justify-content: center; }
-.journey-copy .act-tag::before { background: rgba(253, 251, 244, 0.75); opacity: 1; }
-.journey-copy .p {
-  font-family: $serif-cn;
-  font-size: clamp(23px, 6.2vw, 31px);
-  color: $foam;
-  text-shadow: 0 1px 2px rgba(36, 56, 66, 0.25), 0 2px 16px rgba(36, 56, 66, 0.35);
-  line-height: 2.15;
-  letter-spacing: 0.12em;
-}
-.journey-copy .lead { font-size: clamp(14px, 3.8vw, 17px); opacity: 0.95; letter-spacing: 0.3em; margin-bottom: 14px; }
-.journey-place {
-  margin-top: 18px;
-  font-family: $serif-en;
-  font-size: 11px;
-  letter-spacing: 0.4em;
-  color: rgba(253, 251, 244, 0.82);
-}
-.j-scene { position: relative; margin-top: clamp(-10px, 2vh, 24px); width: 100%; }
-.j-photo { position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow: hidden; background: $sea-deep; }
-.j-layer { transition: opacity 1.4s ease; }
-.j-fade-top, .j-fade-bottom { position: absolute; left: 0; right: 0; z-index: 1; pointer-events: none; }
-.j-fade-top { top: 0; height: 34%; background: linear-gradient(180deg, $sea-deep 0%, rgba(95, 132, 148, 0.55) 40%, rgba(95, 132, 148, 0) 100%); }
-.j-fade-bottom { bottom: 0; height: 34%; background: linear-gradient(180deg, rgba(245, 240, 232, 0) 0%, rgba(245, 240, 232, 0.5) 55%, rgba(245, 240, 232, 0.92) 88%, $ivory 100%); }
-.j-waves { position: absolute; left: 0; right: 0; bottom: -1px; height: 64px; pointer-events: none; z-index: 2; overflow: hidden; }
-.j-wave {
-  position: absolute; left: 0; bottom: 0;
-  width: 200%;
-  background-repeat: repeat-x;
-  background-size: 50% 100%;
-  background-position: 0 0;
-}
-.j-wave.l1 { height: 100%; opacity: 0.35; animation: tide 32s linear infinite; }
-.j-wave.l2 { height: 78%; opacity: 0.6; animation: tide 24s linear infinite reverse; }
-.j-wave.l3 { height: 52%; animation: tide 18s linear infinite; }
-@keyframes tide { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(-50%, 0, 0); } }
-.j-after { display: flow-root; background: $ivory; padding-bottom: 8px; }
-.j-card {
-  position: relative;
-  width: 48%;
-  max-width: 250px;
-  margin: -96px 24px 0 auto;
-  z-index: 4;
-}
-.jc-cap { font-size: 16px !important; padding-top: 7px !important; }
-
-/* ============ 04 THE GALLERY ============ */
-.act-gallery { padding: 120px 0 80px; max-width: 760px; margin: 0 auto; overflow: hidden; }
-.g-tag { margin: 0 22px 56px; }
-.g-grid { padding: 0 22px; }
-.g-row { display: flex; align-items: flex-start; }
-.g-item { position: relative; flex: none; }
-.matte {
-  background: $paper;
-  padding: 9px 9px 10px;
-  box-shadow: 0 18px 46px rgba(52, 58, 61, 0.16);
-  border-radius: 2px;
-}
-.figcaption {
-  font-family: $script-en;
-  text-align: center;
-  color: rgba(52, 58, 61, 0.72);
-  font-size: 18px;
-  letter-spacing: 0.02em;
-  padding: 9px 0 0;
-  line-height: 1.8;
-}
-.r-l { transform: rotate(-1.3deg); }
-.r-r { transform: rotate(1.4deg); }
-/* 12 栏网格（栏距 16px）用 flex 还原：7/5、6/6、7/5 */
-.g-a, .g-e { width: calc((100% - 176px) * 7 / 12 + 96px); }
-.g-b, .g-f { width: calc((100% - 176px) * 5 / 12 + 64px); margin-left: 16px; }
-.g-c, .g-d { width: calc((100% - 176px) / 2 + 80px); }
-.g-d { margin-left: 16px; }
-.g-b { margin-top: 68px; }
-.g-c { margin-top: 34px; }
-.g-d { margin-top: 86px; }
-.g-e { margin-top: 40px; }
-.g-f { margin-top: 104px; }
-.g-bleed { margin: 44px -22px 0; }
-.bleed-layer { transform: scale(1.15); }
-.g-phrase {
-  text-align: center;
-  font-family: $script-en;
-  color: $wine;
-  font-size: clamp(26px, 7vw, 36px);
-  letter-spacing: 0.02em;
-  line-height: 1.8;
-  padding: 56px 0 30px;
-}
-
-/* 全出血照片 ↔ 象牙白底色的过渡（与 H5 同一套）：
-   照片上下边缘各压一层渐变（色带色 → 照片边缘同色调 → 透明），照片上下再各垫一段淡色带
-   （象牙白 → 照片色调的淡色），硬边变成一座色彩的桥。只用叠加 view + linear-gradient，不依赖 mask-image。
-   渐变高度按人物位置定：蓝调那张头在 ~30% 处，上 18% / 下 15%；戒指那张头发在 ~7% 处，上边只留 7%。 */
-.g-bleed { position: relative; z-index: 0; }
-.g-phrase { position: relative; z-index: 1; }
-.g-bleed .photo::after { display: none; } /* 去掉 1px 亮边，否则渐变边缘会出一条细线 */
-.g-band { position: absolute; left: 0; right: 0; z-index: -1; pointer-events: none; }
-.g-band-top { bottom: 100%; height: 120px; background: linear-gradient(180deg, rgba(245, 240, 232, 0) 0%, $band-blue-top 100%); }
-.g-band-bot { top: 100%; height: 96px; background: linear-gradient(180deg, $band-blue-bot 0%, rgba(245, 240, 232, 0) 100%); }
-.edge-fade { position: absolute; left: 0; right: 0; z-index: 1; pointer-events: none; }
-/* 蓝调：象牙白 → 雾蓝 → 钴蓝的天；底部深绿草地 → 灰绿 → 雾色 */
-.ef-top {
-  top: 0; height: 18%;
-  background: linear-gradient(180deg, $band-blue-top 0%, rgba(178, 203, 220, 0.78) 26%, rgba(110, 160, 205, 0.34) 62%, rgba(40, 125, 195, 0) 100%);
-}
-.ef-bot {
-  bottom: 0; height: 15%;
-  background: linear-gradient(0deg, $band-blue-bot 0%, rgba(206, 216, 213, 0.86) 20%, rgba(122, 142, 136, 0.3) 58%, rgba(50, 69, 51, 0) 100%);
-}
-/* 戒指：上边很短；底部青草 → 浅草绿 */
-.g-rings .g-band-top { background: linear-gradient(180deg, rgba(245, 240, 232, 0) 0%, $band-rings-top 100%); }
-.g-rings .g-band-bot { background: linear-gradient(180deg, $band-rings-bot 0%, rgba(245, 240, 232, 0) 100%); }
-.g-rings .ef-top {
-  height: 7%;
-  background: linear-gradient(180deg, $band-rings-top 0%, rgba(200, 212, 205, 0.55) 45%, rgba(139, 157, 154, 0) 100%);
-}
-.g-rings .ef-bot {
-  height: 17%;
-  background: linear-gradient(0deg, $band-rings-bot 0%, rgba(208, 214, 192, 0.8) 26%, rgba(120, 132, 92, 0.3) 64%, rgba(101, 108, 81, 0) 100%);
-}
-
-/* ============ 04.5 所爱隔山海 ============ */
-.interlude { min-height: 460px; overflow: hidden; }
-.inter-bg { position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow: hidden; }
-.inter-layer { transition: opacity 1.2s ease; transform: scale(1.16); }
-.inter-veil {
-  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-  background: linear-gradient(to bottom, $ivory 0%, rgba(245, 240, 232, 0.25) 18%, rgba(52, 58, 61, 0.28) 55%, rgba(52, 58, 61, 0.42) 100%);
-}
-/* 过场底边：草地剪影 → 暮色灰 → 象牙白，接上请柬那一幕（原来这里是一条硬边） */
-.inter-fade {
-  position: absolute; left: 0; right: 0; bottom: 0;
-  height: 15%;
-  z-index: 1;
-  pointer-events: none;
-  background: linear-gradient(0deg, $ivory 0%, rgba(245, 240, 232, 0.86) 22%, rgba(196, 196, 186, 0.5) 52%, rgba(120, 128, 120, 0.18) 78%, rgba(52, 58, 61, 0) 100%);
-}
-.inter-copy {
-  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  text-align: center;
-  padding: 0 30px;
-  z-index: 3;
-}
-.inter-copy .p {
-  font-family: $serif-cn;
-  font-size: clamp(25px, 7vw, 36px);
-  color: $foam;
-  text-shadow: 0 2px 22px rgba(52, 58, 61, 0.45);
-  line-height: 2.1;
-  letter-spacing: 0.22em;
-}
-.inter-copy .small {
-  margin-top: 22px;
-  font-family: $script-en;
-  font-size: clamp(18px, 4.8vw, 23px);
-  color: rgba(253, 251, 244, 0.9);
-  text-shadow: 0 1px 10px rgba(52, 58, 61, 0.55);
-  letter-spacing: 0.06em;
-  line-height: 1.8;
-}
-
-/* ============ 05 THE INVITATION ============ */
-.act-invite {
-  padding: 130px 24px calc(110px + env(safe-area-inset-bottom));
-  background: radial-gradient(ellipse 70% 42% at 50% 30%, rgba(119, 55, 71, 0.05), rgba(119, 55, 71, 0) 70%);
-}
-.invite-card {
-  max-width: 560px;
-  margin: 0 auto;
-  text-align: center;
-  border: 1px solid rgba(119, 55, 71, 0.22);
-  padding: 78px 28px 56px;
-  position: relative;
-  background: $paper;
-  box-shadow: 0 24px 70px rgba(52, 58, 61, 0.10);
-}
-.card-inner-line {
-  position: absolute; top: 8px; left: 8px; right: 8px; bottom: 8px;
-  border: 1px solid rgba(119, 55, 71, 0.14);
-  pointer-events: none;
-}
-.cn { position: absolute; width: 22px; height: 22px; pointer-events: none; z-index: 2; }
-.cn::before, .cn::after { content: ""; position: absolute; background: $wine; opacity: 0.55; }
-.cn::before { width: 100%; height: 1px; }
-.cn::after { width: 1px; height: 100%; }
-.cn.tl { top: -1px; left: -1px; }
-.cn.tl::before, .cn.tl::after { top: 0; left: 0; }
-.cn.tr { top: -1px; right: -1px; }
-.cn.tr::before, .cn.tr::after { top: 0; right: 0; }
-.cn.bl { bottom: -1px; left: -1px; }
-.cn.bl::before, .cn.bl::after { bottom: 0; left: 0; }
-.cn.br { bottom: -1px; right: -1px; }
-.cn.br::before, .cn.br::after { bottom: 0; right: 0; }
-.seal {
-  position: absolute;
-  top: -34px; left: 50%;
-  margin-left: -36px;
-  width: 72px; height: 72px;
-  border-radius: 50%;
-  background: $paper;
-  border: 1px solid $wine-soft;
-  display: flex; align-items: center; justify-content: center;
-  font-family: $script-cn;
-  color: $wine;
-  font-size: 19px;
-  letter-spacing: 0.02em;
-  box-shadow: 0 6px 18px rgba(119, 55, 71, 0.14);
-  z-index: 3;
-}
-.seal-ring {
-  position: absolute; top: 5px; left: 5px; right: 5px; bottom: 5px;
-  border: 1px solid rgba(119, 55, 71, 0.25);
-  border-radius: 50%;
-}
-.invite-families {
-  font-family: $serif-en;
-  font-size: 11px;
-  letter-spacing: 0.34em;
-  color: rgba(52, 58, 61, 0.72);
-  margin-bottom: 14px;
-}
-.h2 {
-  font-family: $serif-en;
-  font-weight: 400;
-  font-size: clamp(26px, 7vw, 38px);
-  letter-spacing: 0.3em;
-  color: $graphite;
-  margin-bottom: 10px;
-  line-height: 1.8;
-}
-.invite-zh {
-  font-family: $serif-cn;
-  font-size: clamp(15px, 4.4vw, 18px);
-  letter-spacing: 0.14em;
-  white-space: nowrap;
-  color: $graphite;
-  margin-top: 12px;
-}
-.invite-date { margin: 44px 0 10px; font-family: $serif-en; color: $wine; }
-.invite-date .day { font-size: clamp(76px, 23vw, 124px); line-height: 1; letter-spacing: 0.02em; }
-.invite-date .ym { margin-top: 12px; font-size: 15px; letter-spacing: 0.5em; }
-.invite-week { font-size: 12px; letter-spacing: 0.34em; color: $graphite; opacity: 0.75; }
-.invite-names {
-  margin-top: 38px;
-  font-family: $serif-cn;
-  font-size: clamp(23px, 6vw, 28px);
+.serif { font-family: $iv-serif; }
+.eyebrow {
+  font-size: 30rpx;
+  line-height: 1.5;
   letter-spacing: 0.16em;
-  color: $graphite;
 }
-.invite-names .amp, .tail .names .amp {
-  font-family: $serif-en;
-  font-style: normal;
-  color: $wine;
-  margin: 0 10px;
-  font-size: 1.1em;
+.eyebrow.abs { position: absolute; z-index: 2; }
+.eyebrow.wine { color: $iv-wine; }
+.amp { color: $iv-gold; font-weight: 400; font-family: $iv-serif; }
+.amp.inline { margin: 0 8rpx; }
+.gold-line { width: 68rpx; height: 2rpx; background: $iv-gold; }
+.gold-line.abs { position: absolute; left: 48rpx; z-index: 2; }
+.b { font-weight: 600; }
+
+button.hit,
+button.text-hit,
+button.copy-btn,
+button.finale-share,
+button.retry-btn,
+button.music-fab {
+  margin: 0;
+  border-radius: 0;
+  line-height: 1.5;
+  font-family: $iv-sans;
+  box-sizing: border-box;
 }
-.invite-time { margin-top: 12px; font-size: 12.5px; letter-spacing: 0.22em; color: rgba(52, 58, 61, 0.7); }
-.invite-venue { margin-top: 26px; font-family: $serif-cn; font-size: 19px; letter-spacing: 0.12em; line-height: 2.15; }
-.invite-venue .small { display: block; font-family: $sans-cn; font-size: 12.5px; opacity: 0.7; letter-spacing: 0.2em; }
-.invite-line {
-  width: 42px; height: 1px;
-  background: $wine;
-  opacity: 0.5;
-  margin: 32px auto;
+button.hit::after,
+button.copy-btn::after,
+button.retry-btn::after { border: none; }
+.hit {
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: $iv-wine;
+  color: $iv-ivory;
+  font-size: 32rpx;
+  font-weight: 500;
+  letter-spacing: 0.04em;
 }
-.diamond {
-  position: absolute;
-  left: 50%; top: 50%;
-  width: 5px; height: 5px;
-  margin: -2.5px 0 0 -2.5px;
-  transform: rotate(45deg);
-  background: $paper;
-  border: 1px solid $wine;
-}
-.btn-map {
+.hit-on { opacity: 0.85; }
+.text-hit {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  margin-top: 6px;
-  padding: 13px 36px;
-  border: 1px solid $wine;
-  color: $wine;
-  font-size: 13px;
-  letter-spacing: 0.3em;
-  line-height: 1.8;
-  border-radius: 999px;
-  transition: background 0.35s, color 0.35s, transform 0.2s;
-}
-.btn-map-on { background: $wine; color: $ivory; transform: scale(0.97); }
-.arrow { position: relative; width: 11px; height: 11px; margin-left: 10px; }
-.arrow-img { position: absolute; top: 0; left: 0; width: 11px; height: 11px; background-size: 11px 11px; background-repeat: no-repeat; }
-.a-ivory { opacity: 0; }
-.btn-map-on .a-ivory { opacity: 1; }
-.btn-map-on .a-wine { opacity: 0; }
-.invite-note {
-  margin-top: 30px;
-  font-family: $script-en;
-  font-size: 20px;
+  width: auto;
+  min-height: 88rpx;
+  padding: 16rpx 0;
+  background: transparent;
+  color: $iv-wine;
+  font-size: 30rpx;
+  font-weight: 500;
   letter-spacing: 0.02em;
-  color: rgba(52, 58, 61, 0.68);
+  text-decoration: none;
+}
+button.text-hit::after {
+  content: "";
+  position: absolute;
+  top: auto;
+  left: 0;
+  right: 0;
+  bottom: 10rpx;
+  width: auto;
+  height: 1px;
+  border: none;
+  border-radius: 0;
+  background: rgba(116, 47, 53, 0.62);
+  transform: none;
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+.shot { position: relative; width: 100%; overflow: hidden; background: #E7E1D4; }
+.layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; }
+.img { position: absolute; display: block; max-width: none; }
+.img-fallback {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #E7E1D4;
+  color: $iv-muted;
+  font-size: 30rpx;
+}
+button.retry-btn {
+  min-width: 144rpx;
+  min-height: 88rpx;
+  margin-top: 24rpx;
+  padding: 16rpx 28rpx;
+  border: 1rpx solid rgba(116, 47, 53, 0.72);
+  border-radius: 8rpx 24rpx 8rpx 24rpx;
+  background: transparent;
+  color: $iv-wine;
+  font-size: 30rpx;
+  font-weight: 500;
+  letter-spacing: 0.04em;
 }
 
-/* ---------- 赴约指南 ---------- */
-.guide { max-width: 560px; margin: 76px auto 0; text-align: left; }
-.guide-title {
+.opening {
+  position: fixed;
+  z-index: 30;
+  top: 0; right: 0; bottom: 0; left: 0;
+  overflow: hidden;
+  background: $iv-ink;
+}
+.scene { position: absolute; z-index: 0; top: 0; right: 0; bottom: 0; left: 0; overflow: hidden; background: #D8D2C6; }
+.door {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  bottom: 0;
+  width: calc(50% - 32rpx);
+  background: $iv-ivory;
+  color: $iv-ink;
+  overflow: hidden;
+  transition: transform 1.2s $iv-door;
+}
+.door.left { left: 0; }
+.door.right { right: 0; }
+.door-copy { position: absolute; right: 24rpx; left: 48rpx; }
+.door-names {
+  margin-top: 176rpx;
+  font-family: $iv-serif;
+  font-size: 88rpx;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.door-names .amp { display: block; margin: 12rpx 0; font-size: 58rpx; line-height: 1; }
+.door-invite { margin-top: 56rpx; font-family: $iv-serif; font-size: 34rpx; line-height: 1.9; }
+.door-facts { position: absolute; right: 36rpx; left: 36rpx; }
+.door-date { font-family: $iv-serif; font-size: 48rpx; line-height: 1.4; color: $iv-wine; }
+.door-time { margin-top: 28rpx; font-size: 32rpx; line-height: 1.9; }
+.door-venue { margin-top: 64rpx; font-size: 32rpx; line-height: 2; }
+.door-note {
+  position: absolute;
+  left: 36rpx;
+  right: 36rpx;
+  font-size: 30rpx;
+  line-height: 1.9;
+  color: $iv-muted;
+}
+.cover-actions {
+  position: absolute;
+  z-index: 5;
+  right: 0;
+  bottom: calc(78rpx + env(safe-area-inset-bottom));
+  left: 0;
+  display: flex;
+  justify-content: center;
+  transition: opacity 0.3s ease, transform 0.5s ease;
+}
+button.open-btn {
+  width: 384rpx;
+  min-height: 108rpx;
+  padding: 0 36rpx;
+  border: 1rpx solid rgba(247, 242, 232, 0.52);
+  border-radius: 32rpx 32rpx 12rpx 12rpx;
+  box-shadow: 0 8rpx 18rpx rgba(41, 43, 44, 0.12);
+}
+.open-btn::before {
+  content: "";
+  position: absolute;
+  top: 6rpx;
+  right: 6rpx;
+  bottom: 6rpx;
+  left: 6rpx;
+  border: 1rpx solid rgba(247, 242, 232, 0.38);
+  border-radius: 26rpx 26rpx 8rpx 8rpx;
+  pointer-events: none;
+}
+.open-btn .glyph {
+  flex: none;
+  width: 48rpx;
+  margin-left: 24rpx;
+  font-size: 32rpx;
+  font-weight: 400;
+  letter-spacing: 0;
   text-align: center;
-  font-family: $serif-cn;
-  letter-spacing: 0.3em;
-  font-size: 19px;
-  color: $wine;
-  margin-bottom: 24px;
+}
+.after-info {
+  position: absolute;
+  z-index: 4;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  min-height: 488rpx;
+  padding: 36rpx 48rpx calc(88rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  background: $iv-ivory;
+  color: $iv-ink;
+  opacity: 0;
+  transform: translateY(56rpx);
+  transition: opacity 0.45s ease 0.45s, transform 0.45s ease 0.45s;
+  pointer-events: none;
+}
+.after-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16rpx; }
+.after-names { flex: 1; min-width: 0; }
+.after-title {
+  font-family: $iv-serif;
+  font-size: 56rpx;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.after-title .amp { font-size: 46rpx; }
+.after-invite { margin-top: 4rpx; font-size: 30rpx; line-height: 1.6; }
+button.enter-btn {
+  flex: none;
+  width: 244rpx;
+  min-height: 96rpx;
+  margin-left: 0;
+  padding: 0 20rpx;
+  border: 1rpx solid rgba(247, 242, 232, 0.48);
+  border-radius: 10rpx 28rpx 10rpx 28rpx;
+  box-shadow: 0 4rpx 12rpx rgba(41, 43, 44, 0.08);
+  font-size: 30rpx;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+.enter-btn::before {
+  content: "";
+  position: absolute;
+  top: 5rpx;
+  right: 5rpx;
+  bottom: 5rpx;
+  left: 5rpx;
+  border: 1rpx solid rgba(247, 242, 232, 0.36);
+  border-radius: 6rpx 22rpx 6rpx 22rpx;
+  pointer-events: none;
+}
+.enter-btn .glyph {
+  flex: none;
+  width: 32rpx;
+  margin-left: 16rpx;
+  font-size: 30rpx;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-align: center;
+}
+.after-facts { margin-top: 24rpx; }
+.after-date { font-size: 34rpx; line-height: 1.7; color: $iv-wine; font-weight: 600; }
+.after-venue { margin-top: 4rpx; font-size: 30rpx; line-height: 1.7; }
+.after-address { font-size: 30rpx; line-height: 1.7; color: $iv-muted; }
+.after-music {
+  position: absolute;
+  right: 48rpx;
+  bottom: calc(8rpx + constant(safe-area-inset-bottom));
+  bottom: calc(8rpx + env(safe-area-inset-bottom));
+  min-height: 88rpx;
+  padding: 16rpx 0;
+}
+button.text-hit.after-music::after { background: rgba(116, 47, 53, 0.58); }
+
+.opening.mid .door.left { transform: translateX(-50%); }
+.opening.mid .door.right { transform: translateX(50%); }
+.opening.mid .cover-actions { opacity: 0; transform: translateY(24rpx); pointer-events: none; }
+.opening.mid .after-info { opacity: 1; transform: translateY(0); }
+.opening.opened .door.left { transform: translateX(-101%); }
+.opening.opened .door.right { transform: translateX(101%); }
+.opening.opened .cover-actions { opacity: 0; transform: translateY(24rpx); pointer-events: none; }
+.opening.opened .after-info { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+.origins { position: relative; overflow: hidden; background: $iv-ivory; }
+.story-h1 {
+  position: absolute;
+  z-index: 2;
+  left: 48rpx;
+  right: 48rpx;
+  font-family: $iv-serif;
+  font-size: 56rpx;
+  font-weight: 500;
+  line-height: 1.8;
+}
+.story-h1 .ln2 { margin-top: 60rpx; margin-left: 68rpx; }
+.origin-meta {
+  position: absolute;
+  z-index: 2;
+  right: 48rpx;
+  text-align: right;
+  font-size: 30rpx;
+  line-height: 1.9;
+  color: $iv-wine;
+}
+.glance { position: absolute; right: 0; bottom: 0; left: 0; }
+
+.city { padding: 128rpx 48rpx 144rpx; background: $iv-paper; }
+.city-h { margin-top: 48rpx; font-family: $iv-serif; font-size: 56rpx; font-weight: 500; line-height: 2; }
+.city-h .stop { margin-top: 40rpx; color: $iv-wine; }
+.meaning { padding: 112rpx 48rpx 120rpx; }
+.meaning-h { font-family: $iv-serif; font-size: 58rpx; font-weight: 500; line-height: 1.9; }
+.depart-copy { padding: 64rpx 48rpx 80rpx; font-family: $iv-serif; font-size: 54rpx; line-height: 1.8; }
+
+.next {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 112rpx;
+  padding: 32rpx 48rpx;
+  font-size: 30rpx;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+}
+.next-on, .summary-on, .text-on { opacity: 0.72; }
+.next-arrow {
+  display: flex;
+  align-items: center;
+  flex: none;
+  font-size: 40rpx;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.5;
+}
+.next-arrow::before {
+  content: "";
+  width: 32rpx;
+  height: 1px;
+  margin-right: 16rpx;
+  background: currentColor;
+  pointer-events: none;
+}
+.on-deep { background: $iv-deep; color: $iv-ivory; border-bottom: 1rpx solid rgba(247, 242, 232, 0.24); }
+.on-ivory { background: $iv-ivory; color: $iv-wine; border-top: 1px solid $iv-hair; }
+
+.mountain { position: relative; overflow: hidden; background: #D5D0C6; }
+.mountain-char {
+  position: absolute;
+  z-index: 2;
+  left: 40rpx;
+  font-family: $iv-serif;
+  font-size: 184rpx;
+  font-weight: 500;
+  line-height: 1;
+  color: $iv-deep;
+}
+.on-sky { color: $iv-deep; }
+.mountain-note {
+  position: absolute;
+  z-index: 2;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  box-sizing: border-box;
+  padding: 72rpx 48rpx;
+  background: $iv-ivory;
+  font-family: $iv-serif;
+  font-size: 62rpx;
+  line-height: 1.6;
+}
+.invite-pause { padding: 112rpx 48rpx 128rpx; background: $iv-paper; }
+.invite-pause .gold-line { margin-bottom: 48rpx; }
+.pause-copy { max-width: 620rpx; font-family: $iv-serif; font-size: 56rpx; line-height: 1.95; }
+
+.sea { background: $iv-deep; color: $iv-ivory; }
+.sea-head { box-sizing: border-box; padding: 56rpx 48rpx 0; }
+.sea .character { margin-top: 80rpx; font-family: $iv-serif; font-size: 176rpx; line-height: 1; }
+.sea-music { margin-top: 34rpx; font-size: 30rpx; letter-spacing: 0.08em; }
+.sea-quote { box-sizing: border-box; padding: 84rpx 48rpx; font-family: $iv-serif; font-size: 72rpx; line-height: 1.6; }
+.sea-small { display: block; margin-top: 34rpx; font-family: $iv-sans; font-size: 30rpx; line-height: 1.8; letter-spacing: 0.05em; }
+.evidence { padding-top: 80rpx; background: $iv-ivory; }
+.evidence-cap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 36rpx 48rpx 50rpx;
+  font-size: 30rpx;
+}
+.evidence-place { font-family: $iv-serif; font-size: 42rpx; font-weight: 500; }
+
+.hero { padding: 0 48rpx 92rpx; background: $iv-paper; }
+.hero-names { margin-top: 80rpx; font-family: $iv-serif; font-size: 72rpx; font-weight: 600; line-height: 1.4; }
+.hero-names .amp { font-size: 58rpx; }
+.hero-invite { margin-top: 26rpx; font-family: $iv-serif; font-size: 36rpx; }
+.date-lockup { display: flex; align-items: flex-end; margin-top: 64rpx; color: $iv-wine; }
+.day {
+  font-family: $iv-serif;
+  font-size: 164rpx;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+}
+.year { margin-left: 32rpx; padding-bottom: 10rpx; font-family: $iv-serif; font-size: 44rpx; line-height: 1.45; }
+.hero-time { margin-top: 36rpx; font-size: 38rpx; font-weight: 600; }
+.hero-venue { margin-top: 40rpx; font-family: $iv-serif; font-size: 40rpx; line-height: 1.85; }
+.hero-address { margin-top: 14rpx; color: $iv-muted; font-size: 30rpx; }
+.share-link { margin-top: 32rpx; }
+button.map-btn {
+  width: 100%;
+  min-height: 104rpx;
+  margin-top: 40rpx;
+  padding: 0 36rpx;
+  border: 1rpx solid rgba(247, 242, 232, 0.46);
+  border-radius: 12rpx 32rpx 12rpx 32rpx;
+  box-shadow: 0 4rpx 12rpx rgba(41, 43, 44, 0.08);
+}
+.map-btn::before {
+  content: "";
+  position: absolute;
+  top: 5rpx;
+  right: 5rpx;
+  bottom: 5rpx;
+  left: 5rpx;
+  border: 1rpx solid rgba(247, 242, 232, 0.34);
+  border-radius: 8rpx 26rpx 8rpx 26rpx;
+  pointer-events: none;
+}
+.map-btn.center { justify-content: center; margin-top: 0; box-shadow: none; }
+.map-btn.center .ne { margin-left: 24rpx; }
+.ne {
+  position: relative;
+  width: 22rpx;
+  height: 22rpx;
+  margin-left: 12rpx;
+  flex: none;
+}
+.ne::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 4rpx;
+  width: 20rpx;
+  height: 2rpx;
+  background: $iv-wine;
+  transform: rotate(-42deg);
+  transform-origin: left center;
+}
+.ne::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 10rpx;
+  height: 10rpx;
+  border-top: 2rpx solid $iv-wine;
+  border-right: 2rpx solid $iv-wine;
+}
+.ne.light::before { background: $iv-ivory; }
+.ne.light::after { border-top-color: $iv-ivory; border-right-color: $iv-ivory; }
+
+.guide { padding: 112rpx 48rpx 88rpx; }
+.guide-title { margin-bottom: 56rpx; font-family: $iv-serif; font-size: 62rpx; font-weight: 500; }
+.tl-row { display: flex; margin-bottom: 64rpx; }
+.tl-date {
+  width: 164rpx;
+  flex: none;
+  font-family: $iv-serif;
+  font-size: 46rpx;
+  line-height: 1.4;
+  color: $iv-wine;
+}
+.tl-copy {
+  flex: 1;
+  min-width: 0;
+  margin-left: 36rpx;
+  padding-left: 36rpx;
+  border-left: 1px solid $iv-gold;
+}
+.tl-title { font-size: 34rpx; line-height: 1.6; }
+.tl-p { margin-top: 18rpx; font-size: 30rpx; line-height: 1.95; }
+.detail { border-top: 1px solid $iv-hair; }
+.detail:last-child { border-bottom: 1px solid $iv-hair; }
+.summary {
+  min-height: 128rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 34rpx;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: 0.04em;
+}
+.mark {
   display: flex;
   align-items: center;
   justify-content: center;
-}
-.guide-title::before, .guide-title::after {
-  content: "";
-  width: 30px; height: 1px;
-  margin: 0 16px;
-  background: $wine;
-  opacity: 0.4;
-}
-.guide-item { border-top: 1px solid rgba(52, 58, 61, 0.14); transition: background 0.3s; }
-.guide-item:last-child { border-bottom: 1px solid rgba(52, 58, 61, 0.14); }
-.guide-item.open { background: rgba(251, 247, 239, 0.6); }
-.guide-head {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 19px 6px;
-  font-family: $sans-cn;
-  font-size: 14.5px;
-  letter-spacing: 0.12em;
-  line-height: normal;
-  color: $graphite;
-}
-.glabel { display: flex; align-items: center; }
-.gicon { width: 18px; height: 18px; margin-right: 12px; opacity: 0.75; flex: none; background-size: 18px 18px; background-repeat: no-repeat; }
-.chev {
-  width: 8px; height: 8px;
-  border-right: 1px solid $wine;
-  border-bottom: 1px solid $wine;
-  transform: rotate(45deg);
-  transition: transform 0.35s ease;
-  margin-right: 4px;
   flex: none;
+  width: 40rpx;
+  height: 64rpx;
+  margin-left: 24rpx;
+  border-bottom: 1rpx solid $iv-wine;
+  color: $iv-wine;
+  font-size: 40rpx;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1;
 }
-.guide-item.open .chev { transform: rotate(225deg); }
-.guide-body { max-height: 0; overflow: hidden; transition: max-height 0.45s ease; }
-.inner {
-  padding: 2px 6px 22px 36px;
-  font-size: 13.5px;
-  line-height: 2.15;
-  color: rgba(52, 58, 61, 0.85);
-}
-.inner .b { font-weight: 600; color: $graphite; }
-.contact-line { display: block; }
-.tel-link {
-  color: $wine-ink;
-  white-space: nowrap;
-  border-bottom: 1px solid rgba(119, 55, 71, 0.35);
-  padding-bottom: 1px;
-}
+.detail-body { padding-bottom: 44rpx; font-size: 30rpx; line-height: 1.95; }
+.detail-p + .detail-p { margin-top: 24rpx; }
 
-/* ---------- 回执 ---------- */
-.rsvp { max-width: 560px; margin: 60px auto 0; text-align: center; }
-.rsvp-p { font-size: 13px; opacity: 0.75; letter-spacing: 0.1em; margin-bottom: 20px; }
-.btn-rsvp {
+.contacts { padding: 96rpx 48rpx 88rpx; background: $iv-paper; }
+.contacts-title { font-family: $iv-serif; font-size: 58rpx; font-weight: 500; }
+.contacts-intro { margin-top: 26rpx; font-size: 30rpx; line-height: 1.9; }
+.person { padding: 50rpx 0 46rpx; border-bottom: 1px solid $iv-hair; }
+.person:first-of-type { margin-top: 38rpx; border-top: 1px solid $iv-hair; }
+.person-head { display: flex; align-items: center; justify-content: space-between; }
+.person-name { font-family: $iv-serif; font-size: 46rpx; font-weight: 500; }
+.person-tel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 88rpx;
+  color: $iv-wine;
+  font-size: 36rpx;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+  text-decoration: none;
+}
+.person-tel::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 12rpx;
+  height: 1px;
+  background: rgba(116, 47, 53, 0.58);
+  pointer-events: none;
+}
+.person-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 88rpx;
+  margin-top: 16rpx;
+  font-size: 30rpx;
+}
+.call {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  padding: 13px 42px;
-  background: $wine;
-  color: $ivory;
-  border-radius: 999px;
-  font-size: 13px;
-  letter-spacing: 0.3em;
-  line-height: 1.8;
-  box-shadow: 0 10px 26px rgba(119, 55, 71, 0.28);
-  transition: transform 0.2s, box-shadow 0.3s;
+  min-height: 88rpx;
+  color: $iv-wine;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  line-height: 1.5;
+  text-decoration: none;
 }
-.btn-rsvp-on { transform: scale(0.97); }
-.env { width: 15px; height: 15px; margin-right: 10px; background-size: 15px 15px; background-repeat: no-repeat; }
-.btn-share {
-  display: block;
-  margin: 18px auto 0;
-  padding: 11px 36px;
-  background: transparent;
-  color: $wine;
-  border: 1px solid rgba(119, 55, 71, 0.45);
-  border-radius: 999px;
-  font-size: 12px;
-  letter-spacing: 0.28em;
-  line-height: 1.8;
-  box-sizing: border-box;
-}
-.btn-share::after { border: none; }
-.btn-share-on { transform: scale(0.97); opacity: 0.85; }
-.share-canvas {
-  position: fixed;
-  left: -9999px;
-  top: 0;
-  width: 750px;
-  height: 600px;
+.call::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 16rpx;
+  height: 1px;
+  background: rgba(116, 47, 53, 0.58);
   pointer-events: none;
-  opacity: 0;
 }
-
-/* ---------- 回执抽屉 ---------- */
-.sheet { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 120; visibility: hidden; }
-.sheet.open { visibility: visible; }
-.sheet-mask {
-  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(52, 58, 61, 0.38);
-  opacity: 0;
-  transition: opacity 0.35s ease;
-}
-.sheet.open .sheet-mask { opacity: 1; }
-.sheet-panel {
-  position: absolute; left: 0; right: 0; bottom: 0;
-  max-width: 560px;
-  margin: 0 auto;
-  background: $paper;
-  border-radius: 18px 18px 0 0;
-  padding: 30px 26px calc(26px + env(safe-area-inset-bottom));
-  box-shadow: 0 -18px 50px rgba(52, 58, 61, 0.16);
-  transform: translateY(105%);
-  transition: transform 0.45s $ease;
-  text-align: center;
-}
-.sheet.open .sheet-panel { transform: translateY(0); }
-.grip {
-  position: absolute; top: 10px; left: 50%;
-  width: 36px; height: 4px;
-  margin-left: -18px;
-  border-radius: 2px;
-  background: rgba(52, 58, 61, 0.15);
-}
-.sheet-title { font-family: $serif-cn; font-size: 21px; letter-spacing: 0.2em; color: $wine; }
-.sheet-sub { margin: 8px 0 22px; font-size: 13px; line-height: 1.9; letter-spacing: 0.06em; color: rgba(52, 58, 61, 0.72); }
-.sheet-list { text-align: left; }
-.sheet-person { border-top: 1px solid rgba(52, 58, 61, 0.12); padding: 14px 2px; }
-.sheet-person:last-child { border-bottom: 1px solid rgba(52, 58, 61, 0.12); }
-.sheet-name { font-family: $serif-cn; font-size: 18px; letter-spacing: 0.14em; color: $graphite; }
-.sheet-row {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-top: 8px;
-  font-size: 14px;
+.wechat-row { display: flex; align-items: center; }
+button.copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  min-width: 128rpx;
+  min-height: 88rpx;
+  margin-left: 16rpx;
+  padding: 16rpx 12rpx;
+  border: 0;
+  border-bottom: 1rpx solid $iv-wine;
+  border-radius: 0;
+  background: transparent;
+  color: $iv-wine;
+  font-size: 30rpx;
+  font-weight: 500;
   letter-spacing: 0.04em;
-  color: rgba(52, 58, 61, 0.85);
 }
-.sheet-row .k { font-size: 12px; letter-spacing: 0.16em; opacity: 0.6; margin-right: 8px; }
-.sheet-row .v { white-space: nowrap; }
-.sheet-btn {
-  flex: none;
-  display: inline-flex; align-items: center; justify-content: center;
-  min-width: 84px;
-  padding: 8px 16px;
-  margin-left: 12px;
-  border: 1px solid $wine;
-  border-radius: 999px;
-  background: transparent;
-  color: $wine;
-  font-size: 13px;
-  letter-spacing: 0.2em;
-  line-height: 1.8;
+.phone-only { font-size: 30rpx; line-height: 88rpx; }
+.copy-note { margin-top: 14rpx; color: $iv-muted; font-size: 30rpx; }
+
+button.music-fab {
+  position: fixed;
+  z-index: 21;
+  right: 32rpx;
+  bottom: calc(24rpx + constant(safe-area-inset-bottom));
+  bottom: calc(24rpx + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 88rpx;
+  height: 88rpx;
+  min-width: 88rpx;
+  min-height: 88rpx;
+  padding: 0;
+  border: 1rpx solid rgba(247, 242, 232, 0.62);
+  border-radius: 50%;
+  background: $iv-deep;
+  box-shadow: 0 4rpx 12rpx rgba(41, 43, 44, 0.14);
+  color: transparent;
+  font-size: 0;
+  line-height: 0;
+  white-space: nowrap;
 }
-.sheet-btn.solid { background: $wine; color: $ivory; }
-.sheet-btn-on { transform: scale(0.96); }
-.sheet-close {
-  display: inline-block;
-  margin-top: 18px;
-  font-size: 13px;
-  letter-spacing: 0.3em;
-  color: rgba(52, 58, 61, 0.55);
-  padding: 8px 20px;
+.music-fab::before,
+.music-fab::after { pointer-events: none; }
+.music-fab::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44rpx;
+  height: 44rpx;
+  margin-top: -22rpx;
+  margin-left: -22rpx;
+  border: 1rpx solid rgba(247, 242, 232, 0.46);
+  border-radius: 50%;
 }
-.toast {
-  position: fixed; left: 50%; top: 22%;
-  z-index: 130;
-  transform: translate(-50%, -50%);
-  background: rgba(52, 58, 61, 0.88);
-  color: $ivory;
-  font-size: 13px;
-  letter-spacing: 0.08em;
-  padding: 10px 18px;
-  border-radius: 10px;
+button.music-fab::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: auto;
+  bottom: auto;
+  left: 50%;
+  width: 10rpx;
+  height: 10rpx;
+  margin-top: -5rpx;
+  margin-left: -5rpx;
+  border: none;
+  border-radius: 50%;
+  background: $iv-ivory;
+  transform: none;
+  transform-origin: 0 0;
+}
+.music-fab.above-map {
+  bottom: calc(28rpx + constant(safe-area-inset-bottom));
+  bottom: calc(28rpx + env(safe-area-inset-bottom));
+}
+.music-fab-on { opacity: 0.82; }
+.map-bar {
+  position: fixed;
+  z-index: 20;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding: 24rpx 48rpx calc(24rpx + constant(safe-area-inset-bottom));
+  padding: 24rpx 48rpx calc(24rpx + env(safe-area-inset-bottom));
+  background: $iv-paper;
+  border-top: 1px solid #D6D0C5;
   opacity: 0;
+  transform: translateY(110%);
   pointer-events: none;
-  transition: opacity 0.3s;
-  max-width: 80vw;
-  text-align: center;
+  transition: opacity 0.25s ease, transform 0.25s ease;
 }
-.toast.show { opacity: 1; }
+.map-bar.with-music { padding-right: 224rpx; }
+.map-bar.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+#guide-rest > .next { padding-bottom: calc(52rpx + 184rpx + env(safe-area-inset-bottom)); }
 
-/* ============ 06 THE ENDING ============ */
-.act-ending {
-  min-height: 80vh;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  text-align: center;
-  padding: 120px 30px 140px;
-  background: linear-gradient(to bottom, $ivory 40%, $shore 75%, $mist 130%);
-  overflow: hidden;
+.final-photo { position: relative; overflow: hidden; background: #2A2420; }
+.on-finale { color: $iv-ivory; }
+.final-words {
+  position: absolute;
+  z-index: 2;
+  left: 48rpx;
+  width: 660rpx;
+  color: $iv-ivory;
+  font-family: $iv-serif;
+  font-size: 70rpx;
+  font-weight: 500;
+  line-height: 1.65;
 }
-.words {
-  font-family: $serif-cn;
-  font-size: clamp(21px, 5.6vw, 27px);
-  line-height: 2.35;
-  letter-spacing: 0.14em;
-  color: $graphite;
+.thanks { padding: 104rpx 48rpx 96rpx; background: $iv-deep; color: $iv-ivory; }
+.thanks-quote { font-family: $iv-serif; font-size: 54rpx; line-height: 1.9; }
+.thanks-names { margin-top: 64rpx; font-family: $iv-serif; font-size: 58rpx; }
+.thanks-names .amp { font-size: 48rpx; }
+.thanks-date { margin-top: 18rpx; font-size: 30rpx; letter-spacing: 0.08em; }
+.letter-end { margin-top: 64rpx; padding-top: 40rpx; border-top: 1px solid rgba(184, 155, 106, 0.65); }
+.music-title { font-family: $iv-serif; font-size: 44rpx; }
+.music-credit { margin-top: 10rpx; font-size: 30rpx; line-height: 1.8; }
+.finale-music { margin-top: 20rpx; color: $iv-ivory; }
+button.text-hit.finale-music::after { background: rgba(247, 242, 232, 0.58); }
+button.finale-share {
   position: relative;
-  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 104rpx;
+  margin-top: 56rpx;
+  padding: 26rpx 0;
+  border-top: 1px solid rgba(247, 242, 232, 0.4);
+  border-bottom: 1px solid rgba(247, 242, 232, 0.4);
+  border-left: 0;
+  border-right: 0;
+  border-radius: 0;
+  background: transparent;
+  color: $iv-ivory;
+  font-size: 32rpx;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+  text-align: left;
 }
-.ending-wave {
-  width: 120px; height: 14px;
-  opacity: 0.8;
-  margin-top: 44px;
-  background-size: 120px 14px;
-  background-repeat: no-repeat;
-  position: relative;
-  z-index: 3;
+button.finale-share::after {
+  content: "";
+  position: absolute;
+  top: 6rpx;
+  right: 0;
+  bottom: auto;
+  left: auto;
+  width: 64rpx;
+  height: 1px;
+  border: none;
+  border-radius: 0;
+  background: rgba(247, 242, 232, 0.4);
+  transform: none;
+  transform-origin: 0 0;
+  pointer-events: none;
 }
-.tail {
-  margin-top: 40px;
-  font-family: $serif-en;
-  color: $wine;
-  font-size: 14px;
-  letter-spacing: 0.4em;
-  line-height: 2.5;
-  position: relative;
-  z-index: 3;
-}
-.tail .names { font-family: $serif-cn; font-size: 20px; letter-spacing: 0.22em; color: $graphite; }
-.tail .names .amp { font-size: 1.15em; }
+.footer { padding: 54rpx 48rpx 72rpx; background: $iv-deep; color: $iv-ivory; font-size: 30rpx; line-height: 1.8; }
+.share-canvas { position: fixed; left: -4000px; top: 0; width: 750px; height: 600px; }
 
-.footer {
-  text-align: center;
-  padding: 26px 20px calc(30px + env(safe-area-inset-bottom));
-  font-size: 10.5px;
-  letter-spacing: 0.24em;
-  line-height: 1.8;
-  color: rgba(52, 58, 61, 0.45);
-  background: $ivory;
+@media (max-width: 350px) {
+  .after-head { display: block; }
+  button.enter-btn { width: 100%; margin-top: 24rpx; }
 }
-.credit { margin: 10px auto 0; max-width: 300px; font-size: 10px; line-height: 1.7; letter-spacing: 0.06em; color: rgba(52, 58, 61, 0.42); }
 
+.opening.reduced .door,
+.opening.reduced .cover-actions,
+.opening.reduced .after-info,
+.reduced .map-bar {
+  transition: none;
+}
 @media (prefers-reduced-motion: reduce) {
-  .reveal, .reveal-line { transition: none; opacity: 1; transform: none; }
-  .kb, .bk, .j-wave { animation: none; }
-  .music-btn.on .music-ring, .music-btn.on::after, .music-btn.on .bar { animation: none; }
-  .opening-names, .h1, .sub, .sub2, .scroll-hint { animation: none; opacity: 1; }
+  .door,
+  .cover-actions,
+  .after-info,
+  .map-bar {
+    animation: none;
+    transition: none;
+  }
 }
 </style>

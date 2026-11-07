@@ -1,5 +1,5 @@
 /* ============================================================
-   高嘉琪 × 张靖 · 婚礼请柬（小程序版）唯一配置
+   高嘉琪 & 张靖 · 婚礼请柬（小程序版）唯一配置
    ------------------------------------------------------------
    内容与 H5（kdnsna/our-wedding，index.html 里的 CONFIG 与正文）逐字一致。
    改文案、电话、时间、图片地址，只改这里。
@@ -20,7 +20,7 @@ const images = {
   hero: { w: 1535, h: 2302, pos: [0.5, 0.5], alt: '主视觉双人婚纱照',
     variants: [[750, 'assets/hero-750-PB7KbFCh.webp'], [1535, 'assets/hero-1535-DetY04Ct.webp']],
     fallback: 'assets/hero-BI7fSnRm.jpg' },
-  story1: { w: 1200, h: 1500, pos: [0.5, 0.5], alt: '欧式暖光室内的双人合影，新娘手捧花束',
+  story1: { w: 1200, h: 1500, pos: [0.5, 0.42], alt: '欧式暖光室内的双人合影，新娘手捧花束',
     variants: [[750, 'assets/story-1-750-DlnnpTTH.webp'], [1200, 'assets/story-1-1200-xbU3rN94.webp']],
     fallback: 'assets/story-1-Czp_OGxZ.jpg' },
   story2: { w: 1080, h: 1080, pos: [0.5, 0.5], alt: '新娘坐在沙发前，裙摆与花瓣铺满地面',
@@ -29,7 +29,7 @@ const images = {
   journey1: { w: 1440, h: 1080, pos: [0.42, 0.5], alt: '荣成海边：石拱桥下停着两只小船',
     variants: [[960, 'assets/journey-1-960-C6a94aZa.webp'], [1440, 'assets/journey-1-1440-ehtZbAfY.webp']],
     fallback: 'assets/journey-1-Dai5S5pp.jpg' },
-  journey2: { w: 1080, h: 763, pos: [0.62, 0.5], alt: '荣成海湾与白色栏杆',
+  journey2: { w: 1080, h: 763, pos: [0.5, 0.56], alt: '荣成海湾与白色栏杆',
     variants: [[540, 'assets/journey-2-540-DTsW3Xfn.webp'], [1080, 'assets/journey-2-1080-DvJIfOY9.webp']],
     fallback: 'assets/journey-2-DZGYweoO.jpg' },
   gallery1: { w: 1200, h: 1800, pos: [0.5, 0.38], alt: '哥特拱窗前的逆光相拥',
@@ -50,15 +50,29 @@ const images = {
   gallery6: { w: 1200, h: 800, pos: [0.5, 0], alt: '草地上一起亮出婚戒',
     variants: [[750, 'assets/gallery-6-750-CIgpNxfU.webp'], [1200, 'assets/gallery-6-1200-BKKACda3.webp']],
     fallback: 'assets/gallery-6-CXScKaLw.jpg' },
-  gallery7: { w: 1200, h: 1800, pos: [0.5, 0.5], alt: '草地山前，头纱随风扬起',
+  gallery7: { w: 1200, h: 1800, pos: [0.58, 0.5], alt: '山前，新娘的头纱随风扬起',
     variants: [[600, 'assets/gallery-7-600-DE-9Knev.webp'], [1200, 'assets/gallery-7-1200-CnB9iDuZ.webp']],
     fallback: 'assets/gallery-7-D6p0uZ1O.jpg' },
-  gallery8: { w: 1200, h: 1800, pos: [0.5, 0.5], alt: '日落时分的吻，头纱铺开',
+  gallery8: { w: 1200, h: 1800, pos: [0.55, 0.5], alt: '日落时分，两人相拥而吻，头纱铺开',
     variants: [[600, 'assets/gallery-8-600-cfR0sBCG.webp'], [1200, 'assets/gallery-8-1200-BYJjGNVq.webp']],
     fallback: 'assets/gallery-8-Ct44r6qK.jpg' },
-  interlude: { w: 1920, h: 1280, pos: [0.4, 0.5], alt: '夕阳下牵手起舞的剪影',
+  interlude: { w: 1920, h: 1280, pos: [0.5, 0.58], alt: '夕阳下牵手起舞，透光头纱像海风展开',
     variants: [[1200, 'assets/interlude-1200-C3OSpo0o.webp'], [1920, 'assets/interlude-1920-BJzQLs_P.webp']],
-    fallback: 'assets/interlude-D4TK7R_L.jpg' }
+    fallback: 'assets/interlude-D4TK7R_L.jpg' },
+  // 4.1 新图。原片只作来源；下面是 1200w WebP（invite-assets/v41/）。
+  // 4.1.1 预览保留 static/assets 三张既定文件，发布自检限制精确路径和合计大小。
+  // opening-couple-1200.webp 166450B 1200x1800，来自 50b8ef4b JPG 1535x2302（868953B）
+  // story-glance-1200.webp 48630B 1200x800，来自 3049bb1e JPG 2302x1535（596164B）
+  // departure-1200.webp 124010B 1200x800，来自 4c55c6fe JPG 2302x1535（1140055B）
+  openingCouple: { w: 1200, h: 1800, pos: [1, 0.5], alt: '花拱与窗光前，新娘转身与新郎相伴',
+    variants: [[1200, '/static/assets/opening-couple-1200.webp']],
+    fallback: '/static/assets/opening-couple-1200.webp' },
+  storyGlance: { w: 1200, h: 800, pos: [0.48, 0.5], alt: '暖光室内，两人相互注视的真实合影',
+    variants: [[1200, '/static/assets/story-glance-1200.webp']],
+    fallback: '/static/assets/story-glance-1200.webp' },
+  departure: { w: 1200, h: 800, pos: [0.5, 0.54], alt: '两人在草地山前牵手前行，长裙纱拖在身后',
+    variants: [[1200, '/static/assets/departure-1200.webp']],
+    fallback: '/static/assets/departure-1200.webp' }
 }
 
 const CONFIG = {

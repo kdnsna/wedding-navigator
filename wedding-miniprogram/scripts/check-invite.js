@@ -53,7 +53,14 @@ function walk(dir, out = []) {
   assert(/uni\.setClipboardData/.test(page), 'pages/invite: 回执需要 uni.setClipboardData 复制微信')
   assert(/uni\.openLocation/.test(page), 'pages/invite: 导航需要 uni.openLocation')
   assert(/onShareAppMessage/.test(page) && /onShareTimeline/.test(page), 'pages/invite: 需要 onShareAppMessage + onShareTimeline')
+  assert(/class="door left"/.test(page) && /class="door right"/.test(page), 'pages/invite: 保留双扇门启仪式')
+  assert(/const amp = '&'/.test(page) && /\$iv-gold:\s*#B89B6A/i.test(page), 'pages/invite: 姓名之间保留香槟金 &')
+  assert(!/@touchmove[^>]*\.prevent/.test(page), 'pages/invite: 不得用 touchmove.prevent 锁住开场触摸')
+  assert(/prefers-reduced-motion:\s*reduce/.test(page), 'pages/invite: 保留减少动态效果路径')
+  assert(/class="music-fab"/.test(page) && /onHide\(\(\) =>[\s\S]*?audio\.pause\(\)/.test(page), 'pages/invite: 长页音乐控制与隐藏暂停必须存在')
+  assert(/function retryPhoto/.test(page) && /class="img-fallback"/.test(page), 'pages/invite: 图片失败需要占位和重试')
   const manifest = JSON.parse(read('manifest.json'))
+  assert(manifest.versionName === '4.1.2' && manifest.versionCode === '412', 'manifest.json: 本轮版本必须是 4.1.2 / 412')
   const mp = manifest['mp-weixin'] || {}
   assert(!(mp.requiredPrivateInfos || []).length, 'manifest.json: 请柬不需要 getLocation/chooseLocation 等 requiredPrivateInfos')
   assert(!mp.permission, 'manifest.json: 请柬不需要 scope.userLocation')
@@ -83,14 +90,25 @@ function walk(dir, out = []) {
     assert(im.variants.length && im.fallback && im.w && im.h && im.pos.length === 2, `CONFIG.images.${k} 不完整`)
   }
 
-  /* ---------- 包内不放照片、音频 ---------- */
+  /* ---------- 包内只留一首音乐、分享卡和 4.1 三张预览图 ---------- */
+  const previewImages = new Set([
+    'static/assets/opening-couple-1200.webp',
+    'static/assets/story-glance-1200.webp',
+    'static/assets/departure-1200.webp'
+  ])
+  let previewBytes = 0
   const staticFiles = walk(path.join(root, 'static'))
   for (const f of staticFiles) {
-    const rel = path.relative(root, f)
-    const isMusic = C.music.enabled && musicPkg && '/' + rel.split(path.sep).join('/') === C.music.src
+    const rel = path.relative(root, f).split(path.sep).join('/')
+    const isMusic = C.music.enabled && musicPkg && '/' + rel === C.music.src
+    const isImage = /\.(jpe?g|webp)$/i.test(f)
+    const isAllowedImage = rel === 'static/share-card.jpg' || previewImages.has(rel)
     assert(isMusic || !/\.(mp3|m4a|aac|wav|ogg|flac)$/i.test(f), `${rel}: 包内只允许 CONFIG.music.src 指向的那一首背景音乐`)
-    assert(!/\.(jpe?g|webp)$/i.test(f) || rel.endsWith('static/share-card.jpg'), `${rel}: 照片不要打进包里（走 CONFIG.assetBase）`)
+    assert(!isImage || isAllowedImage, `${rel}: 不在 4.1 预览白名单内的照片不要打进包里`)
+    if (previewImages.has(rel)) previewBytes += fs.statSync(f).size
   }
+  for (const rel of previewImages) assert(fs.existsSync(path.join(root, rel)), `${rel}: 4.1 预览图缺失`)
+  assert(previewBytes <= 350 * 1024, `4.1 三张预览图合计 ${previewBytes} 字节，不得超过 350KB`)
   assert(!fs.existsSync(path.join(root, 'static/visuals/hero')), 'static/visuals/hero: 平台模板封面图应留在 legacy-assets/（包外）')
   const fonts = read('config/invite-fonts.js')
   for (const f of C.fonts) assert(fonts.includes(`"${f.key}"`), `config/invite-fonts.js 缺少 ${f.key}（运行 node scripts/build-invite-fonts.mjs）`)
