@@ -194,7 +194,7 @@ function fakeTimers() {
 }
 
 const manifest = JSON.parse(fs.readFileSync(path.join(root, 'manifest.json'), 'utf8'))
-assert(manifest.versionName === '3.1.7' && String(manifest.versionCode) === '317', `版本 ${manifest.versionName}/${manifest.versionCode}`)
+assert(manifest.versionName === '3.1.8' && String(manifest.versionCode) === '318', `版本 ${manifest.versionName}/${manifest.versionCode}`)
 
 if (fails.length) {
   console.error(`countdown checks FAILED (TZ=${process.env.TZ || ''} offsetMin=${new Date(TARGET).getTimezoneOffset()}):\n- ` + fails.join('\n- '))

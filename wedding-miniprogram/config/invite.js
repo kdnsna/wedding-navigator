@@ -87,16 +87,18 @@ const CONFIG = {
     scale: 16
   },
 
-  // 背景音乐：原创配乐「海风来信」（D 大调，96 秒无缝循环；旋律与配器均为原创，音色 GeneralUser GS 免署名可商用）。
-  // 小程序里放不了网易云/QQ 音乐外链播放器，所以音频直接打进包里（AAC 80 kbps，约 0.96 MB）。
-  // src 可以是包内路径（/static/music/...）或 https / cloud:// 直链；enabled 改成 false 即整体关闭（按钮和页脚署名一起消失）。
+  // 背景音乐：原创《潮汐替我说愿意》（本地采样作曲，约 79 秒。试听 MP3 192 kbps，
+  // 打进包的是 AAC-LC 112 kbps、44.1 kHz、立体声）。播放逻辑不变：循环，进页尝试自动播放。
+  // 上一首《海风来信》仍在 static/music/haifeng-laixin.m4a，构建时会从产物里去掉。
+  // 回退：把 src / title / titleEn / credit 改回那一首再构建，不要删、不要覆盖原文件。
+  // src 也可以是 https / cloud:// 直链；enabled 改成 false 即整体关闭（按钮和页脚署名一起消失）。
   music: {
     enabled: true,
-    src: '/static/music/haifeng-laixin.m4a',
-    title: '海风来信',
-    titleEn: 'Letter from the Sea Breeze',
+    src: '/static/music/chaoxi-tiwo-shuoyuanyi.m4a',
+    title: '潮汐替我说愿意',
+    titleEn: '',
     volume: 0.6,
-    credit: '背景音乐 · 海风来信（高嘉琪原创）'
+    credit: '背景音乐 · 潮汐替我说愿意（高嘉琪原创）'
   },
 
   // 分享卡片：标题沿用 H5；封面必须用代码包内 750×600（微信读网络图常失败会变空白卡）
