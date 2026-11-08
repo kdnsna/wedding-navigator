@@ -9,6 +9,7 @@
   "scripts": {
     "check:release": "node scripts/check-invite.js && node scripts/check-v2-acceptance.js --automatic && node scripts/check-release-readiness.js && node scripts/check-ui-polish.js && node scripts/check-weather-forecast.js",
     "check:invite": "node scripts/check-invite.js --dist",
+    "check:countdown": "node scripts/check-countdown.mjs",
     "build:invite-fonts": "node scripts/build-invite-fonts.mjs",
     "sync:invite-assets": "node scripts/sync-invite-assets.mjs",
     "check:v2-acceptance": "node scripts/check-v2-acceptance.js",
@@ -34,7 +35,7 @@
     "build:mp-alipay": "uni build -p mp-alipay",
     "build:mp-baidu": "uni build -p mp-baidu",
     "build:mp-weixin": "UNI_INPUT_DIR=. npm exec --yes --package=node@20.19.6 -- node node_modules/.bin/uni build -p mp-weixin",
-    "postbuild:mp-weixin": "node scripts/copy-cloudfunctions-to-dist.js dist/build/mp-weixin",
+    "postbuild:mp-weixin": "node scripts/copy-cloudfunctions-to-dist.js dist/build/mp-weixin && node scripts/prune-unused-invite-music.js dist/build/mp-weixin",
     "build:quickapp": "uni build -p quickapp",
     "upload:mp-weixin": "node upload.mjs"
   },

@@ -7,6 +7,7 @@
  */
 const fs = require('fs')
 const path = require('path')
+const crypto = require('crypto')
 
 const root = path.resolve(__dirname, '..')
 const read = (f) => fs.readFileSync(path.join(root, f), 'utf8')
@@ -64,18 +65,40 @@ function walk(dir, out = []) {
   const withWechat = C.contacts.filter((c) => c.wechat)
   assert(withWechat.length === 1 && withWechat[0].name === '高嘉琪' && withWechat[0].wechat === 'Kdnsna7', 'CONFIG.contacts: 只有高嘉琪显示微信 Kdnsna7')
   assert(C.ceremonyTime === '上午 10:58', 'CONFIG.ceremonyTime 应为 上午 10:58')
+  assert(C.ceremonyAt === '2026-11-14T10:58:00+08:00', 'CONFIG.ceremonyAt 必须是 2026-11-14T10:58:00+08:00')
+  assert(C.story.aside === '从山间到平原，在泉城相遇，向荣成的海奔赴', 'CONFIG.story.aside')
+  assert(!/博兴|新泰/.test(read('config/invite.js') + page), '请柬不再点明博兴 / 新泰')
+  assert(/C\.story\.aside/.test(page) && !/story\.origins/.test(page), '故事副文只读 aside')
+  assert(C.whispers.story === '遇见你，山海都温柔' && C.whispers.journey === '想和你，看遍每一片海' && C.whispers.ending === '从此朝暮，身边都是你', '三句点缀应保持原句')
+  assert(C.groomName === '高嘉琪' && C.brideName === '张靖', '姓名保持高嘉琪 × 张靖')
   const v = C.venue
   assert(v.latitude > 36.9 && v.latitude < 37.5 && v.longitude > 122.2 && v.longitude < 122.8, 'CONFIG.venue: 经纬度应在荣成市区附近')
   assert(v.address === '荣成市成山大道东段1号', 'CONFIG.venue.address')
   assert(C.guide.items.length === 7 && C.guide.items.some((g) => g.title === '住宿安排'), 'CONFIG.guide: 7 张卡，含「住宿安排」')
   const musicPkg = /^\/static\/music\/[\w.-]+\.(m4a|mp3|aac)$/.test(C.music.src || '')
   assert(!C.music.enabled || /^(https|cloud):\/\//.test(C.music.src) || musicPkg, 'CONFIG.music: 开启时 src 必须是 https / cloud:// 授权音频，或包内的 /static/music/*.m4a|mp3|aac（原创/有授权）')
+  // 仓库里可以留一首不进包的回退曲。产物里仍然只能有 CONFIG.music.src 这一首，体积上限不变。
+  const ROLLBACK_MUSIC = 'static/music/haifeng-laixin.m4a'
+  const ROLLBACK_SHA256 = '1d31738a3f0618626ad8d8e61ea94979da6c8ab5676b23ba0a1fb1cd547e4eff'
+  const KEPT_MUSIC = new Set([ROLLBACK_MUSIC, 'static/music/chaoxi-tiwo-shuoyuanyi.m4a'])
+  assert(C.music.title === '潮汐替我说愿意', '曲名应为《潮汐替我说愿意》')
+  assert(C.music.titleEn === '', '新曲不要沿用海风来信的英文名')
+  assert(C.music.credit === '背景音乐 · 潮汐替我说愿意（高嘉琪原创）', '署名应换曲名并保留高嘉琪原创')
+  assert(!/海风来信/.test(C.music.title + C.music.credit + C.music.titleEn), '界面曲名和署名不能仍是海风来信')
+  assert(C.music.src === '/static/music/chaoxi-tiwo-shuoyuanyi.m4a', '当前预览应指向新曲')
   if (C.music.enabled && musicPkg) {
     const mf = path.join(root, C.music.src.slice(1))
     assert(fs.existsSync(mf), `CONFIG.music.src 指向的包内音频不存在：${C.music.src}`)
     if (fs.existsSync(mf)) assert(fs.statSync(mf).size < 1.2 * 1024 * 1024, `${C.music.src}: 背景音乐应压到 1.2 MB 以内（AAC ~80 kbps）`)
     assert(/createInnerAudioContext/.test(page) && !/getBackgroundAudioManager/.test(page), 'pages/invite: 背景音乐用 InnerAudioContext（不用 BackgroundAudioManager，免 requiredBackgroundModes）')
+    assert(/audio\.loop = true/.test(page) && /onHide\(/.test(page) && /audio\.pause\(\)/.test(page), 'pages/invite: 循环和退后台暂停应保持原逻辑')
     assert(!(mp.requiredBackgroundModes || []).length, 'manifest.json: 请柬不需要 requiredBackgroundModes')
+  }
+  const rollbackFile = path.join(root, ROLLBACK_MUSIC)
+  assert(fs.existsSync(rollbackFile), '回退用的海风来信原文件不在仓库里')
+  if (fs.existsSync(rollbackFile)) {
+    const sha = crypto.createHash('sha256').update(fs.readFileSync(rollbackFile)).digest('hex')
+    assert(sha === ROLLBACK_SHA256, `海风来信原文件被改动了：${sha}`)
   }
   assert(/^https:\/\//.test(C.share.imageUrl) || C.share.imageUrl === '/static/share-card.jpg', 'CONFIG.share.imageUrl 必须是 https，或包内的 /static/share-card.jpg（5:4 分享卡）')
   assert(/^(https:\/\/|cloud:\/\/)/.test(C.assetBase) && C.assetBase.endsWith('/'), 'CONFIG.assetBase 必须是 https:// 或 cloud://，并以 / 结尾')
@@ -86,9 +109,11 @@ function walk(dir, out = []) {
   /* ---------- 包内不放照片、音频 ---------- */
   const staticFiles = walk(path.join(root, 'static'))
   for (const f of staticFiles) {
-    const rel = path.relative(root, f)
-    const isMusic = C.music.enabled && musicPkg && '/' + rel.split(path.sep).join('/') === C.music.src
-    assert(isMusic || !/\.(mp3|m4a|aac|wav|ogg|flac)$/i.test(f), `${rel}: 包内只允许 CONFIG.music.src 指向的那一首背景音乐`)
+    const rel = path.relative(root, f).split(path.sep).join('/')
+    const isAudio = /\.(mp3|m4a|aac|wav|ogg|flac)$/i.test(f)
+    const isActive = C.music.enabled && musicPkg && '/' + rel === C.music.src
+    const isKept = KEPT_MUSIC.has(rel)
+    assert(!isAudio || isActive || isKept, `${rel}: 仓库里只留当前曲子和海风来信回退文件`)
     assert(!/\.(jpe?g|webp)$/i.test(f) || rel.endsWith('static/share-card.jpg'), `${rel}: 照片不要打进包里（走 CONFIG.assetBase）`)
   }
   assert(!fs.existsSync(path.join(root, 'static/visuals/hero')), 'static/visuals/hero: 平台模板封面图应留在 legacy-assets/（包外）')
@@ -104,7 +129,8 @@ function walk(dir, out = []) {
     const seg = (lines) => lines.map((l) => (Array.isArray(l) ? l.map((s) => s.t).join('') : '')).filter(Boolean)
     const strings = [
       ...C.opening.title, C.opening.date, C.opening.place, C.opening.sub2,
-      C.story.tag, ...seg(C.story.lines), ...C.story.origins,
+      // story.aside 是相对 H5 改写的一行，不参与逐字比对
+      C.story.tag, ...seg(C.story.lines),
       C.journey.tag, C.journey.lead, ...C.journey.lines, C.journey.place, C.journey.postcard,
       C.gallery.tag, ...Object.values(C.gallery.captions).filter(Boolean), ...C.gallery.phrases,
       ...C.interlude.lines, C.interlude.en,
@@ -139,8 +165,16 @@ function walk(dir, out = []) {
       const bytes = files.reduce((n, f) => n + fs.statSync(f).size, 0)
       console.log(`主包（mp-weixin 产物，不含云函数）：${(bytes / 1024).toFixed(1)} KB（${bytes} 字节，上限 2048 KB）`)
       // 不含音频时应远小于 1 MB；包内背景音乐（≤ 1.2 MB）另算，总量仍须给 2 MB 上限留足余量
-      const musicBytes = files.filter((f) => /\.(mp3|m4a|aac)$/i.test(f)).reduce((n, f) => n + fs.statSync(f).size, 0)
+      const musicFiles = files.filter((f) => /\.(mp3|m4a|aac)$/i.test(f))
+      const musicBytes = musicFiles.reduce((n, f) => n + fs.statSync(f).size, 0)
       if (musicBytes) console.log(`  其中背景音乐：${(musicBytes / 1024).toFixed(1)} KB；其余：${((bytes - musicBytes) / 1024).toFixed(1)} KB`)
+      assert(musicFiles.length === 1, `产物里应只有一首背景音乐，现在有 ${musicFiles.map((f) => path.relative(dist, f)).join(', ')}`)
+      if (musicFiles.length === 1) {
+        const rel = path.relative(dist, musicFiles[0]).split(path.sep).join('/')
+        assert('/' + rel === C.music.src, `产物音频不是当前曲子：${rel}`)
+      }
+      assert(!musicFiles.some((f) => f.includes('haifeng-laixin')), '产物里不应再打进海风来信')
+      assert(bytes < 2048 * 1024, `主包 ${bytes} 字节超过 2048 KB`)
       assert(bytes - musicBytes < 1024 * 1024, `主包（不含音频）${bytes - musicBytes} 字节：单场请柬应远小于 1 MB`)
       assert(bytes < 1.75 * 1024 * 1024, `主包 ${bytes} 字节：含音频也要给 2 MB 上限留余量（< 1.75 MB）`)
       const app = JSON.parse(fs.readFileSync(path.join(dist, 'app.json'), 'utf8'))
