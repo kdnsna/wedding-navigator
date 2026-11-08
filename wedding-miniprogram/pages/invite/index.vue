@@ -86,7 +86,7 @@
         <view class="p story-note">{{ C.whispers.story }}</view>
       </view>
       <view id="rv9" class="story-names reveal" :class="rc(9)">
-        <text>{{ C.story.origins[0] }} </text><text class="mist">×</text><text> {{ C.story.origins[1] }}</text>
+        <text>{{ C.story.aside }}</text>
       </view>
     </view>
 
@@ -252,6 +252,7 @@
           <text>{{ C.groomName }}</text><text class="amp">&amp;</text><text>{{ C.brideName }}</text>
         </view>
         <view class="invite-time">婚礼仪式时间：{{ C.ceremonyTime }}</view>
+        <view class="invite-count">{{ countdownText }}</view>
         <view class="invite-venue">
           <view v-for="(t, i) in C.invitation.venueLines" :key="i">{{ t }}</view>
           <view class="small"><text user-select selectable>地址：{{ C.venue.address }}</text></view>
@@ -363,6 +364,7 @@ import { onLoad as onPageLoad, onReady, onShow, onHide, onPageScroll, onShareApp
 import CONFIG from '@/config/invite.js'
 import { layoutPhoto } from '@/utils/invite-photo.js'
 import * as art from '@/utils/invite-art.js'
+import { createCountdown, describeCountdown } from '@/utils/invite-countdown.js'
 
 const C = CONFIG
 const inst = getCurrentInstance()
@@ -814,18 +816,26 @@ function onAnyTap() {
     startMusic()
   }
 }
+const countdownText = ref(describeCountdown(Date.now(), C.ceremonyAt).text)
+const countdownClock = createCountdown({
+  ceremonyAt: C.ceremonyAt,
+  now: () => Date.now(),
+  onTick: (view) => { countdownText.value = view.text }
+})
 onShow(() => {
   hidden = false
   enableShareMenu()
   if (musicOn && wantPlay && !musicPlaying.value) startMusic()
-  // 回到前台：量一下可滚范围，接着自动下滑
+  // 回到前台：量一下可滚范围，接着自动下滑；倒计时按当前时间重算
   measureMax()
   startAuto()
+  countdownClock.show()
 })
 onHide(() => {
   hidden = true
   clearTimeout(gestureTimer)
   stopAuto()
+  countdownClock.hide()
   if (audio && musicPlaying.value) audio.pause() // wantPlay 保持不变，回来时 onShow 接着放
 })
 
@@ -948,6 +958,7 @@ onUnload(() => {
   clearTimeout(titleTimer)
   clearTimeout(idleTimer)
   stopAuto()
+  countdownClock.unload()
   if (audio) {
     try { audio.stop() } catch (e) { /* noop */ }
     audio.destroy()
@@ -1337,20 +1348,24 @@ page {
 .story-names {
   margin-top: 26px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   font-size: 12px;
-  letter-spacing: 0.28em;
+  letter-spacing: 0.08em;
+  line-height: 1.75;
   color: $wine-ink;
+}
+.story-names text {
+  flex: 1;
+  min-width: 0;
 }
 .story-names::before {
   content: "";
   width: 26px; height: 1px;
-  margin-right: 14px;
+  margin: 0.72em 14px 0 0;
   background: $wine;
   opacity: 0.55;
   flex: none;
 }
-.story-names .mist { color: $sea-deep; }
 
 /* ============ 03 THE JOURNEY ============ */
 .act-journey {
@@ -1648,6 +1663,13 @@ page {
   font-size: 1.05em;
 }
 .invite-time { margin-top: 9px; font-size: 12.5px; letter-spacing: 0.22em; color: rgba(52, 58, 61, 0.7); }
+.invite-count {
+  margin-top: 4px;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  line-height: 1.6;
+  color: $wine-ink;
+}
 .invite-venue { margin-top: 20px; font-family: $serif-cn; font-size: 19px; letter-spacing: 0.12em; line-height: 1.9; }
 .invite-venue .small { display: block; font-family: $sans-cn; font-size: 12.5px; opacity: 0.7; letter-spacing: 0.2em; }
 .invite-line {

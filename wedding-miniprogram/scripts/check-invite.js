@@ -64,6 +64,12 @@ function walk(dir, out = []) {
   const withWechat = C.contacts.filter((c) => c.wechat)
   assert(withWechat.length === 1 && withWechat[0].name === '高嘉琪' && withWechat[0].wechat === 'Kdnsna7', 'CONFIG.contacts: 只有高嘉琪显示微信 Kdnsna7')
   assert(C.ceremonyTime === '上午 10:58', 'CONFIG.ceremonyTime 应为 上午 10:58')
+  assert(C.ceremonyAt === '2026-11-14T10:58:00+08:00', 'CONFIG.ceremonyAt 必须是 2026-11-14T10:58:00+08:00')
+  assert(C.story.aside === '从山间到平原，在泉城相遇，向荣成的海奔赴', 'CONFIG.story.aside')
+  assert(!/博兴|新泰/.test(read('config/invite.js') + page), '请柬不再点明博兴 / 新泰')
+  assert(/C\.story\.aside/.test(page) && !/story\.origins/.test(page), '故事副文只读 aside')
+  assert(C.whispers.story === '遇见你，山海都温柔' && C.whispers.journey === '想和你，看遍每一片海' && C.whispers.ending === '从此朝暮，身边都是你', '三句点缀应保持原句')
+  assert(C.groomName === '高嘉琪' && C.brideName === '张靖', '姓名保持高嘉琪 × 张靖')
   const v = C.venue
   assert(v.latitude > 36.9 && v.latitude < 37.5 && v.longitude > 122.2 && v.longitude < 122.8, 'CONFIG.venue: 经纬度应在荣成市区附近')
   assert(v.address === '荣成市成山大道东段1号', 'CONFIG.venue.address')
@@ -104,7 +110,8 @@ function walk(dir, out = []) {
     const seg = (lines) => lines.map((l) => (Array.isArray(l) ? l.map((s) => s.t).join('') : '')).filter(Boolean)
     const strings = [
       ...C.opening.title, C.opening.date, C.opening.place, C.opening.sub2,
-      C.story.tag, ...seg(C.story.lines), ...C.story.origins,
+      // story.aside 是相对 H5 改写的一行，不参与逐字比对
+      C.story.tag, ...seg(C.story.lines),
       C.journey.tag, C.journey.lead, ...C.journey.lines, C.journey.place, C.journey.postcard,
       C.gallery.tag, ...Object.values(C.gallery.captions).filter(Boolean), ...C.gallery.phrases,
       ...C.interlude.lines, C.interlude.en,
